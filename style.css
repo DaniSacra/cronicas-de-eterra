@@ -181,7 +181,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u) * 3) calc(var(--u) * 5);
   font-size: var(--f2); color: var(--gold); }
 #worldmap.autor .wm-head { color: #e0a0ff; }
-.wm-close { font-family: inherit; font-size: var(--f1); background: none; border: 0; color: var(--text); cursor: pointer; padding: calc(var(--u) * 2); }
+.wm-close { white-space: nowrap; font-family: inherit; font-size: var(--f1); background: none; border: 0; color: var(--text); cursor: pointer; padding: calc(var(--u) * 2); }
 .wm-close:hover { color: var(--gold); }
 .wm-cell { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .wm-map { position: relative; flex: none; box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--rim), 0 0 0 calc(var(--u) * 3) var(--ink); }
@@ -193,15 +193,15 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-pt.segredo i { background: #b060e0; rotate: 45deg; }
 .wm-pt.aqui i { background: var(--hp); animation: wmblink 1s steps(1) infinite; }
 @keyframes wmblink { 50% { background: var(--gold); } }
-.wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none;
-  text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); display: none; }
+.wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none; display: none; }
 .wm-pt.aqui .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
 .wm-pt.aqui:not(.sel) .wm-lbl { opacity: .8; }
 .wm-pt.sel { z-index: 2; }
 .wm-pt.sel .wm-lbl { color: var(--gold); }
 .wm-pt.sel i { outline: var(--u) solid var(--gold); outline-offset: var(--u); }
-.wm-k { font-size: var(--f1); letter-spacing: .3em; color: rgba(7, 8, 26, .55); white-space: nowrap; }
-.wm-pt.reino.sel .wm-k, .wm-pt.reino:hover .wm-k { color: var(--ink); text-shadow: 0 0 calc(var(--u) * 2) var(--gold); }
+.wm-k { font-size: var(--f1); letter-spacing: .3em; color: var(--text); opacity: .9; white-space: nowrap; }
+.wm-lbl, .wm-k { text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); }
+.wm-pt.reino.sel .wm-k, .wm-pt.reino:hover .wm-k { color: var(--gold); opacity: 1; }
 .wm-info { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); font-size: var(--f1); line-height: 1.9; }
 .wm-info .wm-name { font-size: var(--f2); color: var(--gold); line-height: 1.4; margin-bottom: calc(var(--u) * 2); }
 .wm-info .wm-tag { color: var(--dim); margin-bottom: calc(var(--u) * 3); }
@@ -247,3 +247,16 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 }
 /* Narrow screens: notes drop below the place/MUNDO row instead of covering it */
 @media (orientation: portrait), (max-width: 700px) { #info { top: calc(var(--u) * 14 + 16px); } }
+
+/* World map side panel: details on top, list of known places by kingdom below */
+.wm-info { display: flex; flex-direction: column; gap: calc(var(--u) * 4); }
+.wm-detail { flex: none; }
+.wm-list { display: flex; flex-direction: column; gap: var(--u); border-top: var(--u) solid var(--rim2); padding-top: calc(var(--u) * 3); }
+.wm-list h3 { margin: calc(var(--u) * 2) 0 var(--u); font: inherit; color: var(--dim); }
+.wm-row { display: flex; align-items: center; gap: calc(var(--u) * 3); background: none; border: 0; padding: var(--u) 0; text-align: left;
+  font: inherit; color: var(--text); cursor: pointer; }
+.wm-row:hover, .wm-row.sel { color: var(--gold); }
+.wm-row b { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--text); box-shadow: 0 0 0 var(--u) var(--ink); }
+.wm-row b.visto { background: var(--gold); } .wm-row b.aqui { background: var(--hp); }
+.wm-row b.boato { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--text), 0 0 0 var(--u) var(--ink); }
+.wm-row b.segredo { background: #b060e0; rotate: 45deg; }
