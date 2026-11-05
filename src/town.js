@@ -52,7 +52,7 @@ const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, lines: {
-    start: ['Alto! A igreja velha está fechada por ordem do ancião Bertoldo.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', 'Se querem descer, falem com o ancião primeiro. É a casa de telhado verde, ao norte.'],
+    start: ['Alto! A igreja velha está fechada por ordem do ancião Bertoldo.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
     quest: ['Que a luz os guie lá embaixo. Voltem vivos.'],
     won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.'] } },
   { id: 'lia', name: 'Lia', x: 18, y: 8, dir: 2, wander: 2, lines: {
@@ -70,13 +70,14 @@ const NPC_DEFS = [
     start: ['Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há fontes de luz que curam qualquer ferida e guardam a memória de quem passa.'],
     won: ['Os peixes voltaram! E eu achando que era a minha isca.'] } },
   { id: 'nino', name: 'Nino', x: 14, y: 12, dir: 2, wander: 3, lines: {
-    start: ['Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.'],
+    arrive: [() => nextStep()],
+    start: ['Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.', () => nextStep()],
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
   { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, onTalk: claraTalk, lines: {
-    start: ['O Nino não fala de outra coisa: o cavaleiro da espada de verdade.', 'Cuidado com essa espada. E com quem fica do outro lado dela.'],
-    quest: ['Vão descer na igreja velha?', 'Eu conto as crianças toda manhã. Volto a contar vocês também. Os quatro.'],
+    start: ['Bom dia.', 'O Nino não fala de outra coisa: o cavaleiro da espada de verdade.'],
+    quest: ['Vão descer na igreja velha?', 'Voltem. Os quatro.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
   { id: 'cat', name: 'Bigode', x: 20, y: 17, dir: 3, wander: 4, cat: true, lines: {
     start: ['Miau?'], won: ['Purrrr...'] } },
@@ -610,24 +611,34 @@ async function talkTo(n) {
   } finally { n.talking = false; }
 }
 
-// Clara e Aldo: os dois gostam um do outro e nenhum dos dois sabe o que dizer (uma vez só; depois, as falas da etapa)
+// Clara e Aldo: ele gosta dela e tropeça nas palavras; ela é discreta e só deixa escapar um olhar (uma vez só)
 async function claraTalk(n) {
   const nm = 'Clara, a professora';
   if (G.seen['talk:clara'] || G.bossDead) return say(nm, byStage(n.def.lines));
   await partyTalk('clara', [
-    [nm, () => `${heroName('aldo')}? Você... voltou.`],
-    ['aldo', 'Voltei. Quer dizer, vim trabalhar. Trabalho de inverno. Tem bastante trabalho no inverno.'],
-    [nm, 'Tem. Claro. Muito trabalho.'],
-    [null, 'Os dois olham para o chão ao mesmo tempo.'],
-    ['aldo', 'Você ainda dá aula?'],
-    [nm, 'Todo dia. O Nino fala de você o tempo todo. Quer dizer, da espada. Ele fala da espada.'],
-    ['aldo', 'Da espada. Claro.'],
-    [nm, 'Bom. Eu... tenho umas lousas para limpar.'],
-    ['aldo', 'Lousas. Sim. Eu também tenho. Quer dizer, não tenho. Até logo.'],
-    [null, () => `Clara se afasta depressa, vermelha. ${heroName('aldo')} fica parado, coçando a nuca.`],
-    ['teo', 'Lousas?'],
-    ['andilla', 'Lousas. Sei.'],
+    [null, () => `${heroName('aldo')} vê a professora e para no meio da rua.`],
+    ['aldo', 'Clara.'],
+    [nm, () => `${heroName('aldo')}. Bom dia.`],
+    ['aldo', 'Voltei. Para o inverno. Tem trabalho por aqui. Quer dizer, vim pelo trabalho. Também.'],
+    [nm, 'Que bom.'],
+    [null, 'Ela ajeita o xale e olha para as crianças.'],
+    ['aldo', 'Você está... As crianças estão bem? O Nino cresceu.'],
+    [nm, 'Estão bem. Com licença, a aula vai começar.'],
+    [null, 'Clara se afasta. Antes da esquina, olha para trás uma vez.'],
+    [null, () => `${heroName('aldo')} fica parado, coçando a nuca.`],
+    ['teo', () => `Você ficou vermelho, ${heroName('aldo')}.`],
+    ['andilla', 'Vermelho de frio, claro.'],
   ]);
+}
+
+// O próximo passo da história, dito do mesmo jeito por quem dá direção (Hugo, Nino, ancião)
+function nextStep() {
+  if (!G.seen.job) return 'Procurando trabalho? A Berta, na taverna de telhado vermelho, lá embaixo, sempre precisa de braços.';
+  if (!inParty('teo')) return 'A Berta mandou olhar o cemitério? O portão fica ao lado da capela, no alto da vila, à esquerda.';
+  if (!G.intro) return 'Voltem à taverna. A Berta vai querer saber o que vocês viram.';
+  if (!G.quest) return 'O ancião Bertoldo mora na casa de telhado verde, no alto da vila.';
+  if (G.party.length < 4) return 'O ancião quer quatro. Tem gente esperando para descer, lá na taverna.';
+  return 'Vocês são quatro. Falem com o Hugo, na porta da igreja velha.';
 }
 
 // Próximo lugar da história, para a setinha amarela na vila, na taverna e no cemitério
@@ -720,7 +731,7 @@ async function leaveTavern() {
 async function elderTalk() {
   const nm = 'Ancião Bertoldo';
   if (G.bossDead) { await say(nm, ['Os mortos voltaram a dormir, e o sino se calou. Valmor deve isso a vocês.', 'Mas um túmulo arrombado e vazio... Alguém levou o rei lá de baixo, e nós nem vimos.', 'Levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
-  if (!G.intro) { await say(nm, ['Forasteiro? Hoje não tenho trabalho. A Berta, na taverna, sempre precisa de braços.']); return; }
+  if (!G.intro) { await say(nm, ['Forasteiro? Bem-vindo a Valmor.', nextStep()]); return; }
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [

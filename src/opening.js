@@ -290,6 +290,7 @@ Object.assign(AREAS.cemiterio, {
     G.busy = true;
     await UI.say('O cemitério de Valmor. Névoa baixa, corvos no muro e covas abertas por toda parte.');
     await line('Aldo', 'Rui não estava exagerando.');
+    await UI.say('Entre as covas, alguma coisa se mexe. A setinha amarela mostra onde.');
     saveGame(); // perder no cemitério volta para cá
   },
   onStep(x, y) {
