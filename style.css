@@ -26,14 +26,14 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
 canvas#view { flex: none; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* ---- A janela: moldura 9-slice de src/frame.js (16 px, cantos de 3), ampliada --u vezes ---- */
-.win, .card, #msgbox, #info, .title .sub, #wmBtn, #touch button, #hudbar .chip, #face, #menu.icons .opt {
+.win, .card, #msgbox, #info, .title .sub, #wmBtn, #touch button, #hudbar .chip, #face, #menu.icons .opt, #cmdbar, #cmdbar .opt {
   color: var(--text); background: none;
   border: var(--bw) solid transparent; border-image: var(--frame) 4 fill / var(--bw) round;
   image-rendering: pixelated;
 }
-.sel-frame, .card.active, #menu.icons .opt.sel, #touch button:active { border-image-source: var(--frame-sel); }
+.sel-frame, .card.active, #menu.icons .opt.sel, #cmdbar .opt.sel, #touch button:active { border-image-source: var(--frame-sel); }
 .card.low, .danger-frame { border-image-source: var(--frame-danger); }
-#face, #menu.icons .opt, .slot-frame { border-image-source: var(--frame-slot); }
+#face, #menu.icons .opt, #cmdbar .opt, .slot-frame { border-image-source: var(--frame-slot); }
 
 /* ---- Diálogo dentro da cena: retrato em cima à esquerda, texto grande embaixo ---- */
 /* Janelas de baixo: diálogo em cima, faixa do grupo embaixo (como nos RPGs clássicos) */
@@ -318,3 +318,15 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   .hv-face { width: 64px; height: 64px; } .hv-stats { grid-template-columns: repeat(2, auto); }
   .hv-tab span { display: none; }
 }
+
+/* ---- Batalha: barra de comandos só com ícones, em cima do cartão do herói da vez ---- */
+#cmdbar { position: absolute; z-index: 4; display: none; gap: var(--u); padding: calc(var(--u) * 2); }
+#cmdbar.open { display: flex; animation: winOpen 120ms steps(3); }
+#cmdbar .opt { padding: var(--u); overflow: visible; line-height: 0; }
+#cmdbar .opt::before { display: none; }
+#cmdbar .opt img { width: 32px; height: 32px; image-rendering: pixelated; }
+#cmdbar .opt.sel::after, .card.target::after { content: ''; position: absolute; left: 50%; translate: -50% 0; bottom: calc(100% + var(--u) * 2);
+  border: calc(var(--u) * 3) solid transparent; border-bottom: 0; border-top: calc(var(--u) * 4) solid var(--hi);
+  filter: drop-shadow(var(--u) var(--u) 0 var(--ink)); animation: bob .5s steps(1) infinite; }
+#cmdbar .opt.sel::after { bottom: calc(100% + var(--bw) + var(--u)); }
+#hudtop .label { padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f1); color: var(--text); }

@@ -11,6 +11,9 @@ const UI = (() => {
   const speakerEl = document.getElementById('speaker');
   const faceEl = document.getElementById('face');
   const dialogEl = document.getElementById('dialog');
+  // Battle command bar: a small icon-only window that floats above the active hero's card
+  const barEl = document.createElement('div'); barEl.id = 'cmdbar';
+  document.getElementById('screen').appendChild(barEl);
   let menu = null, sayR = null, sayTimer = null, typeT = null, finishType = null, hideT = null;
 
   // Janela de texto dentro da cena: abre quando há fala ou menu, fecha sozinha quando o jogo fica livre
@@ -48,7 +51,7 @@ const UI = (() => {
     finishType = done;
     typeT = setInterval(() => { n += 1; body.textContent = t.slice(0, n); if (n >= t.length) done(); }, 22);
   }
-  function clearMenu() { menuEl.innerHTML = ''; menuEl.classList.remove('icons'); }
+  function clearMenu() { menuEl.innerHTML = ''; menuEl.classList.remove('icons'); barEl.innerHTML = ''; barEl.classList.remove('open'); }
 
   function say(text, opts = {}) {
     clearMenu();
@@ -69,51 +72,90 @@ const UI = (() => {
     clearTimeout(infoT); infoT = setTimeout(() => infoEl.classList.remove('show'), 6000);
   }
 
+  // o.style: 'list' (in the dialog, default), 'bar' (floating icon bar above o.anchor) or
+  // 'pointer' (nothing drawn: the caller shows the selection through o.onHover, e.g. an arrow over the target)
   function choose(opts, o = {}) {
     return new Promise(res => {
-      if (o.title !== undefined) { setSpeaker(null); setText(o.title, false, true); }
-      open();
+      const style = o.style || 'list';
+      if (style === 'list') {
+        if (o.title !== undefined) { setSpeaker(null); setText(o.title, false, true); }
+        open();
+      } else dialogEl.classList.remove('open');
       let sel = opts.findIndex(x => !x.disabled); if (sel < 0) sel = 0;
-      menu = { opts, sel, res, cancel: !!o.cancel, cols: o.cols || 2, onHover: o.onHover, icons: !!o.icons };
+      const start = opts.findIndex(x => !x.disabled && x.value === o.start); if (start >= 0) sel = start;
+      menu = { opts, sel, res, style, anchor: o.anchor, cancel: !!o.cancel, cols: o.cols || 2, onHover: o.onHover, icons: !!o.icons };
       render(); hover();
     });
   }
+  const host = () => menu.style === 'bar' ? barEl : menuEl;
   function render() {
+    clearMenu();
+    if (menu.style === 'pointer') return;
+    if (menu.style === 'bar') {
+      menu.opts.forEach((op, i) => barEl.appendChild(optEl(op, i, `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt="${esc(op.label)}">`)));
+      barEl.classList.add('open'); placeBar();
+      return;
+    }
     menuEl.style.gridTemplateColumns = menu.icons ? `repeat(${menu.cols},auto)` : `repeat(${menu.cols},1fr)`;
     menuEl.classList.toggle('icons', menu.icons);
-    menuEl.innerHTML = '';
     msgEl.querySelector('.cmd-name')?.remove();
     if (menu.icons) msgEl.insertAdjacentHTML('beforeend', '<span class="cmd-name"></span>');
-    menu.opts.forEach((op, i) => {
-      const d = document.createElement('div');
-      d.className = 'opt' + (i === menu.sel ? ' sel' : '') + (op.disabled ? ' dis' : '');
-      d.innerHTML = op.icon ? `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`
-        : esc(op.label) + (op.hint ? `<small>${esc(op.hint)}</small>` : '');
-      d.onmouseenter = () => { if (!menu || menu.sel === i) return; menu.sel = i; update(); };
-      d.onclick = ev => { ev.stopPropagation(); if (!menu) return; menu.sel = i; pick(); };
-      menuEl.appendChild(d);
-    });
+    menu.opts.forEach((op, i) => menuEl.appendChild(optEl(op, i, op.icon ? `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`
+      : esc(op.label) + (op.hint ? `<small>${esc(op.hint)}</small>` : ''))));
     cmdName();
   }
+  function optEl(op, i, html) {
+    const d = document.createElement('div');
+    d.className = 'opt' + (i === menu.sel ? ' sel' : '') + (op.disabled ? ' dis' : '');
+    d.innerHTML = html;
+    d.onmouseenter = () => { if (!menu || menu.sel === i) return; menu.sel = i; update(); };
+    d.onclick = ev => { ev.stopPropagation(); if (!menu) return; menu.sel = i; pick(); };
+    return d;
+  }
+  // Centered over the anchor (the hero's card), just above it, never past the screen edges
+  function placeBar() {
+    if (!menu || menu.style !== 'bar') return;
+    const scr = barEl.parentElement.getBoundingClientRect(), a = menu.anchor?.getBoundingClientRect();
+    const w = barEl.offsetWidth, h = barEl.offsetHeight, pad = 8;
+    const cx = a ? a.left + a.width / 2 - scr.left : scr.width / 2, bottom = a ? a.top - scr.top : scr.height - pad;
+    barEl.style.left = Math.max(pad, Math.min(scr.width - w - pad, cx - w / 2)) + 'px';
+    barEl.style.top = Math.max(pad, bottom - h - 6) + 'px';
+  }
+  window.addEventListener('resize', placeBar);
   // Icon states follow the cursor: normal, selected (gold halo), disabled (grey)
   const iconState = (op, sel) => op.disabled ? 'dis' : sel ? 'sel' : 'normal';
   function update() {
-    [...menuEl.children].forEach((c, i) => {
+    [...host().children].forEach((c, i) => {
       c.classList.toggle('sel', i === menu.sel);
       const op = menu.opts[i], img = op.icon && c.querySelector('img');
       if (img) img.src = iconUrl(op.icon, iconState(op, i === menu.sel));
-    }); menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); cmdName(); hover(); }
+    }); if (menu.style === 'list') menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); cmdName(); hover(); }
   // Phone shows command icons only: the selected command's name goes to the prompt line
   function cmdName() { const n = msgEl.querySelector('.cmd-name'); if (n) n.textContent = menu.opts[menu.sel].label; }
-  function hover() { menu.onHover && menu.onHover(menu.opts[menu.sel].value); }
+  function hover() { const op = menu.opts[menu.sel]; menu.onHover && menu.onHover(op.value, op); }
   function close(v) { const m = menu; menu = null; clearMenu(); closeSoon(); m.onHover && m.onHover(null); m.res(v); }
   function pick() { const op = menu.opts[menu.sel]; if (op.disabled) { Sfx.bump(); return; } Sfx.select(); close(op.value); }
   function cancel() { if (!menu.cancel) return; Sfx.cancel(); close(null); }
+  // Bar and pointer wrap around; pointer also skips what can't be chosen (fallen enemies or allies)
   function move(d) {
-    const n = menu.opts.length;
-    let s = menu.sel + d;
-    if (s < 0 || s >= n) return;
+    const n = menu.opts.length, wrap = menu.style !== 'list';
+    let s = menu.sel;
+    for (let k = 0; k < n; k++) {
+      s += d;
+      if (wrap) s = ((s % n) + n) % n; else if (s < 0 || s >= n) return;
+      if (menu.style !== 'pointer' || !menu.opts[s].disabled) break;
+    }
+    if (s === menu.sel) return;
     menu.sel = s; Sfx.cursor(); update();
+  }
+  // Mouse/touch on things outside the menu (an enemy on the canvas, a hero card)
+  const optIndex = v => menu ? menu.opts.findIndex(o => o.value === v && !o.disabled) : -1;
+  function pickValue(v) { const i = optIndex(v); if (i < 0) return false; menu.sel = i; pick(); return true; }
+  function hoverValue(v) { const i = optIndex(v); if (i < 0 || i === menu.sel) return; menu.sel = i; Sfx.cursor(); update(); }
+  // Arrow over a hero card while choosing an ally
+  function markCard(m) {
+    document.querySelectorAll('.card.target').forEach(c => c.classList.remove('target'));
+    if (m) document.getElementById('card-' + m.id)?.classList.add('target');
   }
 
   function handleKey(e) {
@@ -149,6 +191,8 @@ const UI = (() => {
         <div class="cls">${esc(d.cls)}</div>
         <div class="bar hp"><i></i></div><div class="num hpn"></div>
         <div class="bar mp"><i></i></div><div class="num mpn"></div>`;
+      card.onclick = ev => { if (pickValue(m)) ev.stopPropagation(); };
+      card.onmouseenter = () => hoverValue(m);
       partyEl.appendChild(card);
     }
     updateParty();
@@ -187,5 +231,5 @@ const UI = (() => {
 
   document.getElementById('screen').addEventListener('click', () => { Sfx.init(); advance(); });
 
-  return { say, info, choose, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };
+  return { say, info, choose, pickValue, hoverValue, markCard, placeBar, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };
 })();

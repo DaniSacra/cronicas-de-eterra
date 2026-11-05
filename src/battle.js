@@ -56,33 +56,46 @@ function hurtMember(m, dmg) {
 function physDmg(atk, def, power = 1) { return Math.max(1, Math.round(atk * power * rnd(0.88, 1.12) - def * 0.5)); }
 
 // ---------- Escolha de comandos ----------
-async function chooseEnemy(title) {
+// Target choice has no window: an arrow over the enemy (or the hero card) and the name on the top plaque
+async function chooseEnemy() {
   const list = aliveEnemies();
   if (list.length === 1 && !list[0].boss) return list[0];
-  return UI.choose(list.map(e => ({ label: ename(e), hint: healthWord(e.hp, e.maxhp), value: e })), { title, cancel: true, cols: list.length > 2 ? 3 : 2, onHover: v => B.hover = v });
+  return UI.choose(list.map(e => ({ label: ename(e), value: e })), { style: 'pointer', cancel: true, cols: list.length,
+    onHover: v => { B.hover = v; B.label = v ? ename(v) : null; } });
 }
 
 async function chooseTarget(kind, title) {
-  if (kind === 'enemy') return chooseEnemy(title);
+  if (kind === 'enemy') return chooseEnemy();
   if (kind === 'allEnemies' || kind === 'allAllies') return 'all';
-  return pickAlly(kind, title);
+  return pickAlly(kind, title, { style: 'pointer', cols: G.party.length,
+    onHover: v => { UI.markCard(v); B.label = v ? pdef(v).name : null; } });
 }
+
+// Mouse/touch while aiming: hovering an enemy moves the arrow, clicking it picks
+function enemyAt(ev) {
+  const r = view.getBoundingClientRect(), x = (ev.clientX - r.left) * VW / r.width, y = (ev.clientY - r.top) * VH / r.height;
+  return B && aliveEnemies().find(e => Math.abs(x - e.x) < e.w / 2 && y > e.top - 8 && y < e.base + 12);
+}
+view.addEventListener('mousemove', ev => { const e = enemyAt(ev); if (e) UI.hoverValue(e); });
+view.addEventListener('click', ev => { const e = enemyAt(ev); if (e && UI.pickValue(e)) ev.stopPropagation(); });
 
 async function chooseCommand(m) {
   const d = pdef(m);
   UI.updateParty(m.id);
+  let last = 'atk';
   for (;;) {
     const spells = knownSpells(m);
-    const v = await UI.choose([
+    const v = last = await UI.choose([
       { label: 'Atacar', value: 'atk', icon: 'atk' },
       { label: d.skillWord, value: 'spell', disabled: !spells.length, icon: 'spell' },
       { label: 'Item', value: 'item', disabled: !itemOptions().length, icon: 'item' },
       { label: 'Defender', value: 'def', icon: 'def' },
       { label: 'Fugir', value: 'run', icon: 'run' },
-    ], { title: `Vez de ${d.name}: o que fazer?`, cancel: false, cols: 5, icons: true });
+    ], { style: 'bar', anchor: document.getElementById('card-' + m.id), start: last, cols: 5,
+      onHover: (v, op) => { B.label = op ? op.label : null; } });
     if (v == null) continue;
     if (v === 'atk') {
-      const t = await chooseEnemy(`${d.name} ataca quem?`);
+      const t = await chooseEnemy();
       if (t == null) continue;
       return { type: 'attack', target: t };
     }
@@ -392,10 +405,11 @@ function drawBattle(now) {
     HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
   }
 
-  // Seta de alvo
+  // Seta de alvo (balança em cima do inimigo escolhido) e o nome do comando/alvo na placa do topo
   const hv = B.hover;
-  if (hv && hv.hp > 0 && Math.floor(now / 180) % 2 === 0) {
-    const y = Math.max(10, hv.top - 4);
+  if (B.label) HUD.label(B.label);
+  if (hv && hv.hp > 0) {
+    const y = Math.max(10, hv.top - 4) - (Math.floor(now / 200) % 2) * 2;
     c.fillStyle = '#ffd23f';
     c.beginPath(); c.moveTo(hv.x - 5, y - 7); c.lineTo(hv.x + 5, y - 7); c.lineTo(hv.x, y); c.closePath(); c.fill();
   }

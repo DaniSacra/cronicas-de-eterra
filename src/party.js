@@ -88,7 +88,7 @@ function castSupport(caster, spellId, target) {
   return `${c} hesita.`;
 }
 
-async function pickAlly(kind, title) {
+async function pickAlly(kind, title, o = {}) {
   const opts = G.party.map(m => ({
     label: pdef(m).name, hint: `${m.hp}/${maxHp(m)}`, value: m,
     disabled: kind === 'deadAlly' ? m.hp > 0 : m.hp <= 0,
@@ -98,7 +98,7 @@ async function pickAlly(kind, title) {
     return null;
   }
   if (G.party.length === 1 && !opts[0].disabled) return G.party[0];
-  return UI.choose(opts, { title, cancel: true, cols: G.party.length > 3 ? 2 : 3 });
+  return UI.choose(opts, { title, cancel: true, cols: G.party.length > 3 ? 2 : 3, ...o });
 }
 
 function itemOptions() {

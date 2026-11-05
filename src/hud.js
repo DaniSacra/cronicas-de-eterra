@@ -11,10 +11,11 @@ const HUD = (() => {
   bar.prepend(place);
   const boss = make(top, 'win danger-frame boss', '<div class="nm"></div><div class="bar"><i></i></div>');
   const queue = make(top, 'queue');
+  const label = make(top, 'win label');
   const note = make(top, 'win note');
   const compass = make(layer, 'compass');
   const title = make(layer, 'maptitle');
-  const all = [place, boss, queue, note, compass, title];
+  const all = [place, boss, queue, label, note, compass, title];
   let used = new Set();
 
   const text = (el, t) => { if (el._t !== t) { el._t = t; el.textContent = t; } };
@@ -34,6 +35,7 @@ const HUD = (() => {
     compass(letter, x, y) { text(compass, letter); at(compass, x, y); show(compass); },
     title(t, x, y) { text(title, t); at(title, x, y); show(title); },
     note(t) { text(note, t); show(note); },
+    label(t) { text(label, t); show(label); },
     boss(name, frac, enraged) {
       text(boss.querySelector('.nm'), name);
       const w = Math.round(1000 * frac) / 10 + '%', fill = boss.querySelector('i');
