@@ -122,13 +122,17 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* ---- Toque ---- */
 #touch { display: none; justify-content: space-between; gap: 12px; }
-#touch button { font-family: inherit; font-size: 14px; padding: 12px 0; touch-action: none; }
+/* Touch: 48 px buttons (touch target >= 44 px) and 16 px glyphs; OK on top, ✕ and MAPA below, same height as the pad */
+#touch button { font-family: inherit; font-size: 16px; line-height: 1; min-height: 48px; padding: 0; color: var(--text); touch-action: none; }
 #touch button:active { filter: brightness(1.2); }
 #touch .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; }
-#touch .pad2 { display: grid; grid-template-columns: repeat(1, 90px); gap: 6px; }
-#touch .pad2 button { font-size: 8px; }
+#touch .pad2 { display: grid; grid-template-columns: repeat(2, 48px); gap: 6px; }
+#touch .pad2 button:first-child { grid-column: 1 / -1; }
+#touch .pad2 .small { font-size: 8px; }
+/* Arrows and ✕ are not (or look tiny) in the pixel font: drawn by the system font at a larger, bold size */
+#touch .glyph { font-family: system-ui, sans-serif; font-size: 26px; font-weight: 700; }
 @media (pointer: coarse) { #touch { display: flex; position: absolute; left: 8px; bottom: 8px; width: calc(100% - var(--hudw, 0px) - 16px); margin: 0; opacity: .6; pointer-events: none; }
-  #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); } #touch button { padding: 8px 0; }
+  #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); }
   #game.talking #touch .pad { visibility: hidden; } }
 @media (orientation: landscape) and (pointer: coarse) { #dialog { left: calc(var(--u) * 4); translate: none; width: calc(100% - 106px - var(--u) * 4); } }
 @media (orientation: portrait) {
