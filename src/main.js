@@ -372,6 +372,12 @@ async function campMenu() {
     if (v === 'diary') await showDiary();
     if (v === 'world') await WorldMap.show();
     if (v === null) break;
+    if (v === 'quit') {
+      const ok = await UI.choose([{ label: 'Sim, sair', value: true }, { label: 'Não', value: false }],
+        { title: 'Voltar à tela inicial? O que não foi salvo se perde.', cancel: true, cols: 2, start: 1 });
+      if (ok) { G.bigMap = false; G.held.clear(); return titleScreen(); }
+      continue;
+    }
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
     if (v === 'status') await HeroView.show();

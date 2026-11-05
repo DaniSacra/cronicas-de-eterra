@@ -43,6 +43,7 @@ test('camp menu: coins in the title, Mapa hidden in town, Itens off with an empt
   assert.ok(labels(crypt).includes('Mapa'));
   assert.equal(crypt.opts.find(o => o.value === 'item').disabled, false);
   assert.equal(crypt.opts.at(-1).value, null, 'Voltar stays last');
+  assert.equal(crypt.opts.at(-2).value, 'quit', 'Sair right before Voltar');
 });
 
 test('equipment screen: gear grouped by hero and slot', () => {

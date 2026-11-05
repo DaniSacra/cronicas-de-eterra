@@ -34,7 +34,7 @@ function campMenuOpts(s) {
     { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
   ];
   if (!s.inTown) opts.push({ label: 'Mapa', value: 'map' });
-  opts.push({ label: 'Voltar', value: null });
+  opts.push({ label: 'Sair', value: 'quit' }, { label: 'Voltar', value: null });
   return { title: `Menu · ${s.gold} moedas`, opts };
 }
 
