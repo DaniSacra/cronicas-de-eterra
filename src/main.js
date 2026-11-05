@@ -457,6 +457,7 @@ function emblemSvg() {
 const logoText = t => esc(t).replace(/[ÂÊÔ]/g, ch => `<span class="acc">${{ 'Â': 'A', 'Ê': 'E', 'Ô': 'O' }[ch]}<i>^</i></span>`);
 async function titleScreen() {
   G.mode = 'title'; G.busy = true;
+  Music.play('title');
   loadFloor(0);
   document.title = GAME.tab;
   document.getElementById('game').classList.add('on-title');
