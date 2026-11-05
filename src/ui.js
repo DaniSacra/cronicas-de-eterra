@@ -21,7 +21,7 @@ const UI = (() => {
   function closeSoon() {
     clearTimeout(hideT);
     hideT = setTimeout(() => {
-      if (menu || sayR || G.mode === 'battle') return;
+      if (menu || sayR) return;
       dialogEl.classList.remove('open'); gameEl.classList.remove('talking');
     }, 80);
   }
@@ -119,7 +119,7 @@ const UI = (() => {
     const w = barEl.offsetWidth, h = barEl.offsetHeight, pad = 8;
     const cx = a ? a.left + a.width / 2 - scr.left : scr.width / 2, bottom = a ? a.top - scr.top : scr.height - pad;
     barEl.style.left = Math.max(pad, Math.min(scr.width - w - pad, cx - w / 2)) + 'px';
-    barEl.style.top = Math.max(pad, bottom - h - 6) + 'px';
+    barEl.style.top = Math.max(pad, bottom - h + 4) + 'px'; // tucked onto the card's top edge
   }
   window.addEventListener('resize', placeBar);
   // Icon states follow the cursor: normal, selected (gold halo), disabled (grey)
@@ -187,10 +187,13 @@ const UI = (() => {
       const card = document.createElement('div');
       card.className = 'card'; card.id = 'card-' + m.id;
       card.style.setProperty('--c', d.color);
-      card.innerHTML = `<div class="nm"><span>${esc(d.name)}</span><span class="lv"></span></div>
+      // Classic JRPG party strip: the hero's face on the left, name and bars on the right
+      const key = Portraits.keyFor(d.name);
+      card.innerHTML = `<div class="pfw">${key ? `<img class="pf" src="${Portraits.draw(key).toDataURL()}" alt="">` : ''}<span class="lv"></span></div><div class="info">
+        <div class="nm"><span>${esc(d.name)}</span></div>
         <div class="cls">${esc(d.cls)}</div>
         <div class="bar hp"><i></i></div><div class="num hpn"></div>
-        <div class="bar mp"><i></i></div><div class="num mpn"></div>`;
+        <div class="bar mp"><i></i></div><div class="num mpn"></div></div>`;
       card.onclick = ev => { if (pickValue(m)) ev.stopPropagation(); };
       card.onmouseenter = () => hoverValue(m);
       partyEl.appendChild(card);

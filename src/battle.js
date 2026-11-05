@@ -2,7 +2,12 @@
 
 let B = null;
 const bgCanvas = document.createElement('canvas'); bgCanvas.width = VW; bgCanvas.height = VH;
-const bsay = t => UI.say(t, { auto: 650 + t.length * 18 });
+// Battle narration ("Andilla usa Golpe Baixo!") shows on the top plaque, where the command name was
+const bsay = async t => {
+  if (!B) return UI.say(t, { auto: 650 + t.length * 18 });
+  B.label = t; await wait(600 + t.length * 16);
+  if (B && B.label === t) B.label = null;
+};
 const ename = e => e.name + (e.letter ? ' ' + e.letter : '');
 const aliveEnemies = () => B.enemies.filter(e => e.hp > 0);
 const retarget = t => (t && t.hp > 0) ? t : (aliveEnemies().length ? pick(aliveEnemies()) : null);

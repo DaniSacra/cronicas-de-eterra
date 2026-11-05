@@ -68,10 +68,15 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 /* ---- Faixa do grupo (aparece na dungeon, na batalha e no menu) ---- */
 #party { display: none; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 2); width: min(100%, 56em); }
 #game.show-party #party { display: grid; }
-.card { position: relative; padding: calc(var(--u) * 4) calc(var(--u) * 6); font-size: var(--f2); }
+.card { position: relative; display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 4); font-size: var(--f2); }
+.card .info { flex: 1; min-width: 0; }
+.card .pfw { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; }
+.card .pf { display: block; width: 64px; height: 64px; image-rendering: pixelated;
+  box-shadow: 0 0 0 var(--u) var(--rim2), 0 0 0 calc(var(--u) * 2) var(--rim), 0 0 0 calc(var(--u) * 3) var(--ink); margin: calc(var(--u) * 3); }
+.card .pfw .lv { margin-top: calc(var(--u) * -3); padding: var(--u) calc(var(--u) * 2); background: var(--ink); color: var(--hi); font-size: var(--f1); line-height: 1; white-space: nowrap; z-index: 1; }
+@media (max-width: 900px), (max-height: 500px) { .card .pf { width: 32px; height: 32px; } }
 .card .cls { display: none; }
 .card .nm { display: flex; justify-content: space-between; align-items: baseline; color: color-mix(in srgb, var(--c) 62%, #2a1206); }
-.card .lv { color: var(--text); font-size: var(--f1); }
 .card .cls { font-size: var(--f1); color: var(--dim); margin-top: calc(var(--u) * 2); }
 .card.dead { filter: grayscale(1) brightness(.6); }
 .card.low .hp i { animation: blink .5s steps(1) infinite; }
@@ -141,8 +146,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   #party { grid-template-columns: repeat(4, 1fr); }
   .card { padding: calc(var(--u) * 4) calc(var(--u) * 3); } .card .cls { display: none; }
   /* 4 cartões em pé: nome por cima do nível, números sem quebrar */
-  .card .nm { flex-direction: column; align-items: flex-start; } .card .nm span:first-child { font-size: var(--f1); }
+  .card .nm span:first-child { font-size: var(--f1); }
   .card .num { white-space: nowrap; letter-spacing: -.04em; overflow: hidden; }
+  .card { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 2); } .card .pf { align-self: center; }
 }
 @media (orientation: portrait) and (pointer: coarse) { #bottom { padding-bottom: 150px; } #touch { width: calc(100% - 16px); opacity: .9; } }
 @media (orientation: landscape) and (max-height: 500px) { .card { padding: 6px 8px; } .card .cls { display: none; } #msgbox { line-height: 1.6; } }
@@ -329,4 +335,5 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   border: calc(var(--u) * 3) solid transparent; border-bottom: 0; border-top: calc(var(--u) * 4) solid var(--hi);
   filter: drop-shadow(var(--u) var(--u) 0 var(--ink)); animation: bob .5s steps(1) infinite; }
 #cmdbar .opt.sel::after { bottom: calc(100% + var(--bw) + var(--u)); }
-#hudtop .label { padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f1); color: var(--text); }
+#cmdbar { padding: var(--u); }
+#hudtop .label { max-width: min(92vw, 40em); padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.5; text-align: center; color: var(--text); }
