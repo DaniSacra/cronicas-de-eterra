@@ -21,7 +21,8 @@ const cam = { x: 1.5, y: 1.5, a: 0 };
 const map = () => getMap(G.floor);
 const cellAt = (x, y) => { const m = map(); return (x < 0 || y < 0 || x >= m.size || y >= m.size) ? 1 : m.grid[y * m.size + x]; };
 const objKey = o => `${G.floor}:${o.x},${o.y}`;
-const objAt = (x, y) => map().objects.find(o => o.x === x && o.y === y && !(o.type === 'boss' && G.bossDead));
+// Depois do chefe, o lugar dele mostra o túmulo arrombado (continua sólido e dá para examinar)
+const objAt = (x, y) => map().objects.find(o => o.x === x && o.y === y);
 
 function exploredArr() {
   const m = map();
@@ -51,11 +52,12 @@ function loadFloor(i, pos) {
 }
 
 function worldSprites(now) {
-  return map().objects.filter(o => !(o.type === 'boss' && G.bossDead)).map(o => {
+  return map().objects.map(o => {
     const s = { x: o.x + 0.5, y: o.y + 0.5, type: o.type };
     if (o.type === 'chest') { s.spr = G.opened[objKey(o)] ? SPR.chestOpen : SPR.chest; s.scale = 0.62; }
     if (o.type === 'fountain') { s.spr = SPR.fountain; s.scale = 0.8; s.emit = 0.85; }
-    if (o.type === 'boss') { s.spr = SPR.boss; s.scale = 0.95; s.emit = 0.55; s.lift = 0.04 + Math.sin(now / 500) * 0.03; }
+    if (o.type === 'boss' && G.bossDead) { s.type = 'tomb'; s.spr = SPR.tomb; s.scale = 0.75; }
+    else if (o.type === 'boss') { s.spr = SPR.boss; s.scale = 0.95; s.emit = 0.55; s.lift = 0.04 + Math.sin(now / 500) * 0.03; }
     return s;
   });
 }
@@ -273,11 +275,14 @@ async function interact(o) {
     const saved = saveGame();
     await UI.say('Uma fonte de água cristalina brilha na escuridão.\nO grupo foi totalmente restaurado!' + (saved ? '\nJogo salvo.' : ''));
     if (!G.seen.fonteLyra && inParty('lyra')) { G.seen.fonteLyra = 1; await say2('Lyra', 'É verdade, então. A água lembra de quem passa. Dá para sentir.'); }
+  } else if (o.type === 'boss' && G.bossDead) {
+    await UI.say('O túmulo do rei, arrombado e vazio. Sob os quatro símbolos dos paladinos, os nichos continuam vazios.');
   } else if (o.type === 'boss') {
     if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); }
+    if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); }
     const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
-      { title: 'Uma presença terrível paira sobre um trono de ossos.\nEnfrentar Morvath, o Lich-Rei?', cancel: true });
-    if (ok) await runBattle(['morvath'], true, { hints: [
+      { title: 'Diante da última porta, um morto de batina segura um sino de bronze.\nEnfrentar o Sineiro?', cancel: true });
+    if (ok) await runBattle(['sineiro'], true, { hints: [
       'Só atacar não basta. Teo cura os feridos com Magia; não espere alguém cair.',
       'Lyra queima com Fogo, e a Luz Sagrada de Teo fere em dobro os mortos-vivos.',
       'Se alguém cair, a Pena Vital traz de volta. Poções estão em Item.',
@@ -319,7 +324,7 @@ async function descend() {
   cam.x = G.x + 0.5; cam.y = G.y + 0.5; cam.a = dirAngle(G.dir);
   await fadeTo(0, 700);
   const f = FLOORS[G.floor];
-  await UI.say(`${f.short} — ${f.name}` + (f.boss ? '\nUm frio sobrenatural percorre suas espinhas. O Lich-Rei está perto.' : ''));
+  await UI.say(`${f.short} — ${f.name}` + (f.boss ? '\nUm sino toca, em algum lugar lá embaixo.' : ''));
   await floorClues(G.floor);
 }
 
@@ -341,6 +346,14 @@ const TALKS = {
   bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
     ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.']],
   altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
+  igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
+    ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.']],
+  sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.'], ['aldo', 'Fiquem atrás de mim.'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.']],
+  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
+    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.'], ['aldo', 'Chegamos tarde.']],
+  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'], ['andilla', 'Ele volta. Tem uma professora esperando.'],
+    ['aldo', 'Tem uma sopa paga.'], ['teo', 'A carta vai como veio: fechada.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
+    ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.']],
 };
 const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
@@ -527,38 +540,32 @@ async function gameOver() {
   else await newGame();
 }
 
+// Fim do capítulo 1: o Sineiro cai, o túmulo do rei está arrombado e vazio, Tobias acorda (capitulo1.md)
 async function ending() {
   G.bossDead = true; G.busy = true;
   G.flashColor = '255,255,255'; G.flash = { t0: performance.now(), dur: 1500 };
-  await UI.say('Morvath solta um grito terrível enquanto seu corpo se desfaz em cinzas...');
-  await say2('Morvath', '"Tolos... Não fui eu quem abriu o selo."');
-  Music.play('ending');
-  await UI.say('A maldição se dissipa. Pela primeira vez desde a guerra de Elun, a luz retorna às catacumbas de Valmor.');
+  Music.stop();
+  await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
+  await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
+  await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
+  await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
+  await partyTalk('tumulo', TALKS.tumulo);
   await fadeTo(1, 900);
   enterTown(CRYPT_FRONT);
   Music.play('ending');
   G.busy = true;
   await fadeTo(0, 900);
-  await UI.say('Os sinos da capela tocam. Toda Valmor sai às ruas para receber os heróis.');
-  await say2(null, 'Na porta da cripta, apoiado na irmã Irene, espera o mensageiro.');
-  await say2('Tobias', 'Vocês desceram onde eu não teria coragem. E não abriram a carta.');
-  await say2('Tobias', 'Shulkhan confiaria em vocês. Levem a carta a Erukh. Só a rainha pode romper o selo real.');
-  await say2('Tobias', 'Eu ainda não aguento a estrada. Em Erukh, não confiem em ninguém antes da rainha.');
-  await say2('Lyra', 'Morvath disse que não foi ele quem abriu o selo.');
-  await say2('Aldo', G.seen.bilhete ? 'Então foi o tal "V.". Mas quem é V.?' : 'Então quem foi?');
-  await say2('Teo', 'A resposta deve estar na carta. E ela vai a Erukh como veio: fechada.');
-  if (inParty('andilla') && inParty('lyra')) {
-    const an = heroName('andilla');
-    await say2(an, 'Antes que perguntem: eu não cavei cova nenhuma. Cheguei e já estava cavado.');
-    await say2(an, 'Fui ver se sobrava ouro de rei. Aí uma cova se mexeu. Larguei os ganchos e corri.');
-    await say2('Lyra', 'E a coroa do rei?');
-    await say2(an, 'Pó. Até a coroa virou pó.');
-    await say2('Lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.');
-    await say2(an, 'E Erukh é a cidade mais rica do oeste. Eu vou junto.');
-    await say2('Aldo', 'Então somos quatro. Como os paladinos.');
-  }
+  await say2(null, 'Na porta da igreja velha, apoiado na irmã Irene, espera o mensageiro.');
+  await say2('Irmã Irene', 'Acordou hoje cedo. Disse o nome: Tobias. E a primeira coisa que perguntou foi da carta.');
+  await say2('Tobias', 'A carta... continua fechada?');
+  if (inParty('teo')) await say2('Teo', 'Fechada. Como veio.');
+  await say2(null, 'Tobias chora em silêncio.');
+  await say2('Tobias', 'O que eu vi lá embaixo é da rainha. Levem a carta a ela.');
+  await say2('Tobias', 'Em Erukh, não confiem em ninguém antes dela.');
+  await partyTalk('estrada', TALKS.estrada);
+  await UI.say('Naquela noite, os mortos de Valmor não se levantam. E o sino da igreja velha não toca.');
   const lv = G.party.map(m => `${pdef(m).name} Nv ${m.lv}`).join(' · ');
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>VITÓRIA!</h1><p class="sub">O Lich-Rei voltou ao pó.</p><p class="small">A carta com o selo real ainda precisa chegar a Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
+  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>FIM DO CAPÍTULO 1</h1><p class="sub">O sino de Valmor se calou.</p><p class="small">Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
   saveGame();
   const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: 'FIM', cols: 2 });
   UI.hideOverlay();

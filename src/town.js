@@ -35,6 +35,7 @@ const LOOKS = {
   marta: { skin: '#e8c0a0', hair: '#e8e8e8', body: '#6a5a8a', legs: '#3a3050', robe: true, long: true },
   tome:  { skin: '#c89060', hair: '#2a2018', body: '#3a7ab0', legs: '#4a4030' },
   nino:  { skin: '#f0c898', hair: '#2a1a10', body: '#e0b030', legs: '#4a5a8a' },
+  clara: { skin: '#f0c8a0', hair: '#7a4a2a', body: '#4a7a9a', legs: '#2e4a5e', robe: true, long: true },
   berta: { skin: '#e8b890', hair: '#b04a20', body: '#c05a3a', legs: '#6a3020', robe: true, long: true },
   ana:   { skin: '#e0b898', hair: '#e8e8e8', body: '#7a5a3a', legs: '#3a2a20', robe: true, long: true },
   soldier: { skin: '#e0b080', hair: '#888', body: '#6a7484', legs: '#3a3a4a', hat: '#a0a8b8' },
@@ -43,7 +44,7 @@ const LOOKS = {
   hooded: { skin: '#2a2228', hair: '#6a6a72', body: '#7a7a82', legs: '#3a3a42', hat: '#6a6a72', robe: true, mark: '#e02030' },
 };
 
-const say = (name, lines) => lines.reduce((p, l) => p.then(() => UI.say(`${name}:\n${l}`)), Promise.resolve());
+const say = (name, lines) => lines.reduce((p, l) => p.then(() => UI.say(`${name}:\n${typeof l === 'function' ? l() : l}`)), Promise.resolve());
 // Etapas da vila: arrive (Aldo acabou de chegar) · start (depois da noite na taverna) · quest (missão do ancião) · won
 const stage = () => G.bossDead ? 'won' : G.quest ? 'quest' : G.intro ? 'start' : 'arrive';
 const STAGE_FALLBACK = { arrive: ['arrive', 'start'], start: ['start'], quest: ['quest', 'start'], won: ['won', 'quest', 'start'] };
@@ -51,14 +52,15 @@ const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, lines: {
-    start: ['Alto! A cripta está fechada por ordem do ancião Bertoldo.', 'Se querem descer, falem com ele primeiro. É a casa de telhado verde, ao norte.'],
+    start: ['Alto! A igreja velha está fechada por ordem do ancião Bertoldo.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', 'Se querem descer, falem com o ancião primeiro. É a casa de telhado verde, ao norte.'],
     quest: ['Que a luz os guie lá embaixo. Voltem vivos.'],
-    won: ['Já não ouço ossos batendo debaixo da cripta. Vocês conseguiram!'] } },
+    won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.'] } },
   { id: 'lia', name: 'Lia', x: 18, y: 8, dir: 2, wander: 2, lines: {
     start: ['Meu gato fugiu ontem à noite...', 'Ele nunca foge. Acho que ficou com medo dos barulhos que vêm da cripta.'],
     won: ['O Bigode voltou pra casa! Ele voltou sozinho... mas obrigada mesmo assim!'] } },
   { id: 'rui', name: 'Rui, o lavrador', x: 6, y: 7, dir: 2, wander: 2, lines: {
-    start: ['Toda noite ouço algo arranhando debaixo da terra.', 'Eu falei das covas vazias e ninguém acreditou. Agora acreditam?'],
+    arrive: ['Toda noite ouço algo arranhando debaixo da terra.', 'Eu falei das covas vazias e ninguém acreditou. Agora acreditam?'],
+    start: ['Ouviu o sino de madrugada? É o da igreja velha.', 'Aquela igreja está vazia faz cinquenta anos. Quem é que toca?'],
     won: ['Dormi a noite inteira pela primeira vez em semanas!'] } },
   { id: 'marta', name: 'Dona Marta', x: 23, y: 8, dir: 2, wander: 1, lines: {
     start: ['Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
@@ -71,6 +73,12 @@ const NPC_DEFS = [
     start: ['Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.'],
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
+  // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
+  { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, lines: {
+    arrive: [() => `${heroName('aldo')}? Voltou mesmo.`, 'Trabalho de inverno, é? Claro. Trabalho.'],
+    start: ['O Nino não fala de outra coisa: o cavaleiro da espada de verdade.', 'Cuidado com essa espada. E com quem fica do outro lado dela.'],
+    quest: ['Vão descer na igreja velha?', 'Eu conto as crianças toda manhã. Volto a contar vocês também. Os quatro.'],
+    won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
   { id: 'cat', name: 'Bigode', x: 20, y: 17, dir: 3, wander: 4, cat: true, lines: {
     start: ['Miau?'], won: ['Purrrr...'] } },
 ];
@@ -361,21 +369,28 @@ function drawBuilding(c, b) {
   }
 }
 
+// A igreja velha de Valmor: rachou há cinquenta anos e ficou em ruínas. Torre do sino à esquerda,
+// metade do telhado caída com as vigas à mostra, hera, janela quebrada e a porta escura da cripta.
 function drawCrypt(c, X, Y, W, H, dx) {
-  c.fillStyle = '#4a4854'; c.fillRect(X + 1, Y + 12, W - 2, H - 12);
-  c.fillStyle = '#5c5a68';
-  for (let y = Y + 14, row = 0; y < Y + H; y += 6, row++) for (let x = X + 2 + (row % 2) * 5; x < X + W - 4; x += 10) c.fillRect(x, y, 8, 4);
-  // Frontão
-  c.fillStyle = '#6a6876'; c.beginPath(); c.moveTo(X - 1, Y + 14); c.lineTo(X + W + 1, Y + 14); c.lineTo(X + W / 2, Y + 1); c.closePath(); c.fill();
-  c.fillStyle = '#3a3844'; c.fillRect(X - 1, Y + 13, W + 2, 2);
-  // Selo rachado
-  c.strokeStyle = '#8ad8ff'; c.lineWidth = 1; c.beginPath(); c.arc(X + W / 2, Y + 9, 3, 0, 7); c.stroke();
-  c.strokeStyle = '#1a1820'; c.beginPath(); c.moveTo(X + W / 2 - 1, Y + 5); c.lineTo(X + W / 2 + 1, Y + 13); c.stroke();
-  // Colunas
-  c.fillStyle = '#9896a4'; c.fillRect(X + 3, Y + 15, 4, H - 15); c.fillRect(X + W - 7, Y + 15, 4, H - 15);
-  // Entrada escura com degraus
-  c.fillStyle = '#0c0a10'; c.fillRect(dx + 2, Y + H - 16, 12, 16);
-  c.fillStyle = '#2a2830'; for (let i = 0; i < 4; i++) c.fillRect(dx + 3 + i, Y + H - 4 - i * 3, 10 - i * 2, 1);
+  const P = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  P(X + 1, Y + 16, W - 2, H - 16, '#56524c');
+  c.fillStyle = '#6a655c';
+  for (let y = Y + 18, row = 0; y < Y + H; y += 6, row++) for (let x = X + 2 + (row % 2) * 5; x < X + W - 3; x += 10) c.fillRect(x, y, 8, 4);
+  // telhado: a metade esquerda ficou, a direita caiu
+  c.fillStyle = '#3a2e2a'; c.beginPath(); c.moveTo(X - 1, Y + 17); c.lineTo(X + W / 2, Y + 4); c.lineTo(X + W / 2 + 4, Y + 8);
+  c.lineTo(X + W / 2 - 1, Y + 12); c.lineTo(X + W / 2 + 6, Y + 17); c.closePath(); c.fill();
+  c.strokeStyle = '#6a4a2a'; c.lineWidth = 1.5; c.beginPath();
+  c.moveTo(X + W / 2 + 2, Y + 6); c.lineTo(X + W - 2, Y + 16); c.moveTo(X + W / 2 + 10, Y + 10); c.lineTo(X + W - 7, Y + 17); c.stroke();
+  // torre do sino
+  P(X + 2, Y - 6, 10, 24, '#5e5a52'); P(X + 1, Y - 9, 12, 3, '#3a2e2a'); P(X + 6, Y - 12, 2, 3, '#3a2e2a');
+  P(X + 4, Y - 3, 6, 7, '#141016'); P(X + 5, Y - 2, 4, 3, '#b8862a'); P(X + 6, Y + 1, 2, 1, '#6a4a14');
+  // rachadura, janela quebrada e hera
+  c.strokeStyle = '#221e1c'; c.lineWidth = 1; c.beginPath(); c.moveTo(X + W - 11, Y + 18); c.lineTo(X + W - 14, Y + 26); c.lineTo(X + W - 10, Y + 34); c.stroke();
+  P(X + W - 20, Y + 21, 6, 8, '#141016'); P(X + W - 19, Y + 20, 4, 1, '#141016'); P(X + W - 16, Y + 24, 2, 1, '#56524c');
+  c.fillStyle = '#3e6a34'; for (const [ix, iy] of [[2, 26], [3, 30], [2, 35], [4, 39], [W - 5, 22], [W - 4, 27], [W - 6, 41]]) c.fillRect(X + ix, Y + iy, 3, 2);
+  // porta escura e pedras caídas
+  P(dx + 2, Y + H - 15, 12, 15, '#0c0a10'); P(dx + 1, Y + H - 17, 14, 2, '#3a3630');
+  P(X + W - 8, Y + H - 3, 4, 3, '#6a655c'); P(X + W - 3, Y + H - 2, 3, 2, '#56524c'); P(X + 2, Y + H - 2, 3, 2, '#6a655c');
 }
 
 // ---------- Personagens ----------
@@ -615,8 +630,9 @@ async function enterBuilding(b) {
   Sfx.select();
   if (b.id === 'crypt') {
     if (!G.quest || G.party.length < 4 || !G.seen.hugo4) { await guardTalk(null); return; }
+    await partyTalk('igreja', TALKS.igreja);
     const ok = await UI.choose([{ label: 'Descer', value: true }, { label: 'Ficar', value: false }],
-      { title: 'Uma escadaria úmida desce para as catacumbas de Valmor.', cancel: true });
+      { title: 'Entre as paredes rachadas da igreja velha, uma escada desce para a cripta.', cancel: true });
     if (ok) await enterDungeon();
     return;
   }
@@ -629,7 +645,7 @@ async function enterBuilding(b) {
       start: ['Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina de prata, se acharem uma lá embaixo.'],
       won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
     sara: ['Sara', {
-      start: ['Meu marido desceu à cripta para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
+      start: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
       quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
       won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
     joaquim: ['Seu Joaquim', {
@@ -655,7 +671,7 @@ async function leaveTavern() {
 
 async function elderTalk() {
   const nm = 'Ancião Bertoldo';
-  if (G.bossDead) { await say(nm, ['Vocês salvaram Valmor!', 'Seus nomes serão lembrados por cem anos, e mais cem depois disso.', 'Dizem os antigos que Morvath não foi o único rei a cair. Rezo para que seja o último.', 'Agora levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
+  if (G.bossDead) { await say(nm, ['Os mortos voltaram a dormir, e o sino se calou. Valmor deve isso a vocês.', 'Mas um túmulo arrombado e vazio... Alguém levou o rei lá de baixo, e nós nem vimos.', 'Levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
   if (!G.intro) { await say(nm, ['Forasteiro? Hoje não tenho trabalho. A Berta, na taverna, sempre precisa de braços.']); return; }
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
@@ -687,7 +703,7 @@ async function chapel() {
       arrive: ['Bem-vindo, forasteiro. A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
-      won: ['Toquei os sinos o dia inteiro. Meus braços doem, mas valeu a pena!'] }));
+      won: ['O mensageiro já se levanta sozinho. E o sino da igreja velha se calou.', 'Esta noite, enfim, eu durmo.'] }));
     if (v === 'pray') {
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
       UI.updateParty(); Sfx.holy();

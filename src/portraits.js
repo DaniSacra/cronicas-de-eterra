@@ -25,12 +25,14 @@ const Portraits = (() => {
     irene:    { c: { skin: '#f0c8a0', hair: '#3a2a1a', body: '#e8eef8', veil: '#2a3a7a' }, hair: 'none', top: 'veil' },
     dora:     { c: { skin: '#e0a878', hair: '#7a3a1a', body: '#d8a830' }, hair: 'long', blush: 1 },
     morvath:  { special: 'lich' },
+    sineiro:  { special: 'sineiro' },
+    clara:    { look: 'clara', hair: 'long', blush: 1 },
     cat:      { special: 'cat' },
     scroll:   { special: 'scroll' },
     stone:    { special: 'stone' },
   };
   const BY_NAME = { 'Mensageiro': 'tobias', 'Encapuzado': 'hooded', 'Guarda Hugo': 'hugo', 'Ancião Bertoldo': 'bertoldo',
-    'Irmã Irene': 'irene', 'Dona Marta': 'marta', 'Bigode': 'cat', 'Bilhete': 'scroll', 'Lápide': 'stone', 'Moça dos dados': 'andilla' };
+    'Irmã Irene': 'irene', 'Dona Marta': 'marta', 'Bigode': 'cat', 'Bilhete': 'scroll', 'Lápide': 'stone', 'Moça dos dados': 'andilla', 'O Sineiro': 'sineiro' };
   const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
   function keyFor(name) {
@@ -128,6 +130,15 @@ const Portraits = (() => {
       p(15, 18, 2, 2, '#3a3030'); for (let x = 11; x < 21; x += 2) p(x, 23, 1, 2, '#3a3030');
       p(9, 4, 14, 4, '#d4a72c'); p(9, 2, 2, 2, '#d4a72c'); p(15, 1, 2, 3, '#d4a72c'); p(21, 2, 2, 2, '#d4a72c'); p(15, 5, 2, 2, '#e02040');
       p(12, 27, 8, 2, '#d4a72c');
+    },
+    sineiro(p) { // o Sineiro: crânio no capuz da batina, sino de bronze e a corda
+      p(5, 8, 22, 24, '#3a3046'); p(4, 14, 24, 18, '#3a3046'); p(24, 12, 4, 20, '#2a2234'); p(8, 5, 16, 5, '#2a2234');
+      p(10, 10, 12, 12, '#e8e0c8'); p(11, 22, 10, 3, '#d8d0b8'); p(20, 11, 2, 11, '#b8b098');
+      p(12, 14, 3, 4, '#1a1020'); p(17, 14, 3, 4, '#1a1020'); p(13, 15, 1, 1, '#9fd8ff'); p(18, 15, 1, 1, '#9fd8ff');
+      p(15, 19, 2, 2, '#3a3030'); for (let x = 12; x < 21; x += 2) p(x, 23, 1, 2, '#3a3030');
+      p(13, 26, 2, 6, '#8a7a52'); p(18, 26, 2, 6, '#8a7a52');
+      p(1, 25, 9, 6, '#b8862a'); p(2, 24, 7, 1, '#f0c860'); p(3, 23, 5, 1, '#b8862a'); p(5, 31, 2, 1, '#6a4a14');
+      p(27, 0, 1, 14, '#8a6a3a');
     },
     cat(p) {
       p(7, 6, 4, 6, '#e09038'); p(21, 6, 4, 6, '#e09038'); p(8, 8, 2, 3, '#f8a0a0'); p(22, 8, 2, 3, '#f8a0a0');

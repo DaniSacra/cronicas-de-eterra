@@ -15,22 +15,22 @@ const WORLD_POIS = [
   { id: 'valmor', nome: 'Valmor', reino: 'Imladrin', tipo: 'Vila', x: 200, y: 572, show: () => true, visto: () => true,
     text: () => 'Vila do sul gelado de Imladrin, na estrada que sobe para o norte. Uma capela, a casa do ancião e a Taverna Poney Saltitante.\n' +
       (G.bossDead ? 'Os mortos voltaram a dormir. A estrada para Erukh está aberta.'
-        : G.intro ? 'Um mensageiro do Templo caiu ferido na taverna. Encapuzados queriam a carta que ele trazia.'
+        : G.intro ? 'Um mensageiro caiu ferido na taverna. Encapuzados queriam a carta que ele trazia.'
         : G.seen.job ? 'Alguém, ou alguma coisa, anda abrindo as covas do cemitério.'
         : `${heroName('aldo')} acabou de chegar, procurando pouso para o inverno.`) },
   { id: 'cemiterio', nome: 'Cemitério de Valmor', reino: 'Imladrin', tipo: 'Cemitério', x: 160, y: 610, show: () => G.seen.job, visto: () => G.seen.cemEntrou,
     text: () => 'Atrás da capela, no alto da vila.\n' +
       (G.seen.covas ? 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.'
         : 'A Berta troca o quarto por um favor: ver as covas abertas.') },
-  { id: 'cripta', nome: 'Cripta de Valmor', reino: 'Imladrin', tipo: 'Masmorra', x: 240, y: 608, show: () => G.quest || G.reached, visto: () => G.reached,
-    text: () => 'Paladinos fecharam esta cripta há muito tempo, na guerra de Elun. Algo dorme lá embaixo.\n' +
-      (G.bossDead ? 'Morvath virou pó. Antes, disse que não foi ele quem abriu o selo.'
+  { id: 'cripta', nome: 'Igreja Velha de Valmor', reino: 'Imladrin', tipo: 'Masmorra', x: 240, y: 608, show: () => G.quest || G.reached, visto: () => G.reached,
+    text: () => 'Uma igreja em ruínas, vazia há cinquenta anos. Paladinos fecharam a cripta lá embaixo, na guerra de Elun.\n' +
+      (G.bossDead ? 'O túmulo do rei estava arrombado e vazio. Alguém chegou antes.'
         : G.seen.altar ? 'No altar, escreveram "O rei voltará".'
         : G.seen.lapide ? 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.'
         : 'O ancião quer um grupo de quatro para descer.') },
   { id: 'templo', nome: 'Templo de Erukh', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
     text: () => 'O templo mais conhecido de Hyarmeth, do outro lado do mar. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
-      (G.intro ? '\nDe lá veio o mensageiro ferido, com uma carta de selo real.' : '') },
+      '' },
   { id: 'erukh', nome: 'Erukh', reino: 'Imladrin', tipo: 'Capital', x: 215, y: 125, show: () => true, visto: () => false,
     text: () => 'Capital de Imladrin, no norte da ilha: monumentos, arte e máquinas a vapor. Cidade da rainha Lara e sede da Ordem de Erukh.' +
       (G.bossDead ? '\nO próximo destino. Tobias pediu: não confiar em ninguém antes da rainha.'

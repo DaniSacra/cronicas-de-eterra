@@ -60,6 +60,8 @@ const Sfx = (() => {
     gameover() { seq([392, 370, 349, 330, 262], 'triangle', 0.45, 0.06, 0.3); },
     dark() { tone(80, 0.8, 'sawtooth', 0.08, 40); noise(0.8, 0.1, 0, 300, 0.5); },
     drain() { tone(700, 0.45, 'sine', 0.07, 150); },
+    // Sino da igreja velha: duas badaladas graves com parciais desafinados, decaindo devagar
+    bell() { for (const d of [0, 1.3]) { tone(196, 2.4, 'sine', 0.09, null, d); tone(466, 1.6, 'sine', 0.035, null, d); tone(590, 1.1, 'triangle', 0.02, null, d); } },
   };
 })();
 

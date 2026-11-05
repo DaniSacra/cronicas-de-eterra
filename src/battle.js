@@ -46,7 +46,7 @@ async function hitEnemy(e, dmg, color = '#fff') {
   if (e.hp <= 0) {
     await wait(260);
     e.dieT = performance.now(); Sfx.die();
-    await bsay(e.boss ? 'Morvath cambaleia...' : `${ename(e)} foi derrotado!`);
+    await bsay(e.boss ? e.say.stagger : `${ename(e)} foi derrotado!`);
   } else await wait(380);
 }
 
@@ -206,28 +206,30 @@ async function enemyAct(e) {
   await checkFallen(t);
 }
 
+// Chefe: golpe, ataque em todos e dreno; as falas vêm de ENEMIES[id].say
 async function bossAct(e) {
+  const S = e.say;
   if (!e.enraged && e.hp < e.maxhp * 0.5) {
     e.enraged = true;
     Sfx.dark(); shake(500);
-    await bsay('Morvath ruge! "Eu fui rei desta terra. Serei de novo!"');
+    await bsay(S.enrage);
   }
   const r = Math.random();
   if (r < 0.38) {
     const t = pick(aliveParty());
-    await bsay(`Morvath golpeia ${pdef(t).name} com o cajado!`);
+    await bsay(S.hit(pdef(t).name));
     await enemyAttack(e, t, 1);
     await checkFallen(t);
   } else if (r < 0.7) {
-    await bsay('Morvath conjura Chama Negra!');
-    Sfx.dark(); addFx('dark', VW / 2, VH / 2, 900); G.flashColor = '120,40,160'; G.flash = { t0: performance.now(), dur: 400 };
+    await bsay(S.aoe);
+    Sfx.bell(); shake(300); addFx('dark', VW / 2, VH / 2, 900); G.flashColor = '200,150,60'; G.flash = { t0: performance.now(), dur: 400 };
     await wait(500);
     for (const t of aliveParty()) hurtMember(t, Math.max(1, Math.round(e.chama * rnd(0.85, 1.15) - stat(t, 'def') * 0.25)));
     await wait(500);
     for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; await bsay(`${pdef(t).name} caiu!`); }
   } else {
     const t = pick(aliveParty());
-    await bsay(`Morvath drena a vida de ${pdef(t).name}!`);
+    await bsay(S.drain(pdef(t).name));
     e.atkT = performance.now(); Sfx.drain(); await wait(300);
     const d = hurtMember(t, Math.max(1, Math.round(e.dreno * rnd(0.9, 1.1) - stat(t, 'def') * 0.3)));
     const h = Math.min(e.maxhp - e.hp, d); e.hp += h;
@@ -279,7 +281,7 @@ function buildOrder({ only, bonus } = {}) {
 
 async function tryRun(m, isBoss) {
   await bsay(G.party.length > 1 ? `${pdef(m).name} tenta fugir com o grupo...` : `${pdef(m).name} tenta fugir...`);
-  if (isBoss) { await bsay('Não há escapatória do Lich-Rei!'); return false; }
+  if (isBoss) { await bsay(B.enemies.find(e => e.boss).say.noRun); return false; }
   const ea = aliveEnemies().reduce((s, e) => s + e.agi, 0) / aliveEnemies().length;
   const chance = Math.min(0.9, Math.max(0.2, 0.55 + (stat(m, 'agi') - ea) * 0.03));
   if (Math.random() < chance) { await bsay('Vocês escaparam!'); return true; }
@@ -305,7 +307,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600 };
   await wait(650);
   const names = B.enemies.map(ename);
-  await UI.say(isBoss ? 'Morvath, o Lich-Rei, ergue-se do trono de ossos!\n"Tanto tempo no escuro... Valmor será meu reino outra vez."'
+  await UI.say(isBoss ? B.enemies.find(e => e.boss).say.intro
     : opts.intro || `${names.join(', ')} ${names.length > 1 ? 'aparecem' : 'aparece'}!`, { auto: isBoss ? 3200 : 1300 });
 
   G.party.forEach(m => { m.defending = false; });

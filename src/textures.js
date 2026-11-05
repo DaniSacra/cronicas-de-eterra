@@ -119,6 +119,42 @@ function makeTextures(pal, seed) {
     return [...c, emit];
   }
 
+  // Túnel cavado pela Irmandade: terra batida, marcas de picareta, raízes e pedras, com escoras de madeira.
+  // tools = 1: uma pá e uma picareta largadas encostadas na terra.
+  const EARTH = [96, 72, 50], WOOD = [118, 80, 46];
+  function earth(x, y) {
+    const n = fbm(x + 500, y + 200), g = vnoise(x, y, 2);
+    let c = mul(EARTH, 0.62 + n * 0.5 + (g - 0.5) * 0.22);
+    const pick = vnoise(x * 0.7 + 90, y * 2.2, 8);                       // golpes de picareta em diagonal
+    if (Math.abs(((x + y * 0.6) % 11) - 5.5) < 0.6 && pick > 0.55) c = mul(c, 0.62);
+    if (hash((x >> 2) + 70, (y >> 2) + 3) < 0.06 && (x & 3) && (y & 3)) c = mix(c, [150, 140, 126], 0.7);  // pedrinhas
+    const root = Math.abs(y - 20 - Math.sin(x * 0.21) * 4 - vnoise(x, 7, 8) * 6);
+    if (root < 0.7 && x > 14 && x < 50) c = mul(EARTH, 0.32);           // raiz fina
+    return c;
+  }
+  function tunnel(x, y, tools) {
+    let c = earth(x, y);
+    const post = (x >= 5 && x <= 11) || (x >= 52 && x <= 58), beam = y >= 3 && y <= 9;
+    if (post || beam) {
+      const along = beam ? x : y, grain = vnoise(along * 0.3, (beam ? y : x) * 3, 4);
+      let k = 0.7 + grain * 0.45;
+      if ((beam && (y === 3 || y === 9)) || (!beam && (x === 5 || x === 52 || x === 11 || x === 58))) k *= 0.55; // contorno
+      if (beam && (x === 8 || x === 55) ) k *= 0.5;                       // pregos
+      c = mul(WOOD, k);
+    }
+    if (tools) {
+      // pá: cabo inclinado e lâmina de ferro embaixo
+      const sx = 22 + (60 - y) * 0.28;
+      if (y > 18 && y < 50 && Math.abs(x - sx) < 1.3) c = mul(WOOD, 0.9);
+      if (y >= 50 && y < 61 && Math.abs(x - (22 + (60 - y) * 0.28)) < 4.5 - (y - 50) * 0.15) c = mul([150, 150, 156], 0.6 + vnoise(x, y, 4) * 0.5);
+      // picareta: cabo deitado e cabeça curva
+      if (y >= 55 && y <= 57 && x > 30 && x < 50) c = mul(WOOD, 0.8);
+      const hx = x - 49, hy = y - 56;
+      if (Math.abs(hx * hx / 40 + hy - 0) < 1.2 && Math.abs(hx) < 7 && hy <= 0) c = mul([130, 130, 138], 0.7 + vnoise(x, y, 2) * 0.4);
+    }
+    return c;
+  }
+
   function floorT(x, y) {
     // lajes gastas de tamanhos diferentes, terra nas juntas e um ou outro osso
     const sy = y < 22 ? 0 : y < 46 ? 1 : 2, h = [22, 24, 18][sy], ly = y - [0, 22, 46][sy];
@@ -162,7 +198,8 @@ function makeTextures(pal, seed) {
   }
 
   return {
-    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch), tex(ossuary)],
+    // 0 pedra · 1 pedra rachada com teia · 2 tocha · 3 ossário · 4 túnel com escoras · 5 túnel com ferramentas
+    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch), tex(ossuary), tex((x, y) => tunnel(x, y, 0)), tex((x, y) => tunnel(x, y, 1))],
     floor: tex(floorT),
     ceil: tex(ceilT),
     stairs: tex(stairsT),

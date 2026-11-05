@@ -9,10 +9,11 @@ const GAME = {
 };
 
 // Primeira missão: uma cripta curta, de um andar só, para aprender a jogar (pedido do Daniel, 2026-11-04).
-// A fonte fica no meio do caminho e Morvath no fundo.
+// A fonte fica no meio do caminho; no fundo, o Sineiro guarda o túmulo do rei (docs/mundo/historias/capitulo1.md).
 const FLOORS = [
   {
-    name: 'Cripta de Valmor', short: 'B1', seed: 7331, size: 15, rooms: 2, loops: 0.06, fountainAt: 0.5, boss: true,
+    name: 'Cripta da Igreja Velha', short: 'B1', seed: 7331, size: 15, rooms: 2, loops: 0.06, fountainAt: 0.5, boss: true,
+    tunnels: [[0.12, 0.4], [0.58, 0.86]], // trechos de túnel cavado entre salas da cripta antiga
     pal: { stone: [104, 98, 88], mortar: [28, 25, 22], floor: [70, 64, 56], floorJ: [30, 26, 22], ceil: [42, 38, 34], accent: [76, 94, 50] }, // calcário velho, musgo
     loot: ['pocao', 'espadaFerro', 'eter', 'cajadoRunico', 'pocao'],
     enemies: ['rato', 'morcego', 'gosma'], maxGroup: 3,
@@ -125,6 +126,18 @@ const ENEMIES = {
                pal: { base: '#c8c0aa', light: '#ece6d4', dark: '#6e6656', eye: '#c0ff60' }, drop: ['pocao', 0.2] },
   encapuzado: { name: 'Encapuzado', hp: 28, atk: 12, def: 3, agi: 6, xp: 10, sprite: 'hooded',
                pal: { base: '#6e6e78', light: '#a0a0aa', dark: '#2e2e36', eye: '#e02030' }, drop: ['pocao', 0.25] },
+  // Chefe do capítulo 1: o último padre da igreja velha, um clérigo caído que ainda toca o sino (capitulo1.md)
+  sineiro:   { name: 'O Sineiro', hp: 300, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'bellringer', undead: true, boss: true,
+               pal: { base: '#3a3046', light: '#6a5a78', dark: '#16101e', eye: '#9fd8ff' },
+               say: {
+                 intro: 'O Sineiro ergue o sino de bronze.\n"A missa acabou faz cinquenta anos. Ninguém mais desce."',
+                 enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',
+                 hit: t => `O Sineiro golpeia ${t} com o sino!`,
+                 aoe: 'O Sineiro toca a Badalada! O som atravessa os ossos.',
+                 drain: t => `O Sineiro entoa um dobre fúnebre por ${t}!`,
+                 stagger: 'O Sineiro cambaleia...',
+                 noRun: 'O Sineiro barra a última porta. Não há para onde fugir!',
+               } },
   morvath:   { name: 'Morvath, o Lich-Rei', hp: 310, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'lich', undead: true, boss: true, float: true,
                pal: { base: '#4a2a6a', light: '#8a5ab0', dark: '#1a0a2a', eye: '#40ff80' } },
 };
@@ -156,8 +169,8 @@ const JOURNAL = {
     : G.quest && four() ? 'O que acorda os mortos' : G.quest ? 'Quatro cantos'
     : G.intro ? 'A carta com o selo real' : G.seen.job ? 'As covas abertas' : 'Um pouso para o inverno',
   goal: () => G.bossDead ? 'levar a carta com o selo real à rainha Lara, em Erukh.'
-    : G.seen.altar ? 'derrotar Morvath antes que o selo caia.'
-    : G.seen.lapide ? 'encontrar o selo de Morvath, no fundo da cripta.'
+    : G.seen.altar ? 'passar por quem guarda a última porta da cripta.'
+    : G.seen.lapide ? 'seguir o túnel até o túmulo do rei, no fundo da cripta.'
     : G.reached >= 1 ? 'explorar a cripta. A fonte de luz cura e salva.'
     : G.quest && four() ? 'descer à cripta e descobrir o que acorda os mortos.'
     : G.quest ? 'reunir um grupo de quatro. Há gente de estrada na taverna.'
@@ -185,7 +198,8 @@ const JOURNAL = {
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },
     { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo cede, e "o homem do sumo sacerdote" não pode sair de Valmor. Quem é V.?' },
     { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados adoram Morvath?' },
-    { show: () => G.bossDead, text: 'Morvath virou pó. Antes, disse que não foi ele quem abriu o selo.' },
+    { show: () => G.bossDead, text: 'O Sineiro, um morto da igreja velha, guardava a última porta. Era ele quem tocava o sino.' },
+    { show: () => G.bossDead, text: 'O túmulo de Morvath estava arrombado e vazio. Sob os símbolos dos paladinos, quatro nichos vazios. Alguém levou o que estava lá.' },
     { show: () => G.bossDead && inParty('andilla'), get text() { return `${heroName('andilla')} não cavou as covas. Então quem cavou, e por quê?`; } },
     { show: () => G.bossDead, text: 'O mensageiro acordou. Disse o nome: Tobias. Perguntou se a carta continuava fechada e chorou.' },
     { show: () => G.bossDead, text: 'Tobias pediu: a carta vai fechada até a rainha. Em Erukh, não confiar em ninguém antes dela.' },

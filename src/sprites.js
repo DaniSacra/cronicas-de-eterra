@@ -187,6 +187,46 @@ const Sprites = (() => {
       poly(c, [52, 22, 53, 10, 58, 17, 64, 4, 70, 17, 75, 10, 76, 22], '#d4a72c', '#8a6a10', 1);
       ell(c, 64, 15, 1.8, 1.8, '#e33');
     },
+    bellringer(c, p) { // o Sineiro: esqueleto de batina rasgada, sino de bronze numa mão, corda enrolada no braço
+      ell(c, 64, 64, 60, 50, rg(c, 64, 64, 60, [[0, 'rgba(160,210,255,.22)'], [1, 'rgba(0,0,0,0)']]));
+      line(c, [100, 0, 100, 36, 92, 52, 96, 64], '#8a6a3a', 2.5);
+      c.beginPath(); c.moveTo(64, 26); c.lineTo(36, 44); c.lineTo(24, 106);
+      for (let i = 0; i < 7; i++) c.lineTo(24 + (i + 0.5) * 11.4, 98 + (i % 2 ? 0 : 9)), c.lineTo(24 + (i + 1) * 11.4, 106);
+      c.lineTo(92, 44); c.closePath();
+      c.fillStyle = lg(c, 0, 26, 0, 110, [[0, p.light], [0.5, p.base], [1, p.dark]]); c.fill();
+      c.strokeStyle = p.dark; c.lineWidth = 1.5; c.stroke();
+      line(c, [57, 42, 53, 98], '#8a7a52', 4); line(c, [71, 42, 75, 98], '#8a7a52', 4);   // estola desbotada
+      poly(c, [38, 46, 20, 70, 28, 76, 44, 58], p.base, p.dark, 1.2);
+      line(c, [22, 74, 18, 80], '#e8e0c8', 1.5); line(c, [25, 75, 24, 82], '#e8e0c8', 1.5);
+      c.beginPath(); c.moveTo(10, 82); c.quadraticCurveTo(11, 64, 22, 62); c.quadraticCurveTo(33, 64, 34, 82); c.lineTo(39, 88); c.lineTo(5, 88); c.closePath();
+      c.fillStyle = lg(c, 6, 62, 38, 88, [[0, '#f0c860'], [0.5, '#b8862a'], [1, '#6a4a14']]); c.fill();
+      c.strokeStyle = '#4a3008'; c.lineWidth = 1.2; c.stroke();
+      line(c, [9, 80, 35, 80], '#e8b850', 1); ell(c, 22, 91, 3, 3, '#4a3008');
+      poly(c, [90, 46, 108, 68, 100, 76, 84, 58], p.base, p.dark, 1.2);
+      for (let i = 0; i < 4; i++) line(c, [90 + i * 3, 52 + i * 4, 97 + i * 3, 48 + i * 4], '#8a6a3a', 1.6);
+      line(c, [104, 74, 110, 78], '#e8e0c8', 1.5); line(c, [103, 76, 107, 82], '#e8e0c8', 1.5);
+      c.beginPath(); c.moveTo(44, 46); c.quadraticCurveTo(46, 8, 64, 8); c.quadraticCurveTo(82, 8, 84, 46); c.closePath();
+      c.fillStyle = p.dark; c.fill();
+      ell(c, 64, 31, 11, 12, '#e8e0c8'); c.fillStyle = '#e8e0c8'; c.fillRect(58, 37, 12, 7);
+      ell(c, 59, 30, 3.4, 4, '#000'); ell(c, 69, 30, 3.4, 4, '#000');
+      c.shadowColor = p.eye; c.shadowBlur = 8;
+      ell(c, 59, 30.5, 1.5, 1.5, p.eye); ell(c, 69, 30.5, 1.5, 1.5, p.eye);
+      c.shadowBlur = 0;
+      poly(c, [64, 33, 62, 37, 66, 37], '#222');
+      for (let i = 0; i < 5; i++) line(c, [59.5 + i * 2.2, 39, 59.5 + i * 2.2, 43], '#555', 0.8);
+    },
+    tomb(c) { // túmulo do rei arrombado: tampa caída, interior vazio, símbolos dos paladinos, marcas de arrasto
+      shadow(c, 32, 60, 28);
+      c.fillStyle = lg(c, 0, 30, 0, 60, [[0, '#9a948a'], [1, '#5a5650']]); c.fillRect(6, 34, 52, 24);
+      c.strokeStyle = '#2e2a26'; c.lineWidth = 1; c.strokeRect(6.5, 34.5, 51, 23);
+      c.fillStyle = '#120e10'; c.fillRect(10, 34, 44, 6);
+      for (const x of [11, 49]) { c.fillStyle = '#d8c890'; c.fillRect(x, 45, 4, 5); c.fillRect(x + 1.5, 42, 1, 9); c.fillStyle = '#1a1416'; c.fillRect(x, 52, 4, 3); }
+      c.save(); c.translate(36, 28); c.rotate(-0.35);
+      c.fillStyle = lg(c, -26, -5, 26, 5, [[0, '#b0aa9e'], [1, '#6e6a62']]); c.fillRect(-26, -5, 52, 9);
+      c.strokeStyle = '#2e2a26'; c.strokeRect(-26, -5, 52, 9);
+      c.beginPath(); c.moveTo(-4, -5); c.lineTo(2, 4); c.stroke(); c.restore();
+      line(c, [22, 58, 15, 64], '#3a3430', 1.5); line(c, [29, 58, 24, 64], '#3a3430', 1.5);
+    },
     chest(c, open) {
       shadow(c, 32, 60, 24);
       c.fillStyle = '#6a3a18'; c.fillRect(12, 38, 40, 21);
@@ -237,7 +277,7 @@ const Sprites = (() => {
   function enemy(id) {
     if (cache[id]) return cache[id];
     const e = ENEMIES[id];
-    const big = e.sprite === 'lich';
+    const big = e.sprite === 'lich' || e.sprite === 'bellringer';
     const c = cv(big ? 128 : 64, big ? 112 : 64);
     draw[e.sprite](c.getContext('2d'), e.pal);
     return (cache[id] = c);
@@ -249,7 +289,8 @@ const Sprites = (() => {
       chest: mk(c => draw.chest(c, false)),
       chestOpen: mk(c => draw.chest(c, true)),
       fountain: mk(c => draw.fountain(c)),
-      boss: toTex(enemy('morvath')),
+      boss: toTex(enemy('sineiro')),
+      tomb: mk(c => draw.tomb(c)),
     };
   }
   return { enemy, world };

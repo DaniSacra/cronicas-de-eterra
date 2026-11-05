@@ -107,17 +107,21 @@ function generateFloor(fi) {
     if (ends[i]) objects.push({ type: 'chest', x: ends[i].x, y: ends[i].y, loot });
   });
 
-  // Variação das paredes: 0 normal, 1 musgo/rachada, 2 tocha
+  // Variação das paredes: 0 normal, 1 musgo/rachada, 2 tocha, 3 ossário, 4/5 túnel cavado (com ferramentas).
+  // Com def.tunnels, o caminho alterna cripta antiga e túnel cavado pela distância desde a escada:
+  // as faixas [início, fim) de def.tunnels (frações da maior distância) são túnel.
   const wallVar = new Uint8Array(N * N);
+  const inTunnel = d => (def.tunnels || []).some(([a, b]) => d >= a * maxD && d < b * maxD);
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     if (g[id(x, y)] !== 1) continue;
     const r = rng();
-    let open = false;
+    let open = false, near = 1e9;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, ny = y + dy;
-      if (nx >= 0 && ny >= 0 && nx < N && ny < N && g[id(nx, ny)] !== 1) open = true;
+      if (nx >= 0 && ny >= 0 && nx < N && ny < N && g[id(nx, ny)] !== 1) { open = true; if (dist[id(nx, ny)] >= 0) near = Math.min(near, dist[id(nx, ny)]); }
     }
-    if (open && r < 0.09) wallVar[id(x, y)] = 2;
+    if (open && near < 1e9 && inTunnel(near)) wallVar[id(x, y)] = r < 0.12 ? 5 : 4;
+    else if (open && r < 0.09) wallVar[id(x, y)] = 2;
     else if (r < 0.15) wallVar[id(x, y)] = 3; // nicho de ossário
     else if (r < 0.24) wallVar[id(x, y)] = 1;
   }
