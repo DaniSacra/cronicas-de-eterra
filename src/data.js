@@ -163,7 +163,7 @@ const JOURNAL = {
     : G.intro ? 'falar com o ancião Bertoldo, na casa de telhado verde.'
     : inParty('teo') ? 'voltar à taverna e contar à Berta o que viram.'
     : G.seen.job ? 'investigar as covas abertas no cemitério, atrás da capela.'
-    : 'achar pouso na Taverna do Caldeirão Partido.',
+    : 'achar pouso na Taverna Poney Saltitante.',
   notes: [
     { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },

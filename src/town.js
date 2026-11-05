@@ -145,7 +145,7 @@ function makeArea(name, short, W, H, g, buildings, outside) {
 }
 const AREAS = {
   valmor: makeArea('Vila de Valmor', 'VALMOR', TOWN_W, TOWN_H, buildTownMap().g, BUILDINGS, TILE.TREE),
-  taverna: makeArea('Taverna do Caldeirão Partido', 'TAVERNA', 14, 10, buildTavernMap(), [], TILE.WALL),
+  taverna: makeArea('Taverna Poney Saltitante', 'TAVERNA', 14, 10, buildTavernMap(), [], TILE.WALL),
 };
 
 const TOWN = {

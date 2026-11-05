@@ -54,7 +54,7 @@ async function arrivalScene() {
     TOWN.npcs.push(spawnNpc(nino.def));
   }
   saveGame();
-  await UI.say('Objetivo: achar pouso na Taverna do Caldeirão Partido.\nO Diário, no menu (Esc), guarda o que você descobrir.');
+  await UI.say('Objetivo: achar pouso na Taverna Poney Saltitante.\nO Diário, no menu (Esc), guarda o que você descobrir.');
   G.busy = false; townHint();
 }
 
@@ -283,7 +283,7 @@ async function nightScene() {
   G.busy = true;
   TOWN.followers = [newActor(4, 3, 3)];
   await fadeTo(0, 900);
-  await UI.say('Noite de geada na Taverna do Caldeirão Partido.');
+  await UI.say('Noite de geada na Taverna Poney Saltitante.');
   await line('Caio', 'Mais uma rodada, moça. Hoje eu ganho.');
   await line('Moça dos dados', 'Você disse isso ontem, soldado.');
 

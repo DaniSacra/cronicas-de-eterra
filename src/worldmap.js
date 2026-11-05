@@ -4,66 +4,69 @@
 // Para pôr um lugar novo: acrescente um item em WORLD_POIS com show() e text().
 
 const WORLD_REINOS = {
-  Formeth:  { x: 520, y: 165, text: () => 'O reino do norte. Clima temperado, com montanhas, vales e florestas.\nSeus clãs conquistaram as próprias terras com magia.' },
-  Imladrin: { x: 175, y: 300, text: () => 'O reino do oeste, o mais progressista de Eterra e o único com uma rainha.\nÉ farto, por isso vive sendo atacado, mas os paladinos da Ordem de Erukh o defendem bem.' },
-  Sindarin: { x: 820, y: 330, text: () => 'O reino do leste: muito quente, com áreas de deserto.\nOs clãs vivem separados e não se entendem. Nos outros reinos dizem que nada de bom sai do leste.' },
-  Hyarmeth: { x: 290, y: 520, text: () => 'O reino do sul. Frio, com geadas no extremo sul e florestas perto de Formeth.\nSeus homens têm fama de bravos e destemidos em batalha.' },
+  Imladrin: { x: 215, y: 345, text: () => 'A ilha do oeste: alta e estreita, de norte a sul. O sul é frio; o norte, ameno e farto.\nO reino mais desenvolvido de Eterra, de fábricas e engenhos a vapor, e o único governado por uma rainha, que mora no norte.' },
+  Formeth:  { x: 485, y: 290, text: () => 'O norte da ilha do meio: uma floresta sem fim, terra dos elfos.\nHá magia por todo lado, e seus clãs conquistaram as próprias terras com ela.' },
+  Hyarmeth: { x: 545, y: 455, text: () => 'O sul da ilha do meio. Muito frio, e seu povo nasceu acostumado com isso.\nGente forte, com fama de brava e destemida em batalha.' },
+  Sindarin: { x: 860, y: 320, text: () => 'A ilha do leste, a menor. Muito quente, de savanas e desertos.\nTerra de muitas tribos, sempre em guerra umas com as outras. Nos outros reinos dizem que nada de bom vem do leste.' },
 };
 
 // visto: o grupo já esteve lá (ou está). Sem visto(), o lugar é só um nome ouvido por aí.
 const WORLD_POIS = [
-  { id: 'valmor', nome: 'Valmor', reino: 'Hyarmeth', tipo: 'Vila', x: 430, y: 555, show: () => true, visto: () => true,
-    text: () => 'Vila do sul gelado, na estrada do oeste. Uma capela, a casa do ancião e a Taverna do Caldeirão Partido.\n' +
+  { id: 'valmor', nome: 'Valmor', reino: 'Imladrin', tipo: 'Vila', x: 200, y: 572, show: () => true, visto: () => true,
+    text: () => 'Vila do sul gelado de Imladrin, na estrada que sobe para o norte. Uma capela, a casa do ancião e a Taverna Poney Saltitante.\n' +
       (G.bossDead ? 'Os mortos voltaram a dormir. A estrada para Erukh está aberta.'
         : G.intro ? 'Um mensageiro do Templo caiu ferido na taverna. Encapuzados queriam a carta que ele trazia.'
         : G.seen.job ? 'Alguém, ou alguma coisa, anda abrindo as covas do cemitério.'
         : `${heroName('aldo')} acabou de chegar, procurando pouso para o inverno.`) },
-  { id: 'cemiterio', nome: 'Cemitério de Valmor', reino: 'Hyarmeth', tipo: 'Cemitério', x: 385, y: 622, show: () => G.seen.job, visto: () => G.seen.cemEntrou,
+  { id: 'cemiterio', nome: 'Cemitério de Valmor', reino: 'Imladrin', tipo: 'Cemitério', x: 160, y: 610, show: () => G.seen.job, visto: () => G.seen.cemEntrou,
     text: () => 'Atrás da capela, no alto da vila.\n' +
       (G.seen.covas ? 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.'
         : 'A Berta troca o quarto por um favor: ver as covas abertas.') },
-  { id: 'cripta', nome: 'Cripta de Valmor', reino: 'Hyarmeth', tipo: 'Masmorra', x: 470, y: 595, show: () => G.quest || G.reached, visto: () => G.reached,
+  { id: 'cripta', nome: 'Cripta de Valmor', reino: 'Imladrin', tipo: 'Masmorra', x: 240, y: 608, show: () => G.quest || G.reached, visto: () => G.reached,
     text: () => 'Paladinos fecharam esta cripta há muito tempo, na guerra de Elun. Algo dorme lá embaixo.\n' +
       (G.bossDead ? 'Morvath virou pó. Antes, disse que não foi ele quem abriu o selo.'
         : G.seen.altar ? 'No altar, escreveram "O rei voltará".'
         : G.seen.lapide ? 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.'
         : 'O ancião quer um grupo de quatro para descer.') },
-  { id: 'templo', nome: 'Templo de Erukh', reino: 'Hyarmeth', tipo: 'Templo', x: 570, y: 535, show: () => true, visto: () => false,
-    text: () => 'O templo mais conhecido do sul. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
+  { id: 'templo', nome: 'Templo de Erukh', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
+    text: () => 'O templo mais conhecido de Hyarmeth, do outro lado do mar. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
       (G.intro ? '\nDe lá veio o mensageiro ferido, com uma carta do sumo sacerdote Shulkhan.' : '') },
-  { id: 'erukh', nome: 'Erukh', reino: 'Imladrin', tipo: 'Capital', x: 165, y: 360, show: () => true, visto: () => false,
-    text: () => 'Capital de Imladrin: monumentos, arte e engenharia. Cidade da rainha Lara e sede da Ordem de Erukh.' +
+  { id: 'erukh', nome: 'Erukh', reino: 'Imladrin', tipo: 'Capital', x: 215, y: 125, show: () => true, visto: () => false,
+    text: () => 'Capital de Imladrin, no norte da ilha: monumentos, arte e máquinas a vapor. Cidade da rainha Lara e sede da Ordem de Erukh.' +
       (G.bossDead ? '\nO próximo destino. Tobias pediu: não confiar em ninguém antes da rainha.'
         : G.intro ? '\nA carta lacrada precisa chegar às mãos da rainha.' : '') },
-  { id: 'purpura', nome: 'Floresta Púrpura', reino: 'Imladrin', tipo: 'Floresta', x: 340, y: 300, show: () => true, visto: () => false,
+  { id: 'purpura', nome: 'Floresta Púrpura', reino: 'Imladrin', tipo: 'Floresta', x: 245, y: 395, show: () => true, visto: () => false,
     text: () => 'Uma floresta mágica. Os viajantes contam que é protegida pela Liga Branca.' },
-  { id: 'lago', nome: 'Lago dos Ventos Uivantes', reino: 'Hyarmeth', tipo: 'Lago', x: 400, y: 440, show: () => true, visto: () => false,
-    text: () => 'Um lago no caminho entre o sul e o oeste. Quem passa por lá não esquece o barulho do vento.' },
-  { id: 'lothriel', nome: 'Lothriel', reino: 'Formeth', tipo: 'Cidade', x: 455, y: 235, show: () => true, visto: () => false,
+  { id: 'lago', nome: 'Lago dos Ventos Uivantes', reino: 'Hyarmeth', tipo: 'Lago', x: 590, y: 400, show: () => true, visto: () => false,
+    text: () => 'Um lago gelado no meio de Hyarmeth. Quem passa por lá não esquece o barulho do vento.' },
+  { id: 'lothriel', nome: 'Lothriel', reino: 'Formeth', tipo: 'Cidade', x: 560, y: 225, show: () => true, visto: () => false,
     text: () => 'Cidade de Formeth num vale de árvores. As casas de madeira ficam tão juntas dos troncos que parecem crescer com eles.' },
-  { id: 'gloerin', nome: 'Floresta Glóerin', reino: 'Formeth', tipo: 'Floresta', x: 300, y: 165, show: () => true, visto: () => false,
+  { id: 'gloerin', nome: 'Floresta Glóerin', reino: 'Formeth', tipo: 'Floresta', x: 450, y: 215, show: () => true, visto: () => false,
     text: () => 'Dizem que ali vive a maioria dos elfos da floresta.' },
-  { id: 'ahk', nome: 'Monastério de Ahk', reino: 'Sindarin', tipo: 'Templo', x: 830, y: 385, show: () => true, visto: () => false,
+  { id: 'ahk', nome: 'Monastério de Ahk', reino: 'Sindarin', tipo: 'Templo', x: 830, y: 370, show: () => true, visto: () => false,
     text: () => 'Monges de Sindarin guardam ali papiros muito antigos.' },
-  { id: 'sufuri', nome: 'Deserto Súfuri', reino: 'Sindarin', tipo: 'Deserto', x: 860, y: 470, show: () => true, visto: () => false,
+  { id: 'sufuri', nome: 'Deserto Súfuri', reino: 'Sindarin', tipo: 'Deserto', x: 890, y: 445, show: () => true, visto: () => false,
     text: () => 'Areia e calor sem fim, no leste de Sindarin.' },
 ];
 
 const WorldMap = (() => {
   const W = 250, H = 175, K = 4; // 1 pixel do mapa = 4 unidades do mundo
-  const COAST = 'M120,170 C150,90 300,60 420,80 C520,40 640,70 720,60 C820,55 905,120 890,210 C930,290 905,360 930,430 C950,520 870,600 760,610 C680,640 560,600 480,640 C380,672 260,632 190,592 C110,560 70,480 100,400 C60,330 80,240 120,170 Z';
-  const ISLES = ['M40,610 c20,-25 60,-20 70,5 c-10,25 -55,30 -70,-5z', 'M935,95 c15,-20 45,-10 45,10 c-5,20 -40,25 -45,-10z'];
-  const C = [500, 350];
+  // Três ilhas: Imladrin (oeste, alta e estreita), a ilha do meio (Formeth ao norte, Hyarmeth ao sul) e Sindarin (leste, a menor)
+  const COAST = ['M150,70 C200,40 280,50 300,90 C330,150 300,210 315,270 C335,340 300,400 320,470 C340,540 300,610 250,640 C200,665 140,650 120,600 C100,540 135,480 115,410 C95,340 130,280 110,210 C95,150 110,95 150,70 Z',
+    'M420,80 C480,50 600,55 660,85 C700,110 690,170 680,220 C670,280 700,330 685,390 C670,450 700,520 670,580 C640,640 560,655 490,640 C420,625 385,580 395,520 C405,460 375,400 390,340 C400,280 380,220 395,160 C400,120 395,95 420,80 Z',
+    'M800,215 C850,195 920,205 940,250 C960,300 950,360 945,410 C940,470 920,530 870,540 C820,550 775,515 770,465 C765,420 785,380 775,330 C765,280 765,235 800,215 Z'];
+  const ISLES = ['M35,640 c15,-22 55,-18 60,4 c-8,22 -50,26 -60,-4z', 'M960,600 c10,-14 34,-8 34,6 c-4,14 -30,18 -34,-6z'];
+  const LAKE = { x: 590, y: 400, rx: 30, ry: 16 };
   const REG = {
-    Formeth: [[0, 0], [1000, 0], [1000, 200], [760, 230], C, [240, 230], [0, 200]],
-    Imladrin: [[0, 200], [240, 230], C, [220, 470], [0, 500]],
-    Sindarin: [[1000, 200], [760, 230], C, [780, 480], [1000, 520]],
-    Hyarmeth: [[0, 500], [220, 470], C, [780, 480], [1000, 520], [1000, 700], [0, 700]],
+    Imladrin: [[0, 0], [350, 0], [350, 700], [0, 700]],
+    Sindarin: [[730, 0], [1000, 0], [1000, 700], [730, 700]],
+    Formeth: [[350, 0], [730, 0], [730, 320], [610, 345], [500, 330], [350, 350]],
+    Hyarmeth: [[350, 350], [500, 330], [610, 345], [730, 320], [730, 700], [350, 700]],
   };
   const PAL = {
     sea: '#1a3f7c', wave: '#3a6ab0', shallow: '#2a5aa0', ink: '#0a1230', lake: '#2a5aa0',
     Formeth: ['#3f7a3a', '#4e8a40', '#336a32'], Imladrin: ['#8aa04a', '#9cb055', '#76903e'],
-    Sindarin: ['#d6ad5c', '#e4c070', '#bf9448'], Hyarmeth: ['#7e9a86', '#8faa94', '#6c8a76'],
+    Sindarin: ['#d6ad5c', '#e4c070', '#bf9448'], Hyarmeth: ['#7e9a86', '#8faa94', '#6c8a76'], tundra: ['#a9b8b8', '#bccaca', '#93a4a6'],
     snow: ['#dfe8ee', '#eef3f6', '#c4d2e0'], border: '#2a1a10',
   };
 
@@ -89,12 +92,13 @@ const WorldMap = (() => {
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const c = cv.getContext('2d');
     // terra = dentro da costa ou das ilhas (testado no centro de cada pixel)
-    const coast = new Path2D(COAST), isles = ISLES.map(d => new Path2D(d));
+    const coast = COAST.map(d => new Path2D(d)), isles = ISLES.map(d => new Path2D(d));
     const land = new Uint8Array(W * H), water = new Uint8Array(W * H);
     for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
       const X = px * K + 2, Y = py * K + 2;
-      const onLand = c.isPointInPath(coast, X, Y) || isles.some(p => c.isPointInPath(p, X, Y));
-      const lake = ((X - 400) / 34) ** 2 + ((Y - 440) / 18) ** 2 < 1;
+      const jx = X + (noise(px, py, 7) - 0.5) * 44, jy = Y + (noise(px + 99, py + 99, 7) - 0.5) * 44; // costa recortada
+      const onLand = coast.some(p => c.isPointInPath(p, jx, jy)) || isles.some(p => c.isPointInPath(p, X, Y));
+      const lake = ((X - LAKE.x) / LAKE.rx) ** 2 + ((Y - LAKE.y) / LAKE.ry) ** 2 < 1;
       land[py * W + px] = onLand && !lake ? 1 : 0;
       water[py * W + px] = onLand && lake ? 1 : 0;
     }
@@ -106,7 +110,9 @@ const WorldMap = (() => {
       if (land[py * W + px]) {
         const reg = Object.keys(REG).find(k => inPoly(REG[k], X, Y)) || 'Hyarmeth';
         let pal = PAL[reg];
-        if (reg === 'Hyarmeth' && Y + noise(px, py, 6) * 60 > 600) pal = PAL.snow; // o sul gelado
+        const cold = Y + noise(px, py, 6) * 60; // o sul das duas ilhas grandes é gelado; Hyarmeth inteiro é frio
+        if (reg === 'Hyarmeth') pal = cold > 590 ? PAL.snow : cold > 470 ? PAL.tundra : pal;
+        if (reg === 'Imladrin' && cold > 600) pal = PAL.snow;
         const n = noise(px, py, 5) * 0.7 + hash(px, py) * 0.3;
         put(px, py, n > 0.62 ? pal[1] : n < 0.3 ? pal[2] : pal[0]);
         continue;
@@ -121,7 +127,7 @@ const WorldMap = (() => {
 
     // fronteiras pontilhadas, só em terra
     c.fillStyle = PAL.border;
-    for (const k of ['Formeth', 'Imladrin', 'Sindarin']) {
+    for (const k of ['Formeth']) { // a única fronteira em terra: Formeth × Hyarmeth
       const pts = REG[k];
       for (let i = 0; i < pts.length - 1; i++) {
         const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], len = Math.hypot(x1 - x0, y1 - y0) / K;
@@ -142,17 +148,24 @@ const WorldMap = (() => {
     const PINE = ['.w.', 'wgw', 'gGg', '.t.'];
     const PINEC = { w: '#eef3f6', g: '#2e5a3a', G: '#1e3a28', t: '#4a3020' };
     const DUNE = ['.ddd.', 'd...d'];
+    const CHIMNEY = ['.ss.', 's...', 'c...', 'c.hh', 'chhh'];
+    const CHIMC = { s: '#c8ccd4', c: '#8a4a32', h: '#5a5a6a' };
+    const SPARK = ['.m.', 'mMm', '.m.'];
     const r = rng(42);
     const mtn = (x, y) => spr(MTN, MTNC, Math.round(x / K) - 3, Math.round(y / K) - 4);
-    for (let i = 0; i < 26; i++) { const x = 380 + r() * 340, y = 95 + r() * 70; r(); mtn(x, y); }
-    for (let i = 0; i < 12; i++) { const x = 720 + r() * 120, y = 180 + r() * 90; r(); mtn(x, y); }
-    for (let i = 0; i < 40; i++) spr(TREE, TREEC, Math.round((240 + r() * 130) / K), Math.round((120 + r() * 80) / K));
-    for (let i = 0; i < 26; i++) spr(TREE, { g: '#7a3a8a', G: '#4e2260', t: '#3a2030' }, Math.round((300 + r() * 80) / K), Math.round((270 + r() * 60) / K));
-    for (let i = 0; i < 30; i++) spr(DUNE, { d: '#a87c38' }, Math.round((780 + r() * 130) / K), Math.round((380 + r() * 140) / K));
+    const at = (rows, cols, n, x0, w, y0, h, rr = r) => { for (let i = 0; i < n; i++) spr(rows, cols, Math.round((x0 + rr() * w) / K), Math.round((y0 + rr() * h) / K)); };
+    for (let i = 0; i < 14; i++) { const x = 480 + r() * 180, y = 85 + r() * 40; r(); mtn(x, y); }   // montanhas do norte de Formeth
+    for (let i = 0; i < 8; i++) { const x = 785 + r() * 70, y = 230 + r() * 40; r(); mtn(x, y); }    // Montanhas de Súfuri
+    for (let i = 0; i < 6; i++) { const x = 140 + r() * 140, y = 470 + r() * 50; r(); mtn(x, y); }   // serra no meio de Imladrin
+    at(TREE, TREEC, 90, 395, 290, 130, 200);                                            // a grande floresta de Formeth
+    at(SPARK, { m: '#7fe0d0', M: '#e0fff8' }, 14, 400, 270, 140, 180);                  // magia por todo lado
+    at(TREE, { g: '#7a3a8a', G: '#4e2260', t: '#3a2030' }, 18, 220, 50, 375, 40);       // Floresta Púrpura
+    at(TREE, TREEC, 14, 130, 170, 160, 160);                                            // o norte ameno de Imladrin
+    at(CHIMNEY, CHIMC, 7, 160, 120, 95, 120);                                           // engenhos a vapor perto de Erukh
+    at(DUNE, { d: '#a87c38' }, 24, 790, 140, 330, 180);                                 // desertos de Sindarin
     const r2 = rng(7);
-    for (let i = 0; i < 22; i++) spr(PINE, PINEC, Math.round((240 + r2() * 480) / K), Math.round((500 + r2() * 70) / K));
-    for (let i = 0; i < 14; i++) spr(TREE, TREEC, Math.round((420 + r2() * 160) / K), Math.round((210 + r2() * 50) / K));
-    // rosa dos ventos
+    at(PINE, PINEC, 30, 400, 270, 360, 260, r2);                                        // pinheiros de Hyarmeth
+    at(PINE, PINEC, 12, 120, 190, 540, 80, r2);                                         // pinheiros do sul de Imladrin
     const cx = 17, cy = 22;
     c.fillStyle = '#ece2c4';
     for (let d = -6; d <= 6; d++) { c.fillRect(cx + d, cy, 1, 1); c.fillRect(cx, cy + d, 1, 1); }
