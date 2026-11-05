@@ -1,0 +1,5 @@
+# Fica só no computador do Daniel: cânone, segredos da história, relatórios e agentes
+docs/
+.claude/
+node_modules/
+*.bak

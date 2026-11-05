@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Crônicas de Eterra: Os Reis Caídos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=23">
+</head>
+<body>
+  <div id="game">
+    <div id="screen">
+      <canvas id="view" width="320" height="200"></canvas>
+      <div id="overlay"></div>
+      <div id="info"></div>
+      <div id="bottom">
+        <div id="dialog"><canvas id="face" width="32" height="32"></canvas><div id="msgbox"><div id="speaker"></div><div id="msg"></div><div id="menu"></div></div></div>
+        <div id="party"></div>
+      </div>
+    </div>
+    <div id="touch">
+      <div class="pad">
+        <button data-k="q">⇤</button><button data-k="ArrowUp">▲</button><button data-k="e">⇥</button>
+        <button data-k="ArrowLeft">↺</button><button data-k="ArrowDown">▼</button><button data-k="ArrowRight">↻</button>
+      </div>
+      <div class="pad2">
+        <button data-k="Enter">OK</button><button data-k="Escape">✕</button><button data-k="m">MAPA</button>
+      </div>
+    </div>
+  </div>
+  <script src="src/data.js?v=23"></script>
+  <script src="src/map.js?v=23"></script>
+  <script src="src/textures.js?v=23"></script>
+  <script src="src/sprites.js?v=23"></script>
+  <script src="src/audio.js?v=23"></script>
+  <script src="src/render.js?v=23"></script>
+  <script src="src/portraits.js?v=23"></script>
+  <script src="src/icons.js?v=23"></script>
+  <script src="src/ui.js?v=23"></script>
+  <script src="src/party.js?v=23"></script>
+  <script src="src/battle.js?v=23"></script>
+  <script src="src/town.js?v=23"></script>
+  <script src="src/opening.js?v=23"></script>
+  <script src="src/layout.js?v=23"></script>
+  <script src="src/titlebg.js?v=23"></script>
+  <script src="src/main.js?v=23"></script>
+</body>
+</html>
