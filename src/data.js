@@ -84,11 +84,11 @@ const ITEMS = {
 };
 
 const EQUIPS = {
-  espadaFerro:  { name: 'Espada de Ferro', who: 'aldo', bonus: { atk: 6 } },
-  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', bonus: { def: 6 } },
-  cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', bonus: { mag: 6 } },
-  espadaPrata:  { name: 'Espada de Prata', who: 'aldo', bonus: { atk: 10 } },
-  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  bonus: { def: 5, mag: 5 } },
+  espadaFerro:  { name: 'Espada de Ferro', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 6 } },
+  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', slot: 'armadura', icon: 'def',   bonus: { def: 6 } },
+  cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'spell', bonus: { mag: 6 } },
+  espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 10 } },
+  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 5, mag: 5 } },
 };
 
 const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', agi: 'AGI', hp: 'PV', mp: 'PM' };

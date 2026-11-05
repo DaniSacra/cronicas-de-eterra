@@ -44,3 +44,14 @@ test('camp menu: coins in the title, Mapa hidden in town, Itens off with an empt
   assert.equal(crypt.opts.find(o => o.value === 'item').disabled, false);
   assert.equal(crypt.opts.at(-1).value, null, 'Voltar stays last');
 });
+
+test('equipment screen: gear grouped by hero and slot', () => {
+  const EQ = { a: { name: 'Espada', who: 'aldo', slot: 'arma', bonus: { atk: 6 } }, b: { name: 'Cota', who: 'aldo', slot: 'armadura', bonus: { def: 6 } },
+    c: { name: 'Cajado', who: 'lyra', slot: 'arma', bonus: { mag: 6 } } };
+  const aldo = R.heroGear('aldo', ['a', 'b', 'c'], EQ);
+  assert.deepEqual(aldo.map(s => s.slot), ['arma', 'armadura']);
+  assert.deepEqual(aldo[0].items.map(i => i.name), ['Espada']);
+  assert.deepEqual(aldo[1].items.map(i => i.name), ['Cota']);
+  assert.deepEqual(R.heroGear('teo', ['a', 'c'], EQ).map(s => s.items.length), [0, 0]);
+  assert.equal(R.bonusText({ def: 5, mag: 5 }, { def: 'DEF', mag: 'MAG' }), 'DEF +5, MAG +5');
+});

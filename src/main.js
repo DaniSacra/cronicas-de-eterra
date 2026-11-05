@@ -100,6 +100,7 @@ function onKeyDown(e) {
   Sfx.init();
   const k = normKey(e.key);
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Tab', 'Backspace'].includes(e.key)) e.preventDefault && e.preventDefault();
+  if (HeroView.isOpen()) { e.preventDefault && e.preventDefault(); if (!e.repeat) HeroView.key(k); return; }
   if (WorldMap.isOpen()) { e.preventDefault && e.preventDefault(); if (!e.repeat) WorldMap.key(k); return; }
   if (k === 'u' && !e.repeat && canWorldMap()) { openWorldMap(); return; }
   if (k === 'n' && !e.repeat) { const m = Sfx.toggleMute(); flashNote(m ? 'Som: desligado' : 'Som: ligado'); return; }
@@ -348,16 +349,7 @@ async function campMenu() {
     if (v === null) break;
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
-    if (v === 'status') {
-      for (const m of G.party) {
-        const d = pdef(m);
-        const eq = Object.values(EQUIPS).filter(e => e.who === m.id && Object.entries(e.bonus).every(([k]) => (m.bonus[k] || 0) > 0));
-        await UI.say(`${d.name} · ${d.cls} · Nível ${m.lv}  (XP ${m.xp}/${xpNext(m.lv)})\n` +
-          `PV ${m.hp}/${maxHp(m)}  PM ${m.mp}/${maxMp(m)}\n` +
-          `ATQ ${stat(m, 'atk')}  DEF ${stat(m, 'def')}  MAG ${stat(m, 'mag')}  AGI ${stat(m, 'agi')}` +
-          (knownSpells(m).length ? `\n${d.skillWord}: ${knownSpells(m).map(s => SPELLS[s].name).join(', ')}` : ''));
-      }
-    }
+    if (v === 'status') await HeroView.show();
     if (v === 'item') {
       const keys = Object.keys(KEY_ITEMS).filter(k => G.key[k]).map(k => ({ label: G.key.lida || !KEY_ITEMS[k].sealedName ? KEY_ITEMS[k].name : KEY_ITEMS[k].sealedName, hint: KEY_ITEMS[k].desc, value: 'key:' + k }));
       const opts = [...itemOptions(), ...keys];

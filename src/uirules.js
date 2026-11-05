@@ -30,7 +30,7 @@ function healthWord(hp, maxhp) {
 // Camp menu: coins in the title, Mapa only in the crypt, Itens greyed out while the bag is empty
 function campMenuOpts(s) {
   const opts = [
-    { label: 'Itens', value: 'item', disabled: s.bagCount === 0 }, { label: 'Magia', value: 'magic' }, { label: 'Status', value: 'status' },
+    { label: 'Itens', value: 'item', disabled: s.bagCount === 0 }, { label: 'Magia', value: 'magic' }, { label: 'Heróis', value: 'status' },
     { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
   ];
   if (!s.inTown) opts.push({ label: 'Mapa', value: 'map' });
@@ -38,4 +38,14 @@ function campMenuOpts(s) {
   return { title: `Menu · ${s.gold} moedas`, opts };
 }
 
-if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts };
+// Equipment screen: what one hero carries in each slot, from the ids of the equipment the party found
+const GEAR_SLOTS = [['arma', 'Arma'], ['armadura', 'Armadura']];
+function heroGear(heroId, ownedIds, equips) {
+  return GEAR_SLOTS.map(([slot, label]) => ({
+    slot, label, items: ownedIds.filter(id => equips[id] && equips[id].who === heroId && equips[id].slot === slot).map(id => ({ id, ...equips[id] })),
+  }));
+}
+// "ATQ +6, DEF +5"
+const bonusText = (bonus, names) => Object.entries(bonus).map(([k, v]) => `${names[k]} +${v}`).join(', ');
+
+if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText };
