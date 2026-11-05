@@ -50,6 +50,14 @@ const Portraits = (() => {
     const cv = document.createElement('canvas'); cv.width = cv.height = 32;
     const c = cv.getContext('2d');
     const p = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+    // Hand-drawn hero faces (src/herofaces.js): background bands, then the 32×32 grid
+    const H = typeof HERO_FACES !== 'undefined' && HERO_FACES[key];
+    if (H) {
+      const bg = (HERO_FACE_BG[key] || HERO_FACE_BG.default || ['#24327f', '#1d2a74', '#172264', '#111a52']);
+      bg.forEach((col, i) => p(0, i * 8, 32, 8, col));
+      H.rows.forEach((row, y) => { for (let x = 0; x < 32; x++) if (row[x] !== '.') p(x, y, 1, 1, H.pal[row[x]]); });
+      return (cache[key] = cv);
+    }
     // fundo: faixas da janela
     ['#24327f', '#1d2a74', '#172264', '#111a52'].forEach((col, i) => p(0, i * 8, 32, 8, col));
     if (F.special) { SPECIAL[F.special](p); return (cache[key] = cv); }

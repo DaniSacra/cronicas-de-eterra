@@ -337,3 +337,4 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #cmdbar .opt.sel::after { bottom: calc(100% + var(--bw) + var(--u)); }
 #cmdbar { padding: var(--u); }
 #hudtop .label { max-width: min(92vw, 40em); padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.5; text-align: center; color: var(--text); }
+#game.in-battle #info { display: none; } /* battle uses the top for the turn queue and the plaque */
