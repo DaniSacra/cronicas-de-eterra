@@ -374,7 +374,7 @@ async function campMenu() {
     if (v === null) break;
     if (v === 'quit') {
       const ok = await UI.choose([{ label: 'Sim, sair', value: true }, { label: 'Não', value: false }],
-        { title: 'Voltar à tela inicial? O que não foi salvo se perde.', cancel: true, cols: 2, start: 1 });
+        { title: 'Voltar à tela inicial? O que não foi salvo se perde.', cancel: true, cols: 2, start: false });
       if (ok) { G.bigMap = false; G.held.clear(); return titleScreen(); }
       continue;
     }
