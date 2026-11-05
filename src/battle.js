@@ -59,7 +59,7 @@ function physDmg(atk, def, power = 1) { return Math.max(1, Math.round(atk * powe
 async function chooseEnemy(title) {
   const list = aliveEnemies();
   if (list.length === 1 && !list[0].boss) return list[0];
-  return UI.choose(list.map(e => ({ label: ename(e), value: e })), { title, cancel: true, cols: list.length > 2 ? 3 : 2, onHover: v => B.hover = v });
+  return UI.choose(list.map(e => ({ label: ename(e), hint: healthWord(e.hp, e.maxhp), value: e })), { title, cancel: true, cols: list.length > 2 ? 3 : 2, onHover: v => B.hover = v });
 }
 
 async function chooseTarget(kind, title) {
@@ -400,7 +400,6 @@ function drawBattle(now) {
     c.beginPath(); c.moveTo(hv.x - 5, y - 7); c.lineTo(hv.x + 5, y - 7); c.lineTo(hv.x, y); c.closePath(); c.fill();
   }
 
-  if (!boss) drawEnemyNames(c);
   if (B.order) drawOrder(c, now, boss);
 
   B.fx = B.fx.filter(f => drawFx(c, f, now));
@@ -414,30 +413,6 @@ function drawBattle(now) {
     c.fillStyle = n.color; c.fillText(n.text, n.x, y);
     c.globalAlpha = 1;
     return true;
-  });
-}
-
-// Janela com o nome dos inimigos (canto de cima): ao escolher o alvo, só o inimigo marcado e o estado dele
-function drawEnemyNames(c) {
-  const alive = aliveEnemies();
-  if (!alive.length) return;
-  let lines;
-  const hv = B.hover;
-  if (hv && hv.hp > 0 && hv.name) {
-    const k = hv.hp / hv.maxhp;
-    lines = [ename(hv).toUpperCase(), k > 0.7 ? 'Ileso' : k > 0.4 ? 'Ferido' : k > 0.15 ? 'Muito ferido' : 'Quase caindo'];
-  } else {
-    const count = {};
-    for (const e of alive) count[e.name] = (count[e.name] || 0) + 1;
-    lines = Object.entries(count).map(([n, q]) => n.toUpperCase() + (q > 1 ? ' x' + q : ''));
-  }
-  c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'left';
-  const w = Math.max(...lines.map(t => c.measureText(t).width)) + 14, h = lines.length * 9 + 9;
-  const x = 4, y = 22;
-  drawWindow(c, x, y, w, h);
-  lines.forEach((t, i) => {
-    c.fillStyle = '#07081a'; c.fillText(t, x + 8, y + 13 + i * 9);
-    c.fillStyle = hv && i === 1 ? '#ffd23f' : '#f4f0e0'; c.fillText(t, x + 7, y + 12 + i * 9);
   });
 }
 

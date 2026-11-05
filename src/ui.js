@@ -82,6 +82,8 @@ const UI = (() => {
     menuEl.style.gridTemplateColumns = menu.icons ? `repeat(${menu.cols},auto)` : `repeat(${menu.cols},1fr)`;
     menuEl.classList.toggle('icons', menu.icons);
     menuEl.innerHTML = '';
+    msgEl.querySelector('.cmd-name')?.remove();
+    if (menu.icons) msgEl.insertAdjacentHTML('beforeend', '<span class="cmd-name"></span>');
     menu.opts.forEach((op, i) => {
       const d = document.createElement('div');
       d.className = 'opt' + (i === menu.sel ? ' sel' : '') + (op.disabled ? ' dis' : '');
@@ -91,6 +93,7 @@ const UI = (() => {
       d.onclick = ev => { ev.stopPropagation(); if (!menu) return; menu.sel = i; pick(); };
       menuEl.appendChild(d);
     });
+    cmdName();
   }
   // Icon states follow the cursor: normal, selected (gold halo), disabled (grey)
   const iconState = (op, sel) => op.disabled ? 'dis' : sel ? 'sel' : 'normal';
@@ -99,7 +102,9 @@ const UI = (() => {
       c.classList.toggle('sel', i === menu.sel);
       const op = menu.opts[i], img = op.icon && c.querySelector('img');
       if (img) img.src = iconUrl(op.icon, iconState(op, i === menu.sel));
-    }); menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); hover(); }
+    }); menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); cmdName(); hover(); }
+  // Phone shows command icons only: the selected command's name goes to the prompt line
+  function cmdName() { const n = msgEl.querySelector('.cmd-name'); if (n) n.textContent = menu.opts[menu.sel].label; }
   function hover() { menu.onHover && menu.onHover(menu.opts[menu.sel].value); }
   function close(v) { const m = menu; menu = null; clearMenu(); closeSoon(); m.onHover && m.onHover(null); m.res(v); }
   function pick() { const op = menu.opts[menu.sel]; if (op.disabled) { Sfx.bump(); return; } Sfx.select(); close(op.value); }

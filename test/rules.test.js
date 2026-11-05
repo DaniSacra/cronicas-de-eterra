@@ -25,3 +25,10 @@ test('place label shows only while walking', () => {
   assert.deepEqual(R.placeLabel({ ...base, mode: 'explore' }), { text: 'B1 · Cripta de Valmor', gold: 20 });
   for (const mode of ['battle', 'title', 'gameover']) assert.equal(R.placeLabel({ ...base, mode }), null, mode);
 });
+
+test('enemy health words follow the HP fraction', () => {
+  assert.equal(R.healthWord(10, 10), 'ileso');
+  assert.equal(R.healthWord(6, 10), 'ferido');
+  assert.equal(R.healthWord(3, 10), 'muito ferido');
+  assert.equal(R.healthWord(1, 10), 'quase caindo');
+});

@@ -21,4 +21,10 @@ function placeLabel(s) {
   return null;
 }
 
-if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel };
+// Enemy health in words for the target list (exact numbers stay hidden)
+function healthWord(hp, maxhp) {
+  const k = hp / maxhp;
+  return k > 0.7 ? 'ileso' : k > 0.4 ? 'ferido' : k > 0.15 ? 'muito ferido' : 'quase caindo';
+}
+
+if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord };

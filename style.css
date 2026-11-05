@@ -57,11 +57,11 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #menu { display: grid; gap: .5em 2em; margin-top: .6em; }
 .opt { cursor: pointer; position: relative; padding: .2em 0 .2em 1.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .opt.sel { color: #fff; }
-.opt.sel::before { content: ''; position: absolute; left: 0; top: 50%; width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); margin-top: calc(var(--f1) * -1);
+.opt.sel::before { content: ''; position: absolute; left: 0; top: calc(.2em + .5lh); width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); margin-top: calc(var(--f1) * -1);
   background: var(--cursor) 0 0 / 100% 100%; image-rendering: pixelated; animation: nudge .5s steps(1) infinite; }
 @keyframes nudge { 50% { transform: translateX(var(--u)); } }
 .opt.dis { color: var(--off); }
-.opt small { color: var(--dim); font-size: var(--f1); margin-left: 1em; }
+.opt small { display: block; color: var(--dim); font-size: var(--f1); margin-top: .4em; white-space: normal; }
 
 /* ---- Faixa do grupo (aparece na dungeon, na batalha e no menu) ---- */
 #party { display: none; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 2); width: min(100%, 56em); }
@@ -168,8 +168,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (min-width: 1200px) and (min-height: 700px) { #menu.icons .opt { font-size: var(--f2); } }
 
 /* ---- Mapa de Eterra (mapa-múndi) ---- */
-#wmBtn { position: absolute; z-index: 4; top: calc(var(--u) * 4); right: calc(var(--u) * 4); font-family: inherit; font-size: var(--f1);
-  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 3) calc(var(--u) * 4); cursor: pointer;
+#wmBtn { font-family: inherit; font-size: var(--f1); color: var(--text);
+  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: var(--u) calc(var(--u) * 3); cursor: pointer;
 }
 #wmBtn[hidden] { display: none; }
 #wmBtn:hover { color: var(--gold); }
@@ -239,3 +239,11 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .queue .qs i { display: block; align-self: stretch; height: var(--u); }
 .queue .qs.done { opacity: .45; } .queue .qs.gone { opacity: .2; }
 .queue .round { color: var(--gold); font-size: var(--f1); text-shadow: var(--u) var(--u) 0 var(--ink); margin-left: calc(var(--u) * 2); animation: blink .4s steps(1) 4; }
+/* Phone: battle commands show icons only; the selected name goes to the prompt line (ui.js cmdName) */
+.cmd-name { display: none; }
+@media (orientation: portrait), (max-width: 700px) {
+  #menu.icons .opt span { display: none; }
+  .cmd-name { display: block; color: var(--gold); margin-top: .3em; }
+}
+/* Narrow screens: notes drop below the place/MUNDO row instead of covering it */
+@media (orientation: portrait), (max-width: 700px) { #info { top: calc(var(--u) * 14 + 16px); } }
