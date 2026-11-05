@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
 canvas#view { flex: none; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* ---- A janela: moldura 9-slice de src/frame.js (16 px, cantos de 3), ampliada --u vezes ---- */
-.win, .card, #msgbox, #info, .title .sub, #wmBtn, #touch button, #hud .chip, #face, #menu.icons .opt {
+.win, .card, #msgbox, #info, .title .sub, #wmBtn, #touch button, #hudbar .chip, #face, #menu.icons .opt {
   color: var(--text); background: none;
   border: calc(var(--u) * 3) solid transparent; border-image: var(--frame) 3 fill / calc(var(--u) * 3) round;
   image-rendering: pixelated;
@@ -209,3 +209,33 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (orientation: portrait), (max-width: 700px) {
   #worldmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 38%); }
 }
+
+/* ---- HUD em DOM (src/hud.js): rótulos na mesma escala de texto do resto ---- */
+#hud { position: absolute; z-index: 2; pointer-events: none; }
+#hud > * { position: absolute; white-space: nowrap; font-size: var(--f1); line-height: 1; text-shadow: var(--u) var(--u) 0 var(--ink); }
+#hud .compass { translate: -50% -50%; color: var(--gold); }
+#hud .maptitle { translate: -50% -100%; color: var(--gold); }
+#hudbar { position: absolute; z-index: 4; top: calc(var(--u) * 4); left: calc(var(--u) * 4); display: flex; gap: calc(var(--u) * 2);
+  align-items: stretch; max-width: calc(100% - var(--u) * 8); pointer-events: none; }
+#hudbar > * { pointer-events: auto; }
+#hudbar .chip { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: var(--u) calc(var(--u) * 3); font-size: var(--f1);
+  white-space: nowrap; min-width: 0; overflow: hidden; }
+#hudbar .chip .pl { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#hudbar [hidden] { display: none !important; }
+.coin { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--gold);
+  box-shadow: 0 0 0 var(--u) var(--ink), inset calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--gold2); }
+#hudtop { position: absolute; z-index: 3; top: calc(var(--u) * 4); left: 50%; translate: -50% 0; display: flex; flex-direction: column;
+  align-items: center; gap: calc(var(--u) * 2); pointer-events: none; max-width: calc(100% - var(--u) * 8); }
+#hudtop [hidden] { display: none !important; }
+#hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f1); }
+#hudtop .boss .bar { height: calc(var(--u) * 4); margin-bottom: 0; }
+#hudtop .boss .bar i { background: linear-gradient(#c890f0 0 50%, #8a4ad0 50%); transition: width .3s steps(6); }
+#hudtop .boss.enraged .bar i { background: linear-gradient(#f28a9a 0 50%, var(--danger) 50%); }
+#hudtop .note { padding: calc(var(--u) * 2) calc(var(--u) * 4); font-size: var(--f1); }
+.queue { display: flex; gap: var(--u); align-items: center; flex-wrap: wrap; justify-content: center; }
+.queue .qs { display: flex; flex-direction: column; align-items: center; min-width: calc(var(--f1) * 2 + var(--u) * 8); padding: 0 var(--u);
+  font-size: var(--f1); line-height: 1.8; border: calc(var(--u) * 3) solid transparent; border-image: var(--frame-slot) 3 fill / calc(var(--u) * 3) round; image-rendering: pixelated; }
+.queue .qs.sel-frame { border-image-source: var(--frame-sel); }
+.queue .qs i { display: block; align-self: stretch; height: var(--u); }
+.queue .qs.done { opacity: .45; } .queue .qs.gone { opacity: .2; }
+.queue .round { color: var(--gold); font-size: var(--f1); text-shadow: var(--u) var(--u) 0 var(--ink); margin-left: calc(var(--u) * 2); animation: blink .4s steps(1) 4; }

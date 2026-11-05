@@ -389,11 +389,7 @@ function drawBattle(now) {
   // Chefe: barra no topo
   const boss = B.enemies.find(e => e.boss);
   if (boss) {
-    drawWindow(c, VW / 2 - 102, 3, 204, 22);
-    c.fillStyle = '#07081a'; c.fillRect(VW / 2 - 96, 16, 192, 4);
-    c.fillStyle = boss.enraged ? '#ff3060' : '#b040ff'; c.fillRect(VW / 2 - 96, 16, 192 * boss.hp / boss.maxhp, 4);
-    c.font = '6px "Press Start 2P", monospace'; c.fillStyle = '#f4f0e0'; c.textAlign = 'center';
-    c.fillText('MORVATH, O LICH-REI', VW / 2, 13);
+    HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
   }
 
   // Seta de alvo
@@ -447,28 +443,15 @@ function drawEnemyNames(c) {
 
 // Barra com a ordem dos turnos da rodada (quem já agiu fica apagado, a vez atual fica destacada)
 function drawOrder(c, now, boss) {
-  const list = B.order, cw = 18, gap = 3, h = 12;
-  let x = Math.round(VW / 2 - (list.length * (cw + gap) - gap) / 2);
-  const y = boss ? 29 : 5;
-  c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'center';
-  list.forEach((o, i) => {
-    const a = o.actor, cur = i === B.turn;
-    c.globalAlpha = a.hp <= 0 || o.skip ? 0.2 : i < B.turn ? 0.4 : 1;
-    c.fillStyle = '#07081a'; c.fillRect(x - 1, y - 1, cw + 2, h + 2); c.fillStyle = '#1d2a74'; c.fillRect(x, y, cw, h);
-    c.fillStyle = '#ece2c4'; c.fillRect(x, y, cw, 1);
-    c.fillStyle = o.side === 'party' ? pdef(a).color : '#d03c3c'; c.fillRect(x, y + h - 2, cw, 2);
-    if (cur && Math.floor(now / 250) % 2 === 0) { c.strokeStyle = '#ffd23f'; c.lineWidth = 1; c.strokeRect(x - 0.5, y - 0.5, cw + 1, h + 1); }
-    const label = o.side === 'party' ? pdef(a).name.slice(0, 2) : a.boss ? 'Mo' : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2);
-    c.fillStyle = '#fff'; c.fillText(label, x + cw / 2, y + 8);
-    x += cw + gap;
-  });
-  c.globalAlpha = 1;
-  // Rodada nova: a fila foi sorteada de novo
-  if (B.round > 1 && now - B.roundT < 1600 && Math.floor((now - B.roundT) / 200) % 2 === 0) {
-    c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'center';
-    c.fillStyle = '#07081a'; c.fillText(`RODADA ${B.round}`, VW / 2 + 1, y + h + 10);
-    c.fillStyle = '#ffd23f'; c.fillText(`RODADA ${B.round}`, VW / 2, y + h + 9);
-  }
+  const list = B.order, h = 12, y = boss ? 29 : 5; // y/h: canvas room kept free for the HUD queue
+  HUD.queue(list.map((o, i) => {
+    const a = o.actor;
+    return {
+      label: o.side === 'party' ? pdef(a).name.slice(0, 2) : a.boss ? 'Mo' : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
+      color: o.side === 'party' ? pdef(a).color : 'var(--danger)',
+      state: a.hp <= 0 || o.skip ? 'gone' : i < B.turn ? 'done' : i === B.turn ? 'cur' : 'next',
+    };
+  }), B.round > 1 && now - B.roundT < 1600 ? B.round : 0);
   // Seta sobre o inimigo que está agindo
   const cur = list[B.turn];
   if (cur && cur.side === 'enemy' && cur.actor.hp > 0 && !cur.actor.boss) {
