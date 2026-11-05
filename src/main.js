@@ -75,7 +75,7 @@ function placeHint(place, kind, help) {
   const lines = [];
   if (place !== lastPlace) lines.push(place);
   if (help && !G.seen['ajuda_' + kind]) { G.seen['ajuda_' + kind] = 1; lines.push(help); }
-  const goal = G.intro ? journalGoal() : null;
+  const goal = journalGoal();
   if (goal && goal !== lastGoal) { lines.push('Objetivo: ' + goal); lastGoal = goal; }
   lastPlace = place;
   if (!lines.length) return;
@@ -100,6 +100,8 @@ function onKeyDown(e) {
   Sfx.init();
   const k = normKey(e.key);
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Tab', 'Backspace'].includes(e.key)) e.preventDefault && e.preventDefault();
+  if (WorldMap.isOpen()) { e.preventDefault && e.preventDefault(); if (!e.repeat) WorldMap.key(k); return; }
+  if (k === 'u' && !e.repeat && canWorldMap()) { openWorldMap(); return; }
   if (k === 'n' && !e.repeat) { const m = Sfx.toggleMute(); flashNote(m ? 'Som: desligado' : 'Som: ligado'); return; }
   if (UI.handleKey(e)) return;
   if (G.mode === 'town' && !G.busy) {
@@ -124,6 +126,16 @@ function onKeyDown(e) {
 window.addEventListener('keydown', onKeyDown);
 window.addEventListener('keyup', e => G.held.delete(normKey(e.key)));
 window.addEventListener('blur', () => G.held.clear());
+
+// ---------- Mapa-múndi (src/worldmap.js) ----------
+const wmBtn = document.getElementById('wmBtn');
+const canWorldMap = () => (G.mode === 'town' || G.mode === 'explore') && !G.busy && !UI.busy() && !WorldMap.isOpen();
+async function openWorldMap() {
+  G.busy = true; G.held.clear(); G.queue.length = 0; G.bigMap = false;
+  await WorldMap.show();
+  G.busy = false; exploreHint();
+}
+wmBtn.addEventListener('click', ev => { ev.stopPropagation(); Sfx.init(); if (canWorldMap()) openWorldMap(); });
 
 let noteText = '', noteUntil = 0;
 function flashNote(t) { noteText = t; noteUntil = performance.now() + 1200; }
@@ -231,6 +243,7 @@ async function interact(o) {
     if (G.opened[key]) { await UI.say('O baú está vazio.'); return; }
     const eq0 = EQUIPS[o.loot];
     if (eq0 && !inParty(eq0.who)) { await UI.say(`Um equipamento que só ${heroName(eq0.who)} saberia usar.`); return; }
+    if (!G.seen.bau1 && inParty('andilla')) { G.seen.bau1 = 1; await say2(heroName('andilla'), 'Tranca velha. Dois ganchos e... pronto.'); }
     G.opened[key] = true; Sfx.chest();
     if (ITEMS[o.loot]) {
       G.inv[o.loot] = (G.inv[o.loot] || 0) + 1;
@@ -250,6 +263,7 @@ async function interact(o) {
       await say2(null, 'Junto à fonte, um capuz cinza rasgado. Dentro dele, um bilhete.');
       await say2('Bilhete', '"O selo cede. Mais três noites. A carta não pode chegar à rainha. — V."');
       await say2('Lyra', 'V.... Quem é V.?');
+      if (inParty('andilla')) await say2(heroName('andilla'), 'Capuz cinza de novo. Agora entendem por que a Berta me olhou torto?');
     }
     Sfx.holy();
     G.flashColor = '160,230,255'; G.flash = { t0: performance.now(), dur: 700 };
@@ -257,6 +271,7 @@ async function interact(o) {
     UI.updateParty();
     const saved = saveGame();
     await UI.say('Uma fonte de água cristalina brilha na escuridão.\nO grupo foi totalmente restaurado!' + (saved ? '\nJogo salvo.' : ''));
+    if (!G.seen.fonteLyra && inParty('lyra')) { G.seen.fonteLyra = 1; await say2('Lyra', 'É verdade, então. A água lembra de quem passa. Dá para sentir.'); }
   } else if (o.type === 'boss') {
     if (!G.seen.altar) { G.seen.altar = 1; for (const [who, t] of FLOOR_CLUES[2]) await say2(who, t); }
     const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
@@ -311,7 +326,7 @@ async function descend() {
 const say2 = (who, t) => UI.say(who ? `${who}:\n${t}` : t);
 // [0] ao entrar na cripta · [1] na fonte (lápide) · [2] diante de Morvath (altar)
 const FLOOR_CLUES = [
-  [[null, 'Na parede, ao pé da escada, pintado de vermelho: um olho cortado ao meio.'], ['Aldo', 'Eles já estiveram aqui embaixo.'], ['Lyra', 'Então não vieram a Valmor só pela carta.']],
+  [[null, 'Na parede, ao pé da escada, pintado de vermelho: um olho cortado ao meio.'], ['Aldo', 'Eles já estiveram aqui embaixo.'], ['Lyra', 'Então não vieram a Valmor só pela carta.'], [heroName('andilla'), 'Tinta fresca. Faz menos de uma semana.']],
   [[null, 'Uma lápide antiga, rachada ao meio. As letras ainda se leem:'], ['Lápide', '"Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou."'], ['Teo', 'Morvath... O rei que o ancião não quis nomear.']],
   [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."'], ['Teo', 'Estão rezando para Morvath? Para um rei morto?'], ['Aldo', 'Então é ele quem manda nos encapuzados.']],
 ];
@@ -327,10 +342,11 @@ async function campMenu() {
   for (;;) {
     const v = await UI.choose([
       { label: 'Itens', value: 'item' }, { label: 'Magia', value: 'magic' }, { label: 'Status', value: 'status' },
-      { label: 'Diário', value: 'diary' }, { label: 'Salvar', value: 'save' }, { label: 'Mapa', value: 'map', disabled: G.mode === 'town' },
+      { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' }, { label: 'Mapa', value: 'map', disabled: G.mode === 'town' },
       { label: 'Voltar', value: null },
     ], { title: `— Menu — ${G.gold} moedas`, cancel: true, cols: 3 });
     if (v === 'diary') await showDiary();
+    if (v === 'world') await WorldMap.show();
     if (v === null) break;
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
@@ -351,6 +367,7 @@ async function campMenu() {
       const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true });
       if (it == null) continue;
       if (it === 'key:carta') { await readLetter(false); continue; }
+      if (String(it).startsWith('key:')) { const k = KEY_ITEMS[it.slice(4)]; for (const t of k.text) await UI.say(`${k.name}:\n${t}`); continue; }
       const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`);
       if (t == null) continue;
       await UI.say(applyItem(it, t));
@@ -403,8 +420,8 @@ function loadGame() {
     // saves da versão 1 (Aldo, Lyra e Teo): a ladina entra no grupo
     if (!s.v && !inParty('andilla')) {
       recruit('andilla');
-      Object.assign(G.seen, { job: 1, cem1: 1, cem2: 1, cem3: 1, migrou: 0 });
-      G.key.estojo = true;
+      Object.assign(G.seen, { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, migrou: 0 });
+      if (G.quest) G.seen.hugo4 = 1; // o Hugo já tinha liberado a cripta
     }
     UI.buildParty();
     if (s.place === 'town') {
@@ -419,7 +436,6 @@ function loadGame() {
 
 // ---------- Diário de missões ----------
 function diaryPages() {
-  if (!G.intro) return [];
   const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + n.text);
   const pages = [`Diário · ${JOURNAL.title()}\nObjetivo: ${JOURNAL.goal()}`];
   for (let k = 0; k < notes.length; k += 3) pages.push(`Diário · anotações\n` + notes.slice(k, k + 3).join('\n'));
@@ -471,12 +487,12 @@ async function titleScreen() {
 }
 
 async function newGame() {
-  G.party = PARTY_DEFS.slice(0, 3).map(newMember); // até o P2: abertura antiga com Aldo, Lyra e Teo
-  G.inv = { pocao: 3, eter: 1, pena: 1 };
-  G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
+  G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no capítulo
+  G.inv = { pocao: 2 };
+  G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   loadFloor(0);
   UI.buildParty();
-  await openingScene();
+  await arrivalScene();
 }
 
 // Atalho do título: grupo como depois da abertura (nível 2, carta, missão do ancião) direto na cripta
@@ -484,7 +500,8 @@ async function quickDungeon() {
   G.party = ['aldo', 'teo', 'lyra', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 2; m.xp = 36; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
-  G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1 };
+  G.key.estojo = false; // já devolvido à ladina
+  G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1 };
   loadFloor(0);
   UI.buildParty();
   G.town = CRYPT_FRONT;
@@ -523,6 +540,16 @@ async function ending() {
   await say2('Lyra', 'Morvath disse que não foi ele quem abriu o selo.');
   await say2('Aldo', G.seen.bilhete ? 'Então foi o tal "V.". Mas quem é V.?' : 'Então quem foi?');
   await say2('Teo', 'A resposta deve estar na carta. E ela vai a Erukh como veio: lacrada.');
+  if (inParty('andilla') && inParty('lyra')) {
+    const an = heroName('andilla');
+    await say2(an, 'Antes que perguntem: eu não cavei cova nenhuma. Cheguei e já estava cavado.');
+    await say2(an, 'Fui ver se sobrava ouro de rei. Aí uma cova se mexeu. Larguei os ganchos e corri.');
+    await say2('Lyra', 'E a coroa do rei?');
+    await say2(an, 'Pó. Até a coroa virou pó.');
+    await say2('Lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.');
+    await say2(an, 'E Erukh é a cidade mais rica do oeste. Eu vou junto.');
+    await say2('Aldo', 'Então somos quatro. Como os paladinos.');
+  }
   const lv = G.party.map(m => `${pdef(m).name} Nv ${m.lv}`).join(' · ');
   UI.showOverlay(`<div class="title">${emblemSvg()}<h1>VITÓRIA!</h1><p class="sub">O Lich-Rei voltou ao pó.</p><p class="small">A carta lacrada ainda precisa chegar a Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
   saveGame();
@@ -612,6 +639,7 @@ function frame(now) {
   const dt = Math.min(50, now - last); last = now;
   // Faixa do grupo: na dungeon, na batalha e com o menu aberto (na vila a cena fica livre)
   gameEl.classList.toggle('show-party', G.mode === 'battle' || G.mode === 'explore' || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
+  wmBtn.hidden = !canWorldMap();
   if (G.mode === 'title') {
     TitleBG.draw(vctx, now); // paisagem de Eterra à noite (src/titlebg.js)
   } else if (G.mode === 'town') {

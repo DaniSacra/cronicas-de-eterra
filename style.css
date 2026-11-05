@@ -173,3 +173,47 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #menu.icons .opt.sel img { animation: nudge .5s steps(1) infinite; }
 #menu.icons .opt.dis img { filter: grayscale(1) brightness(.5); }
 @media (min-width: 1200px) and (min-height: 700px) { #menu.icons .opt { font-size: var(--f2); } }
+
+/* ---- Mapa de Eterra (mapa-múndi) ---- */
+#wmBtn { position: absolute; z-index: 4; top: calc(var(--u) * 4); right: calc(var(--u) * 4); font-family: inherit; font-size: var(--f1);
+  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 3) calc(var(--u) * 4); cursor: pointer;
+  background: var(--win); color: var(--text); border: var(--u) solid var(--ink); clip-path: var(--notch);
+  box-shadow: inset 0 0 0 var(--u) var(--bone), inset 0 0 0 calc(var(--u) * 2) var(--brass); }
+#wmBtn[hidden] { display: none; }
+#wmBtn:hover { color: var(--gold); }
+.wm-ico { width: calc(var(--u) * 5); height: calc(var(--u) * 4); background:
+  linear-gradient(90deg, #4e8a40 0 33%, #d6ad5c 33% 66%, #dfe8ee 66%); box-shadow: 0 0 0 var(--u) var(--ink); }
+#worldmap { position: absolute; inset: 0; z-index: 20; display: none; background: rgba(3, 3, 12, .94);
+  padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);
+  grid-template-columns: minmax(0, 1fr) minmax(12em, 30%); grid-template-rows: auto minmax(0, 1fr); }
+#worldmap.open { display: grid; }
+.wm-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u) * 3) calc(var(--u) * 5);
+  font-size: var(--f2); color: var(--gold); }
+#worldmap.autor .wm-head { color: #e0a0ff; }
+.wm-close { font-family: inherit; font-size: var(--f1); background: none; border: 0; color: var(--text); cursor: pointer; padding: calc(var(--u) * 2); }
+.wm-close:hover { color: var(--gold); }
+.wm-cell { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.wm-map { position: relative; flex: none; box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--bone), 0 0 0 calc(var(--u) * 3) var(--brass); }
+.wm-map canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.wm-pt { position: absolute; translate: -50% -50%; background: none; border: 0; padding: calc(var(--u) * 3); cursor: pointer; font-family: inherit; color: var(--text); }
+.wm-pt i { display: block; width: calc(var(--u) * 4); height: calc(var(--u) * 4); background: var(--bone); box-shadow: 0 0 0 var(--u) var(--ink); }
+.wm-pt.visto i { background: var(--gold); }
+.wm-pt.boato i { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--bone), 0 0 0 var(--u) var(--ink); }
+.wm-pt.segredo i { background: #b060e0; rotate: 45deg; }
+.wm-pt.aqui i { background: var(--hp); animation: wmblink 1s steps(1) infinite; }
+@keyframes wmblink { 50% { background: var(--gold); } }
+.wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none;
+  text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); display: none; }
+.wm-pt.aqui .wm-lbl, .wm-pt.visto .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
+.wm-pt.sel { z-index: 2; }
+.wm-pt.sel .wm-lbl { color: var(--gold); }
+.wm-pt.sel i { outline: var(--u) solid var(--gold); outline-offset: var(--u); }
+.wm-k { font-size: var(--f1); letter-spacing: .3em; color: rgba(7, 8, 26, .55); white-space: nowrap; }
+.wm-pt.reino.sel .wm-k, .wm-pt.reino:hover .wm-k { color: var(--ink); text-shadow: 0 0 calc(var(--u) * 2) var(--gold); }
+.wm-info { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); font-size: var(--f1); line-height: 1.9; }
+.wm-info .wm-name { font-size: var(--f2); color: var(--gold); line-height: 1.4; margin-bottom: calc(var(--u) * 2); }
+.wm-info .wm-tag { color: var(--dim); margin-bottom: calc(var(--u) * 3); }
+.wm-info p { margin: 0 0 calc(var(--u) * 3); user-select: text; -webkit-user-select: text; }
+@media (orientation: portrait), (max-width: 700px) {
+  #worldmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 38%); }
+}

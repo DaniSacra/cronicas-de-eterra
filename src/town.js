@@ -2,8 +2,11 @@
 
 const TS = 16, TOWN_W = 32, TOWN_H = 22;
 const TILE = { GRASS: 0, PATH: 1, WATER: 2, TREE: 3, CLIFF: 4, BUSH: 5, FLOWER: 6,
-  FLOOR: 7, WALL: 8, COUNTER: 9, TABLE: 10, HEARTH: 11, BARREL: 12, DOOR: 13 };
-const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR]);
+  FLOOR: 7, WALL: 8, COUNTER: 9, TABLE: 10, HEARTH: 11, BARREL: 12, DOOR: 13,
+  // cemitério
+  GATE: 14, MURO: 15, TOMB: 16, GRAVE_O: 17, GRAVE_U: 18, GRAVE_OLD: 19, DEADTREE: 20 };
+const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE]);
+const isInterior = t => t >= TILE.FLOOR && t <= TILE.DOOR;
 const TDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
 const CRYPT_FRONT = { x: 27, y: 18, dir: 2 };
 const SHOP = [['pocao', 15], ['eter', 30], ['pena', 60]];
@@ -36,12 +39,15 @@ const LOOKS = {
   ana:   { skin: '#e0b898', hair: '#e8e8e8', body: '#7a5a3a', legs: '#3a2a20', robe: true, long: true },
   soldier: { skin: '#e0b080', hair: '#888', body: '#6a7484', legs: '#3a3a4a', hat: '#a0a8b8' },
   tobias: { skin: '#e0b080', hair: '#5a3a1a', body: '#e8eef8', legs: '#3a5aa8', robe: true },
+  ossada: { skin: '#e8e2d0', hair: '#e8e2d0', body: '#cfc8b4', legs: '#bfb8a4', mark: '#2a2420' },
   hooded: { skin: '#2a2228', hair: '#6a6a72', body: '#7a7a82', legs: '#3a3a42', hat: '#6a6a72', robe: true, mark: '#e02030' },
 };
 
 const say = (name, lines) => lines.reduce((p, l) => p.then(() => UI.say(`${name}:\n${l}`)), Promise.resolve());
-const stage = () => G.bossDead ? 'won' : G.quest ? 'quest' : 'start';
-const byStage = o => o[stage()] || o.quest || o.start;
+// Etapas da vila: arrive (Aldo acabou de chegar) · start (depois da noite na taverna) · quest (missão do ancião) · won
+const stage = () => G.bossDead ? 'won' : G.quest ? 'quest' : G.intro ? 'start' : 'arrive';
+const STAGE_FALLBACK = { arrive: ['arrive', 'start'], start: ['start'], quest: ['quest', 'start'], won: ['won', 'quest', 'start'] };
+const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return o[k]; return o.start || o.quest || o.won; };
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, lines: {
@@ -84,6 +90,8 @@ function buildTownMap() {
   rect(6, 18, 29, 18, TILE.PATH);     // rua do sul, até a cripta
   rect(9, 10, 11, 10, TILE.PATH);     // trilha do lago
   for (const b of BUILDINGS) set(b.door.x, b.door.y + 1, TILE.PATH);
+  // Portão do cemitério, colado à capela, ligado à rua principal
+  set(5, 4, TILE.PATH); set(5, 5, TILE.PATH); set(5, 3, TILE.GATE);
   // Lago
   rect(4, 9, 8, 9, TILE.WATER); rect(3, 10, 8, 11, TILE.WATER); rect(3, 12, 7, 12, TILE.WATER);
 
@@ -160,7 +168,8 @@ function drawTownLayer(A) {
 
   for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
     const X = x * TS, Y = y * TS, t = TOWN.tileAt(x, y);
-    if (t >= TILE.FLOOR) { drawInteriorTile(c, t, X, Y, x, y, speckle); continue; }
+    if (isInterior(t)) { drawInteriorTile(c, t, X, Y, x, y, speckle); continue; }
+    if (t >= TILE.GATE) { grass(X, Y); drawGraveTile(c, t, X, Y, x, y, px, rng); continue; }
     if (t === TILE.CLIFF) {
       c.fillStyle = '#e6d49a'; c.fillRect(X, Y, TS, TS); speckle(X, Y, ['#d4bd7c', '#f2e4b4'], 10);
       c.fillStyle = '#9a6430'; c.fillRect(X, Y + 11, TS, 5);
@@ -201,6 +210,37 @@ function drawTownLayer(A) {
   }
   for (const b of A.buildings) drawBuilding(c, b);
   return cv;
+}
+
+// Cemitério: muro, portão, lápides, covas e árvores secas (grama já pintada embaixo)
+function drawGraveTile(c, t, X, Y, x, y, px, rng) {
+  const R = (x0, y0, w, h, col) => { c.fillStyle = col; c.fillRect(X + x0, Y + y0, w, h); };
+  if (t === TILE.GATE) {
+    R(0, 2, 4, 14, '#8a8a94'); R(12, 2, 4, 14, '#8a8a94'); R(0, 2, 4, 1, '#b0b0ba'); R(12, 2, 4, 1, '#b0b0ba');
+    for (let i = 5; i < 12; i += 2) R(i, 4, 1, 12, '#2a2a30');
+    R(4, 5, 8, 1, '#2a2a30'); R(4, 11, 8, 1, '#2a2a30');
+  } else if (t === TILE.MURO) {
+    R(0, 4, 16, 12, '#6e6c78'); R(0, 4, 16, 2, '#9a98a4');
+    for (let r = 0; r < 3; r++) for (let k = (r % 2) * 4; k < 16; k += 8) R(k, 7 + r * 3, 1, 3, '#55535e');
+    R(0, 9, 16, 1, '#55535e'); R(0, 12, 16, 1, '#55535e');
+  } else if (t === TILE.TOMB) {
+    R(4, 13, 9, 2, 'rgba(0,0,0,.3)');
+    R(4, 5, 8, 9, '#9a98a4'); R(5, 4, 6, 1, '#9a98a4'); R(4, 5, 1, 9, '#bcbac6'); R(11, 5, 1, 9, '#6e6c78');
+    R(6, 7, 4, 1, '#6e6c78'); R(6, 9, 4, 1, '#6e6c78');
+  } else if (t === TILE.GRAVE_O) {
+    R(3, 2, 10, 12, '#3a2a1e'); R(4, 3, 8, 10, '#22180f');
+    for (const [a, b] of [[2, 1], [10, 1], [1, 12], [12, 13], [6, 0]]) R(a, b, 3, 2, '#5a4230'); // torrões empurrados para fora
+  } else if (t === TILE.GRAVE_U) {
+    R(2, 3, 9, 11, '#2a1e14'); R(3, 4, 7, 9, '#1a120a');
+    R(11, 5, 4, 8, '#6a4a30'); R(12, 4, 2, 2, '#7a5a3a'); // monte de terra ao lado
+  } else if (t === TILE.GRAVE_OLD) {
+    R(3, 14, 11, 2, 'rgba(0,0,0,.3)');
+    R(3, 3, 10, 11, '#8a8894'); R(4, 2, 8, 1, '#8a8894'); R(3, 3, 1, 11, '#aeacb8');
+    R(7, 3, 1, 4, '#3a3840'); R(8, 6, 1, 4, '#3a3840'); R(7, 10, 1, 3, '#3a3840'); // rachadura
+  } else if (t === TILE.DEADTREE) {
+    R(7, 6, 2, 10, '#5a4a3e'); R(3, 4, 4, 1, '#6a5a4e'); R(9, 3, 4, 1, '#6a5a4e'); R(5, 2, 1, 3, '#6a5a4e');
+    R(11, 1, 1, 3, '#6a5a4e'); R(6, 5, 1, 2, '#6a5a4e'); R(9, 4, 1, 2, '#6a5a4e'); R(4, 15, 9, 1, 'rgba(0,0,0,.3)');
+  }
 }
 
 function drawInteriorTile(c, t, X, Y, x, y, speckle) {
@@ -377,18 +417,18 @@ function personSprite(key, dir, frame) {
   return (PSPR[k] = cv);
 }
 
-function catSprite(dir, frame) {
-  const k = `cat|${dir}|${frame}`;
+function catSprite(dir, frame, fur = '#e09038', stripe = '#b06a20') {
+  const k = `cat|${dir}|${frame}|${fur}`;
   if (PSPR[k]) return PSPR[k];
   const cv = document.createElement('canvas'); cv.width = 16; cv.height = 18;
   const c = cv.getContext('2d');
   const r = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
   r(3, 15, 10, 2, 'rgba(0,0,0,.3)');
-  r(3, 10, 8, 4, '#e09038'); r(5, 10, 1, 4, '#b06a20'); r(8, 10, 1, 4, '#b06a20');
-  r(10, 7, 5, 5, '#e09038'); r(10, 6, 1, 1, '#e09038'); r(14, 6, 1, 1, '#e09038');
+  r(3, 10, 8, 4, fur); r(5, 10, 1, 4, stripe); r(8, 10, 1, 4, stripe);
+  r(10, 7, 5, 5, fur); r(10, 6, 1, 1, fur); r(14, 6, 1, 1, fur);
   r(11, 9, 1, 1, '#222'); r(13, 9, 1, 1, '#222'); r(12, 10, 1, 1, '#f8a0a0');
-  r(1, 7 + frame, 2, 1, '#e09038'); r(2, 8, 1, 3, '#e09038');
-  r(4, 14, 1, 2 - frame, '#b06a20'); r(9, 14, 1, 1 + frame, '#b06a20');
+  r(1, 7 + frame, 2, 1, fur); r(2, 8, 1, 3, fur);
+  r(4, 14, 1, 2 - frame, stripe); r(9, 14, 1, 1 + frame, stripe);
   if (dir === 3) {
     const f = document.createElement('canvas'); f.width = 16; f.height = 18;
     const fc = f.getContext('2d'); fc.translate(16, 0); fc.scale(-1, 1); fc.drawImage(cv, 0, 0);
@@ -397,13 +437,33 @@ function catSprite(dir, frame) {
   return (PSPR[k] = cv);
 }
 
+// Dois morcegos lado a lado, batendo as asas (inimigo visível no cemitério)
+function batsSprite(now) {
+  const up = Math.floor(now / 300) % 2, k = `bats|${up}`;
+  if (PSPR[k]) return PSPR[k];
+  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 18;
+  const c = cv.getContext('2d'), r = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  for (const [ox, oy] of [[1, 4], [9, 8]]) {
+    r(ox + 1, oy + 2, 4, 3, '#4a3a5a');
+    if (up) { r(ox - 1, oy, 2, 2, '#4a3a5a'); r(ox + 5, oy, 2, 2, '#4a3a5a'); }
+    else { r(ox - 1, oy + 4, 2, 2, '#4a3a5a'); r(ox + 5, oy + 4, 2, 2, '#4a3a5a'); }
+    r(ox + 2, oy + 3, 1, 1, '#ffdd33'); r(ox + 4, oy + 3, 1, 1, '#ffdd33');
+  }
+  return (PSPR[k] = cv);
+}
+function foeSprite(n, now) {
+  if (n.def.foe === 'rat') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 400) % 2, '#7a6a5a', '#4a3a2e');
+  if (n.def.foe === 'bats') return batsSprite(now);
+  return personSprite('ossada', n.dir, 0);
+}
+
 // ---------- Estado da vila ----------
 function newActor(x, y, dir) { return { x, y, dir, fx: x, fy: y, t: 1, dur: 180, frame: 0 }; }
 const actorPos = a => { const k = Math.min(1, a.t); return { x: (a.fx + (a.x - a.fx) * k) * TS, y: (a.fy + (a.y - a.fy) * k) * TS }; };
 function moveActor(a, x, y, dur) { a.fx = a.x; a.fy = a.y; a.x = x; a.y = y; a.t = 0; a.dur = dur; a.frame ^= 1; }
 
-function guardHome() { return G.quest ? { x: 28, y: 18 } : { x: 27, y: 18 }; }
-const areaNpcs = area => area === 'taverna' ? TAVERN_NPCS : NPC_DEFS;
+function guardHome() { return G.quest && G.party.length === 4 && G.seen.hugo4 ? { x: 28, y: 18 } : { x: 27, y: 18 }; }
+const areaNpcs = area => AREAS[area].cast ? AREAS[area].cast() : NPC_DEFS;
 function spawnNpc(d) {
   const h = d.id === 'guard' ? guardHome() : d;
   return { ...newActor(h.x, h.y, d.dir), def: d, home: { x: h.x, y: h.y }, wait: d.wander ? rnd(500, 2500) : 1e9 };
@@ -414,14 +474,26 @@ function enterTown(pos, area = 'valmor', cast = null) {
   G.mode = 'town';
   G.area = area;
   TOWN.A = AREAS[area];
-  TOWN.dim = 0;
+  TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0;
   G.town = { x: pos.x, y: pos.y, dir: pos.dir };
   if (!TOWN.A.layer) TOWN.A.layer = drawTownLayer(TOWN.A);
   TOWN.p = newActor(pos.x, pos.y, pos.dir);
   TOWN.followers = G.party.slice(1).map(() => newActor(pos.x, pos.y, pos.dir));
   TOWN.npcs = (cast || areaNpcs(area)).map(spawnNpc);
   G.queue.length = 0; G.held.clear();
-  Music.play('town');
+  TOWN.moved = false;
+  Music.play(TOWN.A.music ? TOWN.A.music() : 'town');
+}
+
+// Saídas das áreas (porta da taverna, portão do cemitério...): pisar nelas troca de área
+async function goArea(ex) {
+  if (ex.check) { const msg = ex.check(); if (msg) { await UI.say(msg); return; } }
+  if (ex.enter) return ex.enter();
+  Sfx.select();
+  await fadeTo(1, 300);
+  enterTown(ex.pos, ex.to);
+  await fadeTo(0, 300);
+  if (TOWN.A.onEnter) await TOWN.A.onEnter();
 }
 
 const npcAt = (x, y) => TOWN.npcs.find(n => n.x === x && n.y === y);
@@ -451,7 +523,8 @@ function tryTownMove(d) {
   P.dir = d;
   const [dx, dy] = TDIRS[d], nx = P.x + dx, ny = P.y + dy;
   if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada segue para Erukh.\nVocês não podem partir enquanto a vila corre perigo.')); return; }
-  if (TOWN.tileAt(nx, ny) === TILE.DOOR) { townBusy(() => leaveTavern()); return; }
+  const ex = (TOWN.A.exits || []).find(e => e.x === nx && e.y === ny);
+  if (ex) { townBusy(() => goArea(ex)); return; }
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny && d === 0) { townBusy(() => enterBuilding(b)); return; }
   // Moradores só conversam com Espaço (townAction); andar contra eles só esbarra
@@ -460,6 +533,7 @@ function tryTownMove(d) {
   for (let i = F.length - 1; i > 0; i--) moveActor(F[i], F[i - 1].x, F[i - 1].y, 180);
   if (F[0]) moveActor(F[0], P.x, P.y, 180);
   moveActor(P, nx, ny, 180);
+  TOWN.moved = true;
   F.forEach(f => { f.dir = f.x !== f.fx ? (f.x > f.fx ? 1 : 3) : f.y !== f.fy ? (f.y > f.fy ? 2 : 0) : f.dir; });
   if (++TOWN.step % 2) Sfx.step();
 }
@@ -476,12 +550,20 @@ function townAction(openMenu = true) {
   if (npc) return townBusy(() => talkTo(npc));
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny) return townBusy(() => enterBuilding(b));
+  const look = TOWN.A.look && TOWN.A.look(nx, ny);
+  if (look) return townBusy(look);
   if (openMenu) campMenu();
 }
 
 function updateTown(dt) {
   const P = TOWN.p;
   for (const a of [P, ...TOWN.followers, ...TOWN.npcs]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
+  // Gatilhos ao pisar (lutas e achados do cemitério, cena do Teo...)
+  if (P.t >= 1 && TOWN.moved && !G.busy && !UI.busy()) {
+    TOWN.moved = false;
+    const fn = TOWN.A.onStep && TOWN.A.onStep(P.x, P.y);
+    if (fn) { townBusy(fn); return; }
+  }
   if (P.t >= 1 && !G.busy && !UI.busy()) {
     let d = null;
     while (G.queue.length && d === null) d = townDir(G.queue.shift());
@@ -505,14 +587,33 @@ function updateTown(dt) {
 // ---------- Conversas e prédios ----------
 async function talkTo(n) {
   n.talking = true;
-  n.dir = (TOWN.p.dir + 2) % 4;
-  try { await say(n.def.name, byStage(n.def.lines)); } finally { n.talking = false; }
+  if (!n.def.foe) n.dir = (TOWN.p.dir + 2) % 4;
+  try {
+    if (n.def.onTalk) await n.def.onTalk(n);
+    else if (n.def.id === 'guard') await guardTalk(n);
+    else await say(n.def.name, byStage(n.def.lines));
+  } finally { n.talking = false; }
+}
+
+// Guarda Hugo: só deixa descer com a missão do ancião e um grupo de quatro
+async function guardTalk(n) {
+  const nm = 'Guarda Hugo';
+  if (!G.quest || G.bossDead) return say(nm, byStage(NPC_DEFS[0].lines));
+  if (G.party.length < 4) return say(nm, ['Ordem do ancião: só desce grupo de quatro. Eu conto daqui.']);
+  if (!G.seen.hugo4) {
+    G.seen.hugo4 = 1;
+    await say(nm, ['Quatro. Assim o ancião aceita. Que a luz os guie lá embaixo.']);
+    const guard = n || TOWN.npcs.find(a => a.def.id === 'guard');
+    if (guard) { const h = guardHome(); guard.home = h; moveActor(guard, h.x, h.y, 400); guard.dir = 3; }
+    return;
+  }
+  return say(nm, byStage(NPC_DEFS[0].lines));
 }
 
 async function enterBuilding(b) {
   Sfx.select();
   if (b.id === 'crypt') {
-    if (!G.quest) { await say('Guarda Hugo', NPC_DEFS[0].lines.start); return; }
+    if (!G.quest || G.party.length < 4 || !G.seen.hugo4) { await guardTalk(null); return; }
     const ok = await UI.choose([{ label: 'Descer', value: true }, { label: 'Ficar', value: false }],
       { title: 'Uma escadaria úmida desce para as catacumbas de Valmor.', cancel: true });
     if (ok) await enterDungeon();
@@ -538,6 +639,7 @@ async function enterBuilding(b) {
 }
 
 async function enterTavern() {
+  if (inParty('teo') && !G.intro) return nightScene(); // Aldo e Teo voltam do cemitério: a noite do mensageiro
   await fadeTo(1, 300);
   enterTown(TAVERN_INSIDE, 'taverna');
   await fadeTo(0, 300);
@@ -552,6 +654,8 @@ async function leaveTavern() {
 async function elderTalk() {
   const nm = 'Ancião Bertoldo';
   if (G.bossDead) { await say(nm, ['Vocês salvaram Valmor!', 'Seus nomes serão lembrados por cem anos, e mais cem depois disso.', 'Dizem os antigos que Morvath não foi o único rei a cair. Rezo para que seja o último.', 'Agora levem a carta de Shulkhan a Erukh. A rainha Lara precisa saber.']); return; }
+  if (!G.intro) { await say(nm, ['Forasteiro? Hoje não tenho trabalho. A Berta, na taverna, sempre precisa de braços.']); return; }
+  if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
@@ -559,14 +663,13 @@ async function elderTalk() {
     'Se mataram por ela, o que tem dentro é maior que Valmor.',
     'Debaixo da nossa cripta dorme um rei, selado na guerra de Elun.',
     'Não digo o nome dele. Não aqui em cima.',
-    'Desçam e vejam se o selo ainda segura. O guarda Hugo vai deixá-los passar.',
+    `Mas ${G.party.length === 3 ? 'três' : 'dois'} não descem lá. Os paladinos que fecharam a cripta eram quatro, um em cada canto do selo.`,
+    G.party.length < 4 ? `Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada. Aí o Hugo deixa passar.` : 'Vocês são quatro. Mostrem isso ao Hugo e ele deixa passar.',
   ]);
   G.quest = 1;
   G.inv.pocao = (G.inv.pocao || 0) + 2;
   Sfx.chest();
-  await UI.say('O ancião entrega 2 Poções ao grupo.\nNova missão: descer à cripta e descobrir o que acorda os mortos.');
-  const guard = TOWN.npcs.find(n => n.def.id === 'guard');
-  if (guard) { const h = guardHome(); guard.home = h; moveActor(guard, h.x, h.y, 400); guard.dir = 3; }
+  await UI.say('O ancião entrega 2 Poções ao grupo.\nNova missão: reunir um grupo de quatro e descer à cripta.');
 }
 
 async function chapel() {
@@ -574,10 +677,11 @@ async function chapel() {
   for (;;) {
     const v = await UI.choose([
       { label: 'Orar', hint: 'restaura e salva', value: 'pray' }, { label: 'Conversar', value: 'talk' }, { label: 'Sair', value: null },
-    ], { title: `${nm}:\nBem-vindos à capela de Valmor.`, cancel: true, cols: 3 });
+    ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3 });
     if (v === null) return;
     if (v === 'talk' && G.quest) G.seen.tobias = 1;
     if (v === 'talk') await say(nm, byStage({
+      arrive: ['Bem-vindo, forasteiro. A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro acordou. Disse o nome dele: Tobias.', 'Perguntou se a carta continua fechada. Quando eu disse que sim, chorou.', 'E disse que os encapuzados não vieram a Valmor só pela carta.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       won: ['Toquei os sinos o dia inteiro. Meus braços doem, mas valeu a pena!'] }));
@@ -636,16 +740,37 @@ function drawTown(now) {
   const list = [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, a.t < 1 ? a.frame : 0) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, TOWN.p.t < 1 ? TOWN.p.frame : 0), lead: true },
-    ...TOWN.npcs.map(n => ({ a: n, lying: n.lying, spr: () => n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.t < 1 ? n.frame : 0) })),
+    ...TOWN.npcs.map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.t < 1 ? n.frame : 0) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
   for (const o of list) {
     const x = Math.round(o.pos.x - camX), y = Math.round(o.pos.y - camY - 3);
-    if (!o.lying) { c.drawImage(o.spr(), x, y); continue; }
+    if (!o.lying) {
+      c.drawImage(o.spr(), x, y);
+      // Aviso de luta: "!" amarelo piscando sobre o inimigo quando o herói chega perto
+      if (o.foe && Math.abs(o.a.x - TOWN.p.x) + Math.abs(o.a.y - TOWN.p.y) <= 3 && Math.floor(now / 250) % 2) {
+        c.fillStyle = '#1a1000'; c.fillRect(x + 6, y - 9, 4, 8); c.fillStyle = '#ffd23f'; c.fillRect(x + 7, y - 8, 2, 4); c.fillRect(x + 7, y - 3, 2, 1);
+      }
+      continue;
+    }
     c.save(); c.translate(x + 8, y + 11); c.rotate(-Math.PI / 2); c.drawImage(o.spr(), -8, -9); c.restore();
   }
-  if (TOWN.dim > 0) { c.fillStyle = `rgba(4,2,16,${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  // Névoa baixa (cemitério): faixas claras deslizando devagar
+  if (A.fog) {
+    // faixas com borda macia em cima e embaixo; cada faixa é mais densa no meio e some nas pontas
+    for (let i = 0; i < 3; i++) {
+      const y = Math.round(VH * (0.22 + i * 0.28)), h = 40, w = VW * 0.9;
+      const off = (((now / 80) * (i % 2 ? -1 : 1) + i * 300) % (VW + w) + VW + w) % (VW + w) - w;
+      for (let r = 0; r < h; r += 2) {
+        const a = 0.13 * Math.sin(Math.PI * r / h);
+        const gr = c.createLinearGradient(off, 0, off + w, 0);
+        gr.addColorStop(0, 'rgba(220,230,240,0)'); gr.addColorStop(0.5, `rgba(220,230,240,${a.toFixed(3)})`); gr.addColorStop(1, 'rgba(220,230,240,0)');
+        c.fillStyle = gr; c.fillRect(Math.round(off), y + r, Math.round(w), 2);
+      }
+    }
+  }
 
   c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'left';
   const label = `${A.short}  ${G.gold}G`, lw = Math.ceil(c.measureText(label).width);

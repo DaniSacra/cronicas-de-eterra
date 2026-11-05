@@ -116,7 +116,14 @@ const ENEMIES = {
                skill: { name: 'Toque Gélido', chance: 0.35, kind: 'mag', power: 30 }, drop: ['eter', 0.15] },
   golem:     { name: 'Golem de Pedra',  hp: 130, atk: 30, def: 22, agi: 4,  xp: 48, sprite: 'golem',
                pal: { base: '#7a7266', light: '#aaa296', dark: '#3c3830', eye: '#ffa020' }, drop: ['pocao', 0.2] },
-  encapuzado: { name: 'Encapuzado', hp: 22, atk: 9, def: 2, agi: 5, xp: 8, sprite: 'hooded',
+  // Cemitério de Valmor: mais fracos que os da cripta, para o Aldo aprender sozinho
+  ratoCova:    { name: 'Rato de Cova', hp: 14, atk: 8,  def: 1, agi: 6,  xp: 4, sprite: 'rat',
+               pal: { base: '#7a7068', light: '#a89c90', dark: '#3e3830', eye: '#ff5050' } },
+  morcegoCova: { name: 'Morcego',      hp: 10, atk: 8,  def: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
+               pal: { base: '#5a4a5a', light: '#8a7a8a', dark: '#2a1e2a', eye: '#ffdd33' } },
+  ossada:      { name: 'Ossada',       hp: 22, atk: 10, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true,
+               pal: { base: '#c8c0aa', light: '#ece6d4', dark: '#6e6656', eye: '#c0ff60' }, drop: ['pocao', 0.2] },
+  encapuzado: { name: 'Encapuzado', hp: 28, atk: 12, def: 3, agi: 6, xp: 10, sprite: 'hooded',
                pal: { base: '#6e6e78', light: '#a0a0aa', dark: '#2e2e36', eye: '#e02030' }, drop: ['pocao', 0.25] },
   morvath:   { name: 'Morvath, o Lich-Rei', hp: 310, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'lich', undead: true, boss: true, float: true,
                pal: { base: '#4a2a6a', light: '#8a5ab0', dark: '#1a0a2a', eye: '#40ff80' } },
@@ -133,6 +140,8 @@ const KEY_ITEMS = {
     'Humildemente peço para que sua família seja diligente por Elun como foste no passado.',
     'Toda Eterra precisa que impeça que o egresso clérigo invoque os reis do exílio.\nDe seu servo.\nShulkhan.',
   ] },
+  estojo: { name: 'Estojo de ganchos', desc: 'Item de missão',
+    text: ['Um estojo de couro cheio de ganchinhos de metal.', 'Ferramenta de quem abre o que não é seu.'] },
 };
 
 function xpNext(lv) { return Math.floor(12 * Math.pow(lv, 1.9)); }
@@ -140,26 +149,42 @@ function xpNext(lv) { return Math.floor(12 * Math.pow(lv, 1.9)); }
 // ===== Diário de missões =====
 // Textos do storyteller (docs/mundo/historias/abertura-o-mensageiro-ferido.md, "Diário de missões").
 // O título e o objetivo mudam com a etapa; as anotações se acumulam conforme o grupo descobre as coisas.
+const four = () => G.party.length === 4;
 const JOURNAL = {
-  title: () => G.bossDead ? 'A caminho de Erukh' : G.seen.lapide ? 'O rei sob a cripta' : G.quest ? 'O que acorda os mortos' : 'A carta lacrada',
+  title: () => G.bossDead ? 'A caminho de Erukh' : G.seen.lapide ? 'O rei sob a cripta'
+    : G.quest && four() ? 'O que acorda os mortos' : G.quest ? 'Quatro cantos'
+    : G.intro ? 'A carta lacrada' : G.seen.job ? 'As covas abertas' : 'Um pouso para o inverno',
   goal: () => G.bossDead ? 'levar a carta lacrada à rainha Lara, em Erukh.'
     : G.seen.altar ? 'derrotar Morvath antes que o selo caia.'
     : G.seen.lapide ? 'encontrar o selo de Morvath, no fundo da cripta.'
     : G.reached >= 1 ? 'explorar a cripta. A fonte de luz cura e salva.'
-    : G.quest ? 'descer à cripta e descobrir o que acorda os mortos.'
-    : 'falar com o ancião Bertoldo, na casa de telhado verde.',
+    : G.quest && four() ? 'descer à cripta e descobrir o que acorda os mortos.'
+    : G.quest ? 'reunir um grupo de quatro. Há gente de estrada na taverna.'
+    : G.intro ? 'falar com o ancião Bertoldo, na casa de telhado verde.'
+    : inParty('teo') ? 'voltar à taverna e contar à Berta o que viram.'
+    : G.seen.job ? 'investigar as covas abertas no cemitério, atrás da capela.'
+    : 'achar pouso na Taverna do Caldeirão Partido.',
   notes: [
+    { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
+    { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
+    { show: () => G.key.estojo || inParty('andilla'), text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
+    { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, noviço do Templo, veio conosco.' },
     { show: () => G.intro, text: 'Um mensageiro do Templo caiu na taverna com uma carta para a rainha.' },
     { show: () => G.intro, text: 'Dois encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
+    { show: () => G.intro, text: 'A moça dos dados sumiu antes da luta. Usa capa cinza, como eles.' },
     { show: () => G.intro, text: 'Teo não quer romper o selo do sumo sacerdote.' },
     { show: () => G.quest, text: 'O selo é de Shulkhan, o sumo sacerdote.' },
     { show: () => G.quest, text: 'Sob a cripta dorme um rei, selado na guerra de Elun. O ancião não quis dizer o nome.' },
+    { show: () => G.quest, text: 'Os paladinos que fecharam a cripta eram quatro. O ancião quer quatro para descer.' },
+    { show: () => inParty('lyra'), text: 'Lyra, uma maga, quer ver a fonte de luz da cripta. Veio conosco.' },
+    { show: () => inParty('andilla'), get text() { return `O estojo era de ${heroName('andilla')}. Ela não diz o que fazia no cemitério.`; } },
     { show: () => G.seen.tobias, text: 'Tobias acordou. Diz que os encapuzados não vieram só pela carta.' },
     { show: () => G.reached >= 1, text: 'A marca dos encapuzados está pintada na parede da cripta. Eles já estiveram aqui.' },
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },
     { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo está cedendo. Quem é V.?' },
     { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados adoram Morvath?' },
     { show: () => G.bossDead, text: 'Morvath virou pó. Antes, disse que não foi ele quem abriu o selo.' },
+    { show: () => G.bossDead && inParty('andilla'), get text() { return `${heroName('andilla')} não cavou as covas. Então quem cavou, e por quê?`; } },
     { show: () => G.bossDead, text: 'Tobias pediu: a carta vai lacrada até a rainha. Em Erukh, não confiar em ninguém antes dela.' },
   ],
 };

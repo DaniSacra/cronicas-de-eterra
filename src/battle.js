@@ -287,7 +287,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600 };
   await wait(650);
   const names = B.enemies.map(ename);
-  await UI.say(isBoss ? 'Morvath, o Lich-Rei, ergue-se do trono de ossos!\n"Cem anos no escuro... Valmor será meu reino outra vez."'
+  await UI.say(isBoss ? 'Morvath, o Lich-Rei, ergue-se do trono de ossos!\n"Tanto tempo no escuro... Valmor será meu reino outra vez."'
     : opts.intro || `${names.join(', ')} ${names.length > 1 ? 'aparecem' : 'aparece'}!`, { auto: isBoss ? 3200 : 1300 });
 
   G.party.forEach(m => { m.defending = false; });
