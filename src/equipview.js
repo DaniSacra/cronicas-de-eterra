@@ -37,7 +37,7 @@ const HeroView = (() => {
     const spells = knownSpells(m);
     root.querySelector('.hv-hero').innerHTML = `
       <div class="hv-id"><img class="hv-face slot-frame" src="${face(m.id)}" alt="">
-        <div><h3 style="color:${d.color}">${esc(d.name)}</h3><p>${esc(d.cls)} · Nível ${m.lv}</p><p class="dim">XP ${m.xp}/${xpNext(m.lv)}</p>${dead ? '<p class="hv-ko">Caído</p>' : ''}</div></div>
+        <div><h3 style="color:color-mix(in srgb, ${d.color} 62%, #2a1206)">${esc(d.name)}</h3><p>${esc(d.cls)} · Nível ${m.lv}</p><p class="dim">XP ${m.xp}/${xpNext(m.lv)}</p>${dead ? '<p class="hv-ko">Caído</p>' : ''}</div></div>
       <div class="hv-bars"><div>PV ${m.hp}/${maxHp(m)}</div><div class="bar"><i style="width:${100 * m.hp / maxHp(m)}%"></i></div>
         <div>PM ${m.mp}/${maxMp(m)}</div><div class="bar mp"><i style="width:${maxMp(m) ? 100 * m.mp / maxMp(m) : 0}%"></i></div></div>
       <div class="hv-stats">${['atk', 'def', 'mag', 'agi'].map(st).join('')}</div>

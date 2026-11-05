@@ -20,40 +20,46 @@ const UI_PAL = {
   b: '#7a4a22', n: '#a3683a', // leather
   y: '#e8d9a8', // parchment
   B: '#2a4f9a', // deep blue (ether)
+  // window kit: warm parchment in a wooden frame with a brass trim (letters used only by the frame)
+  K: '#24140a', // frame outline
+  f: '#9a6236', // wood
+  F: '#5c3318', // dark wood
+  q: '#ecd8aa', // parchment
+  Q: '#d6b984', // parchment, darker (slots, inset)
 };
 
 // ---------- 9-slice frame: 16×16 tile, 3 px corners, 10 px tileable edges ----------
-const FRAME_SLICE = 3;
+const FRAME_SLICE = 4;
 const FRAME_GRID = [
-  '..kkkkkkkkkkkk..',
-  '.krrrrrrrrrrrrk.',
-  'krkkkkkkkkkkkksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkwwwwwwwwwwksk',
-  'krkkkkkkkkkkkksk',
-  '.kssssssssssssk.',
-  '..kkkkkkkkkkkk..',
+  '..KKKKKKKKKKKK..',
+  '.KffffffffffffK.',
+  'KfgFFFFFFFFFFgfK',
+  'KfFooooooooooFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFoqqqqqqqqoFfK',
+  'KfFooooooooooFfK',
+  'KfgFFFFFFFFFFgfK',
+  '.KffffffffffffK.',
+  '..KKKKKKKKKKKK..',
 ];
 // Variants recolor the same grid: one shape, several roles.
 const FRAME_VARIANTS = {
   base:   {},
-  sel:    { r: 'g', s: 'o' },          // active card, chosen command, focused button
-  danger: { r: 'd', s: 'D' },          // boss bar, low-HP warning
-  slot:   { r: 's', s: 'k', w: 'W' },  // inner slots: icons, turn queue, map list rows
+  sel:    { f: 'g', F: 'o', g: 't' },          // active card, chosen command, focused button
+  danger: { f: 'd', F: 'D' },                  // boss bar, low-HP warning
+  slot:   { f: 'F', F: 'F', o: 'K', g: 'F', q: 'Q' },  // inner slots: icons, turn queue, map list rows
 };
 
 const recolor = (grid, map) => grid.map(row => [...row].map(ch => map[ch] || ch).join(''));
 const frameGrid = (variant = 'base') => recolor(FRAME_GRID, FRAME_VARIANTS[variant] || {});
 
-// The 9 pieces as rectangles {x, y, w, h} in the 16×16 source (what border-image-slice: 3 cuts)
+// The 9 pieces as rectangles {x, y, w, h} in the 16×16 source (what border-image-slice: FRAME_SLICE cuts)
 function frameSlices(size = 16, s = FRAME_SLICE) {
   const m = size - 2 * s, cols = [[0, s], [s, m], [size - s, s]];
   const names = [['tl', 't', 'tr'], ['l', 'c', 'r'], ['bl', 'b', 'br']];
