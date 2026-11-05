@@ -2,14 +2,11 @@
    --u = 1 "pixel" da moldura. Textos em múltiplos de 8 px (a Press Start 2P é desenhada numa grade de 8). */
 :root {
   --u: 3px; --f1: 8px; --f2: 16px; --fd: 16px; --face: 128px;
-  --ink: #07081a; --bone: #ece2c4; --brass: #8c6a2c;
-  --text: #f4f0e0; --dim: #a9a6c9; --gold: #ffcf4a; --off: #5c5c7e;
-  --hp: #e8584a; --hp2: #ff9a7a; --mp: #4a98e8; --mp2: #a8d8ff;
-  --win: linear-gradient(180deg, #2b3b8f 0 10%, #243284 10% 28%, #1d2a74 28% 50%, #172264 50% 74%, #111a52 74%);
+  /* Palette (docs/ui-spec.md §1): frost night and crypt */
+  --ink: #0a0c1a; --win: #18203c; --win2: #222c50; --rim: #9fb3d1; --rim2: #56688c;
+  --text: #eef1f7; --dim: #8d97b5; --off: #4b5472; --gold: #f0c04a; --gold2: #a8781e;
+  --hp: #d9504a; --hp2: #f28a6a; --mp: #4a8fe0; --mp2: #9fcaff; --danger: #b8325a;
   --bg: #05060f;
-  --notch: polygon(var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u), 100% calc(100% - var(--u)),
-    calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%, var(--u) calc(100% - var(--u)),
-    0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u));
 }
 @media (min-width: 1200px) and (min-height: 700px) and (orientation: landscape) { :root { --fd: 24px; } }
 @media (min-width: 1700px) and (orientation: landscape) { :root { --u: 4px; --f1: 16px; --f2: 24px; --face: 160px; } }
@@ -26,13 +23,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
 #screen { position: relative; min-width: 0; min-height: 0; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 canvas#view { flex: none; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 
-/* ---- A janela ---- */
-.win, .card, #msgbox, #info, .title .sub {
-  background: var(--win); color: var(--text);
-  border: var(--u) solid var(--ink);
-  box-shadow: inset 0 0 0 var(--u) var(--bone), inset 0 0 0 calc(var(--u) * 2) var(--brass);
-  clip-path: var(--notch);
+/* ---- A janela: moldura 9-slice de src/frame.js (16 px, cantos de 3), ampliada --u vezes ---- */
+.win, .card, #msgbox, #info, .title .sub, #wmBtn, #touch button, #hudbar .chip, #face, #menu.icons .opt {
+  color: var(--text); background: none;
+  border: calc(var(--u) * 3) solid transparent; border-image: var(--frame) 3 fill / calc(var(--u) * 3) round;
+  image-rendering: pixelated;
 }
+.sel-frame, .card.active, #menu.icons .opt.sel, #touch button:active { border-image-source: var(--frame-sel); }
+.card.low, .danger-frame { border-image-source: var(--frame-danger); }
+#face, #menu.icons .opt, .slot-frame { border-image-source: var(--frame-slot); }
 
 /* ---- Diálogo dentro da cena: retrato em cima à esquerda, texto grande embaixo ---- */
 /* Janelas de baixo: diálogo em cima, faixa do grupo embaixo (como nos RPGs clássicos) */
@@ -42,8 +41,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #dialog { position: relative; width: min(100%, 56em);
   font-size: var(--fd); display: none; flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 2); pointer-events: auto; }
 #dialog.open { display: flex; }
-#face { display: none; width: var(--face); height: var(--face); image-rendering: pixelated; border: var(--u) solid var(--ink);
-  box-shadow: 0 0 0 var(--u) var(--bone); margin: var(--u) 0 0 calc(var(--u) * 2); }
+#face { display: none; width: calc(var(--face) + var(--u) * 6); height: calc(var(--face) + var(--u) * 6); margin: var(--u) 0 0 calc(var(--u) * 2); }
 #dialog.has-face #face { display: block; animation: winOpen 120ms steps(3); }
 #msgbox { align-self: stretch; padding: calc(var(--u) * 6) calc(var(--u) * 8); line-height: 1.75; cursor: pointer;
   min-height: calc(1.75em * 3 + var(--u) * 12); max-height: 46vh; overflow-y: auto; transform-origin: 50% 100%; animation: winOpen 120ms steps(3);
@@ -59,11 +57,11 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #menu { display: grid; gap: .5em 2em; margin-top: .6em; }
 .opt { cursor: pointer; position: relative; padding: .2em 0 .2em 1.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .opt.sel { color: #fff; }
-.opt.sel::before { content: ''; position: absolute; left: 0; top: 50%; width: .8em; height: .8em; margin-top: -.45em; background: var(--gold);
-  clip-path: polygon(0 0, 100% 50%, 0 100%, 30% 50%); animation: nudge .5s steps(1) infinite; }
+.opt.sel::before { content: ''; position: absolute; left: 0; top: calc(.2em + .5lh); width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); margin-top: calc(var(--f1) * -1);
+  background: var(--cursor) 0 0 / 100% 100%; image-rendering: pixelated; animation: nudge .5s steps(1) infinite; }
 @keyframes nudge { 50% { transform: translateX(var(--u)); } }
 .opt.dis { color: var(--off); }
-.opt small { color: var(--dim); font-size: var(--f1); margin-left: 1em; }
+.opt small { display: block; color: var(--dim); font-size: var(--f1); margin-top: .4em; white-space: normal; }
 
 /* ---- Faixa do grupo (aparece na dungeon, na batalha e no menu) ---- */
 #party { display: none; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 2); width: min(100%, 56em); }
@@ -73,7 +71,6 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .card .nm { display: flex; justify-content: space-between; align-items: baseline; color: var(--c); }
 .card .lv { color: var(--text); font-size: var(--f1); }
 .card .cls { font-size: var(--f1); color: var(--dim); margin-top: calc(var(--u) * 2); }
-.card.active { box-shadow: inset 0 0 0 var(--u) var(--gold), inset 0 0 0 calc(var(--u) * 2) #a8701a; }
 .card.dead { filter: grayscale(1) brightness(.6); }
 .card.low .hp i { animation: blink .5s steps(1) infinite; }
 .card.hit { animation: hit .3s steps(3); }
@@ -81,7 +78,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @keyframes hit { 33% { transform: translateX(calc(var(--u) * -2)); filter: brightness(1.8) saturate(0); } 66% { transform: translateX(calc(var(--u) * 2)); } }
 @keyframes glow { 50% { filter: brightness(1.6) hue-rotate(60deg); } }
 @keyframes blink { 50% { opacity: .2; } }
-.bar { height: calc(var(--u) * 2); background: var(--ink); margin: calc(var(--u) * 2) 0 var(--u); box-shadow: 0 0 0 1px #3a3f6a; }
+.bar { height: calc(var(--u) * 3); background: var(--ink); padding: calc(var(--u) / 2); margin: calc(var(--u) * 2) 0 var(--u); }
 .bar i { display: block; height: 100%; background: linear-gradient(var(--hp2) 0 50%, var(--hp) 50%); transition: width .3s steps(6); }
 .bar.mp i { background: linear-gradient(var(--mp2) 0 50%, var(--mp) 50%); }
 .num { font-size: var(--f1); color: var(--text); }
@@ -112,7 +109,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   filter: drop-shadow(4px 0 0 var(--ink)) drop-shadow(-4px 0 0 var(--ink)) drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 -4px 0 var(--ink))
     drop-shadow(4px 4px 0 #3a1c5c); }
 .title h1.red { background-image: linear-gradient(180deg, #ffd0c0 0 28%, #ff7060 28% 52%, #d02a2a 52% 76%, #701010 76%); }
-.title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--bone); letter-spacing: 2px; }
+.title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--text); letter-spacing: 2px; }
 .title p { margin: 0; font-size: 16px; color: var(--text); text-shadow: 3px 3px 0 var(--ink); }
 .title p.small { font-size: 8px; color: var(--dim); }
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: 8px; color: var(--dim); }
@@ -125,14 +122,17 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* ---- Toque ---- */
 #touch { display: none; justify-content: space-between; gap: 12px; }
-#touch button { font-family: inherit; font-size: 14px; background: var(--win); color: var(--text); border: var(--u) solid var(--ink);
-  box-shadow: inset 0 0 0 var(--u) var(--bone); clip-path: var(--notch); padding: 12px 0; touch-action: none; }
-#touch button:active { filter: brightness(1.5); }
+/* Touch: 48 px buttons (touch target >= 44 px) and 16 px glyphs; OK on top, ✕ and MAPA below, same height as the pad */
+#touch button { font-family: inherit; font-size: 16px; line-height: 1; min-height: 48px; padding: 0; color: var(--text); touch-action: none; }
+#touch button:active { filter: brightness(1.2); }
 #touch .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; }
-#touch .pad2 { display: grid; grid-template-columns: repeat(1, 90px); gap: 6px; }
-#touch .pad2 button { font-size: 8px; }
+#touch .pad2 { display: grid; grid-template-columns: repeat(2, 48px); gap: 6px; }
+#touch .pad2 button:first-child { grid-column: 1 / -1; }
+#touch .pad2 .small { font-size: 8px; }
+/* Arrows and ✕ are not (or look tiny) in the pixel font: drawn by the system font at a larger, bold size */
+#touch .glyph { font-family: system-ui, sans-serif; font-size: 26px; font-weight: 700; }
 @media (pointer: coarse) { #touch { display: flex; position: absolute; left: 8px; bottom: 8px; width: calc(100% - var(--hudw, 0px) - 16px); margin: 0; opacity: .6; pointer-events: none; }
-  #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); } #touch button { padding: 8px 0; }
+  #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); }
   #game.talking #touch .pad { visibility: hidden; } }
 @media (orientation: landscape) and (pointer: coarse) { #dialog { left: calc(var(--u) * 4); translate: none; width: calc(100% - 106px - var(--u) * 4); } }
 @media (orientation: portrait) {
@@ -165,24 +165,19 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* Comandos da batalha em ícones: cada um numa casinha; o escolhido ganha moldura dourada */
 #menu.icons { justify-content: start; gap: .6em; }
-#menu.icons .opt { display: flex; flex-direction: column; align-items: center; gap: .4em; padding: .4em .5em; overflow: visible;
-  border: var(--u) solid var(--ink); box-shadow: inset 0 0 0 var(--u) #3a3f6a; background: rgba(7, 8, 26, .35); font-size: var(--f1); }
+#menu.icons .opt { display: flex; flex-direction: column; align-items: center; gap: .4em; padding: .3em .5em; overflow: visible; font-size: var(--f1); }
 #menu.icons .opt::before { display: none; }
 #menu.icons .opt img { width: calc(var(--fd) * 2); height: calc(var(--fd) * 2); image-rendering: pixelated; }
-#menu.icons .opt.sel { box-shadow: inset 0 0 0 var(--u) var(--gold); background: rgba(255, 210, 63, .12); }
 #menu.icons .opt.sel img { animation: nudge .5s steps(1) infinite; }
-#menu.icons .opt.dis img { filter: grayscale(1) brightness(.5); }
 @media (min-width: 1200px) and (min-height: 700px) { #menu.icons .opt { font-size: var(--f2); } }
 
 /* ---- Mapa de Eterra (mapa-múndi) ---- */
-#wmBtn { position: absolute; z-index: 4; top: calc(var(--u) * 4); right: calc(var(--u) * 4); font-family: inherit; font-size: var(--f1);
-  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 3) calc(var(--u) * 4); cursor: pointer;
-  background: var(--win); color: var(--text); border: var(--u) solid var(--ink); clip-path: var(--notch);
-  box-shadow: inset 0 0 0 var(--u) var(--bone), inset 0 0 0 calc(var(--u) * 2) var(--brass); }
+#wmBtn { font-family: inherit; font-size: var(--f1); color: var(--text);
+  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: var(--u) calc(var(--u) * 3); cursor: pointer;
+}
 #wmBtn[hidden] { display: none; }
 #wmBtn:hover { color: var(--gold); }
-.wm-ico { width: calc(var(--u) * 5); height: calc(var(--u) * 4); background:
-  linear-gradient(90deg, #4e8a40 0 33%, #d6ad5c 33% 66%, #dfe8ee 66%); box-shadow: 0 0 0 var(--u) var(--ink); }
+.wm-ico { width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); image-rendering: pixelated; }
 #worldmap { position: absolute; inset: 0; z-index: 20; display: none; background: rgba(3, 3, 12, .94);
   padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);
   grid-template-columns: minmax(0, 1fr) minmax(12em, 30%); grid-template-rows: auto minmax(0, 1fr); }
@@ -190,27 +185,27 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u) * 3) calc(var(--u) * 5);
   font-size: var(--f2); color: var(--gold); }
 #worldmap.autor .wm-head { color: #e0a0ff; }
-.wm-close { font-family: inherit; font-size: var(--f1); background: none; border: 0; color: var(--text); cursor: pointer; padding: calc(var(--u) * 2); }
+.wm-close { white-space: nowrap; font-family: inherit; font-size: var(--f1); background: none; border: 0; color: var(--text); cursor: pointer; padding: calc(var(--u) * 2); }
 .wm-close:hover { color: var(--gold); }
 .wm-cell { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.wm-map { position: relative; flex: none; box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--bone), 0 0 0 calc(var(--u) * 3) var(--brass); }
+.wm-map { position: relative; flex: none; box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--rim), 0 0 0 calc(var(--u) * 3) var(--ink); }
 .wm-map canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
 .wm-pt { position: absolute; translate: -50% -50%; background: none; border: 0; padding: calc(var(--u) * 3); cursor: pointer; font-family: inherit; color: var(--text); }
-.wm-pt i { display: block; width: calc(var(--u) * 4); height: calc(var(--u) * 4); background: var(--bone); box-shadow: 0 0 0 var(--u) var(--ink); }
+.wm-pt i { display: block; width: calc(var(--u) * 4); height: calc(var(--u) * 4); background: var(--text); box-shadow: 0 0 0 var(--u) var(--ink); }
 .wm-pt.visto i { background: var(--gold); }
-.wm-pt.boato i { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--bone), 0 0 0 var(--u) var(--ink); }
+.wm-pt.boato i { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--text), 0 0 0 var(--u) var(--ink); }
 .wm-pt.segredo i { background: #b060e0; rotate: 45deg; }
 .wm-pt.aqui i { background: var(--hp); animation: wmblink 1s steps(1) infinite; }
 @keyframes wmblink { 50% { background: var(--gold); } }
-.wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none;
-  text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); display: none; }
+.wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none; display: none; }
 .wm-pt.aqui .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
 .wm-pt.aqui:not(.sel) .wm-lbl { opacity: .8; }
 .wm-pt.sel { z-index: 2; }
 .wm-pt.sel .wm-lbl { color: var(--gold); }
 .wm-pt.sel i { outline: var(--u) solid var(--gold); outline-offset: var(--u); }
-.wm-k { font-size: var(--f1); letter-spacing: .3em; color: rgba(7, 8, 26, .55); white-space: nowrap; }
-.wm-pt.reino.sel .wm-k, .wm-pt.reino:hover .wm-k { color: var(--ink); text-shadow: 0 0 calc(var(--u) * 2) var(--gold); }
+.wm-k { font-size: var(--f1); letter-spacing: .3em; color: var(--text); opacity: .9; white-space: nowrap; }
+.wm-lbl, .wm-k { text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); }
+.wm-pt.reino.sel .wm-k, .wm-pt.reino:hover .wm-k { color: var(--gold); opacity: 1; }
 .wm-info { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); font-size: var(--f1); line-height: 1.9; }
 .wm-info .wm-name { font-size: var(--f2); color: var(--gold); line-height: 1.4; margin-bottom: calc(var(--u) * 2); }
 .wm-info .wm-tag { color: var(--dim); margin-bottom: calc(var(--u) * 3); }
@@ -218,3 +213,54 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (orientation: portrait), (max-width: 700px) {
   #worldmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 38%); }
 }
+
+/* ---- HUD em DOM (src/hud.js): rótulos na mesma escala de texto do resto ---- */
+#hud { position: absolute; z-index: 2; pointer-events: none; }
+#hud > * { position: absolute; white-space: nowrap; font-size: var(--f1); line-height: 1; text-shadow: var(--u) var(--u) 0 var(--ink); }
+#hud .compass { translate: -50% -50%; color: var(--gold); }
+#hud .maptitle { translate: -50% -100%; color: var(--gold); }
+#hudbar { position: absolute; z-index: 4; top: calc(var(--u) * 4); left: calc(var(--u) * 4); display: flex; gap: calc(var(--u) * 2);
+  align-items: stretch; max-width: calc(100% - var(--u) * 8); pointer-events: none; }
+#hudbar > * { pointer-events: auto; }
+#hudbar .chip { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: var(--u) calc(var(--u) * 3); font-size: var(--f1);
+  white-space: nowrap; min-width: 0; overflow: hidden; }
+#hudbar .chip .pl { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#hudbar [hidden] { display: none !important; }
+.coin { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--gold);
+  box-shadow: 0 0 0 var(--u) var(--ink), inset calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--gold2); }
+#hudtop { position: absolute; z-index: 3; top: calc(var(--u) * 4); left: 50%; translate: -50% 0; display: flex; flex-direction: column;
+  align-items: center; gap: calc(var(--u) * 2); pointer-events: none; max-width: calc(100% - var(--u) * 8); }
+#hudtop [hidden] { display: none !important; }
+#hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f1); }
+#hudtop .boss .bar { height: calc(var(--u) * 4); margin-bottom: 0; }
+#hudtop .boss .bar i { background: linear-gradient(#c890f0 0 50%, #8a4ad0 50%); transition: width .3s steps(6); }
+#hudtop .boss.enraged .bar i { background: linear-gradient(#f28a9a 0 50%, var(--danger) 50%); }
+#hudtop .note { padding: calc(var(--u) * 2) calc(var(--u) * 4); font-size: var(--f1); }
+.queue { display: flex; gap: var(--u); align-items: center; flex-wrap: wrap; justify-content: center; }
+.queue .qs { display: flex; flex-direction: column; align-items: center; min-width: calc(var(--f1) * 2 + var(--u) * 8); padding: 0 var(--u);
+  font-size: var(--f1); line-height: 1.8; border: calc(var(--u) * 3) solid transparent; border-image: var(--frame-slot) 3 fill / calc(var(--u) * 3) round; image-rendering: pixelated; }
+.queue .qs.sel-frame { border-image-source: var(--frame-sel); }
+.queue .qs i { display: block; align-self: stretch; height: var(--u); }
+.queue .qs.done { opacity: .45; } .queue .qs.gone { opacity: .2; }
+.queue .round { color: var(--gold); font-size: var(--f1); text-shadow: var(--u) var(--u) 0 var(--ink); margin-left: calc(var(--u) * 2); animation: blink .4s steps(1) 4; }
+/* Phone: battle commands show icons only; the selected name goes to the prompt line (ui.js cmdName) */
+.cmd-name { display: none; }
+@media (orientation: portrait), (max-width: 700px) {
+  #menu.icons .opt span { display: none; }
+  .cmd-name { display: block; color: var(--gold); margin-top: .3em; }
+}
+/* Narrow screens: notes drop below the place/MUNDO row instead of covering it */
+@media (orientation: portrait), (max-width: 700px) { #info { top: calc(var(--u) * 14 + 16px); } }
+
+/* World map side panel: details on top, list of known places by kingdom below */
+.wm-info { display: flex; flex-direction: column; gap: calc(var(--u) * 4); }
+.wm-detail { flex: none; }
+.wm-list { display: flex; flex-direction: column; gap: var(--u); border-top: var(--u) solid var(--rim2); padding-top: calc(var(--u) * 3); }
+.wm-list h3 { margin: calc(var(--u) * 2) 0 var(--u); font: inherit; color: var(--dim); }
+.wm-row { display: flex; align-items: center; gap: calc(var(--u) * 3); background: none; border: 0; padding: var(--u) 0; text-align: left;
+  font: inherit; color: var(--text); cursor: pointer; }
+.wm-row:hover, .wm-row.sel { color: var(--gold); }
+.wm-row b { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--text); box-shadow: 0 0 0 var(--u) var(--ink); }
+.wm-row b.visto { background: var(--gold); } .wm-row b.aqui { background: var(--hp); }
+.wm-row b.boato { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--text), 0 0 0 var(--u) var(--ink); }
+.wm-row b.segredo { background: #b060e0; rotate: 45deg; }

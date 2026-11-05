@@ -14,17 +14,8 @@ function resizeView(w, h) {
 }
 let TEX = null;
 
-// Janela clássica desenhada no canvas (mesmas cores da janela em CSS): faixas azuis, moldura tinta/osso/latão, cantos recortados
-const WIN_BANDS = ['#2b3b8f', '#243284', '#1d2a74', '#172264', '#111a52'], WIN_STOPS = [0, .1, .28, .5, .74, 1];
-function drawWindow(c, x, y, w, h) {
-  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
-  WIN_BANDS.forEach((col, i) => { const a = y + Math.round(h * WIN_STOPS[i]), b = y + Math.round(h * WIN_STOPS[i + 1]); c.fillStyle = col; c.fillRect(x, a, w, b - a); });
-  const ring = (k, col) => { c.fillStyle = col; c.fillRect(x + k + 1, y + k, w - 2 * k - 2, 1); c.fillRect(x + k + 1, y + h - k - 1, w - 2 * k - 2, 1);
-    c.fillRect(x + k, y + k + 1, 1, h - 2 * k - 2); c.fillRect(x + w - k - 1, y + k + 1, 1, h - 2 * k - 2); };
-  c.clearRect(x, y, 1, 1); c.clearRect(x + w - 1, y, 1, 1); c.clearRect(x, y + h - 1, 1, 1); c.clearRect(x + w - 1, y + h - 1, 1, 1);
-  ring(0, '#07081a'); ring(1, '#ece2c4'); ring(2, '#8c6a2c');
-  c.fillStyle = '#ece2c4'; c.fillRect(x + 1, y + 1, 1, 1); c.fillRect(x + w - 2, y + 1, 1, 1); c.fillRect(x + 1, y + h - 2, 1, 1); c.fillRect(x + w - 2, y + h - 2, 1, 1);
-}
+// Janela desenhada no canvas: a mesma moldura 9-slice das janelas em CSS (src/frame.js)
+function drawWindow(c, x, y, w, h, variant) { drawFrame(c, x, y, w, h, variant); }
 
 function light(d) { return 1.25 / (1 + d * d * 0.1); }
 

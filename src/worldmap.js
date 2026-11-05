@@ -175,16 +175,16 @@ const WorldMap = (() => {
   }
 
   // ---------- Janela ----------
-  let root, mapBox, cell, info, open = false, sel = null, done = null, items = [];
+  let root, mapBox, cell, info, list, open = false, sel = null, done = null, items = [];
   const here = () => G.mode === 'explore' ? 'cripta' : G.area === 'cemiterio' ? 'cemiterio' : 'valmor';
 
   function build() {
     root = document.createElement('div');
     root.id = 'worldmap';
     root.innerHTML = `<div class="wm-head win"><span>Mapa de Eterra</span><button class="wm-close">✕ Fechar</button></div>
-      <div class="wm-cell"><div class="wm-map"></div></div><div class="wm-info win"></div>`;
+      <div class="wm-cell"><div class="wm-map"></div></div><div class="wm-info win"><div class="wm-detail"></div><div class="wm-list"></div></div>`;
     document.getElementById('screen').appendChild(root);
-    mapBox = root.querySelector('.wm-map'); cell = root.querySelector('.wm-cell'); info = root.querySelector('.wm-info');
+    mapBox = root.querySelector('.wm-map'); cell = root.querySelector('.wm-cell'); info = root.querySelector('.wm-detail'); list = root.querySelector('.wm-list');
     root.querySelector('.wm-close').onclick = ev => { ev.stopPropagation(); close(); };
     root.addEventListener('click', ev => ev.stopPropagation()); // não avança o texto do jogo por baixo
     new ResizeObserver(fit).observe(cell);
@@ -230,11 +230,30 @@ const WorldMap = (() => {
       it.el = b; it.state = state;
       mapBox.appendChild(b);
     }
+    renderList();
+  }
+  // Side panel list: every known place, grouped by kingdom; a click selects it on the map
+  function renderList() {
+    const groups = {};
+    for (const it of items) if (!it.isReino) (groups[it.reino || '—'] ||= []).push(it);
+    list.replaceChildren(...Object.entries(groups).flatMap(([reino, its]) => {
+      const h = document.createElement('h3'); h.textContent = reino;
+      return [h, ...its.map(it => {
+        const r = document.createElement('button');
+        r.className = 'wm-row';
+        r.innerHTML = `<b class="${it.state}"></b><span>${esc(it.nome)}</span>`;
+        r.onclick = ev => { ev.stopPropagation(); select(it, true); };
+        it.row = r;
+        return r;
+      })];
+    }));
   }
   function select(it, sound) {
     if (sound && sel !== it) Sfx.cursor();
     sel = it;
-    for (const o of items) o.el.classList.toggle('sel', o === it);
+    for (const o of items) { o.el.classList.toggle('sel', o === it); o.row?.classList.toggle('sel', o === it); }
+    it.row?.scrollIntoView({ block: 'nearest' });
+    info.parentElement.scrollTop = 0;
     const CAP = { '1': 'Cap. 1', '2': 'Cap. 2', '3': 'Cap. 3', '4': 'Cap. 4', final: 'Final' };
     const ST = { 'no-jogo': 'já no jogo', planejado: 'planejado', ideia: 'ideia' };
     const a = it.autor;

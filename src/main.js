@@ -65,7 +65,7 @@ function exploreHint() {
   if (G.mode !== 'explore') return;
   const f = FLOORS[G.floor];
   placeHint(`${f.short} · ${f.name}`, 'dungeon',
-    'Setas/WASD andar · Q/E passo lateral\nEspaço interagir · Esc menu · M mapa · F tela cheia\nVolte ao ponto verde do mapa para subir à vila');
+    'Setas andar · Espaço interagir · Esc menu');
 }
 
 // Aviso no alto da cena, sem repetir: o nome do lugar só quando muda de lugar, os comandos uma vez por save
@@ -129,6 +129,7 @@ window.addEventListener('blur', () => G.held.clear());
 
 // ---------- Mapa-múndi (src/worldmap.js) ----------
 const wmBtn = document.getElementById('wmBtn');
+wmBtn.querySelector('img').src = iconUrl('mundo');
 const canWorldMap = () => (G.mode === 'town' || G.mode === 'explore') && !G.busy && !UI.busy() && !WorldMap.isOpen();
 async function openWorldMap() {
   G.busy = true; G.held.clear(); G.queue.length = 0; G.bigMap = false;
@@ -340,11 +341,8 @@ async function floorClues(f) {
 async function campMenu() {
   G.busy = true;
   for (;;) {
-    const v = await UI.choose([
-      { label: 'Itens', value: 'item' }, { label: 'Magia', value: 'magic' }, { label: 'Status', value: 'status' },
-      { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' }, { label: 'Mapa', value: 'map', disabled: G.mode === 'town' },
-      { label: 'Voltar', value: null },
-    ], { title: `— Menu — ${G.gold} moedas`, cancel: true, cols: 3 });
+    const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length });
+    const v = await UI.choose(m.opts, { title: m.title, cancel: true, cols: 3 });
     if (v === 'diary') await showDiary();
     if (v === 'world') await WorldMap.show();
     if (v === null) break;
@@ -435,10 +433,14 @@ function loadGame() {
 }
 
 // ---------- Diário de missões ----------
+// The scene shows only the three essential commands; the full list lives here
+const CONTROLS_PAGE = 'Diário · controles\nSetas ou WASD andar · Q/E passo lateral · Espaço interagir · Esc menu\n' +
+  'M ou Tab mapa da cripta · U mapa de Eterra · F tela cheia · N som\nNa cripta, o ponto verde do mapa leva de volta à vila.';
 function diaryPages() {
   const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + n.text);
   const pages = [`Diário · ${JOURNAL.title()}\nObjetivo: ${JOURNAL.goal()}`];
   for (let k = 0; k < notes.length; k += 3) pages.push(`Diário · anotações\n` + notes.slice(k, k + 3).join('\n'));
+  pages.push(CONTROLS_PAGE);
   return pages;
 }
 async function showDiary() {
@@ -566,8 +568,7 @@ function drawMinimap(now) {
   if (G.bigMap) {
     const cs = Math.floor(170 / N), ox = Math.floor((VW - cs * N) / 2), oy = Math.floor((VH - cs * N) / 2);
     drawWindow(c, ox - 7, oy - 17, cs * N + 14, cs * N + 24);
-    c.font = '6px "Press Start 2P", monospace'; c.fillStyle = '#ffd23f'; c.textAlign = 'center';
-    c.fillText(`${FLOORS[G.floor].short} ${FLOORS[G.floor].name.toUpperCase()}`, VW / 2, oy - 5);
+    HUD.title(`${FLOORS[G.floor].short} · ${FLOORS[G.floor].name}`, VW / 2, oy - 7);
     drawCells(c, ox, oy, cs, 0, 0, N, N, now);
     return;
   }
@@ -576,11 +577,7 @@ function drawMinimap(now) {
   c.save(); c.beginPath(); c.rect(ox, oy, size, size); c.clip();
   drawCells(c, ox - (G.x - R) * cs, oy - (G.y - R) * cs, cs, G.x - R, G.y - R, G.x + R + 1, G.y + R + 1, now);
   c.restore();
-  c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'center'; c.fillStyle = '#ffd23f';
-  c.fillText(DIR_NAMES[G.dir], ox + size / 2, oy + size + 10);
-  drawWindow(c, 4, 4, 26, 16);
-  c.textAlign = 'left'; c.fillStyle = '#f4f0e0';
-  c.fillText(FLOORS[G.floor].short, 11, 15);
+  HUD.compass(DIR_NAMES[G.dir], ox + size / 2, oy + size + 7);
 }
 
 function drawCells(c, ox, oy, cs, x0, y0, x1, y1, now) {
@@ -623,11 +620,7 @@ function drawOverlays(now) {
     if (k >= 1) { G.fadeAnim = null; F.res(); }
   }
   if (G.fade > 0) { c.fillStyle = `rgba(0,0,0,${G.fade})`; c.fillRect(0, 0, VW, VH); }
-  if (now < noteUntil) {
-    c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'center';
-    drawWindow(c, VW / 2 - 66, 4, 132, 17);
-    c.fillStyle = '#f4f0e0'; c.fillText(noteText, VW / 2, 15);
-  }
+  if (now < noteUntil) HUD.note(noteText);
   const shaking = now < G.shakeUntil;
   view.style.transform = shaking ? `translate(${rnd(-4, 4)}px,${rnd(-3, 3)}px)` : '';
 }
@@ -640,6 +633,9 @@ function frame(now) {
   // Faixa do grupo: na dungeon, na batalha e com o menu aberto (na vila a cena fica livre)
   gameEl.classList.toggle('show-party', G.mode === 'battle' || G.mode === 'explore' || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
   wmBtn.hidden = !canWorldMap();
+  HUD.begin();
+  const F = FLOORS[G.floor];
+  HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
   if (G.mode === 'title') {
     TitleBG.draw(vctx, now); // paisagem de Eterra à noite (src/titlebg.js)
   } else if (G.mode === 'town') {
@@ -655,6 +651,7 @@ function frame(now) {
     renderView(cam, map(), worldSprites(now), now);
   }
   drawOverlays(now);
+  HUD.end();
   requestAnimationFrame(frame);
 }
 

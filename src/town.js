@@ -510,7 +510,7 @@ function townDir(k) {
 }
 
 function townHint() {
-  placeHint(TOWN.A.name, 'vila', 'Setas/WASD andar · Espaço falar · Esc menu · F tela cheia');
+  placeHint(TOWN.A.name, 'vila', 'Setas andar · Espaço falar · Esc menu');
 }
 
 async function townBusy(fn) {
@@ -772,8 +772,4 @@ function drawTown(now) {
     }
   }
 
-  c.font = '6px "Press Start 2P", monospace'; c.textAlign = 'left';
-  const label = `${A.short}  ${G.gold}G`, lw = Math.ceil(c.measureText(label).width);
-  drawWindow(c, 4, 4, lw + 14, 17);
-  c.fillStyle = '#f4f0e0'; c.fillText(label, 11, 15);
 }
