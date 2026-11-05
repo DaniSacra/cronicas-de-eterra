@@ -166,60 +166,8 @@ const TOWN = {
 };
 
 // ---------- Desenho estático (tiles e prédios) ----------
-function drawTownLayer(A) {
-  const cv = document.createElement('canvas');
-  cv.width = A.W * TS; cv.height = A.H * TS;
-  const c = cv.getContext('2d');
-  const rng = mulberry32(77);
-  const px = (x, y, col) => { c.fillStyle = col; c.fillRect(x, y, 1, 1); };
-  const speckle = (X, Y, cols, n) => { for (let i = 0; i < n; i++) px(X + Math.floor(rng() * TS), Y + Math.floor(rng() * TS), cols[i % cols.length]); };
-  const grass = (X, Y) => { c.fillStyle = '#3f9a3a'; c.fillRect(X, Y, TS, TS); speckle(X, Y, ['#56b84c', '#2f7f2c', '#4aa842'], 14); };
-
-  for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
-    const X = x * TS, Y = y * TS, t = TOWN.tileAt(x, y);
-    if (isInterior(t)) { drawInteriorTile(c, t, X, Y, x, y, speckle); continue; }
-    if (t >= TILE.GATE) { grass(X, Y); drawGraveTile(c, t, X, Y, x, y, px, rng); continue; }
-    if (t === TILE.CLIFF) {
-      c.fillStyle = '#e6d49a'; c.fillRect(X, Y, TS, TS); speckle(X, Y, ['#d4bd7c', '#f2e4b4'], 10);
-      c.fillStyle = '#9a6430'; c.fillRect(X, Y + 11, TS, 5);
-      c.fillStyle = '#c08040'; for (let i = 0; i < TS; i += 4) c.fillRect(X + i, Y + 11, 2, 2);
-      c.fillStyle = '#5a3a18'; c.fillRect(X, Y + 15, TS, 1);
-      continue;
-    }
-    if (t === TILE.PATH) {
-      c.fillStyle = '#a87c48'; c.fillRect(X, Y, TS, TS); speckle(X, Y, ['#8c6434', '#c09460', '#7a5428'], 12);
-      continue;
-    }
-    if (t === TILE.WATER) {
-      c.fillStyle = '#2a68c8'; c.fillRect(X, Y, TS, TS); speckle(X, Y, ['#3a80e0'], 8);
-      c.fillStyle = '#a8d8ff';
-      if (TOWN.tileAt(x, y - 1) !== TILE.WATER) c.fillRect(X, Y, TS, 2);
-      if (TOWN.tileAt(x, y + 1) !== TILE.WATER) c.fillRect(X, Y + 14, TS, 2);
-      if (TOWN.tileAt(x - 1, y) !== TILE.WATER) c.fillRect(X, Y, 2, TS);
-      if (TOWN.tileAt(x + 1, y) !== TILE.WATER) c.fillRect(X + 14, Y, 2, TS);
-      continue;
-    }
-    grass(X, Y);
-    if (t === TILE.TREE) {
-      c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(X + 8, Y + 14, 6, 2, 0, 0, 7); c.fill();
-      c.fillStyle = '#5a3a1e'; c.fillRect(X + 6, Y + 9, 4, 6);
-      c.fillStyle = '#1d521b'; c.beginPath(); c.arc(X + 8, Y + 7, 7, 0, 7); c.fill();
-      c.fillStyle = '#2d7a2a'; c.beginPath(); c.arc(X + 8, Y + 7, 6, 0, 7); c.fill();
-      c.fillStyle = '#4fa844'; c.beginPath(); c.arc(X + 6, Y + 5, 3, 0, 7); c.fill();
-      px(X + 5, Y + 4, '#7cc46a');
-    } else if (t === TILE.BUSH) {
-      c.fillStyle = '#1d521b'; c.beginPath(); c.arc(X + 8, Y + 9, 6, 0, 7); c.fill();
-      c.fillStyle = '#3a8a34'; c.beginPath(); c.arc(X + 8, Y + 9, 5, 0, 7); c.fill();
-      c.fillStyle = '#e04848'; c.fillRect(X + 6, Y + 7, 2, 2); c.fillRect(X + 10, Y + 10, 2, 2);
-    } else if (t === TILE.FLOWER) {
-      for (const [fx, fy, col] of [[3, 4, '#ff6a8a'], [10, 3, '#ffe060'], [6, 10, '#ffffff'], [12, 11, '#ff6a8a']]) {
-        c.fillStyle = col; c.fillRect(X + fx, Y + fy, 2, 2); px(X + fx, Y + fy + 2, '#2a6a24');
-      }
-    }
-  }
-  for (const b of A.buildings) drawBuilding(c, b);
-  return cv;
-}
+// Chão, árvores, enfeites e prédios ficam em src/townart.js; aqui só a chamada (uma vez por área, em cache)
+function drawTownLayer(A) { return TownArt.layer(A); }
 
 // Cemitério: muro, portão, lápides, covas e árvores secas (grama já pintada embaixo)
 function drawGraveTile(c, t, X, Y, x, y, px, rng) {
@@ -302,95 +250,6 @@ function shadeHex(hex, k) {
   const n = parseInt(hex.slice(1), 16);
   const f = v => Math.max(0, Math.min(255, Math.round(v * k)));
   return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
-}
-
-function drawBuilding(c, b) {
-  const X = b.x * TS, Y = b.y * TS, W = b.w * TS, H = b.h * TS;
-  const dx = X + (b.door.x - b.x) * TS;
-  c.fillStyle = 'rgba(0,0,0,.28)'; c.fillRect(X + 3, Y + H - 1, W - 2, 3);
-  if (b.id === 'crypt') return drawCrypt(c, X, Y, W, H, dx);
-  const style = {
-    chapel: { roof: '#4e5d80', wall: '#e6e0d2' }, elder: { roof: '#3f7a46', wall: '#d8ccb0' },
-    shop: { roof: '#c08a2a', wall: '#d8c8a8' }, smith: { roof: '#7a4a3a', wall: '#b8b0a0' },
-    tavern: { roof: '#8a4a2a', wall: '#d0bc98' },
-  }[b.id] || { roof: '#a8442e', wall: '#cfc4a8' };
-  const rh = Math.round(H * 0.5);
-  // Parede de pedra
-  c.fillStyle = style.wall; c.fillRect(X + 1, Y + rh - 2, W - 2, H - rh + 2);
-  c.fillStyle = shadeHex(style.wall, 0.8);
-  for (let y = Y + rh + 2, row = 0; y < Y + H; y += 4, row++) {
-    c.fillRect(X + 1, y, W - 2, 1);
-    for (let x = X + 1 + (row % 2) * 4; x < X + W - 1; x += 8) c.fillRect(x, y - 3, 1, 3);
-  }
-  // Telhado
-  c.fillStyle = shadeHex(style.roof, 0.6);
-  c.beginPath(); c.moveTo(X - 2, Y + rh + 1); c.lineTo(X + W + 2, Y + rh + 1); c.lineTo(X + W - 4, Y + 1); c.lineTo(X + 4, Y + 1); c.closePath(); c.fill();
-  c.fillStyle = style.roof;
-  c.beginPath(); c.moveTo(X - 1, Y + rh - 1); c.lineTo(X + W + 1, Y + rh - 1); c.lineTo(X + W - 4, Y + 2); c.lineTo(X + 4, Y + 2); c.closePath(); c.fill();
-  c.fillStyle = shadeHex(style.roof, 0.78);
-  for (let y = Y + 5; y < Y + rh - 1; y += 3) c.fillRect(X + 2, y, W - 4, 1);
-  c.fillStyle = shadeHex(style.roof, 1.3); c.fillRect(X + 5, Y + 2, W - 10, 1);
-  // Janelas (todas as colunas menos a da porta)
-  for (let cx = 0; cx < b.w; cx++) {
-    const wx = X + cx * TS + 5;
-    if (X + cx * TS === dx) continue;
-    c.fillStyle = '#e8d8a0'; c.fillRect(wx - 1, Y + H - 11, 7, 6);
-    c.fillStyle = '#2a3c5c'; c.fillRect(wx, Y + H - 10, 5, 4);
-    c.fillStyle = '#e8d8a0'; c.fillRect(wx + 2, Y + H - 10, 1, 4);
-  }
-  // Porta
-  c.fillStyle = '#3a2210'; c.fillRect(dx + 3, Y + H - 12, 10, 12);
-  c.fillStyle = '#7a4a22'; c.fillRect(dx + 4, Y + H - 11, 8, 11);
-  c.fillStyle = '#5a3418'; c.fillRect(dx + 8, Y + H - 11, 1, 11);
-  c.fillStyle = '#e0c050'; c.fillRect(dx + 10, Y + H - 6, 1, 1);
-  if (b.id === 'chapel') {
-    // Torre do sino com cruz
-    const tx = X + W / 2 - 5;
-    c.fillStyle = style.wall; c.fillRect(tx, Y - 6, 10, 16);
-    c.fillStyle = '#2a2a3a'; c.fillRect(tx + 3, Y - 2, 4, 5);
-    c.fillStyle = '#ffd23f'; c.fillRect(tx + 4, Y - 1, 2, 2);
-    c.fillStyle = shadeHex(style.roof, 0.8); c.beginPath(); c.moveTo(tx - 2, Y - 6); c.lineTo(tx + 12, Y - 6); c.lineTo(tx + 5, Y - 13); c.closePath(); c.fill();
-    c.fillStyle = '#ffd23f'; c.fillRect(tx + 4, Y - 20, 2, 8); c.fillRect(tx + 2, Y - 18, 6, 2);
-  } else if (b.id === 'shop') {
-    // Placa com um frasco
-    c.fillStyle = '#5a3418'; c.fillRect(X + W - 6, Y + rh, 2, 6);
-    c.fillStyle = '#8a5a2a'; c.fillRect(X + W - 13, Y + rh + 5, 14, 9);
-    c.fillStyle = '#e04848'; c.fillRect(X + W - 9, Y + rh + 8, 6, 5); c.fillStyle = '#f0f0f0'; c.fillRect(X + W - 7, Y + rh + 6, 2, 2);
-  } else if (b.id === 'tavern') {
-    // Placa com um caldeirão escuro
-    c.fillStyle = '#5a3418'; c.fillRect(X + 4, Y + rh, 2, 6);
-    c.fillStyle = '#8a5a2a'; c.fillRect(X - 1, Y + rh + 5, 14, 9);
-    c.fillStyle = '#1a1a1a'; c.fillRect(X + 2, Y + rh + 8, 8, 5); c.fillRect(X + 1, Y + rh + 8, 10, 1);
-    c.fillStyle = '#e06020'; c.fillRect(X + 4, Y + rh + 13, 4, 1);
-  } else if (b.id === 'smith') {
-    // Chaminé com bigorna na placa
-    c.fillStyle = '#6a6a6a'; c.fillRect(X + W - 12, Y - 3, 6, 9);
-    c.fillStyle = '#3a3a3a'; c.fillRect(X + 2, Y + rh + 3, 10, 3); c.fillRect(X + 5, Y + rh + 6, 4, 3);
-  }
-}
-
-// A igreja velha de Valmor: rachou há cinquenta anos e ficou em ruínas. Torre do sino à esquerda,
-// metade do telhado caída com as vigas à mostra, hera, janela quebrada e a porta escura da cripta.
-function drawCrypt(c, X, Y, W, H, dx) {
-  const P = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
-  P(X + 1, Y + 16, W - 2, H - 16, '#56524c');
-  c.fillStyle = '#6a655c';
-  for (let y = Y + 18, row = 0; y < Y + H; y += 6, row++) for (let x = X + 2 + (row % 2) * 5; x < X + W - 3; x += 10) c.fillRect(x, y, 8, 4);
-  // telhado: a metade esquerda ficou, a direita caiu
-  c.fillStyle = '#3a2e2a'; c.beginPath(); c.moveTo(X - 1, Y + 17); c.lineTo(X + W / 2, Y + 4); c.lineTo(X + W / 2 + 4, Y + 8);
-  c.lineTo(X + W / 2 - 1, Y + 12); c.lineTo(X + W / 2 + 6, Y + 17); c.closePath(); c.fill();
-  c.strokeStyle = '#6a4a2a'; c.lineWidth = 1.5; c.beginPath();
-  c.moveTo(X + W / 2 + 2, Y + 6); c.lineTo(X + W - 2, Y + 16); c.moveTo(X + W / 2 + 10, Y + 10); c.lineTo(X + W - 7, Y + 17); c.stroke();
-  // torre do sino
-  P(X + 2, Y - 6, 10, 24, '#5e5a52'); P(X + 1, Y - 9, 12, 3, '#3a2e2a'); P(X + 6, Y - 12, 2, 3, '#3a2e2a');
-  P(X + 4, Y - 3, 6, 7, '#141016'); P(X + 5, Y - 2, 4, 3, '#b8862a'); P(X + 6, Y + 1, 2, 1, '#6a4a14');
-  // rachadura, janela quebrada e hera
-  c.strokeStyle = '#221e1c'; c.lineWidth = 1; c.beginPath(); c.moveTo(X + W - 11, Y + 18); c.lineTo(X + W - 14, Y + 26); c.lineTo(X + W - 10, Y + 34); c.stroke();
-  P(X + W - 20, Y + 21, 6, 8, '#141016'); P(X + W - 19, Y + 20, 4, 1, '#141016'); P(X + W - 16, Y + 24, 2, 1, '#56524c');
-  c.fillStyle = '#3e6a34'; for (const [ix, iy] of [[2, 26], [3, 30], [2, 35], [4, 39], [W - 5, 22], [W - 4, 27], [W - 6, 41]]) c.fillRect(X + ix, Y + iy, 3, 2);
-  // porta escura e pedras caídas
-  P(dx + 2, Y + H - 15, 12, 15, '#0c0a10'); P(dx + 1, Y + H - 17, 14, 2, '#3a3630');
-  P(X + W - 8, Y + H - 3, 4, 3, '#6a655c'); P(X + W - 3, Y + H - 2, 3, 2, '#56524c'); P(X + 2, Y + H - 2, 3, 2, '#6a655c');
 }
 
 // ---------- Personagens ----------
@@ -791,6 +650,7 @@ function drawTown(now) {
   const A = TOWN.A, lp = actorPos(TOWN.p);
   const cam = (pos, size, view) => Math.round(size < view ? (size - view) / 2 : Math.max(0, Math.min(size - view, pos + 8 - view / 2)));
   const camX = cam(lp.x, A.W * TS, VW), camY = cam(lp.y, A.H * TS, VH);
+  if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
   c.save(); c.translate(-camX, -camY); c.fillStyle = A.edge; c.fillRect(camX, camY, VW, VH); c.restore();
