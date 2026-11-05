@@ -30,23 +30,67 @@ function makeTextures(pal, seed) {
     return { d, e };
   }
 
+  // Pedra de cripta: blocos talhados à mão, de alturas e larguras irregulares, gastos nos cantos e úmidos.
+  // As fileiras somam 64 e as juntas são calculadas módulo 64, então a textura emenda sem costura.
+  const ROWS = [12, 10, 13, 9, 11, 9];
+  const rowOf = y => { let t = 0; for (let r = 0; r < ROWS.length; r++) { if (y < t + ROWS[r]) return [r, y - t, ROWS[r]]; t += ROWS[r]; } return [0, 0, ROWS[0]]; };
+  const joints = ROWS.map((_, r) => { const j = []; let x = Math.floor(hash(r, 99) * 20); while (j.length < 6) { j.push(x % 64); x += 12 + Math.floor(hash(r, j.length + 7) * 14); if (x - j[0] >= 64) break; } return j.sort((p, q) => p - q); });
+  function stoneAt(x, y) {
+    const [r, ly, h] = rowOf(y), j = joints[r];
+    let k = j.length - 1; for (let i = 0; i < j.length; i++) if (x >= j[i]) k = i;
+    const x0 = j[k], x1 = k + 1 < j.length ? j[k + 1] : j[0] + 64;
+    const lx = ((x - x0) % 64 + 64) % 64, w = ((x1 - x0) % 64 + 64) % 64 || 64;
+    return { r, k, lx, ly, w, h };
+  }
   function brick(x, y, variant) {
-    const row = Math.floor(y / 16), off = (row % 2) * 16;
-    const bx = Math.floor((x + off) / 32) % 2, lx = (x + off) % 32, ly = y % 16;
-    const n = fbm(x, y);
-    if (ly < 2 || lx < 2) return mul(pal.mortar, 0.8 + n * 0.4);
-    const bh = hash(bx * 7 + row * 3 + variant * 31, row * 11 + bx);
-    let k = 0.72 + bh * 0.38 + (n - 0.5) * 0.45;
-    if (ly === 2 || lx === 2) k *= 1.22;
-    if (ly === 15 || lx === 31) k *= 0.68;
+    const st = stoneAt(x, y), n = fbm(x, y), grain = vnoise(x, y, 2);
+    // juntas fundas e cantos lascados (o canto do bloco é arredondado por distância)
+    const cx = Math.min(st.lx, st.w - 1 - st.lx), cy = Math.min(st.ly, st.h - 1 - st.ly);
+    const chip = 2 + hash(st.r * 13 + st.k, 5) * 2;
+    const corner = cx < chip && cy < chip && (chip - cx) ** 2 + (chip - cy) ** 2 > chip * chip * 0.9;
+    if (st.lx === 0 || st.ly === 0 || corner) return mul(pal.mortar, 0.55 + n * 0.5);
+    const tone = 0.7 + hash(st.r * 31 + st.k, 17 + variant) * 0.32;
+    let k = tone + (n - 0.5) * 0.4 + (grain - 0.5) * 0.18;
+    if (st.ly === 1 || st.lx === 1) k *= 1.18;                 // aresta que pega luz
+    if (st.ly === st.h - 1 || st.lx === st.w - 1) k *= 0.62;   // aresta na sombra
+    if (hash(x, y) < 0.04) k *= 0.6;                            // poros da pedra
     let c = mul(pal.stone, k);
+    // escorrido de umidade e musgo, mais forte embaixo
+    const damp = vnoise(x * 3, y * 0.4, 8);
+    if (damp > 0.62) c = mul(c, 1 - (damp - 0.62) * 0.9);
+    const moss = fbm(x * 1.2 + 40, y * 1.2 + 9) + y / 160;
+    if (moss > (variant === 1 ? 0.62 : 0.86)) c = mix(c, pal.accent, Math.min(0.8, (moss - 0.6) * 2.4));
     if (variant === 1) {
-      const m = fbm(x * 1.3 + 50, y * 1.3 + 9);
-      if (m > 0.5 && y > 24) c = mix(c, pal.accent, Math.min(0.85, (m - 0.5) * 3.5));
-      // rachadura
-      const cx = 22 + Math.sin(y * 0.35) * 4 + (y > 30 ? (y - 30) * 0.5 : 0);
-      if (y > 4 && y < 50 && Math.abs(x - cx) < 0.9) c = mul(pal.mortar, 0.6);
+      // rachadura que atravessa os blocos
+      const crx = 30 + Math.sin(y * 0.3) * 5 + (y > 28 ? (y - 28) * 0.45 : 0);
+      if (y > 3 && y < 56 && Math.abs(x - crx) < 0.8) c = mul(pal.mortar, 0.45);
+      // teia no canto de cima
+      const wx = x, wy = y, d = Math.hypot(wx, wy), ang = Math.atan2(wy, wx);
+      if (d < 22 && (Math.abs(Math.sin(ang * 5)) < 0.12 || Math.abs(d % 7 - 3.5) < 0.45)) c = mix(c, [200, 200, 196], 0.55);
     }
+    return c;
+  }
+
+  // Nicho de ossário: arco escavado na parede com caveiras empilhadas
+  function ossuary(x, y) {
+    const ax = x - 31.5, top = 14, bot = 54, half = 17;
+    const inArch = Math.abs(ax) < half && y < bot && (y >= top + half || Math.hypot(ax, y - (top + half)) < half);
+    const rim = Math.abs(ax) < half + 2 && y < bot + 2 && (y >= top + half || Math.hypot(ax, y - (top + half)) < half + 2);
+    if (!rim) return brick(x, y, 0);
+    if (!inArch) return mul(pal.stone, 0.95 + fbm(x, y) * 0.3);                // moldura de pedra lisa
+    let c = mul(pal.mortar, 0.35 + fbm(x, y) * 0.2);                           // fundo escuro do nicho
+    const skulls = [[20, 32], [32, 31], [44, 32], [26, 43], [38, 43], [14, 45], [50, 45]];
+    for (const [sx, sy] of skulls) {
+      const dx = x - sx, dy = y - sy;
+      if (dx * dx / 30 + dy * dy / 26 < 1 || (Math.abs(dx) < 3.5 && dy >= 3 && dy < 6)) {
+        let b = 0.85 + fbm(x * 2, y * 2) * 0.25 - Math.max(0, dy) * 0.03 - Math.max(0, dx) * 0.02;
+        c = mul([214, 204, 176], b);
+        if ((Math.abs(dx + 2) < 1.2 || Math.abs(dx - 2) < 1.2) && dy > -1 && dy < 2) c = [20, 16, 14];   // órbitas
+        if (Math.abs(dx) < 0.6 && dy >= 2 && dy < 3.5) c = [40, 32, 28];                                // nariz
+        if (dy >= 4 && dy < 6 && x % 2 === 0) c = mul(c, 0.6);                                            // dentes
+      }
+    }
+    if (y > bot - 4) c = mix(c, [190, 180, 150], (y - bot + 4) / 6 * (hash(x, 3) > 0.5 ? 0.6 : 0.2));  // ossos no chão do nicho
     return c;
   }
 
@@ -76,23 +120,30 @@ function makeTextures(pal, seed) {
   }
 
   function floorT(x, y) {
-    const sx = Math.floor(x / 32), sy = Math.floor(y / 32);
-    const off = (sy % 2) * 16;
-    const lx = (x + off) % 32, ly = y % 32;
+    // lajes gastas de tamanhos diferentes, terra nas juntas e um ou outro osso
+    const sy = y < 22 ? 0 : y < 46 ? 1 : 2, h = [22, 24, 18][sy], ly = y - [0, 22, 46][sy];
+    const off = [0, 13, 27][sy], cut = [21, 40, 18, 35, 26, 44][sy * 2 + (((x + off) % 64) < 32 ? 0 : 1)] % 32;
+    const lx = (x + off) % 32, edge = lx < 1 || ly < 1 || lx === cut;
     const n = fbm(x, y);
-    if (lx < 1 || ly < 1) return mul(pal.floorJ, 0.9 + n * 0.3);
-    const h = hash(Math.floor((x + off) / 32) % 2 + 9, sy + 3);
-    let k = 0.78 + h * 0.3 + (n - 0.5) * 0.5;
-    if (lx === 1 || ly === 1) k *= 1.15;
-    if (lx === 31 || ly === 31) k *= 0.8;
-    return mul(pal.floor, k);
+    if (edge) return mul(pal.floorJ, 0.8 + n * 0.5);
+    let k = 0.72 + hash(sy * 5 + ((x + off) >> 5) + (lx > cut ? 3 : 0), 41) * 0.3 + (n - 0.5) * 0.5 + (vnoise(x, y, 2) - 0.5) * 0.15;
+    if (ly === 1) k *= 1.12;
+    if (ly === h - 1) k *= 0.75;
+    let c = mul(pal.floor, k);
+    const dirt = fbm(x + 300, y + 77);
+    if (dirt > 0.6) c = mix(c, pal.floorJ, (dirt - 0.6) * 1.6);
+    if (hash((x >> 3) + 50, (y >> 3) + 60) < 0.05 && Math.abs((x % 8) - (y % 8)) < 1) c = mul([150, 142, 122], 0.8 + n * 0.3);   // lasca de osso
+    return c;
   }
 
   function ceilT(x, y) {
+    // abóbada escura com nervuras de pedra a cada 32 px
     const n = fbm(x + 100, y + 100);
-    let k = 0.65 + n * 0.55;
-    if (y % 32 < 4) k *= 0.55 + (y % 32) * 0.08;
-    if (x % 32 === 0) k *= 0.7;
+    let k = 0.5 + n * 0.5;
+    const rib = Math.min(y % 32, 32 - (y % 32));
+    if (rib < 3) k = 0.85 + (3 - rib) * 0.12 + n * 0.2;
+    else if (rib < 5) k *= 0.6;
+    if (x % 16 === 0 && rib >= 5) k *= 0.75;
     return mul(pal.ceil, k);
   }
 
@@ -111,7 +162,7 @@ function makeTextures(pal, seed) {
   }
 
   return {
-    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch)],
+    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch), tex(ossuary)],
     floor: tex(floorT),
     ceil: tex(ceilT),
     stairs: tex(stairsT),

@@ -13,7 +13,7 @@ const GAME = {
 const FLOORS = [
   {
     name: 'Cripta de Valmor', short: 'B1', seed: 7331, size: 15, rooms: 2, loops: 0.06, fountainAt: 0.5, boss: true,
-    pal: { stone: [112, 112, 128], mortar: [46, 46, 58], floor: [88, 82, 76], floorJ: [36, 34, 32], ceil: [46, 46, 56], accent: [70, 110, 60] },
+    pal: { stone: [104, 98, 88], mortar: [28, 25, 22], floor: [70, 64, 56], floorJ: [30, 26, 22], ceil: [42, 38, 34], accent: [76, 94, 50] }, // calcário velho, musgo
     loot: ['pocao', 'espadaFerro', 'eter', 'cajadoRunico', 'pocao'],
     enemies: ['rato', 'morcego', 'gosma'], maxGroup: 3,
   },
