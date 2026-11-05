@@ -634,6 +634,7 @@ function frame(now) {
   gameEl.classList.toggle('show-party', G.mode === 'battle' || G.mode === 'explore' || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
   wmBtn.hidden = !canWorldMap();
   HUD.begin();
+  gameEl.classList.toggle('in-battle', G.mode === 'battle'); // phone layout: no d-pad in battle, windows sit lower
   const F = FLOORS[G.floor];
   HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
   if (G.mode === 'title') {

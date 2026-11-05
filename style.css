@@ -178,7 +178,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #wmBtn[hidden] { display: none; }
 #wmBtn:hover { color: var(--gold); }
 .wm-ico { width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); image-rendering: pixelated; }
-#worldmap { position: absolute; inset: 0; z-index: 20; display: none; background: rgba(3, 3, 12, .94);
+#worldmap { position: absolute; inset: 0; z-index: 20; display: none; background: var(--bg);
   padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);
   grid-template-columns: minmax(0, 1fr) minmax(12em, 30%); grid-template-rows: auto minmax(0, 1fr); }
 #worldmap.open { display: grid; }
@@ -247,7 +247,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .cmd-name { display: none; }
 @media (orientation: portrait), (max-width: 700px) {
   #menu.icons .opt span { display: none; }
-  .cmd-name { display: block; color: var(--gold); margin-top: .3em; }
+  .cmd-name { display: inline; color: var(--gold); margin-left: .6em; }
 }
 /* Narrow screens: notes drop below the place/MUNDO row instead of covering it */
 @media (orientation: portrait), (max-width: 700px) { #info { top: calc(var(--u) * 14 + 16px); } }
@@ -264,3 +264,17 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-row b.visto { background: var(--gold); } .wm-row b.aqui { background: var(--hp); }
 .wm-row b.boato { background: transparent; box-shadow: inset 0 0 0 var(--u) var(--text), 0 0 0 var(--u) var(--ink); }
 .wm-row b.segredo { background: #b060e0; rotate: 45deg; }
+
+/* Phone in portrait, battle: the d-pad is useless, so OK/✕/MAPA go on one row and the windows drop, leaving the enemies visible */
+@media (orientation: portrait) and (pointer: coarse) {
+  #game.in-battle #bottom { padding-bottom: 64px; }
+  #game.in-battle #touch .pad { display: none; }
+  #game.in-battle #touch { justify-content: flex-end; }
+  #game.in-battle #touch .pad2 { grid-template-columns: repeat(3, 56px); }
+  #game.in-battle #touch .pad2 button:first-child { grid-column: auto; }
+}
+/* Phone in portrait: target list in one column, state on the same line ("Rato de Cova  ileso") */
+@media (orientation: portrait) {
+  #menu:has(.opt small) { grid-template-columns: 1fr !important; gap: .4em; }
+  #menu .opt small { display: inline; margin: 0 0 0 1em; }
+}
