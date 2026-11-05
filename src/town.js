@@ -147,6 +147,7 @@ const AREAS = {
   valmor: makeArea('Vila de Valmor', 'VALMOR', TOWN_W, TOWN_H, buildTownMap().g, BUILDINGS, TILE.TREE),
   taverna: makeArea('Taverna Poney Saltitante', 'TAVERNA', 14, 10, buildTavernMap(), [], TILE.WALL),
 };
+AREAS.taverna.music = () => 'tavern'; // giga da Poney Saltitante
 
 const TOWN = {
   A: AREAS.valmor, p: null, followers: [], npcs: [], step: 0, dim: 0,
@@ -599,7 +600,7 @@ async function talkTo(n) {
 async function guardTalk(n) {
   const nm = 'Guarda Hugo';
   if (!G.quest || G.bossDead) return say(nm, byStage(NPC_DEFS[0].lines));
-  if (G.party.length < 4) return say(nm, ['Ordem do ancião: só desce grupo de quatro. Eu conto daqui.']);
+  if (G.party.length < 4) return say(nm, ['Ordem do ancião: só desce grupo de quatro. Eu conto daqui.', `Vocês são ${['', 'um', 'dois', 'três'][G.party.length]}. Tem gente esperando para descer, lá na taverna. A Berta sabe quem.`]);
   if (!G.seen.hugo4) {
     G.seen.hugo4 = 1;
     await say(nm, ['Quatro. Assim o ancião aceita. Que a luz os guie lá embaixo.']);
@@ -643,6 +644,7 @@ async function enterTavern() {
   await fadeTo(1, 300);
   enterTown(TAVERN_INSIDE, 'taverna');
   await fadeTo(0, 300);
+  if (needsIntroductions()) await introductions(); // a Berta apresenta quem quer descer à cripta
 }
 async function leaveTavern() {
   Sfx.select();

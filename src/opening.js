@@ -99,6 +99,51 @@ async function bertaJob() {
 const LYRA_DEF = { id: 'lyra', name: 'Lyra', x: 11, y: 6, dir: 0, wander: 0, onTalk: lyraTalk };
 const ANDILLA_DEF = { id: 'andilla', look: 'andilla', get name() { return heroName('andilla'); }, x: 12, y: 7, dir: 3, wander: 0, onTalk: andillaTalk };
 
+// Com a licença do ancião, a Berta apresenta quem espera para descer à cripta e todos se apresentam
+const needsIntroductions = () => G.quest && !G.bossDead && G.party.length < 4 && !G.seen.apresentacao;
+async function introductions() {
+  G.busy = true; G.seen.apresentacao = 1;
+  const actor = id => TOWN.npcs.find(n => n.def.id === id);
+  const lyra = !inParty('lyra') && actor('lyra'), andilla = !inParty('andilla') && actor('andilla'), nm = heroName('andilla');
+  await line('Berta', 'Licença do ancião? Então vocês não são os únicos. Tem gente aqui esperando o Hugo abrir a cripta faz dias.');
+  await line('Berta', 'Ei, vocês duas! Venham cá. Esse povo vai descer.');
+  await Promise.all([
+    lyra && walkPath(lyra, [[10, 6], [9, 6], [8, 6], [8, 7]]),
+    andilla && walkPath(andilla, [[11, 7], [10, 7], [9, 7], [9, 8]]),
+  ]);
+  if (lyra) lyra.dir = 3;
+  if (andilla) andilla.dir = 3;
+  TOWN.p.dir = 1;
+  await line('Berta', 'Ninguém desce sozinho. Cada um diz quem é, e eu sirvo a sopa.');
+  await line('Aldo', 'Aldo. Espada, estrada e pouca conversa. Cheguei ontem procurando pouso.');
+  if (inParty('teo')) await line('Teo', 'Teo, noviço do Templo de Erukh. Eu curo os feridos. E guardo uma carta que não é minha.');
+  if (lyra) {
+    await line('Lyra', 'Lyra. Maga, vinda de longe, com mais livros que bagagem.');
+    await line('Lyra', 'Lá embaixo há fontes de luz que guardam a memória de quem passa. Quero ver uma.');
+    await line('Lyra', 'Antes, me digam: por que vocês vão descer?');
+    const r = await UI.choose([
+      { label: 'Pelos mortos de Valmor.', value: 'Resposta de herói. Gosto.' },
+      { label: 'Pela carta.', value: 'Resposta de mensageiro. Serve.' },
+      { label: 'Pelo ouro.', value: 'Resposta honesta. Essa é rara.' },
+    ], { title: 'Por que descer à cripta?', cols: 1 });
+    await line('Lyra', r);
+    await line('Lyra', 'Vocês têm a licença; eu tenho o fogo.');
+    recruit('lyra', lyra); await joined('Lyra');
+  }
+  if (andilla) {
+    await line(nm, `${nm}. Abro o que está fechado e desarmo o que não devia estar armado.`);
+    if (G.key.estojo) {
+      await line(nm, 'E esse estojo aí é meu. Meus ganchos! Não, não vou contar o que eu fazia no cemitério.');
+      G.key.estojo = false;
+    } else await line(nm, 'Perdi meus ganchos por aí. Se acharem um estojo de couro, é meu. Até lá, me viro com grampo.');
+    await line(nm, 'Lá embaixo tem tranca e armadilha. E dizem que enterraram um rei com a coroa. Rei morto não precisa de coroa.');
+    recruit('andilla', andilla); await joined(nm);
+  }
+  await line('Berta', 'Quatro. Agora o Hugo deixa passar. Voltem vivos, que a sopa de amanhã já está paga.');
+  saveGame();
+  G.busy = false; townHint();
+}
+
 async function lyraTalk(n) {
   if (!G.quest) {
     await line('Lyra', 'Fontes de luz que guardam a memória de quem passa. Vim de longe para ver uma.');
@@ -219,7 +264,7 @@ AREAS.cemiterio = makeArea('Cemitério de Valmor', 'CEMITERIO', 16, 12, buildCem
 Object.assign(AREAS.cemiterio, {
   fog: true, dimCol: '10,24,56',
   dim: () => (G.seen.cem3 && G.seen.teoWin) ? 0.1 : 0.3,
-  music: () => cemDone() ? 'town' : 'explore',
+  music: () => cemDone() ? 'town' : 'cemetery',
   cast: () => [
     ...Object.entries(CEM_FIGHTS).filter(([, f]) => !G.seen[f.flag]).map(([id, f]) => ({ id, foe: f.foe, name: f.name, x: f.x, y: f.y, dir: f.dir, wander: 0, onTalk: cemFight })),
     ...(inParty('teo') ? [] : [TEO_DEF]),
@@ -237,7 +282,7 @@ Object.assign(AREAS.cemiterio, {
     const foe = TOWN.npcs.find(n => n.def.foe && Math.abs(n.x - x) + Math.abs(n.y - y) === 1);
     if (foe) return () => cemFight(foe);
     if (x === 6 && y === 4 && !G.seen.estojo) return async () => {
-      G.seen.estojo = 1; G.key.estojo = true; Sfx.chest();
+      G.seen.estojo = 1; G.key.estojo = !inParty('andilla'); Sfx.chest();
       await UI.say('Junto de uma cova cavada, um estojo de couro cheio de ganchinhos de metal.');
       await line('Aldo', 'Ferramenta de quem abre o que não é seu.');
     };
