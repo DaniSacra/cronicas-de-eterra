@@ -341,11 +341,8 @@ async function floorClues(f) {
 async function campMenu() {
   G.busy = true;
   for (;;) {
-    const v = await UI.choose([
-      { label: 'Itens', value: 'item' }, { label: 'Magia', value: 'magic' }, { label: 'Status', value: 'status' },
-      { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' }, { label: 'Mapa', value: 'map', disabled: G.mode === 'town' },
-      { label: 'Voltar', value: null },
-    ], { title: `— Menu — ${G.gold} moedas`, cancel: true, cols: 3 });
+    const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length });
+    const v = await UI.choose(m.opts, { title: m.title, cancel: true, cols: 3 });
     if (v === 'diary') await showDiary();
     if (v === 'world') await WorldMap.show();
     if (v === null) break;

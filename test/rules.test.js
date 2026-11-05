@@ -32,3 +32,15 @@ test('enemy health words follow the HP fraction', () => {
   assert.equal(R.healthWord(3, 10), 'muito ferido');
   assert.equal(R.healthWord(1, 10), 'quase caindo');
 });
+
+test('camp menu: coins in the title, Mapa hidden in town, Itens off with an empty bag', () => {
+  const labels = m => m.opts.map(o => o.label);
+  const town = R.campMenuOpts({ gold: 20, inTown: true, bagCount: 0 });
+  assert.equal(town.title, 'Menu · 20 moedas');
+  assert.ok(!labels(town).includes('Mapa'));
+  assert.equal(town.opts.find(o => o.value === 'item').disabled, true);
+  const crypt = R.campMenuOpts({ gold: 40, inTown: false, bagCount: 2 });
+  assert.ok(labels(crypt).includes('Mapa'));
+  assert.equal(crypt.opts.find(o => o.value === 'item').disabled, false);
+  assert.equal(crypt.opts.at(-1).value, null, 'Voltar stays last');
+});

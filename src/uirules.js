@@ -27,4 +27,15 @@ function healthWord(hp, maxhp) {
   return k > 0.7 ? 'ileso' : k > 0.4 ? 'ferido' : k > 0.15 ? 'muito ferido' : 'quase caindo';
 }
 
-if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord };
+// Camp menu: coins in the title, Mapa only in the crypt, Itens greyed out while the bag is empty
+function campMenuOpts(s) {
+  const opts = [
+    { label: 'Itens', value: 'item', disabled: s.bagCount === 0 }, { label: 'Magia', value: 'magic' }, { label: 'Status', value: 'status' },
+    { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
+  ];
+  if (!s.inTown) opts.push({ label: 'Mapa', value: 'map' });
+  opts.push({ label: 'Voltar', value: null });
+  return { title: `Menu · ${s.gold} moedas`, opts };
+}
+
+if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts };
