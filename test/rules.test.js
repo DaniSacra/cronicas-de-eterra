@@ -55,3 +55,15 @@ test('equipment screen: gear grouped by hero and slot', () => {
   assert.deepEqual(R.heroGear('teo', ['a', 'c'], EQ).map(s => s.items.length), [0, 0]);
   assert.equal(R.bonusText({ def: 5, mag: 5 }, { def: 'DEF', mag: 'MAG' }), 'DEF +5, MAG +5');
 });
+
+test('party talk: plays once per save and skips heroes not in the party', () => {
+  const seen = {};
+  assert.equal(R.takeTalk(seen, 'olho'), true);
+  assert.equal(R.takeTalk(seen, 'olho'), false, 'second time is skipped');
+  assert.equal(seen['talk:olho'], 1, 'saved in G.seen');
+  assert.equal(R.takeTalk(seen, 'altar'), true, 'other talks are independent');
+  const lines = [['aldo', 'a'], ['lyra', 'b'], [null, 'narração'], ['Bilhete', 'c'], ['andilla', 'd']];
+  const heroes = ['aldo', 'teo', 'lyra', 'andilla'];
+  const got = R.talkLines(lines, heroes, id => id === 'aldo' || id === 'andilla').map(l => l[1]);
+  assert.deepEqual(got, ['a', 'narração', 'c', 'd']);
+});

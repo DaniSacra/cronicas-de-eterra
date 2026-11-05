@@ -48,4 +48,16 @@ function heroGear(heroId, ownedIds, equips) {
 // "ATQ +6, DEF +5"
 const bonusText = (bonus, names) => Object.entries(bonus).map(([k, v]) => `${names[k]} +${v}`).join(', ');
 
-if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText };
+// Party talks (docs/mundo/historias/capitulo1.md, "Conversas do grupo"): each talk plays once per save.
+// takeTalk marks it in `seen` and says whether it should play now.
+function takeTalk(seen, id) {
+  const k = 'talk:' + id;
+  if (seen[k]) return false;
+  seen[k] = 1;
+  return true;
+}
+// Lines are [who, text]: who is a hero id (dropped when that hero is not in the party),
+// any other speaker name, or null for narration.
+const talkLines = (lines, heroIds, inParty) => lines.filter(([who]) => !heroIds.includes(who) || inParty(who));
+
+if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines };

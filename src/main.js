@@ -259,13 +259,12 @@ async function interact(o) {
       await UI.say(`Vocês abrem o baú...\nEncontraram: ${eq.name}!\n${pdef(m).name} equipa (${b}).`);
     }
   } else if (o.type === 'fountain') {
-    if (!G.seen.lapide) { G.seen.lapide = 1; for (const [who, t] of FLOOR_CLUES[1]) await say2(who, t); }
+    if (!G.seen.lapide) { G.seen.lapide = 1; await clue(FLOOR_CLUES[1]); await partyTalk('lapide', TALKS.lapide); }
     if (!G.seen.bilhete) {
       G.seen.bilhete = 1;
       await say2(null, 'Junto à fonte, um capuz cinza rasgado. Dentro dele, um bilhete.');
       await say2('Bilhete', '"O selo cede. Mais três noites. O homem do sumo sacerdote não pode sair de Valmor. V."');
-      await say2('Lyra', 'V.... Quem é V.?');
-      if (inParty('andilla')) await say2(heroName('andilla'), 'Capuz cinza de novo. Agora entendem por que a Berta me olhou torto?');
+      await partyTalk('bilhete', TALKS.bilhete);
     }
     Sfx.holy();
     G.flashColor = '160,230,255'; G.flash = { t0: performance.now(), dur: 700 };
@@ -275,7 +274,7 @@ async function interact(o) {
     await UI.say('Uma fonte de água cristalina brilha na escuridão.\nO grupo foi totalmente restaurado!' + (saved ? '\nJogo salvo.' : ''));
     if (!G.seen.fonteLyra && inParty('lyra')) { G.seen.fonteLyra = 1; await say2('Lyra', 'É verdade, então. A água lembra de quem passa. Dá para sentir.'); }
   } else if (o.type === 'boss') {
-    if (!G.seen.altar) { G.seen.altar = 1; for (const [who, t] of FLOOR_CLUES[2]) await say2(who, t); }
+    if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); }
     const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
       { title: 'Uma presença terrível paira sobre um trono de ossos.\nEnfrentar Morvath, o Lich-Rei?', cancel: true });
     if (ok) await runBattle(['morvath'], true, { hints: [
@@ -326,16 +325,29 @@ async function descend() {
 
 // Pistas da história ao chegar a cada andar (aparecem uma vez só)
 const say2 = (who, t) => UI.say(who ? `${who}:\n${t}` : t);
-// [0] ao entrar na cripta · [1] na fonte (lápide) · [2] diante de Morvath (altar)
+// The clue comes first; the party talk follows it (never in its place)
+// [0] ao entrar na cripta (olho) · [1] na fonte (lápide) · [2] diante do altar
 const FLOOR_CLUES = [
-  [[null, 'Na parede, ao pé da escada, pintado de vermelho: um olho cortado ao meio.'], ['Aldo', 'Eles já estiveram aqui embaixo.'], ['Lyra', 'Então não vieram a Valmor só pela carta.'], [heroName('andilla'), 'Tinta fresca. Faz menos de uma semana.']],
-  [[null, 'Uma lápide antiga, rachada ao meio. As letras ainda se leem:'], ['Lápide', '"Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou."'], ['Teo', 'Morvath... O rei que o ancião não quis nomear.']],
-  [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."'], ['Teo', 'Estão rezando para Morvath? Para um rei morto?'], ['Aldo', 'Então é ele quem manda nos encapuzados.']],
+  [[null, 'Na parede, ao pé da escada, pintado de vermelho: um olho cortado ao meio.']],
+  [[null, 'Uma lápide antiga, rachada ao meio. As letras ainda se leem:'], ['Lápide', '"Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou."']],
+  [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."']],
 ];
+const FLOOR_TALKS = ['olho'];
+// Conversas do grupo (docs/mundo/historias/capitulo1.md)
+const TALKS = {
+  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.'], ['lyra', 'Então não vieram a Valmor só pela carta.']],
+  lapide: [['teo', 'Morvath. O rei que o ancião não quis nomear.'], ['andilla', 'Rei enterrado com a coroa, e a gente aqui de mão vazia.'],
+    ['teo', () => `${heroName('andilla')}.`], ['andilla', 'Brincadeira. Quase toda.']],
+  bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
+    ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.']],
+  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
+};
+const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
   if (G.seen['andar' + f] || !FLOOR_CLUES[f]) return;
   G.seen['andar' + f] = 1;
-  for (const [who, t] of FLOOR_CLUES[f]) await say2(who, t);
+  await clue(FLOOR_CLUES[f]);
+  if (FLOOR_TALKS[f]) await partyTalk(FLOOR_TALKS[f], TALKS[FLOOR_TALKS[f]]);
 }
 
 // ---------- Menu de acampamento ----------
