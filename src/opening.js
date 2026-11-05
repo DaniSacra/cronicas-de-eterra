@@ -89,10 +89,10 @@ async function bertaJob() {
   await line('Berta', 'Quarto e sopa, dez moedas. Ou um favor, se o forasteiro souber usar essa espada.');
   await line('Rui', 'As covas do cemitério amanheceram abertas de novo. Vazias. Como se alguém tivesse saído de dentro.');
   await line('Berta', 'Para com isso, Rui.');
-  await line('Berta', 'O Hugo não pode largar a cripta. Dê uma olhada no cemitério, atrás da capela.');
+  await line('Berta', 'O Hugo não pode largar a igreja velha. Dê uma olhada no cemitério, atrás da capela, no alto da vila.');
   await line('Berta', 'Volte inteiro e o quarto é seu. A sopa também.');
   G.seen.job = 1;
-  await UI.say('Objetivo: investigar as covas abertas no cemitério, atrás da capela.');
+  await UI.say('Objetivo: investigar as covas abertas no cemitério, atrás da capela.\nA setinha amarela mostra o caminho.');
 }
 
 // Manhã em diante: Lyra e a ladina esperam na taverna até entrarem no grupo

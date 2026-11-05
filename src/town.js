@@ -74,8 +74,7 @@ const NPC_DEFS = [
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
-  { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, lines: {
-    arrive: [() => `${heroName('aldo')}? Voltou mesmo.`, 'Trabalho de inverno, é? Claro. Trabalho.'],
+  { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, onTalk: claraTalk, lines: {
     start: ['O Nino não fala de outra coisa: o cavaleiro da espada de verdade.', 'Cuidado com essa espada. E com quem fica do outro lado dela.'],
     quest: ['Vão descer na igreja velha?', 'Eu conto as crianças toda manhã. Volto a contar vocês também. Os quatro.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
@@ -611,6 +610,55 @@ async function talkTo(n) {
   } finally { n.talking = false; }
 }
 
+// Clara e Aldo: os dois gostam um do outro e nenhum dos dois sabe o que dizer (uma vez só; depois, as falas da etapa)
+async function claraTalk(n) {
+  const nm = 'Clara, a professora';
+  if (G.seen['talk:clara'] || G.bossDead) return say(nm, byStage(n.def.lines));
+  await partyTalk('clara', [
+    [nm, () => `${heroName('aldo')}? Você... voltou.`],
+    ['aldo', 'Voltei. Quer dizer, vim trabalhar. Trabalho de inverno. Tem bastante trabalho no inverno.'],
+    [nm, 'Tem. Claro. Muito trabalho.'],
+    [null, 'Os dois olham para o chão ao mesmo tempo.'],
+    ['aldo', 'Você ainda dá aula?'],
+    [nm, 'Todo dia. O Nino fala de você o tempo todo. Quer dizer, da espada. Ele fala da espada.'],
+    ['aldo', 'Da espada. Claro.'],
+    [nm, 'Bom. Eu... tenho umas lousas para limpar.'],
+    ['aldo', 'Lousas. Sim. Eu também tenho. Quer dizer, não tenho. Até logo.'],
+    [null, () => `Clara se afasta depressa, vermelha. ${heroName('aldo')} fica parado, coçando a nuca.`],
+    ['teo', 'Lousas?'],
+    ['andilla', 'Lousas. Sei.'],
+  ]);
+}
+
+// Próximo lugar da história, para a setinha amarela na vila, na taverna e no cemitério
+function goalSpot() {
+  if (G.bossDead || G.busy) return null;
+  const door = id => BUILDINGS.find(b => b.id === id).door;
+  const npc = id => { const n = TOWN.npcs.find(a => a.def.id === id); return n && { x: n.x, y: n.y }; };
+  const a = G.area, four = G.party.length >= 4;
+  if (a === 'valmor') {
+    if (!G.seen.job) return door('tavern');
+    if (!inParty('teo')) return { x: 5, y: 3 };          // portão do cemitério
+    if (!G.intro) return door('tavern');
+    if (!G.quest) return door('elder');
+    if (!four) return door('tavern');
+    if (!G.seen.hugo4) return npc('guard');
+    return door('crypt');
+  }
+  if (a === 'taverna') {
+    if (!G.seen.job) return npc('berta');
+    if (G.quest && !four) return npc('andilla') || npc('lyra');
+    if (G.intro && !G.quest && G.key.estojo) return npc('andilla');
+    return { x: 7, y: 9 };                                // a porta
+  }
+  if (a === 'cemiterio') {
+    if (inParty('teo')) return { x: 8, y: 11 };           // o portão
+    const f = Object.keys(CEM_FIGHTS).find(id => !G.seen[CEM_FIGHTS[id].flag]);
+    return f ? npc(f) : { x: 10, y: 2 };                  // Teo, no fundo
+  }
+  return null;
+}
+
 // Guarda Hugo: só deixa descer com a missão do ancião e um grupo de quatro
 async function guardTalk(n) {
   const nm = 'Guarda Hugo';
@@ -774,6 +822,13 @@ function drawTown(now) {
       continue;
     }
     c.save(); c.translate(x + 8, y + 11); c.rotate(-Math.PI / 2); c.drawImage(o.spr(), -8, -9); c.restore();
+  }
+  // Setinha amarela sobre o próximo lugar da história, balançando
+  const goal = goalSpot();
+  if (goal) {
+    const gx = goal.x * TS - camX + TS / 2, gy = goal.y * TS - camY - 7 - (Math.floor(now / 250) % 2) * 2;
+    c.fillStyle = '#1a1000'; c.beginPath(); c.moveTo(gx - 5, gy - 1); c.lineTo(gx + 5, gy - 1); c.lineTo(gx, gy + 6); c.closePath(); c.fill();
+    c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(gx - 3.5, gy); c.lineTo(gx + 3.5, gy); c.lineTo(gx, gy + 4.5); c.closePath(); c.fill();
   }
   if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
   // Névoa baixa (cemitério): faixas claras deslizando devagar
