@@ -85,14 +85,21 @@ const UI = (() => {
     menu.opts.forEach((op, i) => {
       const d = document.createElement('div');
       d.className = 'opt' + (i === menu.sel ? ' sel' : '') + (op.disabled ? ' dis' : '');
-      d.innerHTML = op.icon ? `<img src="${op.icon}" alt=""><span>${esc(op.label)}</span>`
+      d.innerHTML = op.icon ? `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`
         : esc(op.label) + (op.hint ? `<small>${esc(op.hint)}</small>` : '');
       d.onmouseenter = () => { if (!menu || menu.sel === i) return; menu.sel = i; update(); };
       d.onclick = ev => { ev.stopPropagation(); if (!menu) return; menu.sel = i; pick(); };
       menuEl.appendChild(d);
     });
   }
-  function update() { [...menuEl.children].forEach((c, i) => c.classList.toggle('sel', i === menu.sel)); menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); hover(); }
+  // Icon states follow the cursor: normal, selected (gold halo), disabled (grey)
+  const iconState = (op, sel) => op.disabled ? 'dis' : sel ? 'sel' : 'normal';
+  function update() {
+    [...menuEl.children].forEach((c, i) => {
+      c.classList.toggle('sel', i === menu.sel);
+      const op = menu.opts[i], img = op.icon && c.querySelector('img');
+      if (img) img.src = iconUrl(op.icon, iconState(op, i === menu.sel));
+    }); menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); hover(); }
   function hover() { menu.onHover && menu.onHover(menu.opts[menu.sel].value); }
   function close(v) { const m = menu; menu = null; clearMenu(); closeSoon(); m.onHover && m.onHover(null); m.res(v); }
   function pick() { const op = menu.opts[menu.sel]; if (op.disabled) { Sfx.bump(); return; } Sfx.select(); close(op.value); }

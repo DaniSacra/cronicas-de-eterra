@@ -74,11 +74,11 @@ async function chooseCommand(m) {
   for (;;) {
     const spells = knownSpells(m);
     const v = await UI.choose([
-      { label: 'Atacar', value: 'atk', icon: iconUrl('atk') },
-      { label: d.skillWord, value: 'spell', disabled: !spells.length, icon: iconUrl('spell') },
-      { label: 'Item', value: 'item', disabled: !itemOptions().length, icon: iconUrl('item') },
-      { label: 'Defender', value: 'def', icon: iconUrl('def') },
-      { label: 'Fugir', value: 'run', icon: iconUrl('run') },
+      { label: 'Atacar', value: 'atk', icon: 'atk' },
+      { label: d.skillWord, value: 'spell', disabled: !spells.length, icon: 'spell' },
+      { label: 'Item', value: 'item', disabled: !itemOptions().length, icon: 'item' },
+      { label: 'Defender', value: 'def', icon: 'def' },
+      { label: 'Fugir', value: 'run', icon: 'run' },
     ], { title: `Vez de ${d.name}: o que fazer?`, cancel: false, cols: 5, icons: true });
     if (v == null) continue;
     if (v === 'atk') {

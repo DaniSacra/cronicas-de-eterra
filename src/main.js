@@ -129,6 +129,7 @@ window.addEventListener('blur', () => G.held.clear());
 
 // ---------- Mapa-múndi (src/worldmap.js) ----------
 const wmBtn = document.getElementById('wmBtn');
+wmBtn.querySelector('img').src = iconUrl('mundo');
 const canWorldMap = () => (G.mode === 'town' || G.mode === 'explore') && !G.busy && !UI.busy() && !WorldMap.isOpen();
 async function openWorldMap() {
   G.busy = true; G.held.clear(); G.queue.length = 0; G.bigMap = false;
