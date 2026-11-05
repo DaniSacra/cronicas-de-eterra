@@ -69,10 +69,10 @@ const TAVERN_NPCS = [
     start: ['Aquela marca... Não. Não é conversa para esta noite.', 'Vão falar com o ancião. Eu fico aqui, fiando.'],
     quest: ['Lá embaixo, se alguém chamar vocês pelo nome... não respondam.'],
     won: ['Aquela marca... Eu vi uma vez, menina. Num inverno que não acabava.', 'Não era coisa de ladrão de cova. Ladrão de cova não reza.', 'Vou fiar um cachecol para cada um. Lá fora a geada não perdoa.'] } },
-  { id: 'bruno', look: 'soldier', name: 'Bruno, soldado de folga', x: 2, y: 7, dir: 0, wander: 0, lines: {
+  { id: 'bruno', look: 'bruno', name: 'Bruno, soldado de folga', x: 2, y: 7, dir: 0, wander: 0, lines: {
     start: ['Vimos as lâminas e sentamos de novo. Não conta pra ninguém.'],
     won: ['Da próxima vez, a gente levanta primeiro. Prometo.'] } },
-  { id: 'caio', look: 'soldier', name: 'Caio, soldado de folga', x: 4, y: 6, dir: 3, wander: 0, lines: {
+  { id: 'caio', look: 'caio', name: 'Caio, soldado de folga', x: 4, y: 6, dir: 3, wander: 0, lines: {
     start: ['Aquele olho cortado ao meio... Já vi em algum lugar. Não lembro onde.'],
     quest: ['Ainda não lembrei onde vi aquele olho. Está na ponta da língua.'],
     won: ['Lembrei! Vi aquele olho numa caravana. Ia para o norte, para Erukh.', 'À saúde dos heróis de Valmor!'] } },

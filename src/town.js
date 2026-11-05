@@ -23,25 +23,27 @@ const BUILDINGS = [
 ];
 BUILDINGS.forEach(b => { b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
 
-// Aparência: pele, cabelo, roupa, pernas; robe = túnica longa; hat = capacete/chapéu
+// Aparência: pele, cabelo, roupa, pernas, e o jeito de cada um (campos de estilo em src/folk.js)
 const LOOKS = {
-  aldo:  { skin: '#f0c090', hair: '#6a3a1a', body: '#d08a30', legs: '#5a3a20' },
-  lyra:  { skin: '#f4cca0', hair: '#f0d860', body: '#a050c0', legs: '#5a2a70', robe: true, long: true },
-  teo:   { skin: '#e8b888', hair: '#3a2a1a', body: '#e8f0e8', legs: '#4a8a6a', robe: true },
-  andilla: { skin: '#e8c0a0', hair: '#1a1418', body: '#7a7a82', legs: '#4a3424', mark: '#7a1a24' }, // capa cinza como a dos encapuzados; lenço escuro no peito
-  guard: { skin: '#e0b080', hair: '#888', body: '#7a8494', legs: '#3a3a4a', hat: '#a0a8b8' },
-  lia:   { skin: '#f4cca0', hair: '#a04a20', body: '#e05a6a', legs: '#7a2a3a', robe: true, long: true },
-  rui:   { skin: '#d8a070', hair: '#4a3020', body: '#7a9a3a', legs: '#5a4020', hat: '#d8c070' },
-  marta: { skin: '#e8c0a0', hair: '#e8e8e8', body: '#6a5a8a', legs: '#3a3050', robe: true, long: true },
-  tome:  { skin: '#c89060', hair: '#2a2018', body: '#3a7ab0', legs: '#4a4030' },
-  nino:  { skin: '#f0c898', hair: '#2a1a10', body: '#e0b030', legs: '#4a5a8a' },
-  clara: { skin: '#f0c8a0', hair: '#7a4a2a', body: '#4a7a9a', legs: '#2e4a5e', robe: true, long: true },
-  berta: { skin: '#e8b890', hair: '#b04a20', body: '#c05a3a', legs: '#6a3020', robe: true, long: true },
-  ana:   { skin: '#e0b898', hair: '#e8e8e8', body: '#7a5a3a', legs: '#3a2a20', robe: true, long: true },
-  soldier: { skin: '#e0b080', hair: '#888', body: '#6a7484', legs: '#3a3a4a', hat: '#a0a8b8' },
-  tobias: { skin: '#e0b080', hair: '#5a3a1a', body: '#e8eef8', legs: '#3a5aa8', robe: true },
-  ossada: { skin: '#e8e2d0', hair: '#e8e2d0', body: '#cfc8b4', legs: '#bfb8a4', mark: '#2a2420' },
-  hooded: { skin: '#2a2228', hair: '#6a6a72', body: '#7a7a82', legs: '#3a3a42', hat: '#6a6a72', robe: true, mark: '#e02030' },
+  aldo:  { skin: '#f0c090', hair: '#7a4220', body: '#d08a30', legs: '#5a3a20', hairStyle: 'spiky', eye: '#3a6ad0', belt: '#5a3418', tool: 'sword', cape: '#b03a30' },
+  lyra:  { skin: '#f4cca0', hair: '#f0d860', body: '#a050c0', legs: '#5a2a70', robe: true, long: true, hairStyle: 'long', hat: 'circlet', gem: '#40c0ff', tool: 'staff', orb: '#9ae8ff', eye: '#9a50d0', trim: '#f0c040', blush: 1 },
+  teo:   { skin: '#e8b888', hair: '#3a2a1a', body: '#e8f0e8', legs: '#4a8a6a', robe: true, hairStyle: 'messy', eye: '#3a9a5a', trim: '#4a8a6a', belt: '#4a8a6a', tool: 'satchel' },
+  andilla: { skin: '#e8c0a0', hair: '#1a1418', body: '#7a7a82', legs: '#4a3424', mark: '#9a1a24', hairStyle: 'bob', eye: '#a02030', cape: '#5a5a64', tool: 'dagger', belt: '#3a2a20' }, // capa cinza como a dos encapuzados; lenço escuro no peito
+  guard: { skin: '#e0b080', hair: '#6a6a6a', body: '#7a8494', legs: '#3a3a4a', hat: 'helmet', hatCol: '#a0a8b8', plume: '#c03030', outfit: 'armor', beard: 'mustache', tool: 'spear' },
+  lia:   { skin: '#f4cca0', hair: '#c05a28', body: '#e05a6a', legs: '#7a2a3a', robe: true, long: true, kid: 1, hairStyle: 'braids', tie: '#f8f0f0', blush: 1, eye: '#4a8a3a', apron: '#f8ece8' },
+  rui:   { skin: '#d8a070', hair: '#4a3020', body: '#7a9a3a', legs: '#5a6a9a', hat: 'straw', hatCol: '#e0c870', band: '#a04a20', outfit: 'overalls', beard: 'stubble', tool: 'rake' },
+  marta: { skin: '#e8c0a0', hair: '#e8e8e8', body: '#6a5a8a', legs: '#3a3050', robe: true, long: true, old: 1, hairStyle: 'bun', shawl: '#b08ac8', tool: 'cane' },
+  tome:  { skin: '#c89060', hair: '#3a2a1a', body: '#3a7ab0', legs: '#6a5a40', hat: 'cap', hatCol: '#b03a2a', beard: 'full', tool: 'rod', belt: '#4a3020', outfit: 'vest', shirt: '#e8e0c8' },
+  nino:  { skin: '#f0c898', hair: '#2a1a10', body: '#e0b030', legs: '#4a5a8a', kid: 1, hairStyle: 'messy', shorts: 1, eye: '#5a3a1a', blush: 1 },
+  clara: { skin: '#f0c8a0', hair: '#7a4a2a', body: '#4a7a9a', legs: '#2e4a5e', robe: true, long: true, hairStyle: 'pony', tie: '#f0d860', tool: 'book', book: '#8a2a2a', eye: '#4a6a9a', blush: 1, trim: '#e8e0c8' },
+  berta: { skin: '#e8b890', hair: '#b04a20', body: '#c05a3a', legs: '#6a3020', robe: true, long: true, hairStyle: 'bun', apron: '#f4efe2', tool: 'mug', eye: '#6a3a1a', blush: 1 },
+  ana:   { skin: '#e0b898', hair: '#e8e8e8', body: '#7a5a3a', legs: '#3a2a20', robe: true, long: true, old: 1, hat: 'kerchief', hatCol: '#c8a868', tool: 'basket', trim: '#c8a868' },
+  soldier: { skin: '#e0b080', hair: '#888', body: '#6a7484', legs: '#3a3a4a', hat: 'helmet', hatCol: '#a0a8b8', outfit: 'armor', tool: 'spear' },
+  bruno: { skin: '#e0b080', hair: '#5a3a1a', body: '#6a7484', legs: '#3a3a4a', hairStyle: 'bald', beard: 'mustache', outfit: 'vest', shirt: '#d8d0c0', tool: 'mug', belt: '#3a2a20' },
+  caio:  { skin: '#d8a878', hair: '#2a1a10', body: '#5a6a8a', legs: '#3a3a4a', hairStyle: 'short', mark: '#c8a040', belt: '#3a2a20', tool: 'sword', eye: '#3a2a1a' },
+  tobias: { skin: '#e0b080', hair: '#5a3a1a', body: '#e8eef8', legs: '#3a5aa8', hairStyle: 'short', hat: 'bandage', tool: 'satchel', belt: '#5a3a20', bag: '#a06a30' },
+  ossada: { skin: '#e8e2d0', hair: '#e8e2d0', body: '#cfc8b4', legs: '#bfb8a4', mark: '#2a2420', hairStyle: 'bald', sockets: 1 },
+  hooded: { skin: '#2a2228', hair: '#6a6a72', body: '#7a7a82', legs: '#3a3a42', hat: 'hood', hatCol: '#6a6a72', robe: true, mark: '#e02030', glow: '#ff3040', hairStyle: 'none' },
 };
 
 const say = (name, lines) => lines.reduce((p, l) => p.then(() => UI.say(`${name}:\n${typeof l === 'function' ? l() : l}`)), Promise.resolve());
@@ -254,43 +256,7 @@ function shadeHex(hex, k) {
 
 // ---------- Personagens ----------
 const PSPR = {};
-function personSprite(key, dir, frame) {
-  const k = `${key}|${dir}|${frame}`;
-  if (PSPR[k]) return PSPR[k];
-  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 18;
-  const c = cv.getContext('2d');
-  const L = LOOKS[key];
-  const r = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y + 2, w, h); };
-  r(4, 14, 8, 2, 'rgba(0,0,0,.3)');
-  const side = dir === 1 || dir === 3;
-  // Pernas
-  if (L.robe) {
-    r(4, 10, 8, 4, L.body); r(4, 13, 8, 1, shadeHex(L.body, 0.75));
-    r(frame ? 5 : 4, 14, 2, 1, L.legs); r(frame ? 9 : 10, 14, 2, 1, L.legs);
-  } else if (side) {
-    r(frame ? 5 : 6, 11, 2, 4, L.legs); r(frame ? 9 : 8, 11, 2, 4, shadeHex(L.legs, 0.8));
-  } else {
-    r(5, 11, 2, frame ? 3 : 4, L.legs); r(9, 11, 2, frame ? 4 : 3, L.legs);
-  }
-  // Tronco e braços
-  r(4, 6, 8, 6, L.body); r(4, 9, 8, 1, shadeHex(L.body, 0.6));
-  if (side) r(7, 7, 2, 4, shadeHex(L.body, 0.8)), r(7, 10 + frame, 2, 1, L.skin);
-  else { const s = frame ? 1 : 0; r(3, 7 + s, 1, 4, L.skin); r(12, 8 - s, 1, 4, L.skin); }
-  // Cabeça
-  r(5, 1, 6, 5, L.skin);
-  const hair = L.hat || L.hair;
-  if (dir === 0) r(5, 0, 6, 6, L.hair);
-  else {
-    r(5, 0, 6, 2, hair);
-    if (dir === 2) { r(4, 1, 1, 3, L.hair); r(11, 1, 1, 3, L.hair); r(6, 3, 1, 1, '#222'); r(9, 3, 1, 1, '#222'); }
-    if (dir === 1) { r(5, 1, 2, 4, L.hair); r(9, 3, 1, 1, '#222'); }
-    if (dir === 3) { r(9, 1, 2, 4, L.hair); r(6, 3, 1, 1, '#222'); }
-    if (L.long) { r(4, 2, 1, 5, L.hair); r(11, 2, 1, 5, L.hair); }
-  }
-  if (L.hat) { r(4, 0, 8, 2, L.hat); r(5, -1, 6, 1, L.hat); }
-  if (L.mark && dir !== 0) r(7, 7, 2, 1, L.mark);
-  return (PSPR[k] = cv);
-}
+const personSprite = (key, dir, frame) => Folk.sprite(key, dir, frame);
 
 function catSprite(dir, frame, fur = '#e09038', stripe = '#b06a20') {
   const k = `cat|${dir}|${frame}|${fur}`;
@@ -683,16 +649,16 @@ function drawTown(now) {
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
   for (const o of list) {
-    const x = Math.round(o.pos.x - camX), y = Math.round(o.pos.y - camY - 3);
+    const spr = o.spr(), x = Math.round(o.pos.x - camX), y = Math.round(o.pos.y - camY - 3 - (spr.height - 18));
     if (!o.lying) {
-      c.drawImage(o.spr(), x, y);
+      c.drawImage(spr, x, y);
       // Aviso de luta: "!" amarelo piscando sobre o inimigo quando o herói chega perto
       if (o.foe && Math.abs(o.a.x - TOWN.p.x) + Math.abs(o.a.y - TOWN.p.y) <= 3 && Math.floor(now / 250) % 2) {
         c.fillStyle = '#1a1000'; c.fillRect(x + 6, y - 9, 4, 8); c.fillStyle = '#ffd23f'; c.fillRect(x + 7, y - 8, 2, 4); c.fillRect(x + 7, y - 3, 2, 1);
       }
       continue;
     }
-    c.save(); c.translate(x + 8, y + 11); c.rotate(-Math.PI / 2); c.drawImage(o.spr(), -8, -9); c.restore();
+    c.save(); c.translate(x + 8, y + spr.height - 7); c.rotate(-Math.PI / 2); c.drawImage(spr, -8, -spr.height / 2); c.restore();
   }
   // Setinha amarela sobre o próximo lugar da história, balançando
   const goal = goalSpot();
