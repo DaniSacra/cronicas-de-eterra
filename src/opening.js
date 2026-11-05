@@ -1,5 +1,5 @@
 // ===== Capítulo 1: Aldo chega sozinho, o cemitério, a noite na taverna e o grupo de quatro =====
-// História e falas: docs/mundo/historias/capitulo1-aldo-sozinho.md (aprovado pelo Daniel em 2026-11-05)
+// História e falas: docs/mundo/historias/capitulo1.md (nova história do Daniel, 2026-11-05)
 // Especificação: docs/pacotes/capitulo1-aldo-sozinho.md (P2 e P3)
 
 const TAVERN_INSIDE = { x: 7, y: 8, dir: 0 };   // ao entrar pela porta
@@ -27,7 +27,7 @@ const placeActor = (a, x, y, dir) => { a.x = a.fx = x; a.y = a.fy = y; a.t = 1; 
 async function readLetter(aloud) {
   const c = KEY_ITEMS.carta;
   if (!aloud && !G.key.lida) { for (const t of c.sealed) await UI.say(`${c.sealedName}:\n${t}`); return; }
-  if (aloud) { await UI.say('Teo rompe o selo e lê a carta em voz alta.'); G.key.lida = true; }
+  if (aloud) { await UI.say('Teo rompe o selo real e lê a carta em voz alta.'); G.key.lida = true; }
   for (const t of c.text) await UI.say(`${c.name}:\n${t}`);
 }
 
@@ -75,7 +75,7 @@ const TAVERN_NPCS = [
   { id: 'caio', look: 'soldier', name: 'Caio, soldado de folga', x: 4, y: 6, dir: 3, wander: 0, lines: {
     start: ['Aquele olho cortado ao meio... Já vi em algum lugar. Não lembro onde.'],
     quest: ['Ainda não lembrei onde vi aquele olho. Está na ponta da língua.'],
-    won: ['Lembrei! Vi aquele olho numa caravana. Ia para o oeste, para Erukh.', 'À saúde dos heróis de Valmor!'] } },
+    won: ['Lembrei! Vi aquele olho numa caravana. Ia para o norte, para Erukh.', 'À saúde dos heróis de Valmor!'] } },
 ];
 
 // Tarde da chegada: só Berta, Ana e Rui (os soldados e a moça dos dados chegam à noite)
@@ -105,7 +105,7 @@ async function introductions() {
   G.busy = true; G.seen.apresentacao = 1;
   const actor = id => TOWN.npcs.find(n => n.def.id === id);
   const lyra = !inParty('lyra') && actor('lyra'), andilla = !inParty('andilla') && actor('andilla'), nm = heroName('andilla');
-  await line('Berta', 'Licença do ancião? Então vocês não são os únicos. Tem gente aqui esperando o Hugo abrir a cripta faz dias.');
+  await line('Berta', 'Licença do ancião? Então vocês não são os únicos querendo descer.');
   await line('Berta', 'Ei, vocês duas! Venham cá. Esse povo vai descer.');
   await Promise.all([
     lyra && walkPath(lyra, [[10, 6], [9, 6], [8, 6], [8, 7]]),
@@ -131,11 +131,12 @@ async function introductions() {
     recruit('lyra', lyra); await joined('Lyra');
   }
   if (andilla) {
+    await andillaReveal();
     await line(nm, `${nm}. Abro o que está fechado e desarmo o que não devia estar armado.`);
     if (G.key.estojo) {
       await line(nm, 'E esse estojo aí é meu. Meus ganchos! Não, não vou contar o que eu fazia no cemitério.');
       G.key.estojo = false;
-    } else await line(nm, 'Perdi meus ganchos por aí. Se acharem um estojo de couro, é meu. Até lá, me viro com grampo.');
+    } else await line(nm, 'Perdi meus ganchos no cemitério, quando corri. Se acharem um estojo de couro, é meu. Até lá, me viro com grampo.');
     await line(nm, 'Lá embaixo tem tranca e armadilha. E dizem que enterraram um rei com a coroa. Rei morto não precisa de coroa.');
     recruit('andilla', andilla); await joined(nm);
   }
@@ -147,7 +148,7 @@ async function introductions() {
 async function lyraTalk(n) {
   if (!G.quest) {
     await line('Lyra', 'Fontes de luz que guardam a memória de quem passa. Vim de longe para ver uma.');
-    await line('Lyra', 'Mas o guarda não deixa passar nem uma maga educada.');
+    await line('Lyra', 'Cheguei hoje cedo, na carroça do correio. Disseram na estrada que Valmor tem uma, lá embaixo.');
     return;
   }
   await line('Lyra', 'Licença do ancião, é? Então me digam: por que vocês vão descer?');
@@ -169,6 +170,7 @@ async function andillaTalk(n) {
     await line(nm, 'Perdi um estojo de couro. Se acharem, tem recompensa. E não perguntem onde perdi.');
     return;
   }
+  await andillaReveal();
   await line(nm, 'Meus ganchos! E não, não vou contar o que eu fazia no cemitério.');
   await line(nm, 'Lá embaixo tem tranca e armadilha. Vocês precisam de mim, e eu preciso passar pelo Hugo.');
   await line(nm, 'Dizem que enterraram um rei com a coroa. Rei morto não precisa de coroa.');
@@ -176,6 +178,18 @@ async function andillaTalk(n) {
   recruit('andilla', n);
   await joined(nm);
   saveGame();
+}
+
+// Caio reconhece a moça dos dados, a Berta cobra a fuga e ela conta das lâminas curvas (uma vez só)
+async function andillaReveal() {
+  if (G.seen.andillaFuga) return;
+  G.seen.andillaFuga = 1;
+  const nm = heroName('andilla');
+  await line('Caio', 'Espera. Eu conheço essa capa. É a moça dos dados!');
+  await line('Berta', 'É ela mesma. Sumiu antes da primeira lâmina e deixou a conta. Explica isso, menina.');
+  await line(nm, 'Eu já tinha visto aquelas lâminas curvas. No cemitério, de noite, com gente de capa cinza cavando.');
+  await line(nm, 'Quando eles entraram aqui, eu soube quem eram. Saí antes que me reconhecessem.');
+  await line('Berta', 'Fugir eu entendo. Deixar a conta, não.');
 }
 
 // ---------- Passo 2 · O cemitério (área de cima, atrás da capela) ----------
@@ -274,7 +288,7 @@ Object.assign(AREAS.cemiterio, {
     if (G.seen.cemEntrou) return;
     G.seen.cemEntrou = 1;
     G.busy = true;
-    await UI.say('O cemitério de Valmor. Névoa baixa, corvos no muro e cinco covas abertas.');
+    await UI.say('O cemitério de Valmor. Névoa baixa, corvos no muro e covas abertas por toda parte.');
     await line('Aldo', 'Rui não estava exagerando.');
     saveGame(); // perder no cemitério volta para cá
   },
@@ -295,7 +309,12 @@ Object.assign(AREAS.cemiterio, {
     if (t === TILE.GRAVE_O) return async () => { await UI.say('Nesta, a terra foi empurrada para cima. Por dentro.'); await graveSeen('covaO'); };
     if (x === 3 && y === 3) return () => line('Lápide', '"Aqui descansa Mestre Olavo, que fazia o melhor pão do sul."');
     if (t === TILE.TOMB) return () => UI.say('Uma lápide gasta. O nome já se apagou.');
-    if (t === TILE.GRAVE_OLD) return () => UI.say(inParty('teo') ? 'A cova mais antiga de Valmor. A terra ainda está fofa.' : 'Uma cova antiga, de lápide rachada.');
+    if (t === TILE.GRAVE_OLD) return async () => {
+      if (!inParty('teo')) return UI.say('Uma cova antiga, de lápide rachada.');
+      await UI.say('A cova mais antiga de Valmor. A terra ainda está fofa.');
+      await line('Teo', 'Este símbolo na lápide quebrada é de um paladino. Quem descansava aqui deu a vida por Valmor.');
+      G.seen.paladino = 1;
+    };
     return null;
   },
 });
@@ -344,7 +363,7 @@ async function nightScene() {
   await line('Mensageiro', 'Você é do Templo. Eu vejo pelo livro. Leve. Não deixe que eles...');
   tobias.lying = true; Sfx.hurt(); shake(200);
   G.key.carta = true;
-  await UI.say('O mensageiro desmaia. Teo recebe um rolo lacrado com o selo do sumo sacerdote.');
+  await UI.say('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.');
   Sfx.chest();
 
   // Os encapuzados; quando o primeiro aparece na porta, a moça dos dados some
@@ -375,7 +394,7 @@ async function nightScene() {
   await line('Berta', 'Gente daqui não usa essa marca.');
   await UI.say('A velha Ana para de fiar. Olha a marca por muito tempo e não diz nada.');
   await line('Aldo', 'Teo... o que diz a carta?');
-  await line('Teo', 'É o selo do sumo sacerdote. Não cabe a mim rompê-lo.');
+  await line('Teo', 'É o selo real. Não cabe a mim rompê-lo.');
   await line('Aldo', 'Quase mataram um homem por ela.');
   await line('Teo', 'Por isso mesmo. Quem abrir tem de ter o direito.');
   await line('Caio', 'E a moça dos dados? Sumiu antes da primeira lâmina.');
@@ -388,6 +407,7 @@ async function nightScene() {
   await fadeTo(1, 800);
   await UI.say('Os soldados de folga levam o mensageiro até a capela.');
   await UI.say('Ninguém dorme. Teo passa a noite com a carta fechada no colo.');
+  await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
   await UI.say('Ao amanhecer, chega a carroça do correio. Dela desce uma moça de capa roxa, com mais livros que bagagem.');
   await UI.say('A sopa da Berta devolve as forças ao grupo.');
   for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
@@ -397,6 +417,6 @@ async function nightScene() {
   G.busy = true;
   saveGame(); // não perder a noite se o grupo cair antes de salvar
   await fadeTo(0, 800);
-  await UI.say('Objetivo: falar com o ancião Bertoldo, na casa de telhado verde.\nA carta lacrada está em Itens.');
+  await UI.say('Objetivo: falar com o ancião Bertoldo, na casa de telhado verde.\nA carta com o selo real está em Itens.');
   G.busy = false; townHint();
 }

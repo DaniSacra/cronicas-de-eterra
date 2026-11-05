@@ -132,13 +132,14 @@ const ENEMIES = {
 // Itens de missão (não aparecem na batalha)
 const KEY_ITEMS = {
   carta: { name: 'Carta de Shulkhan', desc: 'Item de missão',
-    sealedName: 'Carta lacrada', sealed: ['O lacre do sumo sacerdote está inteiro.', 'Teo não vai rompê-lo. Só a rainha pode.'], text: [
-    'À Lara, descendente de Hanokh e rainha de Imladrin.\nQue a luz de Elun esteja com você.',
-    'Nossos espiões pagaram com a vida para obterem os relatos que trago nesta carta.',
-    'Peço perdão pelas notícias pois não são boas e sei das dificuldades da guerra.',
-    'Velkor, voltou-se contra Yah e está tentando invocar os reis caídos que foram selados na guerra de Elun.',
-    'Humildemente peço para que sua família seja diligente por Elun como foste no passado.',
-    'Toda Eterra precisa que impeça que o egresso clérigo invoque os reis do exílio.\nDe seu servo.\nShulkhan.',
+    // Texto revisado pelo Daniel (docs/mundo/historias/capitulo1.md). Só a rainha lê; no capítulo 1 fica fechada.
+    sealedName: 'Carta com o selo real', sealed: ['O selo real está inteiro.', 'Teo não vai rompê-lo. Só a rainha pode.'], text: [
+    'À Lara, descendente de Hanokh e rainha de Imladrin.\nQue a luz de Elun esteja contigo.',
+    'Nossos espiões pagaram com a vida pelo pouco que sei. Peço perdão, pois as notícias não são boas, e sei das dificuldades da guerra.',
+    'Velkor, a quem eu mesmo instruí na fé, voltou-se contra Yah e tenta invocar os reis caídos que foram selados na guerra de Elun.',
+    'Envio Tobias no rastro dele. Se esta carta chegou às tuas mãos, ele encontrou o lugar.',
+    'Humildemente peço que tua casa seja diligente por Elun, como foi no passado. Toda Eterra precisa que impeças o clérigo renegado de trazer de volta os reis do exílio.',
+    'Teu servo, Shulkhan.',
   ] },
   estojo: { name: 'Estojo de ganchos', desc: 'Item de missão',
     text: ['Um estojo de couro cheio de ganchinhos de metal.', 'Ferramenta de quem abre o que não é seu.'] },
@@ -153,8 +154,8 @@ const four = () => G.party.length === 4;
 const JOURNAL = {
   title: () => G.bossDead ? 'A caminho de Erukh' : G.seen.lapide ? 'O rei sob a cripta'
     : G.quest && four() ? 'O que acorda os mortos' : G.quest ? 'Quatro cantos'
-    : G.intro ? 'A carta lacrada' : G.seen.job ? 'As covas abertas' : 'Um pouso para o inverno',
-  goal: () => G.bossDead ? 'levar a carta lacrada à rainha Lara, em Erukh.'
+    : G.intro ? 'A carta com o selo real' : G.seen.job ? 'As covas abertas' : 'Um pouso para o inverno',
+  goal: () => G.bossDead ? 'levar a carta com o selo real à rainha Lara, em Erukh.'
     : G.seen.altar ? 'derrotar Morvath antes que o selo caia.'
     : G.seen.lapide ? 'encontrar o selo de Morvath, no fundo da cripta.'
     : G.reached >= 1 ? 'explorar a cripta. A fonte de luz cura e salva.'
@@ -169,23 +170,25 @@ const JOURNAL = {
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
     { show: () => G.key.estojo || inParty('andilla'), text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
     { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, noviço do Templo, veio conosco.' },
-    { show: () => G.intro, text: 'Um mensageiro do Templo caiu na taverna com uma carta para a rainha.' },
+    { show: () => G.intro, text: 'Um mensageiro ferido caiu na taverna com uma carta para a rainha.' },
     { show: () => G.intro, text: 'Dois encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
     { show: () => G.intro, text: 'A moça dos dados sumiu antes da luta. Usa capa cinza, como eles.' },
-    { show: () => G.intro, text: 'Teo não quer romper o selo do sumo sacerdote.' },
-    { show: () => G.quest, text: 'O selo é de Shulkhan, o sumo sacerdote.' },
-    { show: () => G.quest, text: 'Sob a cripta dorme um rei, selado na guerra de Elun. O ancião não quis dizer o nome.' },
+    { show: () => G.intro, text: 'A carta tem o selo real. Teo não quer rompê-lo: quem abrir tem de ter o direito.' },
+    { show: () => G.intro, text: 'De madrugada, um sino tocou ao longe. Ninguém sabe quem tocou.' },
+    { show: () => G.quest, text: 'O mensageiro delira "o selo... o selo" e não diz o próprio nome.' },
+    { show: () => G.quest, text: 'O sino era o da igreja velha, vazia há cinquenta anos. Sob ela, no fundo da cripta, dorme um rei. O ancião não quis dizer o nome.' },
     { show: () => G.quest, text: 'Os paladinos que fecharam a cripta eram quatro. O ancião quer quatro para descer.' },
     { show: () => inParty('lyra'), text: 'Lyra, uma maga, quer ver a fonte de luz da cripta. Veio conosco.' },
-    { show: () => inParty('andilla'), get text() { return `O estojo era de ${heroName('andilla')}. Ela não diz o que fazia no cemitério.`; } },
-    { show: () => G.seen.tobias, text: 'Tobias acordou. Diz que os encapuzados não vieram só pela carta.' },
+    { show: () => inParty('andilla'), get text() { return `A moça dos dados era ${heroName('andilla')}. Fugiu da taverna porque já tinha visto aquelas lâminas no cemitério.`; } },
+    { show: () => G.seen.paladino, text: 'Na lápide da cova mais antiga, o símbolo de um paladino.' },
     { show: () => G.reached >= 1, text: 'A marca dos encapuzados está pintada na parede da cripta. Eles já estiveram aqui.' },
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },
-    { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo está cedendo. Quem é V.?' },
+    { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo cede, e "o homem do sumo sacerdote" não pode sair de Valmor. Quem é V.?' },
     { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados adoram Morvath?' },
     { show: () => G.bossDead, text: 'Morvath virou pó. Antes, disse que não foi ele quem abriu o selo.' },
     { show: () => G.bossDead && inParty('andilla'), get text() { return `${heroName('andilla')} não cavou as covas. Então quem cavou, e por quê?`; } },
-    { show: () => G.bossDead, text: 'Tobias pediu: a carta vai lacrada até a rainha. Em Erukh, não confiar em ninguém antes dela.' },
+    { show: () => G.bossDead, text: 'O mensageiro acordou. Disse o nome: Tobias. Perguntou se a carta continuava fechada e chorou.' },
+    { show: () => G.bossDead, text: 'Tobias pediu: a carta vai fechada até a rainha. Em Erukh, não confiar em ninguém antes dela.' },
   ],
 };
 const journalGoal = () => JOURNAL.goal();

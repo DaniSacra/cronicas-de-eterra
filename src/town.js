@@ -523,7 +523,7 @@ function tryTownMove(d) {
   const P = TOWN.p;
   P.dir = d;
   const [dx, dy] = TDIRS[d], nx = P.x + dx, ny = P.y + dy;
-  if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada segue para Erukh.\nVocês não podem partir enquanto a vila corre perigo.')); return; }
+  if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada vai para o oeste e depois sobe para o norte, até Erukh.\nVocês não podem partir enquanto a vila corre perigo.')); return; }
   const ex = (TOWN.A.exits || []).find(e => e.x === nx && e.y === ny);
   if (ex) { townBusy(() => goArea(ex)); return; }
   const b = TOWN.buildingAt(nx, ny);
@@ -655,15 +655,17 @@ async function leaveTavern() {
 
 async function elderTalk() {
   const nm = 'Ancião Bertoldo';
-  if (G.bossDead) { await say(nm, ['Vocês salvaram Valmor!', 'Seus nomes serão lembrados por cem anos, e mais cem depois disso.', 'Dizem os antigos que Morvath não foi o único rei a cair. Rezo para que seja o último.', 'Agora levem a carta de Shulkhan a Erukh. A rainha Lara precisa saber.']); return; }
+  if (G.bossDead) { await say(nm, ['Vocês salvaram Valmor!', 'Seus nomes serão lembrados por cem anos, e mais cem depois disso.', 'Dizem os antigos que Morvath não foi o único rei a cair. Rezo para que seja o último.', 'Agora levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
   if (!G.intro) { await say(nm, ['Forasteiro? Hoje não tenho trabalho. A Berta, na taverna, sempre precisa de braços.']); return; }
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
-    'Este selo é de Shulkhan, o sumo sacerdote. E vocês não abriram. Bom.',
+    'É o selo real. E vocês não abriram. Bom.',
     'Se mataram por ela, o que tem dentro é maior que Valmor.',
-    'Debaixo da nossa cripta dorme um rei, selado na guerra de Elun.',
+    'O homem que a trouxe delira "o selo... o selo". As covas abrem sozinhas.',
+    'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',
+    'Tudo aponta para o mesmo lugar. Debaixo da igreja velha, no fundo da cripta, dorme um rei, selado na guerra de Elun.',
     'Não digo o nome dele. Não aqui em cima.',
     `Mas ${G.party.length === 3 ? 'três' : 'dois'} não descem lá. Os paladinos que fecharam a cripta eram quatro, um em cada canto do selo.`,
     G.party.length < 4 ? `Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada. Aí o Hugo deixa passar.` : 'Vocês são quatro. Mostrem isso ao Hugo e ele deixa passar.',
@@ -681,11 +683,10 @@ async function chapel() {
       { label: 'Orar', hint: 'restaura e salva', value: 'pray' }, { label: 'Conversar', value: 'talk' }, { label: 'Sair', value: null },
     ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3 });
     if (v === null) return;
-    if (v === 'talk' && G.quest) G.seen.tobias = 1;
     if (v === 'talk') await say(nm, byStage({
       arrive: ['Bem-vindo, forasteiro. A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
-      quest: ['O mensageiro acordou. Disse o nome dele: Tobias.', 'Perguntou se a carta continua fechada. Quando eu disse que sim, chorou.', 'E disse que os encapuzados não vieram a Valmor só pela carta.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
+      quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       won: ['Toquei os sinos o dia inteiro. Meus braços doem, mas valeu a pena!'] }));
     if (v === 'pray') {
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }

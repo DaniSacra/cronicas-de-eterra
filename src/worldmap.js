@@ -30,11 +30,11 @@ const WORLD_POIS = [
         : 'O ancião quer um grupo de quatro para descer.') },
   { id: 'templo', nome: 'Templo de Erukh', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
     text: () => 'O templo mais conhecido de Hyarmeth, do outro lado do mar. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
-      (G.intro ? '\nDe lá veio o mensageiro ferido, com uma carta do sumo sacerdote Shulkhan.' : '') },
+      (G.intro ? '\nDe lá veio o mensageiro ferido, com uma carta de selo real.' : '') },
   { id: 'erukh', nome: 'Erukh', reino: 'Imladrin', tipo: 'Capital', x: 215, y: 125, show: () => true, visto: () => false,
     text: () => 'Capital de Imladrin, no norte da ilha: monumentos, arte e máquinas a vapor. Cidade da rainha Lara e sede da Ordem de Erukh.' +
       (G.bossDead ? '\nO próximo destino. Tobias pediu: não confiar em ninguém antes da rainha.'
-        : G.intro ? '\nA carta lacrada precisa chegar às mãos da rainha.' : '') },
+        : G.intro ? '\nA carta com o selo real precisa chegar às mãos da rainha.' : '') },
   { id: 'purpura', nome: 'Floresta Púrpura', reino: 'Imladrin', tipo: 'Floresta', x: 245, y: 395, show: () => true, visto: () => false,
     text: () => 'Uma floresta mágica. Os viajantes contam que é protegida pela Liga Branca.' },
   { id: 'lago', nome: 'Lago dos Ventos Uivantes', reino: 'Hyarmeth', tipo: 'Lago', x: 590, y: 400, show: () => true, visto: () => false,

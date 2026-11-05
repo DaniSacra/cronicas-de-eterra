@@ -263,7 +263,7 @@ async function interact(o) {
     if (!G.seen.bilhete) {
       G.seen.bilhete = 1;
       await say2(null, 'Junto à fonte, um capuz cinza rasgado. Dentro dele, um bilhete.');
-      await say2('Bilhete', '"O selo cede. Mais três noites. A carta não pode chegar à rainha. — V."');
+      await say2('Bilhete', '"O selo cede. Mais três noites. O homem do sumo sacerdote não pode sair de Valmor. V."');
       await say2('Lyra', 'V.... Quem é V.?');
       if (inParty('andilla')) await say2(heroName('andilla'), 'Capuz cinza de novo. Agora entendem por que a Berta me olhou torto?');
     }
@@ -530,11 +530,11 @@ async function ending() {
   await UI.say('Os sinos da capela tocam. Toda Valmor sai às ruas para receber os heróis.');
   await say2(null, 'Na porta da cripta, apoiado na irmã Irene, espera o mensageiro.');
   await say2('Tobias', 'Vocês desceram onde eu não teria coragem. E não abriram a carta.');
-  await say2('Tobias', 'Shulkhan confiaria em vocês. Levem a carta a Erukh. Só a rainha pode romper o selo.');
+  await say2('Tobias', 'Shulkhan confiaria em vocês. Levem a carta a Erukh. Só a rainha pode romper o selo real.');
   await say2('Tobias', 'Eu ainda não aguento a estrada. Em Erukh, não confiem em ninguém antes da rainha.');
   await say2('Lyra', 'Morvath disse que não foi ele quem abriu o selo.');
   await say2('Aldo', G.seen.bilhete ? 'Então foi o tal "V.". Mas quem é V.?' : 'Então quem foi?');
-  await say2('Teo', 'A resposta deve estar na carta. E ela vai a Erukh como veio: lacrada.');
+  await say2('Teo', 'A resposta deve estar na carta. E ela vai a Erukh como veio: fechada.');
   if (inParty('andilla') && inParty('lyra')) {
     const an = heroName('andilla');
     await say2(an, 'Antes que perguntem: eu não cavei cova nenhuma. Cheguei e já estava cavado.');
@@ -546,7 +546,7 @@ async function ending() {
     await say2('Aldo', 'Então somos quatro. Como os paladinos.');
   }
   const lv = G.party.map(m => `${pdef(m).name} Nv ${m.lv}`).join(' · ');
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>VITÓRIA!</h1><p class="sub">O Lich-Rei voltou ao pó.</p><p class="small">A carta lacrada ainda precisa chegar a Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
+  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>VITÓRIA!</h1><p class="sub">O Lich-Rei voltou ao pó.</p><p class="small">A carta com o selo real ainda precisa chegar a Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
   saveGame();
   const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: 'FIM', cols: 2 });
   UI.hideOverlay();
