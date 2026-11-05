@@ -94,8 +94,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @keyframes float { from { transform: translateY(4px); } to { opacity: 0; transform: translateY(-22px); } }
 
 /* Aviso curto no alto (lugar, comandos, objetivo): aparece quando muda e some sozinho */
-#info { position: absolute; z-index: 2; top: calc(var(--u) * 4); left: 50%; translate: -50% 0; max-width: min(90%, 40em);
-  padding: calc(var(--u) * 4) calc(var(--u) * 6); font-size: var(--f1); line-height: 2; white-space: pre-line; color: var(--dim);
+/* Aviso de lugar e objetivo: na coluna da esquerda, embaixo do nome do lugar, em letra legível */
+#info { flex-basis: 100%; max-width: min(100%, 26em); box-sizing: border-box;
+  padding: calc(var(--u) * 3) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.6; white-space: pre-line; color: var(--text);
   opacity: 0; transition: opacity .4s steps(4); pointer-events: none; }
 #info.show { opacity: 1; }
 #info:empty, #game.talking #info { display: none; }
@@ -227,7 +228,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #hud > * { position: absolute; white-space: nowrap; font-size: var(--f1); line-height: 1; color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
 #hud .compass { translate: -50% -50%; color: var(--hi); }
 #hud .maptitle { translate: -50% -100%; color: var(--hi); }
-#hudbar { position: absolute; z-index: 4; top: calc(var(--u) * 4); left: calc(var(--u) * 4); display: flex; gap: calc(var(--u) * 2);
+#hudbar { position: absolute; z-index: 4; top: calc(var(--u) * 4); left: calc(var(--u) * 4); display: flex; flex-wrap: wrap; gap: calc(var(--u) * 2);
   align-items: stretch; max-width: calc(100% - var(--u) * 8); pointer-events: none; }
 #hudbar > * { pointer-events: auto; }
 #hudbar .chip { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: var(--u) calc(var(--u) * 3); font-size: var(--f1);
@@ -258,7 +259,6 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   .cmd-name { display: inline; color: var(--gold); margin-left: .6em; }
 }
 /* Narrow screens: notes drop below the place/MUNDO row instead of covering it */
-@media (orientation: portrait), (max-width: 700px) { #info { top: calc(var(--u) * 14 + 16px); } }
 
 /* World map side panel: details on top, list of known places by kingdom below */
 .wm-info { display: flex; flex-direction: column; gap: calc(var(--u) * 4); }
@@ -338,3 +338,4 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #cmdbar { padding: var(--u); }
 #hudtop .label { max-width: min(92vw, 40em); padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.5; text-align: center; color: var(--text); }
 #game.in-battle #info { display: none; } /* battle uses the top for the turn queue and the plaque */
+#hudbar > #info { pointer-events: none; } /* the note never blocks taps on the scene */
