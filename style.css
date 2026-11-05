@@ -204,7 +204,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @keyframes wmblink { 50% { background: var(--gold); } }
 .wm-lbl { position: absolute; left: 50%; top: 100%; translate: -50% 0; white-space: nowrap; font-size: var(--f1); pointer-events: none;
   text-shadow: var(--u) 0 0 var(--ink), calc(var(--u) * -1) 0 0 var(--ink), 0 var(--u) 0 var(--ink), 0 calc(var(--u) * -1) 0 var(--ink); display: none; }
-.wm-pt.aqui .wm-lbl, .wm-pt.visto .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
+.wm-pt.aqui .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
+.wm-pt.aqui:not(.sel) .wm-lbl { opacity: .8; }
 .wm-pt.sel { z-index: 2; }
 .wm-pt.sel .wm-lbl { color: var(--gold); }
 .wm-pt.sel i { outline: var(--u) solid var(--gold); outline-offset: var(--u); }
