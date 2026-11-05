@@ -65,7 +65,7 @@ function exploreHint() {
   if (G.mode !== 'explore') return;
   const f = FLOORS[G.floor];
   placeHint(`${f.short} · ${f.name}`, 'dungeon',
-    'Setas/WASD andar · Q/E passo lateral\nEspaço interagir · Esc menu · M mapa · F tela cheia\nVolte ao ponto verde do mapa para subir à vila');
+    'Setas andar · Espaço interagir · Esc menu');
 }
 
 // Aviso no alto da cena, sem repetir: o nome do lugar só quando muda de lugar, os comandos uma vez por save
@@ -436,10 +436,14 @@ function loadGame() {
 }
 
 // ---------- Diário de missões ----------
+// The scene shows only the three essential commands; the full list lives here
+const CONTROLS_PAGE = 'Diário · controles\nSetas ou WASD andar · Q/E passo lateral · Espaço interagir · Esc menu\n' +
+  'M ou Tab mapa da cripta · U mapa de Eterra · F tela cheia · N som\nNa cripta, o ponto verde do mapa leva de volta à vila.';
 function diaryPages() {
   const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + n.text);
   const pages = [`Diário · ${JOURNAL.title()}\nObjetivo: ${JOURNAL.goal()}`];
   for (let k = 0; k < notes.length; k += 3) pages.push(`Diário · anotações\n` + notes.slice(k, k + 3).join('\n'));
+  pages.push(CONTROLS_PAGE);
   return pages;
 }
 async function showDiary() {

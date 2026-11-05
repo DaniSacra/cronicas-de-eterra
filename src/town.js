@@ -510,7 +510,7 @@ function townDir(k) {
 }
 
 function townHint() {
-  placeHint(TOWN.A.name, 'vila', 'Setas/WASD andar · Espaço falar · Esc menu · F tela cheia');
+  placeHint(TOWN.A.name, 'vila', 'Setas andar · Espaço falar · Esc menu');
 }
 
 async function townBusy(fn) {
