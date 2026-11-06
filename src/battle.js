@@ -36,7 +36,7 @@ function shake(ms = 250) { G.shakeUntil = performance.now() + ms; }
 async function hitEnemy(e, dmg, color = '#fff') {
   e.hp = Math.max(0, e.hp - dmg);
   e.hitT = performance.now();
-  addNum(e.x, e.boss ? e.cy : e.top + 10, dmg, color); // no chefe, o número nasce no meio do sprite
+  addNum(e.x, e.boss ? e.cy : e.top + 22, dmg, color); // no chefe, o número nasce no meio do sprite; nos outros sobe até logo abaixo da barra de PV
   if (e.hp <= 0) {
     await wait(260);
     e.dieT = performance.now(); Sfx.die();
@@ -48,7 +48,7 @@ async function hitEnemy(e, dmg, color = '#fff') {
 function hurtMember(m, dmg, quiet = false) {
   if (m.defending) dmg = Math.max(1, Math.round(dmg / 2));
   m.hp = Math.max(0, m.hp - dmg);
-  UI.cardFloat(m, '-' + dmg, '#ff6a6a'); UI.cardHit(m); shake(); if (!quiet) Sfx.hurt();
+  UI.cardFloat(m, '-' + dmg, 'dmg'); UI.cardHit(m); shake(); if (!quiet) Sfx.hurt();
   UI.updateParty();
   return dmg;
 }
@@ -59,7 +59,7 @@ function physDmg(atk, def, power = 1) { return Math.max(1, Math.round(atk * powe
 // Target choice has no window: an arrow over the enemy (or the hero card) and the name on the top plaque
 async function chooseEnemy() {
   const list = aliveEnemies();
-  if (list.length === 1 && !list[0].boss) return list[0];
+  if (list.length === 1) return list[0]; // um inimigo só (o chefe também): alvo direto
   return UI.choose(list.map(e => ({ label: ename(e), value: e })), { style: 'pointer', cancel: true, cols: list.length,
     onHover: v => { B.hover = v; B.label = v ? ename(v) : null; } });
 }
@@ -220,9 +220,9 @@ async function partyAct(c) {
     const sp = SPELLS[c.spell];
     if (a.mp < sp.mp) { await bsay(`${an} não tem PM suficiente!`); return; }
     a.mp -= sp.mp; UI.updateParty();
-    await bsay(`${an} usa ${sp.name}!`);
+    const targets = sp.kind === 'heal' || sp.kind === 'revive' ? [] : sp.target === 'allEnemies' ? aliveEnemies() : [retarget(c.target)].filter(Boolean);
+    await bsay(spellLine(an, sp.name, sp.target === 'enemy' && targets[0] ? ename(targets[0]) : ''));
     if (sp.kind === 'heal' || sp.kind === 'revive') { await bsay(castSupport(a, c.spell, c.target)); return; }
-    const targets = sp.target === 'allEnemies' ? aliveEnemies() : [retarget(c.target)].filter(Boolean);
     if (sp.fx && Sfx[sp.fx]) Sfx[sp.fx](); else Sfx.slash();
     if (sp.fx === 'bolt') { G.flashColor = '255,255,200'; G.flash = { t0: performance.now(), dur: 180 }; }
     targets.forEach(t => addFx(sp.fx, t.x, t.cy, sp.fx === 'slash' ? 300 : 650));
@@ -485,12 +485,12 @@ function drawBattle(now) {
     // Idle: two frames (slow and heavy for the boss); flyers bob a few whole pixels; attacking = a quick hop forward
     const frame = e.frames[Math.floor((now + e.i * 370) / (e.boss ? 900 : 520)) % 2];
     const bob = e.float ? Math.round(Math.sin(now / 380 + e.i * 1.7) * 3) : 0;
-    const hop = now - e.atkT < 300 ? Math.round(5 * Math.sin((now - e.atkT) / 300 * Math.PI)) : 0;
+    const hop = now - e.atkT < 300 ? Math.round((e.boss ? 3 : 5) * Math.sin((now - e.atkT) / 300 * Math.PI)) : 0; // o chefe, mais pesado, pula menos
     const rise = e.dieT ? Math.round((now - e.dieT) / 40) : 0;
     if (e.grid && !e.dieT) groundShadow(c, e.x, e.base, Math.round(e.w * (e.float ? 0.28 : 0.38)), alpha);
     c.globalAlpha = alpha;
     if (e.dieT) { c.filter = 'sepia(1) saturate(4) hue-rotate(-50deg)'; }
-    c.drawImage(frame, e.left, e.top + bob - (e.boss ? 0 : hop) - rise, e.w, e.h);
+    c.drawImage(frame, e.left, e.top + bob - hop - rise, e.w, e.h);
     c.filter = 'none';
     c.globalAlpha = 1;
     // Barra de vida
@@ -499,6 +499,11 @@ function drawBattle(now) {
       const by = Math.max(2, e.top - 6); // em cima da cabeça: embaixo a barra de comandos a cobriria
       c.fillStyle = '#000'; c.fillRect(e.x - bw / 2 - 1, by, bw + 2, 4);
       c.fillStyle = e.hp / e.maxhp > 0.3 ? '#e04848' : '#ff9030'; c.fillRect(e.x - bw / 2, by + 1, bw * e.hp / e.maxhp, 2);
+      if (e.letter) { // inimigos repetidos: a letra (A, B, C) à esquerda da barra, a mesma das mensagens
+        c.font = '8px "Press Start 2P", monospace'; c.textAlign = 'right'; c.textBaseline = 'middle'; c.lineWidth = 2; c.strokeStyle = '#26202e';
+        const lx = Math.max(9, e.x - bw / 2 - 3);
+        c.strokeText(e.letter, lx, by + 2); c.fillStyle = '#ffffff'; c.fillText(e.letter, lx, by + 2); c.textBaseline = 'alphabetic';
+      }
     }
   }
 
@@ -538,7 +543,7 @@ function drawOrder(c, now, boss) {
   HUD.queue(list.map((o, i) => {
     const a = o.actor;
     return {
-      label: o.side === 'party' ? pdef(a).name.slice(0, 2) : a.boss ? a.name.replace(/^O /, '').slice(0, 2) : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
+      label: o.side === 'party' ? queueTag(pdef(a).name) : a.boss ? a.name.replace(/^O /, '').slice(0, 2) : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
       color: o.side === 'party' ? pdef(a).color : 'var(--danger)',
       state: a.hp <= 0 || o.skip ? 'gone' : i < B.turn ? 'done' : i === B.turn ? 'cur' : 'next',
     };

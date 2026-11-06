@@ -197,7 +197,7 @@ const UI = (() => {
       // Classic JRPG party strip: the hero's face on the left, name and bars on the right
       const key = Portraits.keyFor(d.name);
       card.innerHTML = `<div class="pfw">${key ? `<img class="pf" src="${Portraits.draw(key).toDataURL()}" alt="">` : ''}<span class="lv"></span></div><div class="info">
-        <div class="nm${d.name.length > 6 ? ' long' : ''}"><span>${esc(d.name)}</span><img class="dfn" src="${iconUrl('def')}" alt=""></div>
+        <div class="nm${shortName(d.name).length > 6 ? ' long' : ''}"><span>${esc(shortName(d.name))}</span><img class="dfn" src="${iconUrl('def')}" alt=""></div>
         <div class="cls">${esc(d.cls)}</div>
         <div class="bar hp"><i></i></div><div class="num hpn"></div>
         <div class="bar mp"><i></i></div><div class="num mpn"></div></div>`;
@@ -228,7 +228,8 @@ const UI = (() => {
   const faceUrl = (key, mood) => faceUrls[key + mood] || (faceUrls[key + mood] = Portraits.draw(key, mood).toDataURL());
   function cardFloat(m, text, color) {
     const card = document.getElementById('card-' + m.id); if (!card) return;
-    const s = document.createElement('span'); s.className = 'float'; s.textContent = text; s.style.color = color;
+    const s = document.createElement('span'); s.className = 'float'; s.textContent = text;
+    if (color === 'dmg') s.classList.add('dmg'); else s.style.color = color; // dano: vermelho da paleta com contorno
     card.appendChild(s); setTimeout(() => s.remove(), 950);
   }
   function cardHit(m) {

@@ -171,9 +171,17 @@ function heroViewFonts(w, h, dpr = 1) {
   return { body: f.f2, big: f.fd };
 }
 
+// Battle names: the dice girl is "Moça" on her card and "Mç" in the turn queue; lines keep "Moça dos dados"
+const shortName = name => (name === 'Moça dos dados' ? 'Moça' : name);
+const queueTag = name => (name === 'Moça dos dados' ? 'Mç' : name.slice(0, 2));
+// "Lyra usa Fogo em Encapuzado B!" when the spell hits one enemy; just the spell otherwise
+const spellLine = (who, spell, target) => `${who} usa ${spell}${target ? ' em ' + target : ''}!`;
+// Before the boss: a warning when the party is still weak (average level under 4); empty otherwise
+const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length < 4 ? 'O sino pesa. Talvez seja melhor voltar mais forte.\n' : '');
+
 // Title menu: the quick start straight into the crypt is a test shortcut, only with ?dev in the address
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

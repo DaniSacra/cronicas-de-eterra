@@ -45,6 +45,7 @@ const Sfx = (() => {
     },
     step() { noise(0.06, 0.1, 0, 300, 0.8); },
     bump() { tone(110, 0.12, 'square', 0.06, 60); },
+    alert() { tone(392, 0.06, 'square', 0.04); tone(523, 0.1, 'square', 0.04, null, 0.06); }, // um errante viu o grupo
     cursor() { tone(880, 0.03, 'square', 0.035); },
     select() { tone(660, 0.05, 'square', 0.035); tone(990, 0.06, 'square', 0.035, null, 0.04); },
     cancel() { tone(440, 0.06, 'square', 0.035, 220); },

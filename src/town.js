@@ -333,6 +333,8 @@ const roamFree = (x, y) => TOWN.walkable(x, y) && !npcAt(x, y) && !roamerAt(x, y
 function spawnRoamers() {
   TOWN.roamers = (TOWN.A.roamers ? TOWN.A.roamers() : []).map(d => ({ ...newActor(d.x, d.y, 2), def: d, home: { x: d.x, y: d.y }, range: d.range || 2, wait: rnd(600, 1800), calm: 0 }));
 }
+// The roamer saw the party: true only on the step it starts to chase (the alert sounds once, again after it loses them)
+const spotted = (r, chase) => { const now = chase && !r.seen; r.seen = chase; return now; };
 const touchingParty = r => [TOWN.p, ...TOWN.followers].some(a => Math.abs(a.x - r.x) + Math.abs(a.y - r.y) === 1);
 function updateRoamers(dt) {
   const radius = TOWN.A.vision ? TOWN.A.vision.radius : 6;
@@ -341,6 +343,7 @@ function updateRoamers(dt) {
     if (r.t < 1 || (r.wait -= dt) > 0) continue;
     const { to, chase } = roamerStep(r, TOWN.p, radius, roamFree);
     r.wait = chase ? (to ? 0 : 300) : rnd(900, 2400);
+    if (spotted(r, chase)) Sfx.alert();
     if (!to || !roamFree(to.x, to.y)) continue; // o próximo passo é o próprio grupo: o encontro começa a luta
     r.dir = to.x > r.x ? 1 : to.x < r.x ? 3 : to.y > r.y ? 2 : 0;
     moveActor(r, to.x, to.y, r.def.speed);
@@ -349,7 +352,7 @@ function updateRoamers(dt) {
 // Volta da batalha para a área (luz e música do lugar)
 function backToArea() { G.mode = 'town'; TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0; Music.play(TOWN.A.music ? TOWN.A.music() : 'town'); }
 async function roamerFight(r) {
-  const res = await startBattle(r.def.ids, false);
+  const res = await startBattle(r.def.ids, false, { intro: r.def.intro });
   if (res === 'lose') return gameOver();
   backToArea();
   if (res === 'win') { TOWN.roamers = TOWN.roamers.filter(o => o !== r); return; }

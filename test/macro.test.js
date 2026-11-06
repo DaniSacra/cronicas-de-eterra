@@ -128,13 +128,13 @@ test('record the last round, replay it for everyone left in the round, and stop 
   const p = player(hand, { 2: { lyra: [['macroSave', 0], ['macro1']] }, 3: { lyra: [['macro1']] } }, 4);
   const { G, log, run, ctx } = battle(['aldo', 'lyra', 'teo'], p.choose);
   const logTick = ctx.tick;
-  ctx.tick = () => { logTick(); if (run('B && B.round === 3 && B.macro && B.label === "Lyra usa Fogo!"')) run('stopMacro()'); };
+  ctx.tick = () => { logTick(); if (run('B && B.round === 3 && B.macro && B.label && B.label.startsWith("Lyra usa Fogo")')) run('stopMacro()'); };
   assert.equal(await start(run), 'win');
   assert.deepEqual(p.bars, ['1:lyra', '1:aldo', '1:teo', '2:lyra', '2:lyra', '3:lyra', '3:aldo', '3:teo', '4:lyra'],
     'round 2: nobody after Lyra is asked; round 3: Esc gives the bar back from Aldo on');
   assert.deepEqual(run.json('G.macros[0]'), { lyra: { type: 'spell', spell: 'fogo', enemy: 0 }, aldo: { type: 'attack', enemy: 0 }, teo: { type: 'defend' } });
   const r2 = log.slice(log.indexOf('Tática 1 gravada.'));
-  assert.deepEqual(r2.slice(1, 4), ['Lyra usa Fogo!', 'Aldo ataca Boneco!', 'Teo se defende.']);
+  assert.deepEqual(r2.slice(1, 4), ['Lyra usa Fogo em Boneco!', 'Aldo ataca Boneco!', 'Teo se defende.']);
   assert.ok(log.includes('Tática interrompida.'));
   assert.equal(G.seen.macro, 1);
 });

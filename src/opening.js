@@ -227,7 +227,8 @@ async function cemFight(n) {
 const cemRoamerCount = (seen, bossDead = false) => bossDead || !seen.cem1 ? 0 : seen.teoWin ? 3 : 2; // calmo depois do fim do prólogo
 const CEM_ROAM_SPOTS = [[4, 6], [2, 10], [13, 10], [11, 4], [1, 10]];
 const CEM_RESERVED = new Set([...Object.values(CEM_FIGHTS).map(f => f.x + ',' + f.y), '10,2', '7,2', '8,10', '8,11']);
-const CEM_ROAMERS = [{ foe: 'rat', ids: ['ratoCova'], speed: 520 }, { foe: 'bats', ids: ['morcegoCova', 'morcegoCova'], speed: 380 }];
+const CEM_ROAMERS = [{ foe: 'rat', ids: ['ratoCova'], speed: 520, intro: 'Um rato sai da névoa!' },
+  { foe: 'bats', ids: ['morcegoCova', 'morcegoCova'], speed: 380, intro: 'Dois morcegos mergulham da névoa!' }];
 const cemRoamers = () => CEM_ROAM_SPOTS.filter(([x, y]) => (x - TOWN.p.x) ** 2 + (y - TOWN.p.y) ** 2 > 25)
   .slice(0, cemRoamerCount(G.seen, G.bossDead)).map(([x, y], i) => ({ ...CEM_ROAMERS[i % 2], x, y }));
 
@@ -246,7 +247,7 @@ async function teoScene() {
     recruit('teo', teo);
   }
   const r = await startBattle(['ossada', 'ossada'], false, {
-    surprise: 'advantage', intro: 'Duas Ossadas se erguem atrás do clérigo!', noRun: 'As Ossadas cercam a cova. Não dá para fugir!',
+    intro: 'Duas Ossadas se erguem atrás do clérigo!', noRun: 'As Ossadas cercam a cova. Não dá para fugir!',
     hints: G.seen.dica_teo ? [] : ['Teo cura com Magia. Contra mortos-vivos, a Luz Sagrada fere em dobro.'],
   });
   G.seen.dica_teo = 1;

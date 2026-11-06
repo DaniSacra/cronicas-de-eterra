@@ -102,6 +102,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .num { font-size: var(--f1); color: var(--text); }
 .float { position: absolute; right: calc(var(--u) * 6); top: calc(var(--u) * 3); font-size: var(--f2); animation: float .9s steps(6) forwards;
   pointer-events: none; color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
+#party .float.dmg { color: #a8323e; text-shadow: 1px 0 #4a0c14, -1px 0 #4a0c14, 0 1px #4a0c14, 0 -1px #4a0c14, 1px 1px #4a0c14, -1px -1px #4a0c14, 1px -1px #4a0c14, -1px 1px #4a0c14; }
 @keyframes float { from { transform: translateY(4px); } to { opacity: 0; transform: translateY(-22px); } }
 
 /* Aviso curto no alto (lugar, comandos, objetivo): aparece quando muda e some sozinho */

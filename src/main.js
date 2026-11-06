@@ -288,7 +288,7 @@ async function interact(o) {
     if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); }
     if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); }
     const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
-      { title: 'Diante da última porta, um morto de batina segura um sino de bronze.\nEnfrentar o Sineiro?', cancel: true });
+      { title: 'Diante da última porta, um morto de batina segura um sino de bronze.\n' + bossWarning(G.party) + 'Enfrentar o Sineiro?', cancel: true });
     if (ok) await runBattle(['sineiro'], true, { hints: [
       'Só atacar não basta. Teo cura os feridos com Magia; não espere alguém cair.',
       'Lyra queima com Fogo, e a Luz Sagrada de Teo fere em dobro os mortos-vivos.',
