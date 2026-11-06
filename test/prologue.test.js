@@ -37,12 +37,14 @@ test('the night: the dice girl plays, stays when the hooded men come, fights unn
   for (const estojo of [true, false]) {
     const { G, log, run } = story(['aldo', 'lyra', 'teo'], { seen: { job: 1, teoWin: 1 }, key: { estojo } });
     run(`startBattle = async (ids, b, o) => { globalThis.at = { ids, party: G.party.map(m => m.id), name: heroName('andilla'), hint: o.hints[0], full: G.party.every(m => m.hp === maxHp(m) && m.mp === maxMp(m)) }; return 'win'; }`);
-    run(`enterTown(TAVERN_FRONT, 'valmor'); for (const m of G.party) { m.hp = 3; m.mp = 0; }`);
+    run(`enterTown(TAVERN_FRONT, 'valmor'); for (const m of G.party) { m.hp = 3; m.mp = 0; }
+      globalThis.savedAt = null; saveGame = () => { if (!globalThis.savedAt) globalThis.savedAt = G.area === 'valmor' && G.town.x === TAVERN_FRONT.x && G.town.y === TAVERN_FRONT.y ? 'TAVERN_FRONT' : G.area; return true; };`);
     await run('enterTavern()');
     const at = run.json('at');
     assert.deepEqual(at.party, ['aldo', 'lyra', 'teo', 'andilla'], 'she is in the party before the fight');
     assert.equal(at.ids.length, 3, 'three hooded men');
     assert.ok(at.full, 'the soup of Berta: the party starts the night fight rested');
+    assert.equal(run('globalThis.savedAt'), 'TAVERN_FRONT', 'saved at the tavern door before the night');
     assert.equal(at.name, 'Moça dos dados', 'no name on her card in the fight');
     assert.equal(at.hint, 'Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.');
     const i = t => { const k = log.indexOf(t); assert.ok(k >= 0, t); return k; };

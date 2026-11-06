@@ -602,7 +602,7 @@ async function enterBuilding(b) {
 }
 
 async function enterTavern() {
-  if (inParty('teo') && !G.intro) return nightScene(); // Aldo e Teo voltam do cemitério: a noite do mensageiro
+  if (inParty('teo') && !G.intro) { saveGame(); return nightScene(); } // a noite do mensageiro; perder a luta volta para a porta da taverna
   await fadeTo(1, 300);
   enterTown(TAVERN_INSIDE, 'taverna');
   await fadeTo(0, 300);
