@@ -164,6 +164,7 @@ const AREAS = {
 };
 Object.assign(AREAS.valmor, { winter: true, dusk: true, lamps: LAMPS }); // inverno ao entardecer: neve, janelas acesas, lampiões
 AREAS.taverna.music = () => 'tavern'; // giga da Poney Saltitante
+AREAS.taverna.cozy = 'rgba(40,20,14,.38)'; // penumbra quente; a lareira, as velas e a lamparina abrem poças de luz
 
 const TOWN = {
   A: AREAS.valmor, p: null, followers: [], npcs: [], step: 0, dim: 0,
@@ -205,52 +206,6 @@ function drawGraveTile(c, t, X, Y, x, y, px, rng) {
   } else if (t === TILE.DEADTREE) {
     R(7, 6, 2, 10, '#5a4a3e'); R(3, 4, 4, 1, '#6a5a4e'); R(9, 3, 4, 1, '#6a5a4e'); R(5, 2, 1, 3, '#6a5a4e');
     R(11, 1, 1, 3, '#6a5a4e'); R(6, 5, 1, 2, '#6a5a4e'); R(9, 4, 1, 2, '#6a5a4e'); R(4, 15, 9, 1, 'rgba(0,0,0,.3)');
-  }
-}
-
-function drawInteriorTile(c, t, X, Y, x, y, speckle) {
-  const floor = () => {
-    c.fillStyle = '#8a5a32'; c.fillRect(X, Y, TS, TS);
-    c.fillStyle = '#6e4626'; c.fillRect(X, Y + 7, TS, 1); c.fillRect(X, Y + 15, TS, 1);
-    c.fillRect(X + ((x * 7) % 12) + 2, Y, 1, 7); c.fillRect(X + ((x * 5 + 6) % 12) + 2, Y + 8, 1, 7);
-    speckle(X, Y, ['#9a6a3e'], 4);
-  };
-  if (t === TILE.WALL || t === TILE.HEARTH) {
-    c.fillStyle = '#4a3a34'; c.fillRect(X, Y, TS, TS);
-    c.fillStyle = '#5c4a42';
-    for (let r = 0; r < 4; r++) for (let k = (r % 2) * 4; k < TS; k += 8) c.fillRect(X + k, Y + r * 4, 7, 3);
-    if (t === TILE.WALL && y === 0 && x % 4 === 2) {
-      // Janela com a noite lá fora
-      c.fillStyle = '#2a1e18'; c.fillRect(X + 3, Y + 3, 10, 10);
-      c.fillStyle = '#1a2a50'; c.fillRect(X + 4, Y + 4, 8, 8);
-      c.fillStyle = '#e8f0ff'; c.fillRect(X + 9, Y + 5, 1, 1); c.fillRect(X + 5, Y + 9, 1, 1);
-      c.fillStyle = '#2a1e18'; c.fillRect(X + 7, Y + 4, 1, 8); c.fillRect(X + 4, Y + 7, 8, 1);
-    }
-    if (t === TILE.HEARTH) {
-      c.fillStyle = '#7a6a60'; c.fillRect(X, Y + 2, TS, 14);
-      c.fillStyle = '#140c0a'; c.fillRect(X + 2, Y + 6, 12, 10);
-    }
-    return;
-  }
-  floor();
-  if (t === TILE.COUNTER) {
-    c.fillStyle = '#4a2a14'; c.fillRect(X, Y + 2, TS, 14);
-    c.fillStyle = '#7a4a24'; c.fillRect(X, Y + 2, TS, 5);
-    c.fillStyle = '#9a6234'; c.fillRect(X, Y + 2, TS, 1);
-    if ((x + y) % 3 === 0) { c.fillStyle = '#d8d0c0'; c.fillRect(X + 5, Y, 4, 5); c.fillStyle = '#f0e8a0'; c.fillRect(X + 6, Y + 1, 2, 1); }
-  } else if (t === TILE.TABLE) {
-    c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(X + 1, Y + 13, 14, 3);
-    c.fillStyle = '#5a3418'; c.fillRect(X + 1, Y + 3, 14, 10);
-    c.fillStyle = '#a0662e'; c.fillRect(X + 1, Y + 3, 14, 8);
-    c.fillStyle = '#b8783a'; c.fillRect(X + 1, Y + 3, 14, 1);
-    c.fillStyle = '#e8e0d0'; c.fillRect(X + 4, Y + 5, 4, 3); c.fillStyle = '#c86a2a'; c.fillRect(X + 5, Y + 5, 2, 1);
-  } else if (t === TILE.BARREL) {
-    c.fillStyle = '#5a3418'; c.beginPath(); c.ellipse(X + 8, Y + 9, 6, 6, 0, 0, 7); c.fill();
-    c.fillStyle = '#8a5428'; c.beginPath(); c.ellipse(X + 8, Y + 8, 5, 5, 0, 0, 7); c.fill();
-    c.fillStyle = '#3a3a3a'; c.fillRect(X + 3, Y + 6, 10, 1); c.fillRect(X + 3, Y + 11, 10, 1);
-  } else if (t === TILE.DOOR) {
-    c.fillStyle = '#2a1a10'; c.fillRect(X + 1, Y + 6, 14, 10);
-    c.fillStyle = '#c8b090'; c.fillRect(X + 2, Y + 12, 12, 4);
   }
 }
 

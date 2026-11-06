@@ -646,6 +646,135 @@ const TownArt = (() => {
     }
   }
 
+
+  // ---------- Interior da taverna: a mesma régua da vila (contorno, luz do alto à esquerda, paleta mestre) ----------
+  const IN = {
+    out: '#24180c', deep: '#140c06',
+    plank: P(['#9a6232', '#a07048', '#a8704a', '#9a6232']), plankHi: rgb('#b07c58'), seam: rgb('#6a3a1a'), knot: rgb('#7a4a24'),
+    plaster: '#d8a478', plaster2: '#c89464', beam: '#4e2c14', beamHi: '#7a4a24', wains: '#6a3a1a', wainsDk: '#4e2c14', rail: '#8a5418', railHi: '#c89c38',
+    cap: '#3a2010', capHi: '#6a3a1a',
+    stone: ['#26262e', '#55555e', '#7a7a82', '#a2a2ac', '#b0bcc4'],
+    top: '#a87040', topHi: '#c89464', front: '#7a4a24', frontDk: '#6a3a1a', leg: '#4e2c14',
+    rug: '#a8323e', rugDk: '#7a1a24', rugGold: '#e8b840', rugFringe: '#f4cca0',
+  };
+  const BARREL_IN = ['..oooooooo..', '.oBBBBBBBBo.', 'oBkkkkkkkkbo', 'oBbbbbbbbbdo', 'oIIIIIIIIIIo', 'oBbbbbbbbbdo', 'oBbbbbbbbbdo',
+    'oBbbbbbbbbdo', 'oIIIIIIIIIIo', 'oBbbbbbbbbdo', '.oBbbbbbbdo.', '..oooooooo..'];
+  const BARREL_PAL = { o: IN.out, B: '#b07c58', b: '#9a6232', d: '#6a3a1a', k: '#4e2c14', I: '#7a7a82' };
+  const MUG = ['.ww.', 'oyyo', 'oyYoo', 'oyyo', '.oo.'], MUG_PAL = { w: '#ffffff', o: IN.out, y: '#c89c38', Y: '#e8b840' };
+  const CANDLE = ['.f.', '.F.', 'oWo', 'oWo', 'ooo'], CANDLE_PAL = { f: '#f0d860', F: '#fff6c0', W: '#e8f0e8', o: IN.out };
+  const BOTTLES = [['#3a9a6a', '#2a5440'], ['#a050c0', '#72308e'], ['#3a78c8', '#2c3c80'], ['#a8323e', '#7a1a24']];
+  const HORSESHOE = ['o...o', 'Io.oI', 'Io.oI', 'IIoII', '.III.'], SHOE_PAL = { o: IN.out, I: '#b0bcc4' };
+
+  function plankPixel(gx, gy) {
+    const row = Math.floor(gy / 5), ly = gy % 5;   // tábuas de 4 px e uma fresta
+    if (ly === 4) return IN.seam;
+    const off = Math.floor(hash(row, 0, 120) * 24), seg = Math.floor((gx + off) / 22);
+    if ((gx + off) % 22 === 0) return IN.seam;                       // emenda das tábuas, desencontrada a cada fileira
+    if (ly === 0 && hash(seg, row, 121) < 0.3) return IN.plankHi;     // a luz pega a borda de cima
+    if (hash(gx >> 1, row, 122) < 0.012) return IN.knot;              // nó da madeira
+    return IN.plank[Math.floor(hash(seg, row, 123) * IN.plank.length)];
+  }
+  const inT = (A, x, y, t) => tileAt(A, x, y) === t;
+
+  function backWall(c, A) {
+    const W = A.W * TS;
+    R(c, 0, 0, W, 2, IN.beam); R(c, 0, 2, W, 1, IN.beamHi);                 // viga do teto
+    R(c, 0, 3, W, 8, IN.plaster);
+    for (let x = 0; x < W; x++) for (let y = 3; y < 11; y++) if (hash(x, y, 124) < 0.12) R(c, x, y, 1, 1, IN.plaster2);
+    R(c, 0, 11, W, 1, IN.railHi); R(c, 0, 12, W, 1, IN.rail);                // corrimão e lambri
+    R(c, 0, 13, W, 3, IN.wains); for (let x = 2; x < W; x += 4) R(c, x, 13, 1, 3, IN.wainsDk);
+    for (const px of [16 * 5 - 2, 16 * 9 - 2]) { R(c, px, 0, 4, 16, IN.beam); R(c, px, 0, 1, 16, IN.beamHi); }   // pilares
+    // Janela: noite de neve lá fora
+    const wx = 16 * 6 + 2, wy = 3;
+    pix(c, wx, wy, ['oooooooooooo', 'oFFFFFFFFFFo', 'oFnnNnFnnnFo', 'oFnsnnFnNnFo', 'oFFFFFFFFFFo', 'oFnnnsFnnsFo', 'oFSSSSFSSSFo', 'oFFFFFFFFFFo', 'oooooooooooo'],
+      { o: IN.out, F: IN.wains, n: '#1c2860', N: '#2c3c80', s: '#ffffff', S: '#e8eff8' });
+    pix(c, 16 * 7 + 10, 4, HORSESHOE, SHOE_PAL);   // a ferradura da Poney Saltitante, para dar sorte
+    // Prateleira atrás do balcão, com garrafas
+    const sx = 16 * 9 + 4, sw = 16 * 4 - 8;
+    R(c, sx, 9, sw, 2, IN.front); R(c, sx, 9, sw, 1, IN.topHi); R(c, sx, 11, sw, 1, IN.out);
+    for (let i = 0; i * 5 < sw - 4; i++) {
+      const [lt, dk] = BOTTLES[Math.floor(hash(i, 1, 125) * BOTTLES.length)], bx = sx + 2 + i * 5, h = 4 + Math.floor(hash(i, 2, 125) * 2);
+      R(c, bx, 9 - h, 3, h, dk); R(c, bx, 9 - h, 1, h, lt); R(c, bx + 1, 9 - h - 2, 1, 2, dk);
+    }
+  }
+  // Paredes do lado e da frente: vistas de cima, como o topo de um muro cortado
+  function wallCap(c, A, x, y) {
+    const X = x * TS, Y = y * TS;
+    R(c, X, Y, TS, TS, IN.cap);
+    for (let i = 0; i < 6; i++) R(c, X + Math.floor(hash(x, y, 126 + i) * 15), Y + Math.floor(hash(x, y, 136 + i) * 15), 1, 1, IN.out);
+    if (x === 0) { R(c, X + 13, Y, 2, TS, IN.capHi); R(c, X + 15, Y, 1, TS, IN.out); }
+    if (x === A.W - 1) { R(c, X, Y, 1, TS, IN.out); R(c, X + 1, Y, 2, TS, IN.capHi); }
+    if (y === A.H - 1) { R(c, X, Y, TS, 1, IN.out); R(c, X, Y + 1, TS, 2, IN.capHi); }
+  }
+  function hearth(c, x0, y0, w) {
+    const X = x0 * TS - 2, Y = y0 * TS, W = w * TS + 4, [o, d, m, l, h] = IN.stone;
+    LIGHTS.push({ x: X + W / 2, y: Y + 22, r: 46 });
+    R(c, X + 4, Y - 16, W - 8, 16, o); stones(c, X + 5, X + W - 5, Y - 15, Y, [o, d, m, l], 3);          // chaminé na parede
+    R(c, X, Y - 1, W, 17, o); stones(c, X + 1, X + W - 1, Y, Y + 15, [o, d, m, l], 4);
+    R(c, X - 1, Y - 2, W + 2, 3, IN.out); R(c, X, Y - 2, W, 2, IN.front); R(c, X, Y - 2, W, 1, IN.topHi);  // consolo de madeira
+    pix(c, X + 6, Y - 7, CANDLE, CANDLE_PAL); pix(c, X + W - 9, Y - 7, CANDLE, CANDLE_PAL);
+    R(c, X + 5, Y + 4, W - 10, 12, o); R(c, X + 6, Y + 5, W - 12, 11, IN.deep);                           // boca do fogo
+    R(c, X + 6, Y + 5, W - 12, 1, h);
+    R(c, X - 2, Y + 15, W + 4, 2, d); R(c, X - 2, Y + 15, W + 4, 1, l);                                   // pedra do chão
+  }
+  function counterTile(c, A, x, y) {
+    const X = x * TS, Y = y * TS, C = TILE.COUNTER, up = inT(A, x, y - 1, C), dn = inT(A, x, y + 1, C), lf = inT(A, x - 1, y, C), rt = inT(A, x + 1, y, C);
+    const top0 = up ? Y : Y + 2, top1 = dn ? Y + TS : Y + 10;
+    shadow(c, X + 8, Y + 16, 9, 2, 0.3);
+    R(c, X, top0, TS, top1 - top0, IN.top);
+    if (!up) { R(c, X, top0 - 1, TS, 1, IN.out); R(c, X, top0, TS, 1, IN.topHi); }
+    if (!lf) { R(c, X, top0, 1, top1 - top0 + (dn ? 0 : 6), IN.out); R(c, X + 1, top0, 1, top1 - top0, IN.topHi); }
+    if (!rt) { R(c, X + 15, top0, 1, top1 - top0 + (dn ? 0 : 6), IN.out); R(c, X + 13, top0, 2, top1 - top0, IN.front); }
+    if (!dn) {
+      R(c, X + (lf ? 0 : 1), Y + 10, TS - (lf ? 0 : 1) - (rt ? 0 : 1), 5, IN.front);
+      for (let i = X + 3; i < X + TS - 1; i += 5) R(c, i, Y + 11, 1, 4, IN.frontDk);
+      R(c, X, Y + 15, TS, 1, IN.out);
+    }
+    if (hash(x, y, 127) < 0.55) pix(c, X + 3 + Math.floor(hash(x, y, 128) * 8), (up ? Y + 4 : Y + 1), MUG, MUG_PAL);
+    if (!dn && !lf) { pix(c, X + 9, Y - 2, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 10, y: Y + 6, r: 22 }); }   // lamparina na ponta do balcão
+  }
+  function tableAt(c, x, y) {   // mesa comprida de dois tiles, com velas, canecas e pão
+    const X = x * TS + 1, Y = y * TS, W = 30;
+    shadow(c, X + 15, Y + 15, 15, 2, 0.32);
+    R(c, X + 2, Y + 11, 2, 4, IN.leg); R(c, X + W - 4, Y + 11, 2, 4, IN.leg);
+    R(c, X, Y + 2, W, 10, IN.out); R(c, X + 1, Y + 3, W - 2, 6, IN.top); R(c, X + 1, Y + 3, W - 2, 1, IN.topHi);
+    R(c, X + 1, Y + 9, W - 2, 2, IN.front);
+    for (let i = X + 6; i < X + W - 2; i += 8) R(c, i, Y + 4, 1, 5, IN.front);   // tábuas do tampo
+    pix(c, X + 3, Y, MUG, MUG_PAL); pix(c, X + 22, Y + 1, MUG, MUG_PAL);
+    pix(c, X + 9, Y + 4, ['.ooo.', 'oBbbo', '.ooo.'], { o: IN.out, B: '#d8a478', b: '#9a6232' });   // pão
+    pix(c, X + 15, Y - 1, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 16, y: Y + 8, r: 20 });
+  }
+  function rug(c, x0, y0, x1, y1) {
+    R(c, x0, y0, x1 - x0, y1 - y0, IN.rugGold); R(c, x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4, IN.rug);
+    for (let y = y0 + 4; y < y1 - 4; y++) for (let x = x0 + 4; x < x1 - 4; x++) if (((x - x0) + (y - y0)) % 8 === 0 || ((x - x0) - (y - y0) + 800) % 8 === 0) R(c, x, y, 1, 1, IN.rugDk);
+    for (let x = x0; x < x1; x += 2) { R(c, x, y0 - 1, 1, 1, IN.rugFringe); R(c, x, y1, 1, 1, IN.rugFringe); }
+  }
+  function drawInterior(c, A) {
+    rug(c, 16 * 5 + 4, 16 * 4 + 6, 16 * 9 + 12, 16 * 7 + 12);
+    backWall(c, A);
+    for (let x = 1; x < A.W - 1; x++) if (!inT(A, x, 1, TILE.WALL)) R(c, x * TS, 16, TS, 1, 'rgba(20,12,6,.45)');   // sombra da parede no chão
+    for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) if (inT(A, x, y, TILE.WALL) && (y > 0 || x === 0 || x === A.W - 1)) wallCap(c, A, x, y);
+    for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
+      const t = tileAt(A, x, y);
+      if (t === TILE.HEARTH && !inT(A, x - 1, y, TILE.HEARTH)) { let w = 1; while (inT(A, x + w, y, TILE.HEARTH)) w++; hearth(c, x, y, w); }
+      else if (t === TILE.COUNTER) counterTile(c, A, x, y);
+      else if (t === TILE.TABLE && inT(A, x + 1, y, TILE.TABLE) && !inT(A, x - 1, y, TILE.TABLE)) tableAt(c, x, y);
+      else if (t === TILE.BARREL) { shadow(c, X(x) + 8, y * TS + 15, 7, 2); pix(c, X(x) + 2, y * TS + 2, BARREL_IN, BARREL_PAL); }
+      else if (t === TILE.DOOR) {   // soleira: a porta aberta para a neve, com capacho
+        const DX = x * TS, DY = y * TS;
+        R(c, DX, DY, TS, TS, IN.deep); R(c, DX + 1, DY + 9, 14, 7, SNOW.md); R(c, DX + 1, DY + 9, 14, 1, SNOW.sh);
+        R(c, DX - 1, DY, 1, TS, IN.out); R(c, DX + TS, DY, 1, TS, IN.out);
+        R(c, DX + 2, DY - 3, 12, 4, IN.rugDk); R(c, DX + 3, DY - 2, 10, 2, IN.rug);
+      }
+    }
+  }
+  const X = x => x * TS;
+  function interiorEdge() { const t = canvas(TS, TS); R(t.getContext('2d'), 0, 0, TS, TS, IN.deep); return t; }
+  const INTERIOR_COLORS = [IN.out, IN.deep, IN.plaster, IN.plaster2, IN.beam, IN.beamHi, IN.wains, IN.wainsDk, IN.rail, IN.railHi, IN.cap, IN.capHi,
+    ...IN.stone, IN.top, IN.topHi, IN.front, IN.frontDk, IN.leg, IN.rug, IN.rugDk, IN.rugGold, IN.rugFringe, '#9a6232', '#a07048', '#a8704a',
+    '#b07c58', '#7a4a24', '#6a3a1a', ...Object.values(BARREL_PAL), ...Object.values(MUG_PAL), ...Object.values(CANDLE_PAL), ...BOTTLES.flat(),
+    ...Object.values(SHOE_PAL), '#1c2860', '#2c3c80', '#ffffff', '#e8eff8', '#d8a478', SNOW.md, SNOW.sh];
+
   // Mata fechada para além da borda do mapa (padrão 32x32 que se repete sem emenda)
   function forestTile() {
     const cv = canvas(32, 32), c = cv.getContext('2d');
@@ -666,17 +795,13 @@ const TownArt = (() => {
     const img = c.createImageData(W, H), data = img.data;
     for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
       const t = A.g[y * A.W + x];
-      if (isInterior(t)) continue;
       for (let ly = 0; ly < TS; ly++) for (let lx = 0; lx < TS; lx++) {
-        const gx = x * TS + lx, gy = y * TS + ly, col = groundPixel(A, t, x, y, gx, gy, lx, ly, valmor), p = (gy * W + gx) * 4;
+        const gx = x * TS + lx, gy = y * TS + ly, col = isInterior(t) ? plankPixel(gx, gy) : groundPixel(A, t, x, y, gx, gy, lx, ly, valmor), p = (gy * W + gx) * 4;
         data[p] = col[0]; data[p + 1] = col[1]; data[p + 2] = col[2]; data[p + 3] = 255;
       }
     }
     c.putImageData(img, 0, 0);
-    // Interiores (taverna): o desenho de sempre
-    const rng = mulberry32(77);
-    const speckle = (X, Y, cols, n) => { for (let i = 0; i < n; i++) R(c, X + Math.floor(rng() * TS), Y + Math.floor(rng() * TS), 1, 1, cols[i % cols.length]); };
-    for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) { const t = A.g[y * A.W + x]; if (isInterior(t)) drawInteriorTile(c, t, x * TS, y * TS, x, y, speckle); }
+    if (A.g.some(isInterior)) { drawInterior(c, A); A.edgeTile = interiorEdge(); }   // taverna: assoalho, paredes e móveis
     // Detalhes do chão e sombras
     for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) groundDetail(c, A, A.g[y * A.W + x], x, y, valmor);
     for (const b of A.buildings) houseShadow(c, b);
@@ -699,9 +824,9 @@ const TownArt = (() => {
     const ry = Math.round(r * 0.7);    // achatada: chão em 3/4
     for (let yy = -ry; yy <= ry; yy++) { const half = Math.round(r * Math.sqrt(1 - (yy / (ry + 0.5)) ** 2)); c.fillRect(cx - half, cy + yy, half * 2, 1); }
   }
-  function lightLayer(A) {
+  function lightLayer(A, veil = DUSK) {
     const cv = canvas(A.W * TS, A.H * TS), c = cv.getContext('2d');
-    c.fillStyle = DUSK; c.fillRect(0, 0, cv.width, cv.height);
+    c.fillStyle = veil; c.fillRect(0, 0, cv.width, cv.height);
     c.globalCompositeOperation = 'destination-out';
     for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(0,0,0,${g.cut})`; disc(c, l.x, l.y, g.r); }
     c.globalCompositeOperation = 'source-over';
@@ -734,6 +859,7 @@ const TownArt = (() => {
     }
   }
   function weather(c, A, now, camX, camY, vw, vh) {
+    if (A.cozy) { if (!A.light) A.light = lightLayer(A, A.cozy); c.drawImage(A.light, -camX, -camY); return; }   // interior: penumbra e luz de fogo
     if (!A.winter) return;
     for (const sm of A.smoke || []) for (let k = 0; k < PUFFS; k++) {
       const p = smokePuff(k, now, sm.seed); if (!p) continue;
@@ -746,7 +872,7 @@ const TownArt = (() => {
   // Toda cor nova do inverno (o teste confere que estão na paleta mestre)
   const WINTER_COLORS = [...Object.values(SNOW), ...LEAF_W, ...PINE_W, '#2c3c80', '#3a78c8', '#1c2860', '#26202e', '#55555e', '#7a7a82',
     '#a2a2ac', '#e8b840', '#f0d860', '#fff6c0', '#c89c38'];
-  return { layer, hash, weather, lightRings, smokePuff, flake, SNOW, WINTER_COLORS, PUFFS };
+  return { layer, hash, weather, lightRings, smokePuff, flake, SNOW, WINTER_COLORS, INTERIOR_COLORS, PUFFS };
 })();
 
 if (typeof module !== 'undefined') module.exports = { TownArt };

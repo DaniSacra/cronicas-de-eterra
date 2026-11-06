@@ -66,3 +66,9 @@ test('street lamps block nothing: each sits on its own tile by a street and ever
   for (const b of BUILDINGS) assert.ok(seen.has(`${b.door.x},${b.door.y + 1}`), `door of ${b.id}`);
   for (const n of NPC_DEFS) if (n.id !== 'guard') assert.ok(TDIRS.some(([dx, dy]) => seen.has(`${n.x + dx},${n.y + dy}`)), `villager ${n.id}`);
 });
+
+test('tavern interior colors come from the master palette, and the room has firelight', () => {
+  for (const c of TownArt.INTERIOR_COLORS) assert.ok(inPalette(c), c);
+  const { AREAS } = loadTown();
+  assert.match(AREAS.taverna.cozy, /^rgba\(/, 'the tavern gets a warm veil with light pools');
+});
