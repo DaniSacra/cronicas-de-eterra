@@ -8,7 +8,7 @@ function crispPx(target, dpr = 1) {
 // One type scale for the whole UI (docs/ui-spec.md §5). w, h in CSS px.
 function fontScale(w, h, dpr = 1) {
   const land = w >= h, huge = land && w >= 1700, large = land && w >= 1200 && h >= 700, small = w <= 900 || h <= 500;
-  const t1 = huge ? 16 : 8;
+  const t1 = huge || large ? 16 : 8; // small text: 16 on a PC screen (2026-11-06), 8 on small ones
   const t2 = huge ? 24 : small ? 12 : 16;
   const td = huge || large ? 24 : small ? 12 : 16; // dialog text
   return { f1: crispPx(t1, dpr), f2: crispPx(t2, dpr), fd: crispPx(td, dpr) };
