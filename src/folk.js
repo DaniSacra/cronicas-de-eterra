@@ -9,8 +9,10 @@ const Folk = (() => {
   const W = 16, H = 24, FEET = 21, OUT = '#1c1424', cache = {};
   const sh = (col, k) => shadeHex(col, k);
 
-  function draw(key, dir, frame) {
+  // pose: 0 parado · 1 passo A · 2 passo B (pernas e braços trocados) · 3 meio do passo · 4 respirando
+  function draw(key, dir, pose) {
     const L = LOOKS[key] || LOOKS.aldo;
+    const frame = pose === 1 || pose === 2 ? 1 : 0, B = pose === 2;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const c = cv.getContext('2d');
     const px = (x, y, w, h, col) => { if (col) { c.fillStyle = col; c.fillRect(x, y, w, h); } };
@@ -42,19 +44,20 @@ const Folk = (() => {
       px(sx, ly, sw, FEET - ly, body); px(sx - 1, FEET - 1, sw + 2, 1, body);
       px(sx + sw - 1, ly, 1, FEET - ly, bodyD); px(sx - 1, FEET - 1, sw + 2, 1, bodyD);
       if (L.trim) px(sx - 1, FEET - 2, sw + 2, 1, L.trim);
-      if (side) { px(frame ? 9 : 7, FEET, 3, 1, shoe); if (frame) px(4, FEET, 2, 1, shoe); }
-      else { px(frame ? 4 : 5, FEET, 2, 1, shoe); px(frame ? 10 : 9, FEET, 2, 1, shoe); }
+      if (side) { px(frame ? (B ? 8 : 9) : 7, FEET, 3, 1, shoe); if (frame) px(B ? 5 : 4, FEET, 2, 1, shoe); }
+      else { px(frame && !B ? 4 : 5, FEET, 2, 1, shoe); px(frame && B ? 10 : 9, FEET, 2, 1, shoe); }
     } else {
       const leg = (x, len, col) => {
         if (L.shorts) { px(x, ly, 2, 1, col); px(x, ly + 1, 2, len - 1, skin); } else px(x, ly, 2, len, col);
       };
       const n = FEET - ly;
       if (side) {
-        if (frame) { leg(5, n, sh(L.legs, 0.8)); leg(9, n, L.legs); px(4, FEET, 3, 1, shoe); px(9, FEET, 3, 1, shoe); }
+        if (frame) { leg(5, n, B ? L.legs : sh(L.legs, 0.8)); leg(9, n, B ? sh(L.legs, 0.8) : L.legs); px(4, FEET, 3, 1, shoe); px(9, FEET, 3, 1, shoe); }
         else { leg(6, n, sh(L.legs, 0.8)); leg(8, n, L.legs); px(7, FEET, 4, 1, shoe); }
       } else {
-        leg(5, frame ? n - 1 : n, L.legs); leg(9, n, sh(L.legs, 0.85));
-        px(5, frame ? FEET - 1 : FEET, 2, 1, shoe); px(9, FEET, 2, 1, shoe);
+        const upL = frame && !B, upR = frame && B;
+        leg(5, upL ? n - 1 : n, L.legs); leg(9, upR ? n - 1 : n, sh(L.legs, 0.85));
+        px(5, upL ? FEET - 1 : FEET, 2, 1, shoe); px(9, upR ? FEET - 1 : FEET, 2, 1, shoe);
       }
     }
 
@@ -81,10 +84,10 @@ const Folk = (() => {
     // ---- Braços e mãos ----
     const sleeve = L.outfit === 'vest' ? (L.shirt || '#e8e0d0') : sh(body, 0.85);
     if (side) {
-      const hx = frame ? 9 : 7;
+      const hx = frame ? (B ? 5 : 9) : 7;
       px(7, by + 1, 2, bl - 2, sleeve); px(hx, by + bl - 1, 2, 1, sleeve); px(hx, by + bl, 2, 1, skin);
     } else {
-      const s = frame ? 1 : 0;
+      const s = frame && !B ? 1 : 0; // passo B balança os braços como parado: o contrário do passo A
       px(3, by + 1, 1, bl - 1, sleeve); px(12, by + 1, 1, bl - 1, sleeve);
       px(3, by + bl - s, 1, 1, skin); px(12, by + bl - 1 + s, 1, 1, skin);
     }
@@ -172,6 +175,18 @@ const Folk = (() => {
       if (tool === 'mug') { px(hx + 1, hyy, 2, 3, '#8a5a2a'); px(hx + 1, hyy - 1, 2, 1, '#f8f4e8'); px(hx + 3, hyy + 1, 1, 1, '#8a5a2a'); }
       if (tool === 'basket') { px(hx, hyy + 1, 4, 3, '#b08040'); px(hx, hyy + 1, 4, 1, '#d8a860'); px(hx + 1, hyy, 2, 1, '#e05a6a'); }
     }
+    cv.chest = by + 1; // a respiração abaixa daqui para cima
+    return cv;
+  }
+
+  // Respirando: cabeça e ombros descem 1px (a linha do peito some por baixo); meio do passo: corpo sobe 1px
+  function posed(fig, pose) {
+    if (pose !== 3 && pose !== 4) return fig;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const c = cv.getContext('2d'), cut = fig.chest;
+    if (pose === 3) { c.drawImage(fig, 0, -1); return cv; }
+    c.drawImage(fig, 0, cut, W, H - cut, 0, cut, W, H - cut);
+    c.drawImage(fig, 0, 0, W, cut, 0, 1, W, cut);
     return cv;
   }
 
@@ -195,9 +210,20 @@ const Folk = (() => {
   }
 
   // dir: 0 costas · 1 direita · 2 frente · 3 esquerda
-  function sprite(key, dir, frame) {
-    const k = `${key}|${dir}|${frame}`;
-    return cache[k] || (cache[k] = finish(draw(key, dir === 3 ? 1 : dir, frame), dir === 3));
+  function sprite(key, dir, pose = 0) {
+    const k = `${key}|${dir}|${pose}`;
+    if (cache[k]) return cache[k];
+    const base = pose === 3 || pose === 4 ? 0 : pose;
+    return (cache[k] = finish(posed(draw(key, dir === 3 ? 1 : dir, base), pose), dir === 3));
   }
-  return { sprite, OUT };
+
+  // Pose de um ator agora: andando, quatro tempos (passo A, meio, passo B, meio); parado, respira devagar
+  function pose(a, now) {
+    if (a.t < 1) return a.t < 0.5 ? (a.frame ? 1 : 2) : 3;
+    const seed = (a.x * 7 + a.y * 13) * 97;
+    return Math.floor((now + seed) / 800) % 2 ? 4 : 0;
+  }
+  return { sprite, pose, OUT };
 })();
+
+if (typeof module !== 'undefined') module.exports = { Folk };

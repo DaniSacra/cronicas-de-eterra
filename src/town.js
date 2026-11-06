@@ -646,9 +646,9 @@ function drawTown(now) {
 
   // Personagens, de trás para a frente
   const list = [
-    ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, a.t < 1 ? a.frame : 0) })).reverse(),
-    { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, TOWN.p.t < 1 ? TOWN.p.frame : 0), lead: true },
-    ...TOWN.npcs.map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.t < 1 ? n.frame : 0) })),
+    ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
+    { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
+    ...TOWN.npcs.map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
