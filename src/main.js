@@ -503,13 +503,23 @@ function emblemSvg() {
 const ACCENTS = { 'Â': 'A^', 'Ê': 'E^', 'Ô': 'O^', 'Á': 'A´', 'É': 'E´', 'Í': 'I´', 'Ó': 'O´', 'Ú': 'U´', 'Ã': 'A~', 'Õ': 'O~' };
 const logoText = t => esc(t).replace(/[ÂÊÔÁÉÍÓÚÃÕ]/g, ch => `<span class="acc">${ACCENTS[ch][0]}<i>${ACCENTS[ch][1]}</i></span>`);
 // Title layout: the logo and the menu go where titleLayout (src/titlebg.js) leaves Erukh and the siblings uncovered
+// Version B (src/titlebg2.js) also places the credit in the corner and the A/B button that switches versions
 function placeTitle() {
-  const g = document.getElementById('game'), r = view.getBoundingClientRect(), L = TitleBG.layout(), px = r.width / VW;
-  const set = (k, v) => g.style.setProperty(k, v + 'px');
-  set('--tl-x', r.left + L.logo.x * px); set('--tl-y', r.top + L.logo.y * px); set('--tl-w', L.logo.w * px);
-  set('--tl-f', L.logo.L * px); set('--tl-sub', crispPx(L.logo.L / 2 * px, window.devicePixelRatio || 1));
-  set('--tm-x', r.left + L.menu.x * px); set('--tm-y', r.top + L.menu.y * px); set('--tm-w', L.menu.w * px);
+  const g = document.getElementById('game'), r = view.getBoundingClientRect(), L = TitleScene.cur().layout(), px = r.width / VW;
+  const set = (k, v) => g.style.setProperty(k, v + 'px'), at = (n, b) => { set(`--${n}-x`, r.left + b.x * px); set(`--${n}-y`, r.top + b.y * px); set(`--${n}-w`, b.w * px); };
+  g.classList.toggle('title-b', TitleScene.v === 'b');
+  at('tl', L.logo); at('tm', L.menu);
+  set('--tl-f', L.logo.L * px); set('--tl-sub', crispPx(L.logo.L * (L.logo.sub || 0.5) * px, window.devicePixelRatio || 1));
+  if (L.foot) at('tc', L.foot);
+  at('ab', L.ab || { x: L.W - 2 - L.logo.L * 3, y: 2, w: L.logo.L * 3 });
 }
+function switchTitle(ev) {
+  ev.stopPropagation();
+  const v = TitleScene.toggle(), b = document.querySelector('.title-ab');
+  if (b) b.innerHTML = titleAbLabel(v);
+  placeTitle();
+}
+const titleAbLabel = v => `<b class="${v === 'a' ? 'on' : ''}">A</b>/<b class="${v === 'b' ? 'on' : ''}">B</b>`;
 window.addEventListener('resize', () => { if (G.mode === 'title') placeTitle(); });
 async function titleScreen() {
   G.mode = 'title'; G.busy = true;
@@ -519,13 +529,14 @@ async function titleScreen() {
   document.getElementById('game').classList.add('on-title');
   document.getElementById('party').innerHTML = '';
   UI.hideOverlay();
-  await TitleBG.intro(); // the camera comes down from the sky; any key, click or touch skips it
+  await TitleCam.intro(); // the camera comes down from the sky; any key, click or touch skips it
   placeTitle();
+  const [c1, c2] = GAME.credit.split(' · ');
   UI.showOverlay(`<div class="title title-logo"><h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p>` +
-    `<p class="foot">${esc(GAME.credit)}</p></div>`, 'ov-title');
-  const v = await UI.choose([{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !hasSave() },
-    { label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }],
-    { title: '', cols: 1 });
+    `<p class="foot">${esc(c1)}<span class="sep"> · </span><br class="b-only">${esc(c2)}</p></div>` +
+    `<button class="title-ab" title="Alternar a abertura">${titleAbLabel(TitleScene.v)}</button>`, 'ov-title');
+  document.querySelector('.title-ab').addEventListener('click', switchTitle);
+  const v = await UI.choose(titleOptions(hasSave(), new URLSearchParams(location.search).has('dev')), { title: '', cols: 1 });
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
   Sfx.init();
@@ -700,7 +711,7 @@ function frame(now) {
   const F = FLOORS[G.floor];
   HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
   if (G.mode === 'title') {
-    TitleBG.draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js)
+    TitleScene.cur().draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js, versão B em src/titlebg2.js)
   } else if (G.mode === 'town') {
     updateTown(dt);
     drawTown(now);

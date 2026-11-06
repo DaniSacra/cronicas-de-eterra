@@ -171,5 +171,9 @@ function heroViewFonts(w, h, dpr = 1) {
   return { body: f.f2, big: f.fd };
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+// Title menu: the quick start straight into the crypt is a test shortcut, only with ?dev in the address
+const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
+  ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
+
+if (typeof module !== 'undefined') module.exports = { titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
