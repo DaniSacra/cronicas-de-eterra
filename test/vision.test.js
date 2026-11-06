@@ -116,7 +116,7 @@ test('the Sineiro whispers a name once, on the second round, to the first one st
   run('B.round = 2');
   await run('bossAct(B.enemies[0])');
   await run('bossAct(B.enemies[0])');
-  assert.deepEqual(log.filter(t => t.includes('sussurra')), ['O Sineiro sussurra: "Lyra... a oração vai começar."']);
+  assert.deepEqual(log.filter(t => t.includes('sussurra')), ['O Sineiro sussurra: "Lyra... o sino vai tocar por você."']);
   assert.deepEqual(ctx.kept, ['sussurro'], 'kept in the save, so a retry after a loss does not repeat it');
 });
 
