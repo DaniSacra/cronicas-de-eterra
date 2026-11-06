@@ -37,7 +37,7 @@ test('introductions call only Andilla, and still work when she is already in the
     assert.ok(log.includes('Berta:\nEi, você! Venha cá. Esse povo vai descer.'));
     assert.ok(!log.some(t => t.includes('vocês duas')));
     assert.deepEqual([...G.party.map(m => m.id)], ['aldo', 'teo', 'lyra', 'andilla']);
-    assert.equal(log.at(-1), 'Berta:\nQuatro. Agora o Hugo deixa passar. Voltem vivos, que a sopa de amanhã já está paga.');
+    assert.equal(log.at(-1), 'Berta:\nQuatro. Agora o Hugo deixa passar. Voltem vivos, que eu já esquentei a panela.');
   }
   {
     const { G, log, run } = story(['aldo', 'teo', 'andilla'], { intro: 1, quest: 1, seen: { job: 1, andillaFuga: 1 } });

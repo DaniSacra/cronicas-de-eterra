@@ -5,7 +5,7 @@
 
 const WORLD_REINOS = {
   Imladrin: { x: 215, y: 345, text: () => 'A ilha do oeste: alta e estreita, de norte a sul. O sul é frio; o norte, ameno e farto.\nO reino mais desenvolvido de Eterra, de fábricas e engenhos a vapor, e o único governado por uma rainha, que mora no norte.' },
-  Formeth:  { x: 485, y: 290, text: () => 'O norte da ilha do meio: uma floresta sem fim, terra dos elfos.\nHá magia por todo lado, e seus clãs conquistaram as próprias terras com ela.' },
+  Formeth:  { x: 485, y: 290, text: () => 'O norte da ilha do meio: uma floresta sem fim, com cara de floresta de elfos.\nHá magia por todo lado, e seus clãs conquistaram as próprias terras com ela.' },
   Hyarmeth: { x: 545, y: 455, text: () => 'O sul da ilha do meio. Muito frio, e seu povo nasceu acostumado com isso.\nGente forte, com fama de brava e destemida em batalha.' },
   Sindarin: { x: 860, y: 320, text: () => 'A ilha do leste, a menor. Muito quente, de savanas e desertos.\nTerra de muitas tribos, sempre em guerra umas com as outras. Nos outros reinos dizem que nada de bom vem do leste.' },
 };

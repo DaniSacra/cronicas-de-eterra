@@ -161,7 +161,7 @@ function makeTextures(pal, seed) {
     return [...c, emit];
   }
 
-  // Túnel cavado pela Irmandade: terra batida, marcas de picareta, raízes e pedras, com escoras de madeira.
+  // Túnel cavado: terra batida, marcas de picareta, raízes e pedras, com escoras de madeira.
   // tools = 1: uma pá e uma picareta largadas encostadas na terra.
   const EARTH = [96, 72, 50], WOOD = [118, 80, 46];
   function earth(x, y) {

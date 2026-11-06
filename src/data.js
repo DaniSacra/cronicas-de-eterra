@@ -20,22 +20,6 @@ const FLOORS = [
   },
 ];
 
-// Andares das versões antigas, guardados para as próximas dungeons (não são usados agora)
-const FLOORS_FUTURO = [
-  {
-    name: 'Cripta Sangrenta', short: 'B2', seed: 4242, size: 21, rooms: 3, loops: 0.07, fountainAt: 0.5,
-    pal: { stone: [146, 86, 64], mortar: [58, 36, 28], floor: [94, 72, 60], floorJ: [40, 28, 22], ceil: [54, 38, 32], accent: [170, 130, 60] },
-    loot: ['pena', 'pocao', 'cajadoRunico', 'cotaMalha', 'eter'],
-    enemies: ['esqueleto', 'aranha', 'goblin'], maxGroup: 3,
-  },
-  {
-    name: 'Santuário de Morvath', short: 'B3', seed: 9001, size: 23, rooms: 3, loops: 0.08, fountainAt: 0.5, boss: true,
-    pal: { stone: [94, 64, 120], mortar: [34, 20, 46], floor: [66, 50, 78], floorJ: [26, 16, 32], ceil: [32, 22, 42], accent: [180, 50, 90] },
-    loot: ['elixir', 'espadaPrata', 'mantoSagrado', 'pena', 'pocao', 'eter'],
-    enemies: ['cavaleiro', 'espectro', 'golem'], maxGroup: 3,
-  },
-];
-
 const PARTY_DEFS = [
   {
     id: 'aldo', name: 'Aldo', cls: 'Guerreiro', color: '#e0a040',
@@ -95,10 +79,10 @@ const EQUIPS = {
 const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', agi: 'AGI', hp: 'PV', mp: 'PM' };
 
 const ENEMIES = {
-  rato:      { name: 'Rato Gigante',    hp: 32,  atk: 15, def: 2,  agi: 8,  xp: 6,  sprite: 'rat', drop: ['pocao', 0.08] },
-  morcego:   { name: 'Morcego Vampiro', hp: 26,  atk: 14, def: 1,  agi: 14, xp: 5,  sprite: 'bat', float: true,
+  rato:      { name: 'Rato Gigante',    hp: 52,  atk: 21, def: 2,  agi: 8,  xp: 8,  sprite: 'rat', drop: ['pocao', 0.08] },
+  morcego:   { name: 'Morcego Vampiro', hp: 38,  atk: 20, def: 1,  agi: 14, xp: 7,  sprite: 'bat', float: true,
                skill: { name: 'Mordida Vampira', chance: 0.3, kind: 'drain', power: 1.0 } },
-  gosma:     { name: 'Gosma Verde',     hp: 40,  atk: 14, def: 5,  agi: 5,  xp: 7,  sprite: 'slime', drop: ['eter', 0.06] },
+  gosma:     { name: 'Gosma Verde',     hp: 64,  atk: 20, def: 5,  agi: 5,  xp: 9,  sprite: 'slime', drop: ['eter', 0.06] },
   esqueleto: { name: 'Esqueleto',       hp: 56,  atk: 20, def: 7,  agi: 8,  xp: 16, sprite: 'skeleton', undead: true,
                recolor: { '#a8323e': '#3a78c8', '#e86a7a': '#8ac0f0', '#3a78c8': '#a8323e', '#2c3c80': '#7a1a24', '#1c2860': '#4a0c14' }, drop: ['pocao', 0.1] },
   aranha:    { name: 'Aranha Tumular',  hp: 48,  atk: 19, def: 5,  agi: 14, xp: 15, sprite: 'spider',
@@ -113,15 +97,15 @@ const ENEMIES = {
                skill: { name: 'Toque Gélido', chance: 0.35, kind: 'mag', power: 30 }, drop: ['eter', 0.15] },
   golem:     { name: 'Golem de Pedra',  hp: 130, atk: 30, def: 22, agi: 4,  xp: 48, sprite: 'golem',
                pal: { base: '#7a7266', light: '#aaa296', dark: '#3c3830', eye: '#ffa020' }, drop: ['pocao', 0.2] },
-  // Cemitério de Valmor: mais fracos que os da cripta, para o Aldo aprender sozinho
-  ratoCova:    { name: 'Rato de Cova', hp: 14, atk: 8,  def: 1, agi: 6,  xp: 4, sprite: 'rat',
+  // Cemitério de Valmor: mais fracos que os da cripta, para Aldo e Lyra aprenderem
+  ratoCova:    { name: 'Rato de Cova', hp: 24, atk: 11, def: 1, agi: 6,  xp: 4, sprite: 'rat',
                recolor: { '#b07c58': '#a2a2ac', '#9a6232': '#7a7a82', '#6a3a1a': '#55555e', '#4a2610': '#26262e' } }, // rato cinza do cemitério
-  morcegoCova: { name: 'Morcego',      hp: 10, atk: 8,  def: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
+  morcegoCova: { name: 'Morcego',      hp: 16, atk: 10, def: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
                recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
-  ossada:      { name: 'Ossada',       hp: 22, atk: 10, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
-  encapuzado: { name: 'Encapuzado', hp: 28, atk: 12, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
-  // Chefe do capítulo 1: o último padre da igreja velha, um clérigo caído que ainda toca o sino (capitulo1.md)
-  sineiro:   { name: 'O Sineiro', hp: 300, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'bellringer', undead: true, boss: true,
+  ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
+  encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
+  // Chefe do capítulo 1 (capitulo1.md)
+  sineiro:   { name: 'O Sineiro', hp: 600, atk: 24, def: 14, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
                say: {
                  intro: 'O Sineiro ergue o sino de bronze.\n"A missa acabou faz cinquenta anos. Ninguém mais desce."',
                  enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',
@@ -131,22 +115,13 @@ const ENEMIES = {
                  stagger: 'O Sineiro cambaleia...',
                  noRun: 'O Sineiro barra a última porta. Não há para onde fugir!',
                } },
-  morvath:   { name: 'Morvath, o Lich-Rei', hp: 310, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'lich', undead: true, boss: true, float: true,
-               pal: { base: '#4a2a6a', light: '#8a5ab0', dark: '#1a0a2a', eye: '#40ff80' } },
 };
 
 // Itens de missão (não aparecem na batalha)
 const KEY_ITEMS = {
-  carta: { name: 'Carta de Shulkhan', desc: 'Item de missão',
-    // Texto revisado pelo Daniel (docs/mundo/historias/capitulo1.md). Só a rainha lê; no capítulo 1 fica fechada.
-    sealedName: 'Carta com o selo real', sealed: ['O selo real está inteiro.', 'Teo não vai rompê-lo. Só a rainha pode.'], text: [
-    'À Lara, descendente de Hanokh e rainha de Imladrin.\nQue a luz de Elun esteja contigo.',
-    'Nossos espiões pagaram com a vida pelo pouco que sei. Peço perdão, pois as notícias não são boas, e sei das dificuldades da guerra.',
-    'Velkor, a quem eu mesmo instruí na fé, voltou-se contra Yah e tenta invocar os reis caídos que foram selados na guerra de Elun.',
-    'Envio Tobias no rastro dele. Se esta carta chegou às tuas mãos, ele encontrou o lugar.',
-    'Humildemente peço que tua casa seja diligente por Elun, como foi no passado. Toda Eterra precisa que impeças o clérigo renegado de trazer de volta os reis do exílio.',
-    'Teu servo, Shulkhan.',
-  ] },
+  // O texto da carta fica em docs/mundo/historias/capitulo1.md até o capítulo em que ela for aberta
+  carta: { name: 'Carta com o selo real', desc: 'Item de missão',
+    sealedName: 'Carta com o selo real', sealed: ['O selo real está inteiro.', 'Teo não vai rompê-lo. Só a rainha pode.'] },
   estojo: { name: 'Estojo de ganchos', desc: 'Item de missão',
     text: ['Um estojo de couro cheio de ganchinhos de metal.', 'Ferramenta de quem abre o que não é seu.'] },
 };

@@ -66,6 +66,11 @@ function splitMood(name) {
   const m = /^(.*?)~(alegre|preocupado|bravo)$/.exec(name || '');
   return m ? { name: m[1], mood: m[2] } : { name: name || null, mood: null };
 }
+// "Nome:\ntexto" -> who speaks and what; a title or line without a name gives who = null
+function splitSpeaker(text) {
+  const m = /^([^\n:]{1,28}):\n([\s\S]+)$/.exec(text || '');
+  return m ? { who: m[1], text: m[2] } : { who: null, text: text || '' };
+}
 // Face on a party card: worried when hurt, fierce on its turn in battle, else the normal face
 function cardMood(hp, maxHp, acting) {
   if (hp <= 0) return 'normal';
@@ -101,4 +106,4 @@ function battleLayout(sizes, vw, vh, boss = false) {
   });
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, cardMood, torchTint };
+if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint };

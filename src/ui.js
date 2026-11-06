@@ -30,6 +30,9 @@ const UI = (() => {
   function setSpeaker(label) {
     const { name, mood } = splitMood(label);
     speakerEl.textContent = name || '';
+    const hero = PARTY_DEFS.find(d => d.name === name);   // herói fala na cor dele; moradores em tijolo
+    speakerEl.style.setProperty('--c', hero ? hero.color : '');
+    speakerEl.classList.toggle('hero', !!hero);
     const key = Portraits.keyFor(name);
     dialogEl.classList.toggle('has-face', !!key);
     if (!key) return;
@@ -56,11 +59,11 @@ const UI = (() => {
 
   function say(text, opts = {}) {
     clearMenu();
-    const m = /^([^\n:]{1,28}):\n([\s\S]+)$/.exec(text);
-    setSpeaker(m ? m[1] : null); open();
+    const m = splitSpeaker(text);
+    setSpeaker(m.who); open();
     return new Promise(res => {
-      setText(m ? m[2] : text, !opts.auto, !!opts.auto);
-      sayR = () => { clearTimeout(sayTimer); sayR = null; closeSoon(); res(); };
+      setText(m.text, !opts.auto, !!opts.auto);
+      sayR = v => { clearTimeout(sayTimer); sayR = null; closeSoon(); res(v); }; // v = 'esc' when closed with Esc or ✕
       if (opts.auto) sayTimer = setTimeout(() => sayR && sayR(), opts.auto);
     });
   }
@@ -80,7 +83,7 @@ const UI = (() => {
     return new Promise(res => {
       const style = o.style || 'list';
       if (style === 'list') {
-        if (o.title !== undefined) { setSpeaker(null); setText(o.title, false, true); }
+        if (o.title !== undefined) { const t = splitSpeaker(o.title); setSpeaker(t.who); setText(t.text, false, true); }
         open();
       } else dialogEl.classList.remove('open');
       let sel = opts.findIndex(x => !x.disabled); if (sel < 0) sel = 0;
@@ -175,7 +178,7 @@ const UI = (() => {
       return true;
     }
     if (sayR) {
-      if (!e.repeat && ['Enter', ' ', 'z', 'x', 'Escape'].includes(k)) { if (finishType) finishType(); else sayR(); }
+      if (!e.repeat && ['Enter', ' ', 'z', 'x', 'Escape'].includes(k)) { if (finishType) finishType(); else sayR(k === 'Escape' || k === 'x' ? 'esc' : undefined); }
       return true;
     }
     return false;
@@ -194,7 +197,7 @@ const UI = (() => {
       // Classic JRPG party strip: the hero's face on the left, name and bars on the right
       const key = Portraits.keyFor(d.name);
       card.innerHTML = `<div class="pfw">${key ? `<img class="pf" src="${Portraits.draw(key).toDataURL()}" alt="">` : ''}<span class="lv"></span></div><div class="info">
-        <div class="nm"><span>${esc(d.name)}</span></div>
+        <div class="nm${d.name.length > 6 ? ' long' : ''}"><span>${esc(d.name)}</span><img class="dfn" src="${iconUrl('def')}" alt=""></div>
         <div class="cls">${esc(d.cls)}</div>
         <div class="bar hp"><i></i></div><div class="num hpn"></div>
         <div class="bar mp"><i></i></div><div class="num mpn"></div></div>`;
@@ -214,6 +217,7 @@ const UI = (() => {
       card.querySelector('.hpn').textContent = `PV ${m.hp}/${mh}`;
       card.querySelector('.mpn').textContent = `PM ${m.mp}/${mm}`;
       card.classList.toggle('dead', m.hp <= 0);
+      card.classList.toggle('defending', !!m.defending && G.mode === 'battle');
       card.classList.toggle('low', m.hp > 0 && m.hp < mh * 0.3);
       if (activeId !== undefined) card.classList.toggle('active', m.id === activeId);
       const img = card.querySelector('.pf'), mood = cardMood(m.hp, mh, card.classList.contains('active') && G.mode === 'battle');
@@ -241,6 +245,7 @@ const UI = (() => {
   function hideOverlay() { overlay.style.display = 'none'; overlay.innerHTML = ''; }
 
   document.getElementById('screen').addEventListener('click', () => { Sfx.init(); advance(); });
+  document.addEventListener('pointerdown', () => Sfx.init(), true); // o tema do título toca também para quem só usa o mouse
 
   return { say, info, choose, pickValue, hoverValue, markCard, placeBar, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };
 })();

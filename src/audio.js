@@ -1,12 +1,14 @@
 // ===== Efeitos sonoros e música chiptune (WebAudio) =====
 
 const Sfx = (() => {
-  let ac = null, master = null, muted = false, nbuf = null;
+  const VOL = 0.8; // volume geral
+  let ac = null, master = null, nbuf = null, muted = false;
+  try { muted = localStorage.getItem('rpg-mute') === '1'; } catch (e) { /* sem armazenamento */ }
   function init() {
     if (!ac) {
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
-        master = ac.createGain(); master.gain.value = muted ? 0 : 0.5; master.connect(ac.destination);
+        master = ac.createGain(); master.gain.value = muted ? 0 : VOL; master.connect(ac.destination);
       } catch (e) { ac = null; }
     }
     if (ac && ac.state === 'suspended') ac.resume();
@@ -29,16 +31,21 @@ const Sfx = (() => {
     const t = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     s.buffer = nbuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + 0.05);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   }
-  const seq = (arr, type, dur, vol, gap) => arr.forEach((f, i) => tone(f, dur, type, vol, null, i * gap));
+  const seq = (arr, type, dur, vol, gap) => arr.forEach((f, i) => { if (f) tone(f, dur, type, vol, null, i * gap); }); // 0 = pausa
   return {
     init,
     get ctx() { return ac; }, get master() { return master; }, get muted() { return muted; },
-    toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.5; return muted; },
-    step() { noise(0.06, 0.06, 0, 300, 0.8); },
+    toggleMute() {
+      muted = !muted;
+      try { localStorage.setItem('rpg-mute', muted ? '1' : '0'); } catch (e) { /* sem armazenamento */ }
+      if (master) master.gain.setTargetAtTime(muted ? 0 : VOL, ac.currentTime, 0.02);
+      return muted;
+    },
+    step() { noise(0.06, 0.1, 0, 300, 0.8); },
     bump() { tone(110, 0.12, 'square', 0.06, 60); },
-    cursor() { tone(880, 0.03, 'square', 0.025); },
+    cursor() { tone(880, 0.03, 'square', 0.035); },
     select() { tone(660, 0.05, 'square', 0.035); tone(990, 0.06, 'square', 0.035, null, 0.04); },
     cancel() { tone(440, 0.06, 'square', 0.035, 220); },
     encounter() { seq([523, 659, 784, 1046, 784, 1046, 1318], 'square', 0.08, 0.05, 0.05); },
@@ -53,7 +60,7 @@ const Sfx = (() => {
     holy() { seq([784, 988, 1175, 1568], 'triangle', 0.25, 0.06, 0.07); },
     heal() { seq([523, 659, 784, 1046], 'triangle', 0.15, 0.06, 0.06); },
     die() { tone(400, 0.35, 'square', 0.05, 60); },
-    victory() { seq([523, 523, 523, 659, 784, 0.01, 659, 784, 1046], 'square', 0.13, 0.05, 0.11); },
+    victory() { seq([523, 523, 523, 659, 784, 0, 659, 784, 1046], 'square', 0.13, 0.05, 0.11); },
     levelup() { seq([659, 784, 988, 1318, 1568], 'square', 0.12, 0.05, 0.08); },
     chest() { seq([392, 523, 659, 784, 1046], 'triangle', 0.14, 0.06, 0.07); },
     stairs() { seq([392, 330, 262, 196, 131], 'triangle', 0.22, 0.06, 0.14); },
@@ -61,6 +68,14 @@ const Sfx = (() => {
     dark() { tone(80, 0.8, 'sawtooth', 0.08, 40); noise(0.8, 0.1, 0, 300, 0.5); },
     drain() { tone(700, 0.45, 'sine', 0.07, 150); },
     // Sino da igreja velha: duas badaladas graves com parciais desafinados, decaindo devagar
+    // Uma badalada só, ao longe: a madrugada e o último toque do sino quando o Sineiro cai
+    bellFar() { tone(196, 3, 'sine', 0.05); tone(466, 2.2, 'sine', 0.02); },
+    // Entrada do chefe: badalada grave e um baque
+    bossEncounter() { tone(130.8, 2, 'sine', 0.09); tone(311, 1.4, 'sine', 0.03); noise(0.4, 0.12, 0, 200); },
+    defend() { tone(330, 0.12, 'square', 0.04); tone(494, 0.1, 'square', 0.03, null, 0.05); },
+    flee() { for (const d of [0, 0.07, 0.14, 0.21]) noise(0.05, 0.06, d, 400); },
+    fall() { tone(330, 0.5, 'triangle', 0.05, 110); },
+    coin() { tone(1318, 0.05, 'square', 0.035); tone(1760, 0.12, 'square', 0.035, null, 0.05); },
     bell() { for (const d of [0, 1.3]) { tone(196, 2.4, 'sine', 0.09, null, d); tone(466, 1.6, 'sine', 0.035, null, d); tone(590, 1.1, 'triangle', 0.02, null, d); } },
   };
 })();
@@ -257,7 +272,7 @@ const Music = (() => {
   }
   function newBus(ac) {
     const g = ac.createGain(), f = ac.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 6500; g.gain.value = 0.7;
+    f.type = 'lowpass'; f.frequency.value = 6500; g.gain.value = 0.35;
     g.connect(f); f.connect(Sfx.master);
     return { g, f };
   }

@@ -52,6 +52,11 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @keyframes winOpen { from { transform: scaleY(.12); } to { transform: none; } }
 #msg { color: var(--text); }
 #speaker { color: var(--gold); }
+#speaker.hero { color: color-mix(in srgb, var(--c, var(--gold)) 55%, #2a1206); }
+/* Menus read at the middle size, with the title in gold */
+#msgbox:has(#menu:not(:empty)) { font-size: var(--f2); }
+#msgbox:has(#menu:not(:empty)) #msg { color: var(--gold); }
+#msgbox:has(#menu:not(:empty)) .opt.sel::before { width: 1em; height: 1em; margin-top: -.5em; }
 #speaker:empty { display: none; }
 #msg { white-space: pre-line; }
 #msg .more { display: inline-block; color: var(--gold); animation: bob .5s steps(1) infinite; }
@@ -78,8 +83,11 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (min-width: 1200px) and (min-height: 700px) and (orientation: landscape) { .card .pf { width: 96px; height: 96px; } .card .num, .card .nm { font-size: 16px; } }
 @media (max-width: 900px), (max-height: 500px) { .card .pf { width: 32px; height: 32px; } }
 .card .cls { display: none; }
-.card .nm { display: flex; justify-content: space-between; align-items: baseline; color: color-mix(in srgb, var(--c) 62%, #2a1206); }
+.card .nm { display: flex; justify-content: space-between; align-items: baseline; color: color-mix(in srgb, var(--c) 50%, #2a1206); }
 .card .nm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .nm.long span { letter-spacing: -.125em; } /* the blank column of each glyph: "Andilla" fits, letters stay whole */
+.card .nm .dfn { display: none; flex: none; width: 16px; height: 16px; image-rendering: pixelated; align-self: center; }
+.card.defending .nm .dfn { display: block; }
 .card .cls { font-size: var(--f1); color: var(--dim); margin-top: calc(var(--u) * 2); }
 .card.dead { filter: grayscale(1) brightness(.6); }
 .card.low .hp i { animation: blink .5s steps(1) infinite; }
@@ -98,7 +106,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* Aviso curto no alto (lugar, comandos, objetivo): aparece quando muda e some sozinho */
 /* Aviso de lugar e objetivo: na coluna da esquerda, embaixo do nome do lugar, em letra legível */
-#info { flex-basis: 100%; max-width: min(100%, 26em); box-sizing: border-box;
+#info { flex-basis: 100%; max-width: min(100%, 40em); box-sizing: border-box;
   padding: calc(var(--u) * 3) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.6; white-space: pre-line; color: var(--text);
   opacity: 0; transition: opacity .4s steps(4); pointer-events: none; }
 #info.show { opacity: 1; }
@@ -123,7 +131,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--text); letter-spacing: 2px; }
 .title p { margin: 0; font-size: 16px; color: var(--light); text-shadow: 3px 3px 0 var(--ink); }
 .title p.small { font-size: 8px; color: var(--dim); }
-.foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: 8px; color: var(--dim); }
+.title .sub.end { display: flex; flex-direction: column; gap: 1em; max-width: min(90vw, 40em); text-align: center; letter-spacing: 0; }
+.title .sub.end p { font-size: var(--f2); line-height: 1.5; color: var(--text); text-shadow: none; }
+#overlay.ov-end { padding-bottom: 38vh; }
+.foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
 @media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
 
 /* Menu do título: janela estreita no centro */
@@ -139,13 +150,17 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #touch .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; }
 #touch .pad2 { display: grid; grid-template-columns: repeat(2, 48px); gap: 6px; }
 #touch .pad2 button:first-child { grid-column: 1 / -1; }
-#touch .pad2 .small { font-size: 8px; }
+#touch .pad2 .small { font-size: var(--f1); letter-spacing: -.125em; }
+/* In town the arrows step, so the turn buttons show ◀ ▶ and the dungeon-only buttons hide */
+#game.in-town #touch [data-k="q"], #game.in-town #touch [data-k="e"], #game.in-town #touch [data-k="m"] { visibility: hidden; }
+#game.in-town #touch [data-k="ArrowLeft"], #game.in-town #touch [data-k="ArrowRight"] { font-size: 0; }
+#game.in-town #touch [data-k="ArrowLeft"]::after { content: '◀'; font-size: 26px; }
+#game.in-town #touch [data-k="ArrowRight"]::after { content: '▶'; font-size: 26px; }
 /* Arrows and ✕ are not (or look tiny) in the pixel font: drawn by the system font at a larger, bold size */
 #touch .glyph { font-family: system-ui, sans-serif; font-size: 26px; font-weight: 700; }
 @media (pointer: coarse) { #touch { display: flex; position: absolute; left: 8px; bottom: 8px; width: calc(100% - var(--hudw, 0px) - 16px); margin: 0; opacity: .6; pointer-events: none; }
   #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); }
   #game.talking #touch .pad { visibility: hidden; } }
-@media (orientation: landscape) and (pointer: coarse) { #dialog, #party { position: relative; left: calc(var(--u) * 4); translate: none; width: calc(100% - 106px - var(--u) * 4); } }
 @media (orientation: portrait) {
   #party { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .card { padding: calc(var(--u) * 4) calc(var(--u) * 3); } .card .cls { display: none; }
@@ -243,7 +258,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #hudtop { position: absolute; z-index: 3; top: calc(var(--u) * 4); left: 50%; translate: -50% 0; display: flex; flex-direction: column;
   align-items: center; gap: calc(var(--u) * 2); pointer-events: none; max-width: calc(100% - var(--u) * 8); }
 #hudtop [hidden] { display: none !important; }
-#hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f1); }
+#hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f2); }
 #hudtop .boss .bar { height: calc(var(--u) * 4); margin-bottom: 0; }
 #hudtop .boss .bar i { background: linear-gradient(#c890f0 0 50%, #8a4ad0 50%); transition: width .3s steps(6); }
 #hudtop .boss.enraged .bar i { background: linear-gradient(#f28a9a 0 50%, var(--danger) 50%); }
@@ -344,5 +359,23 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #cmdbar .opt.sel::after { bottom: calc(100% + var(--bw) + var(--u)); }
 #cmdbar { padding: var(--u); }
 #hudtop .label { max-width: min(92vw, 40em); padding: calc(var(--u) * 2) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.5; text-align: center; color: var(--text); }
-#game.in-battle #info { display: none; } /* battle uses the top for the turn queue and the plaque */
-#hudbar > #info { pointer-events: none; } /* the note never blocks taps on the scene */
+#game.in-battle #info { display: none; }
+/* Battle: the message is a band right under the turn queue (and the boss window), so the enemies stay in view */
+#game.in-battle #bottom { top: 0; justify-content: flex-end; } /* covers the scene, so the band can sit at the top */
+#game.in-battle #dialog { position: absolute; top: calc(var(--hudtop-h, 4em) + var(--u) * 6); left: 50%; translate: -50% 0;
+  width: min(92%, calc(var(--fd) * 40)); font-size: var(--f2); }
+#game.in-battle #msgbox { min-height: 0; padding: calc(var(--u) * 3) calc(var(--u) * 6); }
+#game.in-battle #msg { text-align: center; }
+#game.in-battle #face { display: none !important; } /* battle uses the top for the turn queue and the plaque */
+#hudbar > #info { pointer-events: none; }
+#game.bigmap #info { display: none; } /* the note never blocks taps on the scene */
+
+/* Phone on its side: the windows sit between the d-pad (left) and OK/✕ (right), same width as each other */
+/* (last in the file: it must win over the short-screen #bottom padding) */
+@media (orientation: landscape) and (pointer: coarse) {
+  #bottom { padding-left: calc(164px + var(--u) * 2); padding-right: calc(110px + var(--u) * 2); }
+  #dialog, #party { position: static; width: 100%; }
+  #game.in-battle #touch .pad { display: none; }
+  #game.in-battle #bottom { padding-left: calc(110px + var(--u) * 2); padding-right: calc(var(--u) * 4); } /* no d-pad: OK/✕ move left */
+  .card .nm span:first-child { font-size: var(--f1); } /* names fit the narrower cards, as in portrait */
+}

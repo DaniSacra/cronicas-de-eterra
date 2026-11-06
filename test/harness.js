@@ -45,7 +45,7 @@ function battle(ids, choose, extra = {}) {
     ctx: { VW: 320, VH: 200, view: el('view'), performance: { now: () => 0 }, HUD: { queue() {}, label() {}, boss() {} },
       document: { createElement: () => ({ getContext: () => ({ drawImage() {}, putImageData() {} }) }), getElementById: el },
       Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true },
-      renderView() {}, worldSprites: () => [], vimg: {}, cam: {}, levelUpMessages: () => [] },
+      renderView() {}, drawTown() {}, worldSprites: () => [], vimg: {}, cam: {} },
   });
   run = s.run;
   run('Math.random = () => 0.5');

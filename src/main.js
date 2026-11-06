@@ -72,17 +72,15 @@ function exploreHint() {
 
 // Aviso no alto da cena, sem repetir: o nome do lugar só quando muda de lugar, os comandos uma vez por save
 // (na vila e na dungeon) e o objetivo só quando muda. O resto fica no Diário (Esc → Diário).
-let lastPlace = null, lastGoal = null;
+let lastGoal = null;
+// O nome do lugar já está no chip do HUD: o aviso só traz os comandos e o objetivo
+const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 function placeHint(place, kind, help) {
   const lines = [];
-  if (place !== lastPlace) lines.push(place);
-  if (help && !G.seen['ajuda_' + kind]) { G.seen['ajuda_' + kind] = 1; lines.push(help); }
+  if (help && !G.seen['ajuda_' + kind]) { G.seen['ajuda_' + kind] = 1; lines.push(TOUCH ? 'Setas andar · OK interagir · ✕ menu' : help); }
   const goal = journalGoal();
   if (goal && goal !== lastGoal) { lines.push('Objetivo: ' + goal); lastGoal = goal; }
-  lastPlace = place;
-  if (!lines.length) return;
-  if (lines[0] !== place) lines.unshift(place);
-  UI.info(lines.join('\n'));
+  if (lines.length) UI.info(lines.join('\n'));
 }
 
 // ---------- Entrada ----------
@@ -286,7 +284,7 @@ async function interact(o) {
     if (ok) await runBattle(['sineiro'], true, { hints: [
       'Só atacar não basta. Teo cura os feridos com Magia; não espere alguém cair.',
       'Lyra queima com Fogo, e a Luz Sagrada de Teo fere em dobro os mortos-vivos.',
-      'Se alguém cair, a Pena Vital traz de volta. Poções estão em Item.',
+      G.party.some(m => m.id === 'teo' && knownSpells(m).includes('reviver')) ? 'Se alguém cair, o Reviver de Teo ou a Pena Vital traz de volta. Poções estão em Item.' : 'Se alguém cair, a Pena Vital traz de volta. Poções estão em Item.',
     ] });
   }
 }
@@ -394,7 +392,7 @@ async function campMenu() {
       if (!opts.length) { await UI.say('A bolsa está vazia.'); continue; }
       const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true });
       if (it == null) continue;
-      if (it === 'key:carta') { await readLetter(false); continue; }
+      if (it === 'key:carta') { await readLetter(); continue; }
       if (String(it).startsWith('key:')) { const k = KEY_ITEMS[it.slice(4)]; for (const t of k.text) await UI.say(`${k.name}:\n${t}`); continue; }
       const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`);
       if (t == null) continue;
@@ -491,7 +489,7 @@ async function campMacros() {
 async function showDiary() {
   const pages = diaryPages();
   if (!pages.length) { await UI.say('O diário ainda está em branco.'); return; }
-  for (const p of pages) await UI.say(p);
+  for (const p of pages) if (await UI.say(p) === 'esc') return; // Enter passa a página, Esc fecha o Diário
 }
 
 // ---------- Telas ----------
@@ -506,8 +504,9 @@ function emblemSvg() {
   return `<svg class="emblem" viewBox="0 0 15 15" shape-rendering="crispEdges">${r}</svg>`;
 }
 
-// A fonte pixel achata as maiúsculas com circunflexo (Ô parece Ø); no logo o acento é desenhado por cima da letra
-const logoText = t => esc(t).replace(/[ÂÊÔ]/g, ch => `<span class="acc">${{ 'Â': 'A', 'Ê': 'E', 'Ô': 'O' }[ch]}<i>^</i></span>`);
+// A fonte pixel achata as maiúsculas acentuadas (Ô parece Ø, Í vira í); nos títulos o acento é desenhado por cima da letra
+const ACCENTS = { 'Â': 'A^', 'Ê': 'E^', 'Ô': 'O^', 'Á': 'A´', 'É': 'E´', 'Í': 'I´', 'Ó': 'O´', 'Ú': 'U´', 'Ã': 'A~', 'Õ': 'O~' };
+const logoText = t => esc(t).replace(/[ÂÊÔÁÉÍÓÚÃÕ]/g, ch => `<span class="acc">${ACCENTS[ch][0]}<i>${ACCENTS[ch][1]}</i></span>`);
 async function titleScreen() {
   G.mode = 'title'; G.busy = true;
   Music.play('title');
@@ -518,7 +517,7 @@ async function titleScreen() {
     `<p class="foot">${esc(GAME.credit)}</p>`, 'ov-title');
   document.getElementById('party').innerHTML = '';
   const v = await UI.choose([{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !hasSave() },
-    { label: 'Direto à dungeon', hint: 'grupo de 4, pula o capítulo', value: 'dungeon' }],
+    { label: 'Direto à cripta', hint: 'grupo de 4, pula o capítulo', value: 'dungeon' }],
     { title: '', cols: 1 });
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
@@ -563,7 +562,7 @@ async function quickDungeon() {
 async function gameOver() {
   G.mode = 'gameover'; G.busy = true;
   Music.stop(); Sfx.gameover();
-  UI.showOverlay('<div class="title"><h1 class="red">FIM DE JOGO</h1><p class="sub">A escuridão engoliu o grupo...</p></div>', 'ov-dark');
+  UI.showOverlay(`<div class="title"><h1 class="red">${logoText('FIM DE JOGO')}</h1><p class="sub">A escuridão engoliu o grupo...</p></div>`, 'ov-dark');
   const v = await UI.choose([{ label: 'Continuar do último save', value: 'load', disabled: !hasSave() }, { label: 'Novo Jogo', value: 'new' }], { title: '', cols: 1 });
   UI.hideOverlay();
   if (v === 'load' && loadGame()) { G.busy = false; exploreHint(); }
@@ -574,7 +573,7 @@ async function gameOver() {
 async function ending() {
   G.bossDead = true; G.busy = true;
   G.flashColor = '255,255,255'; G.flash = { t0: performance.now(), dur: 1500 };
-  Music.stop();
+  Music.stop(); Sfx.bellFar();
   await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
   await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
   await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
@@ -592,12 +591,13 @@ async function ending() {
   await say2(null, 'Tobias chora em silêncio.');
   await say2('Tobias', 'O que eu vi lá embaixo é da rainha. Levem a carta a ela.');
   await say2('Tobias', 'Em Erukh, não confiem em ninguém antes dela.');
-  await partyTalk('estrada', TALKS.estrada);
   await UI.say('Naquela noite, os mortos de Valmor não se levantam. E o sino da igreja velha não toca.');
+  await UI.say('Na manhã seguinte, na estrada do oeste.');
+  await partyTalk('estrada', TALKS.estrada);
   const lv = G.party.map(m => `${pdef(m).name} Nv ${m.lv}`).join(' · ');
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>FIM DO CAPÍTULO 1</h1><p class="sub">O sino de Valmor se calou.</p><p class="small">Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p class="small">${esc(lv)}</p><p class="small">Obrigado por jogar!</p></div>`, 'ov-dark');
+  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO CAPÍTULO 1')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>${esc(lv)}</p><p>Obrigado por jogar!</p></div></div>`, 'ov-dark ov-end');
   saveGame();
-  const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: 'FIM', cols: 2 });
+  const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: 2 });
   UI.hideOverlay();
   if (v === 'new') return newGame();
   Music.play('town');
@@ -608,7 +608,7 @@ async function ending() {
 function drawMinimap(now) {
   const c = vctx, m = map(), N = m.size, ex = exploredArr();
   if (G.bigMap) {
-    const cs = Math.floor(170 / N), ox = Math.floor((VW - cs * N) / 2), oy = Math.floor((VH - cs * N) / 2);
+    const cs = Math.max(2, Math.floor(Math.min(VW - 24, VH - 48) / N)), ox = Math.floor((VW - cs * N) / 2), oy = Math.floor((VH - cs * N) / 2);
     drawWindow(c, ox - 7, oy - 17, cs * N + 14, cs * N + 24);
     HUD.title(`${FLOORS[G.floor].short} · ${FLOORS[G.floor].name}`, VW / 2, oy - 7);
     drawCells(c, ox, oy, cs, 0, 0, N, N, now);
@@ -669,14 +669,20 @@ function drawOverlays(now) {
 
 // ---------- Loop ----------
 let last = performance.now();
-const gameEl = document.getElementById('game');
+const gameEl = document.getElementById('game'), hudTop = document.getElementById('hudtop');
 function frame(now) {
   const dt = Math.min(50, now - last); last = now;
   // Faixa do grupo: na dungeon, na batalha e com o menu aberto (na vila a cena fica livre)
-  gameEl.classList.toggle('show-party', G.mode === 'battle' || G.mode === 'explore' || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
+  gameEl.classList.toggle('show-party', G.mode === 'battle' || (G.mode === 'explore' && !G.bigMap) || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
   wmBtn.hidden = !canWorldMap();
   HUD.begin();
   gameEl.classList.toggle('in-battle', G.mode === 'battle'); // phone layout: no d-pad in battle, windows sit lower
+  gameEl.classList.toggle('in-town', G.mode === 'town');     // touch: arrows step instead of turning
+  gameEl.classList.toggle('bigmap', G.mode === 'explore' && G.bigMap);
+  if (G.mode === 'battle') {                                 // the battle message band sits right under the top HUD
+    const h = hudTop.offsetHeight + 'px';
+    if (gameEl._ht !== h) { gameEl._ht = h; gameEl.style.setProperty('--hudtop-h', h); }
+  }
   const F = FLOORS[G.floor];
   HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
   if (G.mode === 'title') {

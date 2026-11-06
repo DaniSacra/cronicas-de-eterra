@@ -36,7 +36,7 @@ function shake(ms = 250) { G.shakeUntil = performance.now() + ms; }
 async function hitEnemy(e, dmg, color = '#fff') {
   e.hp = Math.max(0, e.hp - dmg);
   e.hitT = performance.now();
-  addNum(e.x, e.top + 10, dmg, color);
+  addNum(e.x, e.boss ? e.cy : e.top + 10, dmg, color); // no chefe, o número nasce no meio do sprite
   if (e.hp <= 0) {
     await wait(260);
     e.dieT = performance.now(); Sfx.die();
@@ -44,10 +44,11 @@ async function hitEnemy(e, dmg, color = '#fff') {
   } else await wait(380);
 }
 
-function hurtMember(m, dmg) {
+// quiet: no ataque em área só o primeiro grito toca (quatro juntos somam +12 dB)
+function hurtMember(m, dmg, quiet = false) {
   if (m.defending) dmg = Math.max(1, Math.round(dmg / 2));
   m.hp = Math.max(0, m.hp - dmg);
-  UI.cardFloat(m, '-' + dmg, '#ff6a6a'); UI.cardHit(m); shake(); Sfx.hurt();
+  UI.cardFloat(m, '-' + dmg, '#ff6a6a'); UI.cardHit(m); shake(); if (!quiet) Sfx.hurt();
   UI.updateParty();
   return dmg;
 }
@@ -196,7 +197,7 @@ async function macroTip() {
 // ---------- Execução ----------
 async function partyAct(c) {
   const a = c.actor, an = pdef(a).name;
-  if (c.type === 'defend') { a.defending = true; await bsay(`${an} se defende.`); return; }
+  if (c.type === 'defend') { a.defending = true; Sfx.defend(); UI.updateParty(); await bsay(`${an} se defende.`); return; }
   if (c.type === 'attack') {
     const t = retarget(c.target); if (!t) return;
     await bsay(`${an} ataca ${ename(t)}!`);
@@ -250,7 +251,7 @@ async function enemyAttack(e, t, power = 1) {
   return d;
 }
 
-async function checkFallen(t) { if (t.hp <= 0) await bsay(`${pdef(t).name} caiu!`); }
+async function checkFallen(t) { if (t.hp <= 0) { Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); } }
 
 async function enemyAct(e) {
   const targets = aliveParty(); if (!targets.length) return;
@@ -293,9 +294,9 @@ async function bossAct(e) {
     await bsay(S.aoe);
     Sfx.bell(); shake(300); addFx('dark', VW / 2, VH / 2, 900); G.flashColor = '200,150,60'; G.flash = { t0: performance.now(), dur: 400 };
     await wait(500);
-    for (const t of aliveParty()) hurtMember(t, Math.max(1, Math.round(e.chama * rnd(0.85, 1.15) - stat(t, 'def') * 0.25)));
+    aliveParty().forEach((t, i) => hurtMember(t, Math.max(1, Math.round(e.chama * rnd(0.85, 1.15) - stat(t, 'def') * 0.25)), i > 0));
     await wait(500);
-    for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; await bsay(`${pdef(t).name} caiu!`); }
+    for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); }
   } else {
     const t = pick(aliveParty());
     await bsay(S.drain(pdef(t).name));
@@ -353,17 +354,22 @@ async function tryRun(m, isBoss) {
   if (isBoss) { await bsay(B.enemies.find(e => e.boss).say.noRun); return false; }
   const ea = aliveEnemies().reduce((s, e) => s + e.agi, 0) / aliveEnemies().length;
   const chance = Math.min(0.9, Math.max(0.2, 0.55 + (stat(m, 'agi') - ea) * 0.03));
-  if (Math.random() < chance) { await bsay('Vocês escaparam!'); return true; }
+  if (Math.random() < chance) { Sfx.flee(); await bsay('Vocês escaparam!'); return true; }
   await bsay('Não conseguiram fugir!');
   return false;
 }
+
+// Véu sobre o fundo da batalha, na cor do lugar
+const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 'rgba(0,0,0,.5)'
+  : G.area === 'taverna' ? 'rgba(58,20,10,.5)' : 'rgba(21,30,78,.55)';
 
 // ---------- Fluxo principal ----------
 // opts: surprise (força o resultado), intro (texto de entrada), hints (dicas do tutorial), noRun (texto ao tentar fugir)
 async function startBattle(ids, isBoss, opts = {}) {
   // Fundo: a vila ou a taverna como estão na tela; na dungeon, a imagem do raycaster
   bgCanvas.width = VW; bgCanvas.height = VH;
-  if (G.mode === 'town') bgCanvas.getContext('2d').drawImage(view, 0, 0);
+  const veil = battleVeil(isBoss);
+  if (G.mode === 'town') { drawTown(performance.now(), true); bgCanvas.getContext('2d').drawImage(view, 0, 0); } // só o lugar, sem os moradores
   else {
     if (isBoss) renderView(cam, map(), worldSprites(performance.now()).filter(o => o.type !== 'boss'), performance.now());
     bgCanvas.getContext('2d').putImageData(vimg, 0, 0);
@@ -371,10 +377,10 @@ async function startBattle(ids, isBoss, opts = {}) {
   if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd
   G.mode = 'battle';
   Music.play(isBoss ? 'boss' : 'battle');
-  Sfx.encounter();
+  if (isBoss) Sfx.bossEncounter(); else Sfx.encounter();
   G.flashColor = '255,255,255';
   G.flash = { t0: performance.now(), dur: 600, strobe: true };
-  B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600 };
+  B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600, veil };
   await wait(650);
   const names = B.enemies.map(ename);
   await UI.say(isBoss ? B.enemies.find(e => e.boss).say.intro
@@ -426,7 +432,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   G.party.forEach(m => { m.defending = false; delete m._fallenMsg; });
   if (result === 'win') {
     await wait(300);
-    Music.stop(); Sfx.victory();
+    Music.stop(); if (!isBoss) Sfx.victory(); // o chefe cai com a última badalada (ending)
     const xp = B.enemies.reduce((s, e) => s + e.xp, 0);
     if (!isBoss) {
       const gold = Math.round(xp * rnd(1.3, 1.7));
@@ -438,10 +444,9 @@ async function startBattle(ids, isBoss, opts = {}) {
           Sfx.chest(); await UI.say(`${ename(e)} deixou cair: ${ITEMS[e.drop[0]].name}!`);
         }
       }
-      for (const m of aliveParty()) {
-        m.xp += xp;
-        for (const msg of levelUpMessages(m)) { Sfx.levelup(); UI.updateParty(); UI.cardGlow(m); await UI.say(msg); }
-      }
+      const ups = aliveParty().flatMap(m => { m.xp += xp; const u = levelUp(m); if (u.length) UI.cardGlow(m); return u; });
+      UI.updateParty();
+      for (const msg of levelUpLines(ups)) { Sfx.levelup(); await UI.say(msg); }
     }
   }
   UI.updateParty(null);
@@ -462,7 +467,7 @@ function groundShadow(c, x, y, rx, alpha) {
 function drawBattle(now) {
   const c = vctx;
   c.drawImage(bgCanvas, 0, 0, VW, VH);
-  c.fillStyle = B.boss ? 'rgba(20,0,30,.6)' : 'rgba(0,0,0,.5)';
+  c.fillStyle = B.veil;
   c.fillRect(0, 0, VW, VH);
   const appear = Math.min(1, Math.max(0, 1 - (B.intro - now) / 600));
 
@@ -485,21 +490,22 @@ function drawBattle(now) {
     // Barra de vida
     if (!e.dieT && !e.boss) {
       const bw = 34;
-      c.fillStyle = '#000'; c.fillRect(e.x - bw / 2 - 1, e.base + 6, bw + 2, 4);
-      c.fillStyle = e.hp / e.maxhp > 0.3 ? '#e04848' : '#ff9030'; c.fillRect(e.x - bw / 2, e.base + 7, bw * e.hp / e.maxhp, 2);
+      const by = Math.max(2, e.top - 6); // em cima da cabeça: embaixo a barra de comandos a cobriria
+      c.fillStyle = '#000'; c.fillRect(e.x - bw / 2 - 1, by, bw + 2, 4);
+      c.fillStyle = e.hp / e.maxhp > 0.3 ? '#e04848' : '#ff9030'; c.fillRect(e.x - bw / 2, by + 1, bw * e.hp / e.maxhp, 2);
     }
   }
 
   // Chefe: barra no topo
   const boss = B.enemies.find(e => e.boss);
-  // Boss fight: the command/target name goes inside the boss window, so the boss keeps the whole screen
-  if (boss) HUD.boss(B.label || boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
+  // Boss fight: the boss window always shows the name; commands and narration use the plaque below it
+  if (boss) HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
 
   // Seta de alvo (balança em cima do inimigo escolhido) e o nome do comando/alvo na placa do topo
   const hv = B.hover;
-  if (B.label && !boss) HUD.label(B.label);
+  if (B.label) HUD.label(B.label);
   if (hv && hv.hp > 0) {
-    const y = Math.max(10, hv.top - 4) - (Math.floor(now / 200) % 2) * 2;
+    const y = Math.max(10, hv.top - 10) - (Math.floor(now / 200) % 2) * 2; // acima da barra de PV
     c.fillStyle = '#ffd23f';
     c.beginPath(); c.moveTo(hv.x - 5, y - 7); c.lineTo(hv.x + 5, y - 7); c.lineTo(hv.x, y); c.closePath(); c.fill();
   }
@@ -526,7 +532,7 @@ function drawOrder(c, now, boss) {
   HUD.queue(list.map((o, i) => {
     const a = o.actor;
     return {
-      label: o.side === 'party' ? pdef(a).name.slice(0, 2) : a.boss ? 'Mo' : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
+      label: o.side === 'party' ? pdef(a).name.slice(0, 2) : a.boss ? a.name.replace(/^O /, '').slice(0, 2) : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
       color: o.side === 'party' ? pdef(a).color : 'var(--danger)',
       state: a.hp <= 0 || o.skip ? 'gone' : i < B.turn ? 'done' : i === B.turn ? 'cur' : 'next',
     };
@@ -534,7 +540,7 @@ function drawOrder(c, now, boss) {
   // Seta sobre o inimigo que está agindo
   const cur = list[B.turn];
   if (cur && cur.side === 'enemy' && cur.actor.hp > 0 && !cur.actor.boss) {
-    const e = cur.actor, ty = Math.max(y + h + 8, e.top - 4);
+    const e = cur.actor, ty = Math.max(y + h + 8, e.top - 10);
     c.fillStyle = '#ff5050';
     c.beginPath(); c.moveTo(e.x - 4, ty - 6); c.lineTo(e.x + 4, ty - 6); c.lineTo(e.x, ty); c.closePath(); c.fill();
   }

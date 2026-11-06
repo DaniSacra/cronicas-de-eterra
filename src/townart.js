@@ -818,8 +818,8 @@ const TownArt = (() => {
 
   // ---------- Luz e clima (por quadro, por cima dos personagens) ----------
   // Poças de luz em degraus: cada anel tira um pouco do anoitecer e põe um pouco de âmbar. Sem degradê suave.
-  const lightRings = r => [{ r, cut: 0.35, warm: 0.05 }, { r: Math.round(r * 0.68), cut: 0.45, warm: 0.07 }, { r: Math.round(r * 0.38), cut: 0.6, warm: 0.09 }];
-  const DUSK = 'rgba(28,40,96,.32)';   // noite #1c2860
+  const lightRings = r => [{ r, cut: 0.35, warm: 0.10 }, { r: Math.round(r * 0.68), cut: 0.5, warm: 0.16 }, { r: Math.round(r * 0.38), cut: 0.7, warm: 0.24 }];
+  const DUSK = 'rgba(28,40,96,.48)';   // noite #1c2860
   function disc(c, cx, cy, r) {
     const ry = Math.round(r * 0.7);    // achatada: chão em 3/4
     for (let yy = -ry; yy <= ry; yy++) { const half = Math.round(r * Math.sqrt(1 - (yy / (ry + 0.5)) ** 2)); c.fillRect(cx - half, cy + yy, half * 2, 1); }
@@ -830,7 +830,7 @@ const TownArt = (() => {
     c.globalCompositeOperation = 'destination-out';
     for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(0,0,0,${g.cut})`; disc(c, l.x, l.y, g.r); }
     c.globalCompositeOperation = 'source-over';
-    for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(240,216,96,${g.warm})`; disc(c, l.x, l.y, g.r); }
+    for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(232,184,64,${g.warm})`; disc(c, l.x, l.y, g.r); }
     return cv;
   }
 

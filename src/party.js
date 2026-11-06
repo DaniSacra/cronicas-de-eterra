@@ -125,20 +125,25 @@ function itemOptions() {
   return Object.keys(ITEMS).filter(k => G.inv[k] > 0).map(k => ({ label: `${ITEMS[k].name} x${G.inv[k]}`, hint: ITEMS[k].desc, value: k }));
 }
 
-function levelUpMessages(m) {
-  const msgs = [];
+// Applies the XP the member already has: one entry per level gained, { name, lv, learned: [spell names] }
+function levelUp(m) {
+  const ups = [];
   while (m.xp >= xpNext(m.lv)) {
     m.xp -= xpNext(m.lv);
-    const oh = maxHp(m), om = maxMp(m), old = {};
-    ['atk', 'def', 'mag', 'agi'].forEach(k => old[k] = stat(m, k));
+    const oh = maxHp(m), om = maxMp(m);
     m.lv++;
     m.hp += maxHp(m) - oh; m.mp += maxMp(m) - om;
-    const ups = ['atk', 'def', 'mag', 'agi'].map(k => [k, stat(m, k) - old[k]]).filter(([, v]) => v > 0)
-      .map(([k, v]) => `${STAT_NAMES[k]}+${v}`).join(' ');
-    let s = `${pdef(m).name} subiu para o nível ${m.lv}!\nPV+${maxHp(m) - oh} PM+${maxMp(m) - om} ${ups}`;
-    const learned = pdef(m).spells.filter(([lv]) => lv === m.lv).map(([, id]) => SPELLS[id].name);
-    if (learned.length) s += `\nAprendeu: ${learned.join(', ')}!`;
-    msgs.push(s);
+    ups.push({ name: pdef(m).name, lv: m.lv, learned: pdef(m).spells.filter(([lv]) => lv === m.lv).map(([, id]) => SPELLS[id].name) });
   }
-  return msgs;
+  return ups;
+}
+// Everyone who reached the same level shares one box; each new spell gets its own box
+function levelUpLines(ups) {
+  const byLv = new Map();
+  for (const u of ups) byLv.set(u.lv, [...(byLv.get(u.lv) || []), u.name]);
+  const and = ns => ns.length > 1 ? ns.slice(0, -1).join(', ') + ' e ' + ns.at(-1) : ns[0];
+  return [
+    ...[...byLv].map(([lv, ns]) => `${and(ns)} ${ns.length > 1 ? 'subiram' : 'subiu'} para o nível ${lv}!`),
+    ...ups.filter(u => u.learned.length).map(u => `${u.name} aprendeu: ${u.learned.join(', ')}!`),
+  ];
 }
