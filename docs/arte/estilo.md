@@ -98,26 +98,11 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   borda de cada faixa e um brilho atrás da capital; a estrela do título acima de Erukh; nuvens em duas camadas com
   a borda de baixo dourada; cordilheira azulada com neve acesa do lado do sol; colinas mais claras e azuis com a
   distância; rio em S com estrada até o portão. Erukh tem 64x44, com muralha, torres, telhados pontudos, cúpula do
-  templo, estandartes e janelas âmbar. Aldo (sentado) e Lyra (em pé, apontando, capa ao vento) de costas, em grade,
-  dois quadros, sobre a ruína com musgo e um entalhe gasto, no terço direito. A câmera desce do céu em 2 s
+  templo, estandartes e janelas âmbar. Aldo (em pé, apontando para Erukh, escudo e espada nas costas) e Lyra
+  (sentada na borda, pernas penduradas, cajado em pé, mechas ao vento) de costas, em grade, dois quadros, gerados por
+  `docs/arte/gerador/titleheroes.cjs`, sobre a ruína com musgo e um entalhe gasto, no terço direito. A câmera desce do céu em 2 s
   (qualquer tecla pula). Feito em `src/titlebg.js`; `titleLayout` dá os retângulos e o teste garante que logo e
   menu nunca cobrem Erukh nem os irmãos. Em pé, o horizonte sobe para pouco além do meio e a ruína vai junto.
-- **Tela de título, versão B (acabamento, v70):** a mesma composição com contraluz. Os irmãos e a ruína ficam um ou
-  dois tons mais escuros e ganham 1 px de contorno `#f0d860` do lado do sol (alto e lado esquerdo de cima), feito por
-  `rimLit` sobre a grade, nunca à mão. Encostas viradas para o sol têm a borda dourada; as do outro lado, azulada.
-  Erukh tem 52x36, clara e azul (`#8ac0f0`, `#3a78c8`), cúpula do templo mais alta e mais clara que tudo, casas
-  descendo a encosta com janelas âmbar, fumaça fina e as fontes da praça cintilando; o pé do morro some atrás de um
-  morro do meio. Halo irregular que se abre ao longo do horizonte, com pontilhado largo entre os tons. Nuvens de
-  grade (três formas, base dourada e topo roxo, no máximo 8 linhas) em duas camadas. Vale com campos em perspectiva
-  (divisas que convergem para Erukh e cercas vivas), bosques, árvores sozinhas, uma fazenda e uma ponte; o rio nasce
-  fino perto de Erukh e se abre no primeiro plano refletindo o ouro. Ruína 25% menor, de pedras grandes e gastas
-  (fiadas de alturas diferentes, cantos quebrados, rachaduras, musgo, trepadeiras, tufos e flores nas juntas) com
-  uma espada em pé dentro de um círculo em baixo-relevo de borda dourada. Aldo sentado na quina, uma perna pendurada,
-  antebraço no joelho, escudo redondo nas costas e o punho da espada sobre o ombro; Lyra com cabelo em três tons e
-  mechas ao vento, braço grosso e a mão aberta apontando. Os dois saem de `docs/arte/gerador/titleheroes.cjs`
-  (`src/titleheroes.js`); a cena está em `src/titlebg2.js`. O crédito vai pequeno e apagado no canto de baixo à
-  direita, o subtítulo cresce para três quartos da letra do título, e o botão A/B no alto à direita alterna com a
-  versão A (a escolha fica guardada no navegador).
 
 ## NPCs e heróis ganham vida
 
@@ -141,6 +126,8 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   depois: exige gerar um arquivo de fonte ou desenhar todo texto no canvas.
 - Tela de título nova (v63): amanhecer sobre Erukh com os irmãos na ruína, menu compacto translúcido no canto de
   baixo à esquerda, logo no alto sem moldura de pergaminho.
+- Abertura (v71): uma versão B com contraluz e acabamento foi testada e descartada; o Daniel preferiu a A, com Aldo
+  de pé e Lyra sentada.
 - Tela de Heróis nova (v65): herói de corpo inteiro no vitral com Arma e Armadura ao lado, ficha com barras grossas,
   atributos comparados ao grupo e a história que cresce com o jogo, e o livro com habilidades (as futuras em "???")
   e a bolsa. Ícones novos: `raio` e `luz`. Texto nunca menor que o dos menus; no celular, três abas.

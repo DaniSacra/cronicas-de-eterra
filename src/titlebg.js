@@ -29,180 +29,8 @@ const TITLE_STAR = {
   pal: { a: '#f0d860', b: '#fff6c0', c: '#c89c38', g: '#8ac0f0', w: '#ffffff' },
 };
 
-// Aldo sentado na borda (escudo redondo e espada nas costas) e Lyra em pé apontando para Erukh, os dois de costas.
-// Mesmas cores dos retratos; contorno da própria cor. Quadros: Aldo respira; cabelo e capa da Lyra ao vento.
-const TITLE_HEROES = {
-  aldo: {
-    pal: { k: '#2a1408', h: '#6a3a1a', j: '#9a6232', i: '#4a2610', s: '#f0c090', t: '#d09868', b: '#f0b050', c: '#d08a30', d: '#a0601c', g: '#8ac0f0', e: '#3a78c8', f: '#1a2a5a', y: '#e8b840', r: '#8a5418', l: '#6a3020', m: '#cbd8ec' },
-    frames: [
-      [
-        '........k.kjkkjkkhkhk.......',
-        '.......khkkkjjjjjkkkhk......',
-        '.......kkhjjjjjjjhhkkhk.....',
-        '......khkjjjjhhhhhhhkkhk....',
-        '.......khjjhhhhhhhhhhkk.k...',
-        '......kkjjhhhhhhhhhhik.kyk..',
-        '.....khjjjhhhhhhhhhiiikmk...',
-        '......khjjhhhhhhhhiiiikjk...',
-        '......kstjhhhhhhhiiiiikjk...',
-        '......ksjhhhhhhhiiiiikjk....',
-        '......kttihhhhhiiiiiikjk....',
-        '.......kkihhhhiiiiiikykkk...',
-        '........kkiiiiiiiiiyyyyyyk..',
-        '.......kbbbciiiiidddkkkkk...',
-        '......kbbbcyyygyyydddk......',
-        '....kkbbbcygggggeeydddkk....',
-        '...kcbdbbygggeeeeeeyddcdk...',
-        '...kcbdbyyggeeeeeeeyrdcdk...',
-        '...kcbdbyygeeeyeeefrrdcdk...',
-        '...kcbdbyggeeyyyefffrdcdk...',
-        '...kcbdbyygeeeyefffrrdcdk...',
-        '...kcbdbyrfeeeeffffrrdcdk...',
-        '...kcbdbbrffeefffffrddcdk...',
-        '....kkkkkkrfffffffrkkkkk....',
-        '...kcbdbbbcrrrfrrrddddcdk...',
-        '...kssdkbbbcrrrrrdddkdttk...',
-        '...kssdlllyllllyllllydttk...',
-        '....kkllllllllllllllllkk....',
-        '.....kllllllllllllllllk.....',
-        '......kkkkkkkkkkkkkkkk......',
-      ],
-      [
-        '.........khkkhkkhk.k........',
-        '........k.kjkkjkkhkhk.......',
-        '.......khkkkjjjjjkkkhk......',
-        '.......kkhjjjjjjjhhkkhk.....',
-        '......khkjjjjhhhhhhhkkhk....',
-        '.......khjjhhhhhhhhhhkk.k...',
-        '......kkjjhhhhhhhhhhik.kyk..',
-        '.....khjjjhhhhhhhhhiiikmk...',
-        '......khjjhhhhhhhhiiiikjk...',
-        '......kstjhhhhhhhiiiiikjk...',
-        '......ksjhhhhhhhiiiiikjk....',
-        '......kttihhhhhiiiiiikjk....',
-        '.......kkihhhhiiiiiikykkk...',
-        '........kkiiiiiiiiiyyyyyyk..',
-        '.......kbbbciiiiidddkkkkk...',
-        '......kbbbcyyygyyydddk......',
-        '....kkbbbcygggggeeydddkk....',
-        '...kcbdbbygggeeeeeeyddcdk...',
-        '...kcbdbyyggeeeeeeeyrdcdk...',
-        '...kcbdbyygeeeyeeefrrdcdk...',
-        '...kcbdbyggeeyyyefffrdcdk...',
-        '...kcbdbyygeeeyefffrrdcdk...',
-        '...kcbdbyrfeeeeffffrrdcdk...',
-        '...kcbdbbrffeefffffrddcdk...',
-        '...kcbdbbbrfffffffrdddcdk...',
-        '...kssdkbbbrrrfrrrddkdttk...',
-        '...kssdlllylrrrrrlllydttk...',
-        '....kkllllllllllllllllkk....',
-        '.....kllllllllllllllllk.....',
-        '......kkkkkkkkkkkkkkkk......',
-      ],
-    ],
-  },
-  lyra: {
-    pal: { o: '#8a5418', h: '#f0d860', j: '#fff6c0', i: '#c89c38', x: '#e8b840', q: '#40145a', b: '#c880e0', c: '#a050c0', d: '#72308e', s: '#f4cca0', t: '#d8a478', w: '#9a6232', v: '#40e0d8', a: '#ffffff', n: '#3a1448' },
-    frames: [
-      [
-        '..................................',
-        '..............ooooo...............',
-        '............oojjjjjoo.............',
-        '...........ojjjjjjhhho...q........',
-        '..........ojjjhhhhhhhho.qaq.......',
-        '.........ojjjhhhhhhhhhhqvvvq......',
-        '.........ojjhxxxxxxxxhiavvvvq.....',
-        '.........oxxxhhhhhhhhxxqvvvq......',
-        '........ojjjhhhhhhhhiiiiqvq.......',
-        '........osjjhhhhhhhiiiioqwq.......',
-        '........osjhhhhhhhiiiiioqwq.......',
-        '.........otihhhhhiiiiiioqwq.......',
-        '..........oihhhhiiiiiio.qwq.......',
-        '.o........ojiihiiiiiio..qwq.......',
-        'osooqq....ojjhiiiiiiiqq.qwq.......',
-        '.ossbbqqq.ojjihhihiiinnqqwq.......',
-        '..otccbbbqojjihhihiiinnqqwq.......',
-        '...oqqcccbbjjihhihiiinnnqwq.......',
-        '......qqqccjjihhihiiidnnnwq.......',
-        '.........qqjjihhihiiicnnnwq.......',
-        '..........ojjihhihiiidcnsso.......',
-        '..........ojjihhihiiidncnwq.......',
-        '..........ojjihhihiiidnnnwq.......',
-        '..........ojjihhihiiidnnnwqq......',
-        '..........qbjjihhiihddddnwnnq.....',
-        '.........qbbjjihhiiidddnnwnq......',
-        '.........qbbjjihhiiidddnnwnq......',
-        '.........qbbjjihhiiiddddnwnnq.....',
-        '.........qbbbjhihiihddddnwnnq.....',
-        '........qbbbcjhihiiddddddwnnnq....',
-        '........qbbbcjhihiiddddddwnnnnq...',
-        '........qbbbcjhihiiddddddwnnnq....',
-        '........qbbbcccccccddddddwnnnnq...',
-        '........qbbbcccccccddddddwnnnnq...',
-        '.......qbbbcccccccccdddddwnnnnnq..',
-        '.......qbbbcccccccccdddddwnnnnnq..',
-        '.......qbbbcccccccccdddddwdnnnnnq.',
-        '.......qbbbcccccccccdddddwdnnnnnq.',
-        '......qbbbbcccccccccdddddwdnnnnnq.',
-        '......qbbbbcccccccccdddddwddnnnnnq',
-        '......qbbbbcccccccccdddddwddnnnnnq',
-        '......qbbbbcccccccccdddddwqqqqqqq.',
-        '......qbbbbcxccxccxcdddddwq.......',
-        '.......qqqqqqqqoqqqqqqqqqwq.......',
-        '.........................q........',
-        '..................................',
-      ],
-      [
-        '..................................',
-        '..............ooooo...............',
-        '............oojjjjjoo.............',
-        '...........ojjjjjjhhho...q........',
-        '..........ojjjhhhhhhhho.qaq.......',
-        '.........ojjjhhhhhhhhhhqvvvq......',
-        '.........ojjhxxxxxxxxhiavvvvq.....',
-        '.........oxxxhhhhhhhhxxqvvvq......',
-        '........ojjjhhhhhhhhiiiiqvq.......',
-        '........osjjhhhhhhhiiiioqwq.......',
-        '........osjhhhhhhhiiiiioqwq.......',
-        '.........otihhhhhiiiiiioqwq.......',
-        '..........oihhhhiiiiiio.qwq.......',
-        '.o........ojiihiiiiiio..qwq.......',
-        'osooqq....ojjhiiiiiiiqq.qwq.......',
-        '.ossbbqqq.ojjihhihiiinnqqwq.......',
-        '..otccbbbqojjihhihiiinnqqwq.......',
-        '...oqqcccbbjjihhihiiidnnnwq.......',
-        '......qqqccjjihhihiiinnnqwq.......',
-        '.........qqjjihhihiiicnnnwq.......',
-        '..........ojjihhihiiidcnsso.......',
-        '..........qbjjihhihhiiicnwq.......',
-        '..........qbjjihhihhiiinnwq.......',
-        '..........qbjjihhihhiiinnwnq......',
-        '..........qbbjjihhihihdnnwnq......',
-        '.........qbbbjjihhihiiddnwnnq.....',
-        '.........qbbbjjihhihiiddnwnnq.....',
-        '.........qbbbjjihhihiidddwnnnq....',
-        '.........qbbbcjjihhiihdddwnnnqq...',
-        '........qbbbccjjihhiiddddwnnnnnq..',
-        '........qbbbccjjihhiiddddwnnnnq...',
-        '........qbbbccjjihhiiddddwnnnnq...',
-        '........qbbbcccccccddddddwnnnnnq..',
-        '........qbbbcccccccddddddwnnnnnq..',
-        '.......qbbbcccccccccdddddwdnnnnnq.',
-        '.......qbbbcccccccccdddddwddnnnnnq',
-        '.......qbbbcccccccccdddddwdnnnnnq.',
-        '.......qbbbcccccccccdddddwddnnnnnq',
-        '......qbbbbcccccccccdddddwddnnnnnq',
-        '......qbbbbcccccccccdddddwddnnnnnn',
-        '......qbbbbcccccccccdddddwddnnnnnn',
-        '......qbbbbcccccccccdddddwqqqqqqqq',
-        '......qbbbbcxccxccxcdddddwq.......',
-        '.......qqqqqqqqoqqqqqqqqqwq.......',
-        '.........................q........',
-        '..................................',
-      ],
-    ],
-  },
-};
+// Aldo de pé apontando para Erukh e Lyra sentada na borda da ruína: TITLE_HEROES e TITLE_SEAT vêm de
+// src/titleheroes.js (gerado por docs/arte/gerador/titleheroes.cjs).
 
 // ---------- Layout (pixels lógicos) ----------
 // W, H: tamanho lógico da tela; px: pixels de CSS por pixel lógico; f1, f2: letras pequena e média da interface (CSS).
@@ -220,8 +48,9 @@ function titleLayout({ W, H, px, f1, f2 }) {
   const cx = Math.round(W * 0.44);
   const erukh = { x: cx - 32, y: hy - 14 - 44, w: 64, h: 44 };
   const ry = Math.min(H - 58, hy + 40), ruin = { x: W - 118, y: ry, w: 118, h: H - ry };
-  const aldo = { x: ruin.x + 26, y: ruin.y - 28, w: 28, h: 30 };
-  const lyra = { x: ruin.x + 56, y: ruin.y - 44, w: 34, h: 46 };
+  const size = def => ({ w: def.frames[0][0].length, h: def.frames[0].length });
+  const lyra = Object.assign({ x: ruin.x + 6, y: ruin.y - TITLE_SEAT }, size(TITLE_HEROES.lyra));      // sentada na borda
+  const as = size(TITLE_HEROES.aldo), aldo = Object.assign({ x: ruin.x + 46, y: ruin.y - as.h + 1 }, as); // de pé ao lado
   const star = { x: cx - 7, y: Math.max(Math.round((logo.y + logo.h + erukh.y) / 2) - 7, erukh.y - 34), w: 15, h: 15 };
   const clouds = { y0: logo.y + logo.h + 4, y1: erukh.y - 2 }; // nuvens só na faixa entre o logo e Erukh
   return { W, H, hy, cx, logo, menu, erukh, ruin, aldo, lyra, star, clouds };
@@ -373,7 +202,7 @@ const TitleBG = (() => {
     const stars = Array.from({ length: Math.round(W * (hy + D) / 300) }, () => ({ x: Math.floor(r() * W), y: Math.floor(r() * (hy * 0.45 + D)) - D, p: r() * 6, col: TITLE_C.stars[Math.floor(r() * 3)], life: r() < 0.3 ? Infinity : 6000 + r() * 40000 }));
     const clouds = Array.from({ length: Math.max(4, Math.round(W / 70)) }, (_, i) => ({ x: r() * W * 1.5, y: cloudY(L.clouds, r()), w: 18 + Math.floor(r() * 30), lo: i % 2, s: 0.0015 + r() * 0.002 })).filter(cl => cl.y !== null);
     const tufts = Array.from({ length: 14 }, (_, i) => ({ x: R.x + 6 + i * 8 + Math.floor(r() * 4), h: 2 + Math.floor(r() * 3), flower: r() < 0.3 ? TITLE_C.flowers[i % 2] : null }))
-      .filter(t => t.x < W - 2 && !(t.x > L.aldo.x - 2 && t.x < L.lyra.x + L.lyra.w));
+      .filter(t => t.x < W - 2 && !(t.x > L.lyra.x + 6 && t.x < L.aldo.x + L.aldo.w - 4));
     return { L, D, bg: cv, river, stars, clouds, tufts, top };
   }
 
@@ -415,4 +244,4 @@ const TitleBG = (() => {
   return { draw, layout: layoutNow };
 })();
 
-if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS, TITLE_BAYER, titleRng };
+if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS, TITLE_BAYER, titleRng };
