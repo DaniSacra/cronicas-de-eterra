@@ -110,6 +110,11 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   Clara, Hugo, o ancião) ganham retrato no estilo dos heróis.
 - **Heróis:** retratos atuais mantidos como estão. Quatro expressões cada: normal, alegre, preocupado, bravo.
   Sprite chibi com o mesmo cabelo, roupa e acessório do retrato. Cor de identidade no cartão, no golpe e na magia.
+- **Heróis de corpo inteiro (tela de Heróis):** 48x64, de frente, mesmo cabelo, olhos e roupa do retrato, contorno da
+  própria cor, dois quadros parado (respira; capa e cabelo ao vento) e uma pose de caído (ajoelhado, nos cinzas da
+  paleta). A arma está sempre na mão; o equipamento achado muda o sprite por troca de cores (`GEAR_LOOK`), nunca
+  por grade nova. Gerados por `docs/arte/gerador/herobody.cjs` → `src/herobody.js`. Ficam num palco de 96x78 com
+  vitral na família do herói (`HERO_FACE_BG`) e pedestal de pedra, em escala inteira.
 
 ## Feito até agora
 
@@ -120,6 +125,9 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   depois: exige gerar um arquivo de fonte ou desenhar todo texto no canvas.
 - Tela de título nova (v63): amanhecer sobre Erukh com os irmãos na ruína, menu compacto translúcido no canto de
   baixo à esquerda, logo no alto sem moldura de pergaminho.
+- Tela de Heróis nova (v65): herói de corpo inteiro no vitral com Arma e Armadura ao lado, ficha com barras grossas,
+  atributos comparados ao grupo e a história que cresce com o jogo, e o livro com habilidades (as futuras em "???")
+  e a bolsa. Ícones novos: `raio` e `luz`. Texto nunca menor que o dos menus; no celular, três abas.
 
 ## Ordem de produção
 
