@@ -36,3 +36,14 @@ test('hero expressions: every mood keeps the 32x32 grid and stays inside the mas
     }
   }
 });
+
+test('story NPC portraits (Berta, Clara, Hugo, the elder) are 32x32 grids in the master palette', () => {
+  const { NPC_FACES } = require('../src/npcfaces.js');
+  const { GridSprite } = require('../src/gridsprite.js');
+  assert.deepEqual(Object.keys(NPC_FACES).sort(), ['berta', 'bertoldo', 'clara', 'hugo']);
+  for (const [id, def] of Object.entries(NPC_FACES)) {
+    assert.deepEqual(GridSprite.check(def), [], id);
+    assert.equal(def.rows.length, 32); for (const r of def.rows) assert.equal(r.length, 32, id);
+    for (const c of [...Object.values(def.pal), ...def.bg]) assert.ok(inPalette(c), `${id} ${c}`);
+  }
+});

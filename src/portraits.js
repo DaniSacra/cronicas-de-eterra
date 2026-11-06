@@ -50,6 +50,7 @@ const Portraits = (() => {
   function draw(key, mood) {
     // Hand-drawn hero faces (src/herofaces.js): the 32×32 grid over the background bands
     if (HERO_FACES[key]) return GridSprite.render(heroFace(key, mood));
+    if (typeof NPC_FACES !== 'undefined' && NPC_FACES[key]) return GridSprite.render(NPC_FACES[key]); // story NPCs (src/npcfaces.js)
     if (cache[key]) return cache[key];
     const F = FACES[key];
     const cv = document.createElement('canvas'); cv.width = cv.height = 32;
