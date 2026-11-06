@@ -2,6 +2,7 @@
    --u = 1 "pixel" da moldura. Textos em múltiplos de 8 px (a Press Start 2P é desenhada numa grade de 8). */
 :root {
   --u: 3px; --bw: calc(var(--u) * 4); --f1: 8px; --f2: 16px; --fd: 16px; --face: 128px;
+  --boxw: min(100%, calc(var(--fd) * 56)); /* dialog box and party strip share one width */
   /* Palette: parchment windows in a wooden frame (src/frame.js draws the frame from the same colors) */
   --ink: #24140a; --win: #ecd8aa; --win2: #d6b984; --rim: #9a6236; --rim2: #5c3318;
   --text: #3b2414; --dim: #8a6844; --off: #b39a76; --gold: #a8361c; --gold2: #6e2410;
@@ -40,7 +41,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #bottom { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: calc(var(--u) * 4); display: flex; flex-direction: column;
   align-items: center; gap: calc(var(--u) * 2); pointer-events: none; }
 #bottom > * { pointer-events: auto; }
-#dialog { position: relative; width: min(100%, 56em);
+#dialog { position: relative; width: var(--boxw);
   font-size: var(--fd); display: none; flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 2); pointer-events: auto; }
 #dialog.open { display: flex; }
 #face { display: none; width: calc(var(--face) + var(--u) * 6); height: calc(var(--face) + var(--u) * 6); margin: var(--u) 0 0 calc(var(--u) * 2); }
@@ -66,7 +67,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .opt small { display: block; color: var(--dim); font-size: var(--f1); margin-top: .4em; white-space: normal; }
 
 /* ---- Faixa do grupo (aparece na dungeon, na batalha e no menu) ---- */
-#party { display: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 2); width: min(100%, 64em); }
+#party { display: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 2); width: var(--boxw); box-sizing: border-box; }
 #game.show-party #party { display: grid; }
 .card { position: relative; display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 4); font-size: var(--f2); }
 .card .info { flex: 1; min-width: 0; }
@@ -74,6 +75,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .card .pf { display: block; width: 64px; height: 64px; image-rendering: pixelated;
   box-shadow: 0 0 0 var(--u) var(--rim2), 0 0 0 calc(var(--u) * 2) var(--rim), 0 0 0 calc(var(--u) * 3) var(--ink); margin: calc(var(--u) * 3); }
 .card .pfw .lv { margin-top: calc(var(--u) * -3); padding: var(--u) calc(var(--u) * 2); background: var(--ink); color: var(--hi); font-size: var(--f1); line-height: 1; white-space: nowrap; z-index: 1; }
+@media (min-width: 1200px) and (min-height: 700px) and (orientation: landscape) { .card .pf { width: 96px; height: 96px; } .card .num, .card .nm { font-size: 16px; } }
 @media (max-width: 900px), (max-height: 500px) { .card .pf { width: 32px; height: 32px; } }
 .card .cls { display: none; }
 .card .nm { display: flex; justify-content: space-between; align-items: baseline; color: color-mix(in srgb, var(--c) 62%, #2a1206); }
@@ -143,7 +145,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (pointer: coarse) { #touch { display: flex; position: absolute; left: 8px; bottom: 8px; width: calc(100% - var(--hudw, 0px) - 16px); margin: 0; opacity: .6; pointer-events: none; }
   #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); }
   #game.talking #touch .pad { visibility: hidden; } }
-@media (orientation: landscape) and (pointer: coarse) { #dialog { left: calc(var(--u) * 4); translate: none; width: calc(100% - 106px - var(--u) * 4); } }
+@media (orientation: landscape) and (pointer: coarse) { #dialog, #party { position: relative; left: calc(var(--u) * 4); translate: none; width: calc(100% - 106px - var(--u) * 4); } }
 @media (orientation: portrait) {
   #party { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .card { padding: calc(var(--u) * 4) calc(var(--u) * 3); } .card .cls { display: none; }
