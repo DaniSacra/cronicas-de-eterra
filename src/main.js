@@ -354,6 +354,14 @@ async function floorClues(f) {
   if (FLOOR_TALKS[f]) await partyTalk(FLOOR_TALKS[f], TALKS[FLOOR_TALKS[f]]);
 }
 
+// Uses one bag item outside battle: an item id, or 'key:<id>' to read a key item. Shared by the Items menu and the Heroes screen.
+async function useBagItem(it) {
+  if (it === 'key:carta') return readLetter();
+  if (String(it).startsWith('key:')) { const k = KEY_ITEMS[it.slice(4)]; for (const t of k.text) await UI.say(`${k.name}:\n${t}`); return; }
+  const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`);
+  if (t != null) await UI.say(applyItem(it, t));
+}
+
 // ---------- Menu de acampamento ----------
 async function campMenu() {
   G.busy = true;
@@ -378,12 +386,7 @@ async function campMenu() {
       const opts = [...itemOptions(), ...keys];
       if (!opts.length) { await UI.say('A bolsa está vazia.'); continue; }
       const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true });
-      if (it == null) continue;
-      if (it === 'key:carta') { await readLetter(); continue; }
-      if (String(it).startsWith('key:')) { const k = KEY_ITEMS[it.slice(4)]; for (const t of k.text) await UI.say(`${k.name}:\n${t}`); continue; }
-      const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`);
-      if (t == null) continue;
-      await UI.say(applyItem(it, t));
+      if (it != null) await useBagItem(it);
     }
     if (v === 'magic') {
       const casters = G.party.filter(m => m.hp > 0 && knownSpells(m).some(s => SPELLS[s].field));
