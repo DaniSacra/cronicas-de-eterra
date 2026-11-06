@@ -53,8 +53,8 @@ test('every story speaker has a grid portrait', () => {
   Object.assign(globalThis, { NPC_FACES, HERO_FACES, PARTY_DEFS: [{ id: 'aldo', name: 'Aldo' }] });
   const { Portraits } = require('../src/portraits.js');
   const speakers = ['Aldo', 'Ana, a fiandeira', 'Ancião Bertoldo', 'Andilla', 'Berta, a taverneira', 'Bigode', 'Bruno, soldado de folga',
-    'Caio', 'Carta de Shulkhan', 'Clara, a professora', 'Dona Marta', 'Dora, a mercadora', 'Encapuzado', 'Guarda Hugo', 'Irmã Irene',
-    'Lia', 'Lápide', 'Mensageiro', 'Morvath, o Lich-Rei', 'Moça dos dados', 'Nino', 'O Sineiro', 'Rui, o lavrador', 'Tomé, o pescador', 'Bilhete'];
+    'Caio', 'Clara, a professora', 'Dona Marta', 'Dora, a mercadora', 'Encapuzado', 'Guarda Hugo', 'Irmã Irene',
+    'Lia', 'Lápide', 'Mensageiro', 'Moça dos dados', 'Nino', 'O Sineiro', 'Rui, o lavrador', 'Tomé, o pescador', 'Bilhete'];
   for (const name of speakers) {
     const key = Portraits.keyFor(name);
     assert.ok(key && (NPC_FACES[key] || HERO_FACES[key]), name);

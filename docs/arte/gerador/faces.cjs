@@ -242,13 +242,6 @@ Object.assign(NPCS, {
   dora: { bg: BGS.purple, blush: 1, pal: look('warm', 'auburn', 'gold', '#3a9a6a', { x: '#ffffff', v: '#4ad08a' }),
     backHair: LONG_BACK, clothes: SHOULDERS, frontHair: LONG_FRONT,
     trim: [[24, 12, 'xxxxxxxx'], [25, 13, 'x....x']], marks: [[17, 8, 'v'], [17, 23, 'v']] },
-  // Morvath, o Lich-Rei: caveira coroada no capuz roxo, olhos verdes
-  morvath: { hatOpt: { smooth: 1 }, bg: BGS.tomb, noFace: 1,
-    pal: Object.assign(R('bcdq', CL.purple), R('ABCD', CL.purple), R('JKLM', CL.bone), R('TUVW', CL.sun), { Z: '#120c14', E: '#4ad08a', x: '#a8323e' }),
-    clothes: SHOULDERS, hat: hood(13, ell(15.5, 14.5, 6.6, 8)),
-    fills: [[ell(15.5, 14.5, 6.6, 8), 'Z']],
-    top: [[SKULL_FACE, 'JKLM'], [any(rect(9, 3, 22, 6), rect(9, 0, 10, 2), rect(15, 0, 16, 2), rect(21, 0, 22, 2)), 'TUVW']],
-    post: skullFills(), marks: [[4, 15, 'xx'], [27, 12, 'UUUUUUUU']] },
   // O Sineiro: crânio no capuz da batina escura, sino de bronze e a corda
   sineiro: { hatOpt: { smooth: 1 }, bg: BGS.deep, noFace: 1,
     pal: Object.assign(R('bcdq', CL.shadow), R('ABCD', CL.shadow), R('JKLM', CL.bone), R('TUVW', CL.gold), { Z: '#120c14', E: '#8ac0f0', r: '#9a6232' }),
