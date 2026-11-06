@@ -116,7 +116,7 @@ test('the Sineiro whispers a name once, on the second round, to the first one st
   run('B.round = 2');
   await run('bossAct(B.enemies[0])');
   await run('bossAct(B.enemies[0])');
-  assert.deepEqual(log.filter(t => t.includes('sussurra')), ['O Sineiro sussurra: "Lyra... a missa vai começar."']);
+  assert.deepEqual(log.filter(t => t.includes('sussurra')), ['O Sineiro sussurra: "Lyra... a oração vai começar."']);
   assert.deepEqual(ctx.kept, ['sussurro'], 'kept in the save, so a retry after a loss does not repeat it');
 });
 
@@ -127,7 +127,7 @@ test('the road talk: Aldo, the answer from the church door if there is one, then
     assert.deepEqual(log, [
       'Aldo:\nFui contratado para olhar umas covas. E agora vou para a capital.',
       ...(porque ? ['Lyra:\nAldo desceu pelo ouro. Voltou sem nenhum. Aldo está feliz mesmo assim.'] : []),
-      'Aldo:\nSe alguém tirou um rei daquele buraco, ele não vai ficar longe de Valmor. Eu vou.',
+      'Aldo:\nSe alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou.',
       'Lyra~alegre:\nAldo diz que vai por Valmor. Aldo quer dizer: por uma certa professora.',
       'Aldo~bravo:\nLyra.',
       'Teo:\nA carta vai até a rainha. Até lá, ninguém toca nela.',

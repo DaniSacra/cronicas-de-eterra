@@ -18,7 +18,7 @@ test('Lyra has her own entrance: she joins on the first tavern visit, goes to th
   log.length = 0;
   await run('teoScene()');
   assert.deepEqual([...G.party.map(m => m.id)], ['aldo', 'lyra', 'teo']);
-  assert.ok(log.includes('Teo:\nObrigado. Sou Teo, noviço da Ordem. Vim ajudar a irmã Irene no inverno.'));
+  assert.ok(log.includes('Teo:\nObrigado. Sou Teo. Ainda estou aprendendo, mas um dia quero servir no Templo. Vim ajudar a irmã Irene no inverno.'));
   run(`enterTown(TAVERN_FRONT, 'valmor')`);
   log.length = 0;
   await run('enterTavern()');   // a noite do mensageiro
@@ -36,19 +36,20 @@ test('Lyra has her own entrance: she joins on the first tavern visit, goes to th
 test('the night: the dice girl plays, stays when the hooded men come, fights unnamed and says her name after the fight', async () => {
   for (const estojo of [true, false]) {
     const { G, log, run } = story(['aldo', 'lyra', 'teo'], { seen: { job: 1, teoWin: 1 }, key: { estojo } });
-    run(`startBattle = async (ids, b, o) => { globalThis.at = { ids, party: G.party.map(m => m.id), name: heroName('andilla'), hint: o.hints[0] }; return 'win'; }`);
-    run(`enterTown(TAVERN_FRONT, 'valmor')`);
+    run(`startBattle = async (ids, b, o) => { globalThis.at = { ids, party: G.party.map(m => m.id), name: heroName('andilla'), hint: o.hints[0], full: G.party.every(m => m.hp === maxHp(m) && m.mp === maxMp(m)) }; return 'win'; }`);
+    run(`enterTown(TAVERN_FRONT, 'valmor'); for (const m of G.party) { m.hp = 3; m.mp = 0; }`);
     await run('enterTavern()');
     const at = run.json('at');
     assert.deepEqual(at.party, ['aldo', 'lyra', 'teo', 'andilla'], 'she is in the party before the fight');
     assert.equal(at.ids.length, 3, 'three hooded men');
+    assert.ok(at.full, 'the soup of Berta: the party starts the night fight rested');
     assert.equal(at.name, 'Moça dos dados', 'no name on her card in the fight');
-    assert.equal(at.hint, 'A moça dos dados age rápido. O Truque dela, Golpe Baixo, atravessa a defesa.');
+    assert.equal(at.hint, 'Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.');
     const i = t => { const k = log.indexOf(t); assert.ok(k >= 0, t); return k; };
     i('Moça dos dados~alegre:\nNinguém tira. Eu tiro.');
     i('Lyra~alegre:\nAldo está tentando descobrir como ela faz. Aldo não vai descobrir.');
     assert.ok(i('As botas dele estão cobertas de terra úmida. E tem cera de vela na manga.') > i('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.'));
-    assert.ok(i('A moça dos dados guarda os dados no bolso. Na outra mão, já tem uma faca.') > i('Encapuzado:\nA carta. E ninguém mais precisa sangrar esta noite.'));
+    assert.ok(i('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.') > i('Encapuzado:\nA carta. E ninguém mais precisa sangrar esta noite.'));
     const name = i('Andilla:\nMe chamam de Andilla. Às vezes é verdade.');
     assert.ok(log.slice(0, name).every(t => !t.startsWith('Andilla')), 'no name before she says it');
     assert.ok(name > i('Teo:\nPor isso mesmo. Quem abrir tem de ter o direito.'), 'the introductions come after the letter');
@@ -91,7 +92,7 @@ test('old save from dawn on without Lyra and Andilla: the arrow sends Aldo to th
   assert.deepEqual(run.json('goalSpot()'), run.json(`(n => ({ x: n.x, y: n.y }))(TOWN.npcs.find(n => n.def.id === 'andilla'))`));
   log.length = 0;
   await run(`talkTo(TOWN.npcs.find(n => n.def.id === 'andilla'))`);
-  assert.equal(log[0], 'Moça dos dados~alegre:\nDemorou. Eu disse que te devia uma.');
+  assert.equal(log[0], 'Moça dos dados~alegre:\nVocês de novo. Andilla, prazer. Ouvi dizer que o ancião quer quatro.'); // never said her name in that save
   assert.ok(G.party.some(m => m.id === 'andilla'));
   assert.equal(G.key.estojo, false);
   run(`enterTown(TAVERN_FRONT, 'valmor')`);
@@ -136,7 +137,7 @@ test('Clara: one scene on the first day, another once Lyra is in the party', asy
 
 test('Clara with Lyra after Aldo saw her alone: "twice in one day" only on the first day; she leaves for home in the afternoon, for class in the morning', async () => {
   const cases = [[{}, 'Duas vezes no mesmo dia, Aldo.', 'preciso levar as crianças para casa'],
-    [{ intro: 1 }, 'De novo por aqui?', 'a aula vai começar'], [{ intro: 1, quest: 1 }, 'De novo por aqui?', 'a aula vai começar']];
+    [{ intro: 1 }, 'De novo por aqui?', 'a aula vai começar'], [{ intro: 1, quest: 1 }, 'De novo por aqui?', 'preciso levar as crianças para casa']];
   for (const [extra, again, leave] of cases) {
     const { log, run } = story(['aldo', 'lyra'], { ...extra, seen: { job: 1, 'talk:clara': 1 } });
     run(`enterTown({ x: 12, y: 11, dir: 2 }, 'valmor')`);
@@ -178,4 +179,22 @@ test('no player text uses an em dash', () => {
     const strings = fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8').match(/'[^'\n]*'|`[^`\n]*`|"[^"\n]*"/g) || [];
     for (const t of strings) assert.doesNotMatch(t, /—/, `${f}: ${t}`);
   }
+});
+
+test('after the end the cemetery is calm, and its music is always its own', () => {
+  const { run } = story(['aldo']);
+  assert.equal(run('cemRoamerCount({ cem1: 1, teoWin: 1 }, false)'), 3);
+  assert.equal(run('cemRoamerCount({ cem1: 1, teoWin: 1 }, true)'), 0);
+  assert.equal(run('cemRoamerCount({}, false)'), 0);
+  assert.equal(run("G.seen.cem3 = G.seen.teoWin = 1, AREAS.cemiterio.music()"), 'cemetery');
+});
+
+test('the journal shows the lockpick case only once it was found, and names its owner once she said her name', () => {
+  const { run } = story(['aldo', 'andilla']);
+  const notes = () => run.json("JOURNAL.notes.filter(n => n.show()).map(n => typeof n.text === 'function' ? n.text() : n.text)").filter(t => t.includes('estojo'));
+  assert.deepEqual(notes(), []);
+  run('G.seen.estojo = 1');
+  assert.ok(notes()[0].endsWith('De quem?'));
+  run('G.seen.andillaNome = 1');
+  assert.deepEqual(notes(), ['Junto de uma cova cavada, um estojo de ganchos. Era da Andilla.']);
 });

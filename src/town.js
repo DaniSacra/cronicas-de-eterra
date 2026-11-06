@@ -474,7 +474,7 @@ async function claraTalk(n) {
     ['andilla', 'Vermelho de frio, claro.'],
     ['lyra', 'Frio. Sei.', 'alegre'],
   ];
-  const leave = stage() === 'arrive' ? 'preciso levar as crianças para casa' : 'a aula vai começar'; // tarde da chegada ou manhã
+  const leave = stage() === 'start' ? 'a aula vai começar' : 'preciso levar as crianças para casa'; // só na manhã do começo há aula
   const bye = [nm, `Oi, ${heroName('lyra')}. Com licença, ${leave}.`];
   // a Lyra chega depois: se o Aldo já viu a Clara sozinho, o reencontro não se repete
   if (lyra) return partyTalk('claraLyra', G.seen['talk:clara'] ? [
@@ -662,7 +662,7 @@ async function chapel() {
     ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3 });
     if (v === null) return;
     if (v === 'talk') await say(nm, byStage({
-      arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', inParty('teo') ? 'Teo, você voltou inteiro. Graças a Elun.' : 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
+      arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', inParty('teo') ? 'Teo, você voltou inteiro. Graças a Elun.' : 'O jovem Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       desceu: ['Voltaram da cripta. Deixem-me ver esses ferimentos.', 'O mensageiro se mexeu quando vocês passaram pela porta. Como se soubesse onde vocês estiveram.'],

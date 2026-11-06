@@ -69,7 +69,7 @@ const TAVERN_NPCS = [
     start: ['O ancião Bertoldo mora na casa de telhado verde, ao norte. Vão!'],
     quest: ['Encapuzados em Valmor... e a moça dos dados com uma faca. Esta semana eu já vi de tudo.', 'Lá embaixo não tem sopa. Comprem poções com a Dora.'],
     desceu: ['Desceram e voltaram! A sopa está quente. Contem tudo, mas comam primeiro.'],
-    won: ['Eu disse que a sopa estava paga. Sentem, heróis.', 'Agora me digam: se o túmulo estava vazio, quem é que anda por aí com um rei nas costas?'] } },
+    won: ['Eu disse que a sopa era de vocês. Sentem, heróis.', 'Agora me digam: se o túmulo estava vazio, quem é que anda por aí com um rei nas costas?'] } },
   { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: {
     start: ['Aquela marca... Não. Não é conversa para agora.', 'Vão falar com o ancião. Eu fico aqui, fiando.'],
     quest: ['Lá embaixo, se alguém chamar vocês pelo nome... não respondam.'],
@@ -141,7 +141,9 @@ async function askWhyAtDoor() {
 function lyraTalk(n) { return lyraArrives(n); } // saves antigos: ela ainda espera na taverna
 
 async function andillaTalk(n) {
-  await line(n.def.name, 'Demorou. Eu disse que te devia uma.', 'alegre');
+  // saves antigos em que ela nunca disse o nome: ela se apresenta antes
+  if (!G.seen.andillaFuga && !G.seen.andillaNome) await line(n.def.name, 'Vocês de novo. Andilla, prazer. Ouvi dizer que o ancião quer quatro.', 'alegre');
+  else await line(n.def.name, 'Demorou. Eu disse que te devia uma.', 'alegre');
   G.seen.andillaNome = 1;
   const nm = heroName('andilla');
   if (G.key.estojo) { await line('Aldo', 'Então isso aqui é seu.'); await line(nm, 'Meus ganchos!', 'alegre'); G.key.estojo = false; }
@@ -222,12 +224,12 @@ async function cemFight(n) {
 
 // Errantes do cemitério: nenhum antes da primeira luta fixa, dois depois dela e três depois do Teo, para treinar.
 // Nascem longe do grupo e nunca pisam nas lutas fixas, no ponto da cena do Teo, no portão nem na entrada.
-const cemRoamerCount = seen => !seen.cem1 ? 0 : seen.teoWin ? 3 : 2;
+const cemRoamerCount = (seen, bossDead = false) => bossDead || !seen.cem1 ? 0 : seen.teoWin ? 3 : 2; // calmo depois do fim do prólogo
 const CEM_ROAM_SPOTS = [[4, 6], [2, 10], [13, 10], [11, 4], [1, 10]];
 const CEM_RESERVED = new Set([...Object.values(CEM_FIGHTS).map(f => f.x + ',' + f.y), '10,2', '7,2', '8,10', '8,11']);
 const CEM_ROAMERS = [{ foe: 'rat', ids: ['ratoCova'], speed: 520 }, { foe: 'bats', ids: ['morcegoCova', 'morcegoCova'], speed: 380 }];
 const cemRoamers = () => CEM_ROAM_SPOTS.filter(([x, y]) => (x - TOWN.p.x) ** 2 + (y - TOWN.p.y) ** 2 > 25)
-  .slice(0, cemRoamerCount(G.seen)).map(([x, y], i) => ({ ...CEM_ROAMERS[i % 2], x, y }));
+  .slice(0, cemRoamerCount(G.seen, G.bossDead)).map(([x, y], i) => ({ ...CEM_ROAMERS[i % 2], x, y }));
 
 const TEO_DEF = { id: 'teo', name: 'Teo', x: 7, y: 2, dir: 0, wander: 0,
   onTalk: () => line('Teo', '...que os que dormem fiquem em paz.') };
@@ -253,7 +255,7 @@ async function teoScene() {
   if (r !== 'win') return; // fugiram: a luta recomeça ao voltar a este ponto
   G.seen.teoWin = 1;
   backToArea();
-  await line('Teo', 'Obrigado. Sou Teo, noviço da Ordem. Vim ajudar a irmã Irene no inverno.');
+  await line('Teo', 'Obrigado. Sou Teo. Ainda estou aprendendo, mas um dia quero servir no Templo. Vim ajudar a irmã Irene no inverno.');
   await line('Teo', 'Rezo por estas covas há três noites e elas continuam abrindo.', 'preocupado');
   await line('Teo', `Mortos não se levantam sozinhos. Vou com ${G.party.length > 2 ? 'vocês' : 'você'} até descobrir quem os chama.`, 'bravo');
   await joined('Teo');
@@ -275,7 +277,7 @@ AREAS.cemiterio = makeArea('Cemitério de Valmor', 'CEMITERIO', 16, 12, buildCem
 Object.assign(AREAS.cemiterio, {
   fog: true, winter: true, dimCol: '10,24,56', vision: { radius: 4 }, roamers: cemRoamers, reserved: (x, y) => CEM_RESERVED.has(x + ',' + y),
   dim: () => (G.seen.cem3 && G.seen.teoWin) ? 0.1 : 0.3,
-  music: () => cemDone() ? 'town' : 'cemetery',
+  music: () => 'cemetery',
   cast: () => [
     ...Object.entries(CEM_FIGHTS).filter(([, f]) => !G.seen[f.flag]).map(([id, f]) => ({ id, foe: f.foe, name: f.name, x: f.x, y: f.y, dir: f.dir, wander: 0, onTalk: cemFight })),
     ...(inParty('teo') ? [] : [TEO_DEF]),
@@ -340,8 +342,8 @@ async function introduceAndilla() {
   if (lyra) { await line('Lyra', 'Isso é nome ou é ameaça?'); await line(nm, 'Depende de quem pergunta.', 'alegre'); }
   await line('Aldo', `${A()}. Espada, estrada e pouca conversa.`);
   if (lyra) { await line('Lyra', `E coração mole. ${A()} odeia que eu conte isso.`, 'alegre'); await line('Lyra', 'Lyra, irmã dele. Maga. Eu falo, ele luta.'); }
-  await line('Teo', 'Teo, noviço da Ordem de Erukh. Curo os feridos. E agora guardo uma carta que não é minha.');
-  await line(nm, 'Eu já vi esse olho. Anteontem, no cemitério. Gente de capa cinza cavando cova.');
+  await line('Teo', 'Teo. Aprendiz por enquanto, do Templo um dia. Curo os feridos. E agora guardo uma carta que não é minha.');
+  await line(nm, 'Eu já vi essas lâminas. Anteontem, no cemitério. Gente de capa cinza cavando cova.');
   if (lyra) { await line('Lyra', 'E o que você fazia num cemitério de noite?'); await line(nm, 'Coisas minhas.', 'alegre'); }
   if (G.key.estojo) {
     await line('Aldo', 'Então isso aqui é seu.');
@@ -365,7 +367,10 @@ async function nightScene() {
   enterTown(TAVERN_INSIDE, 'taverna');
   G.busy = true;
   await fadeTo(0, 300);
-  await line('Berta', 'Ossadas andando? E ainda trouxe um noviço de brinde. Sentem, o quarto é de vocês.');
+  await line('Berta', 'Ossadas andando? E ainda trouxeram um aprendiz de brinde. Sentem, o quarto é de vocês.');
+  await UI.say('A Berta serve sopa quente. O grupo recupera as forças.');
+  for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
+  UI.updateParty();
   await fadeTo(1, 900);
 
   // A noite: Aldo e Teo à mesa, soldados jogando dados com a moça de capa cinza
@@ -397,11 +402,11 @@ async function nightScene() {
   TOWN.p.dir = 1; TOWN.followers[0].dir = 2;
   await wait(250);
   await line('Mensageiro', 'Esta carta... tem de chegar à rainha. Ninguém mais pode ler.');
-  await line('Mensageiro', 'Você é da Ordem. Eu vejo pelo livro. Leve. Não deixe que eles...');
-  tobias.lying = true; Sfx.hurt(); shake(200);
+  await line('Mensageiro', 'Você é do Templo. Eu vejo pelo livro. Leve. Não deixe que eles...');
+  tobias.lying = true; Sfx.fall(); shake(200);
   G.key.carta = true;
   await UI.say('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.');
-  Sfx.chest();
+  Sfx.keyItem();
   await UI.say('As botas dele estão cobertas de terra úmida. E tem cera de vela na manga.');
 
   // Os encapuzados. A moça dos dados não foge: entra na briga, e no grupo, antes de dizer o nome
@@ -412,8 +417,9 @@ async function nightScene() {
     await walkPath(h, path, 300);
   }
   await line('Encapuzado', 'A carta. E ninguém mais precisa sangrar esta noite.');
-  await UI.say('A moça dos dados guarda os dados no bolso. Na outra mão, já tem uma faca.');
-  await line(moca, 'Vocês interromperam o meu jogo. Isso tem preço.', 'alegre');
+  await UI.say('A moça dos dados vê as lâminas curvas e perde a cor por um instante.');
+  await UI.say('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.');
+  await line(moca, 'Hoje eu não corro.');
   TOWN.p.dir = 2;
   await line('Aldo', 'Acho que vocês erraram de taverna.', 'bravo');
   if (!inParty('andilla')) {
@@ -424,8 +430,8 @@ async function nightScene() {
   const r = await startBattle(['encapuzado', 'encapuzado', 'encapuzado'], false, {
     surprise: 'ambush',
     intro: 'Três encapuzados puxam lâminas curvas!',
-    hints: ['A moça dos dados age rápido. O Truque dela, Golpe Baixo, atravessa a defesa.', 'Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.',
-      'Teo cura os feridos com Magia; não espere alguém cair.', 'Defender reduz o dano até a próxima vez daquele herói.'],
+    hints: ['Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.', 'A moça dos dados age rápido: o Golpe Baixo dela atravessa a defesa.',
+      'Teo cura os feridos com Magia, e Defender reduz o dano até a próxima vez do herói.'],
     noRun: 'Não dá para fugir: o mensageiro está caído no balcão!',
   });
   if (r === 'lose') return gameOver();
@@ -454,7 +460,7 @@ async function nightScene() {
   await UI.say('Ninguém dorme. Teo passa a noite com a carta fechada no colo.');
   Sfx.bellFar();
   await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
-  await UI.say('A sopa da Berta devolve as forças ao grupo.');
+  await UI.say('Pão quente e mais sopa. O grupo recupera as forças.');
   for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
   UI.updateParty();
   G.intro = 1;
@@ -486,7 +492,7 @@ const TALKS = {
     ['lyra', () => `${heroName('aldo')} ficou quieto. Quando ${heroName('aldo')} fica quieto assim, é raiva.`, 'preocupado']],
   estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
     ['lyra', porqueRoad], // a resposta da porta da igreja (G.seen.porque); saves sem resposta pulam a fala
-    ['aldo', 'Se alguém tirou um rei daquele buraco, ele não vai ficar longe de Valmor. Eu vou.'],
+    ['aldo', 'Se alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou.'],
     ['lyra', () => `${heroName('aldo')} diz que vai por Valmor. ${heroName('aldo')} quer dizer: por uma certa professora.`, 'alegre'],
     ['aldo', () => `${heroName('lyra')}.`, 'bravo'],
     ['teo', 'A carta vai até a rainha. Até lá, ninguém toca nela.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],

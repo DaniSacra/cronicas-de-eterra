@@ -461,7 +461,7 @@ function loadGame() {
 const CONTROLS_PAGE = 'Diário · controles\nSetas ou WASD andar · Q/E passo lateral · Espaço interagir · Esc menu\n' +
   'M ou Tab mapa da cripta · U mapa de Eterra · F tela cheia · N som\nNa cripta, o ponto verde do mapa leva de volta à vila.';
 function diaryPages() {
-  const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + n.text);
+  const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + (typeof n.text === 'function' ? n.text() : n.text));
   const pages = [`Diário · ${JOURNAL.title()}\nObjetivo: ${JOURNAL.goal()}`];
   for (let k = 0; k < notes.length; k += 3) pages.push(`Diário · anotações\n` + notes.slice(k, k + 3).join('\n'));
   const tips = TIPS.filter(t => t.show()).map(t => '· ' + t.text);
@@ -550,9 +550,9 @@ async function newGame() {
   await arrivalScene();
 }
 
-// Atalho do título: grupo como depois da abertura (nível 2, carta, missão do ancião) direto na cripta
+// Atalho do título: grupo como depois da abertura (nível 3, carta, missão do ancião) direto na cripta
 async function quickDungeon() {
-  G.party = ['aldo', 'teo', 'lyra', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 2; m.xp = 36; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
+  G.party = ['aldo', 'teo', 'lyra', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
@@ -583,7 +583,8 @@ async function ending() {
   Music.stop(); Sfx.bellFar();
   await say2('O Sineiro', '"Ele prometeu... que o rei traria os fiéis de volta..."');
   await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
-  if (inParty('lyra')) await say2('Lyra~alegre', 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
+  if (inParty('lyra')) await say2('Lyra~alegre', G.party.some(m => m.id === 'aldo' && m.hp <= 0)
+    ? `Levanta, ${heroName('aldo')}. A professora não gosta de remendo.` : 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
   await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
   await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
   await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
@@ -607,7 +608,9 @@ async function ending() {
   await partyTalk('estrada', TALKS.estrada);
   UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-dark ov-end');
   saveGame();
-  const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: 2 });
+  document.getElementById('game').classList.add('on-end');
+  const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches ? 1 : 2 });
+  document.getElementById('game').classList.remove('on-end');
   UI.hideOverlay();
   if (v === 'new') return newGame();
   Music.play('town');

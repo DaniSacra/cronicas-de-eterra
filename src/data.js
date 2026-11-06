@@ -83,7 +83,7 @@ const STAT_FULL = { atk: 'Ataque', def: 'Defesa', mag: 'Magia', agi: 'Agilidade'
 const START_GEAR = {
   aldo:    { arma: { name: 'Espada de viagem', icon: 'atk' },  armadura: { name: 'Túnica de couro', icon: 'def' } },
   lyra:    { arma: { name: 'Cajado de estudo', icon: 'spell' }, armadura: { name: 'Vestido de viagem', icon: 'def' } },
-  teo:     { arma: { name: 'Maça de noviço', icon: 'atk' },    armadura: { name: 'Hábito branco', icon: 'def' } },
+  teo:     { arma: { name: 'Maça de aprendiz', icon: 'atk' },    armadura: { name: 'Hábito branco', icon: 'def' } },
   andilla: { arma: { name: 'Adaga', icon: 'atk' },             armadura: { name: 'Capa cinza', icon: 'def' } },
 };
 // The story of each hero grows with the game: a line shows once its flag is set (flags: G.seen, plus quest, bossDead, carta)
@@ -107,7 +107,7 @@ const HERO_STORY = {
   },
   teo: {
     lines: [
-      { text: 'Noviço que veio ajudar a irmã Irene no inverno.' },
+      { text: 'Aprendiz que ainda está aprendendo as coisas, com o sonho de servir no Templo. Veio ajudar a irmã Irene no inverno.' },
       { when: 'teoWin', text: 'O grupo o achou no cemitério, cercado de mortos que não ficavam quietos.' },
       { when: 'carta', text: 'Guarda uma carta com o selo real e não vai rompê-lo. Só a rainha pode.' },
     ],
@@ -152,15 +152,15 @@ const ENEMIES = {
   ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
   encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
   // Chefe do prólogo (prologo.md)
-  sineiro:   { name: 'O Sineiro', hp: 600, atk: 24, def: 14, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
+  sineiro:   { name: 'O Sineiro', hp: 650, atk: 24, def: 14, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
                say: {
-                 intro: 'O Sineiro ergue o sino de bronze.\n"A missa acabou faz cinquenta anos. Ninguém mais desce."',
+                 intro: 'O Sineiro ergue o sino de bronze.\n"A última oração foi há cinquenta anos. Ninguém mais desce."',
                  enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',
                  hit: t => `O Sineiro golpeia ${t} com o sino!`,
                  aoe: 'O Sineiro toca a Badalada! O som atravessa os ossos.',
                  drain: t => `O Sineiro entoa um dobre fúnebre por ${t}!`,
                  stagger: 'O Sineiro cambaleia...',
-                 whisper: n => `O Sineiro sussurra: "${n}... a missa vai começar."`, // o aviso da Ana: chamar pelo nome
+                 whisper: n => `O Sineiro sussurra: "${n}... a oração vai começar."`, // o aviso da Ana: chamar pelo nome
                  noRun: 'O Sineiro barra a última porta. Não há para onde fugir!',
                } },
 };
@@ -197,8 +197,9 @@ const JOURNAL = {
   notes: [
     { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
-    { show: () => G.key.estojo || inParty('andilla'), text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
-    { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, noviço da Ordem de Erukh, veio conosco.' },
+    { show: () => G.seen.estojo && !G.seen.andillaNome, text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
+    { show: () => G.seen.estojo && G.seen.andillaNome, text: () => `Junto de uma cova cavada, um estojo de ganchos. Era da ${heroName('andilla')}.` },
+    { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, aprendiz que sonha servir no Templo, veio conosco.' },
     { show: () => G.intro, text: 'Um mensageiro ferido caiu na taverna com uma carta para a rainha.' },
     { show: () => G.intro, text: 'Os encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
     { show: () => G.intro && inParty('andilla'), get text() { return `A moça dos dados se chama ${heroName('andilla')}. Ganha no dado e na faca. Não diz de onde vem.`; } },
