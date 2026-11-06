@@ -81,18 +81,28 @@ view.addEventListener('click', ev => { const e = enemyAt(ev); if (e && UI.pickVa
 async function chooseCommand(m) {
   const d = pdef(m);
   UI.updateParty(m.id);
-  let last = 'atk';
+  let last = B.tipStart || 'atk';   // right after the tip, the bar opens on Tática
+  B.tipStart = null;
   for (;;) {
     const spells = knownSpells(m);
-    const v = last = await UI.choose([
+    let v = last = await UI.choose([
       { label: 'Atacar', value: 'atk', icon: 'atk' },
       { label: d.skillWord, value: 'spell', disabled: !spells.length, icon: 'spell' },
       { label: 'Item', value: 'item', disabled: !itemOptions().length, icon: 'item' },
       { label: 'Defender', value: 'def', icon: 'def' },
       { label: 'Fugir', value: 'run', icon: 'run' },
-    ], { style: 'bar', anchor: document.getElementById('card-' + m.id), start: last, cols: 5,
+      { label: 'Tática', value: 'macro', icon: 'tatica' },
+    ], { style: 'bar', anchor: document.getElementById('card-' + m.id), start: last, cols: 6, keys: MACRO_KEYS,
       onHover: (v, op) => { B.label = op ? op.label : null; } });
+    if (v === 'macro') v = await macroMenu();
     if (v == null) continue;
+    if (v === 'macroSave') { await recordMacro(); continue; }
+    if (v === 'macro1' || v === 'macro2') {
+      const slot = v === 'macro1' ? 0 : 1;
+      if (!macros()[slot]) { Sfx.bump(); await bsay(`${macroName(slot)} está vazia.`); continue; }
+      G.seen.macro = 1;
+      return { type: 'macro', slot };
+    }
     if (v === 'atk') {
       const t = await chooseEnemy();
       if (t == null) continue;
@@ -118,6 +128,69 @@ async function chooseCommand(m) {
     if (v === 'def') return { type: 'defend' };
     if (v === 'run') return { type: 'run' };
   }
+}
+
+// ---------- Táticas (macros, src/macro.js) ----------
+const MACRO_KEYS = { 1: 'macro1', 2: 'macro2', g: 'macroSave' };
+const macros = () => (G.macros = normalizeMacros(G.macros));
+const macroOpt = (slot, value) => {
+  const mc = macros()[slot];
+  return { label: macroName(slot), value, icons: macroIcons(mc, G.party.map(m => m.id), SPELLS), hint: mc ? '' : 'vazia', disabled: value !== slot && !mc };
+};
+const macroMenu = () => UI.choose([macroOpt(0, 'macro1'), macroOpt(1, 'macro2'), { label: 'Gravar tática', value: 'macroSave', disabled: !G.lastRound }],
+  { title: 'Táticas · atalhos 1, 2 e G', cancel: true, cols: 1 });
+
+// Saves the last round the party played into one of the two slots (asking before replacing one)
+async function recordMacro() {
+  if (!G.lastRound) { Sfx.bump(); await bsay('Ainda não há rodada para gravar.'); return; }
+  const slot = await UI.choose([macroOpt(0, 0), macroOpt(1, 1)], { title: 'Gravar a última rodada em qual espaço?', cancel: true, cols: 1 });
+  if (slot == null) return;
+  if (macros()[slot] && !await UI.choose([{ label: 'Sim', value: true }, { label: 'Não', value: false }],
+    { title: `Substituir ${macroName(slot)}?`, cancel: true, cols: 2, start: false })) return;
+  macros()[slot] = { ...G.lastRound };
+  G.seen.macro = 1;
+  await bsay(`${macroName(slot)} gravada.`);
+}
+
+// The hero's command this turn: from the running tactic when it has one for him, otherwise chosen by hand.
+// Returns the command and what goes into this round's record.
+async function heroCommand(m, opts) {
+  for (;;) {
+    const saved = B.macro && B.macro.entries[m.id];
+    if (saved) {
+      const { cmd, warn } = resolveMacro(saved, { actor: m, name: pdef(m).name, party: G.party, enemies: B.enemies, inv: G.inv,
+        spells: SPELLS, items: ITEMS, maxHp, maxMp, useless: itemUseless });
+      if (warn) await bsay(warn);
+      return { cmd, entry: saved };
+    }
+    const cmd = await chooseCommand(m);
+    if (cmd.type === 'macro') {
+      B.macro = { slot: cmd.slot, entries: macros()[cmd.slot] };
+      if (!B.macro.entries[m.id]) await bsay(`${pdef(m).name} não estava na ${macroName(cmd.slot)}.`);
+      continue;
+    }
+    if (cmd.type === 'run' && opts.noRun) { await UI.say(opts.noRun); continue; }
+    return { cmd, entry: macroEntry(cmd) };
+  }
+}
+// Esc or a tap while a tactic runs: from the next hero on, commands are chosen by hand again
+function stopMacro() {
+  if (!B || !B.macro) return false;
+  B.macro = null; Sfx.cancel(); bsay('Tática interrompida.');
+  return true;
+}
+if (typeof document !== 'undefined') document.getElementById('screen')?.addEventListener('click', () => { if (G.mode === 'battle' && !UI.busy()) stopMacro(); });
+
+const MACRO_TALK = [
+  ['lyra', 'Estamos repetindo os mesmos golpes. Podíamos combinar uma tática e só dar o sinal.'],
+  ['aldo', 'Menos conversa. Mas faz sentido.'],
+  ['andilla', 'Eu bato, ela queima, o padre cura. Até eu decoro isso.', 'alegre'],
+];
+async function macroTip() {
+  G.seen.dicaTatica = 1;
+  await partyTalk('tatica', MACRO_TALK);
+  await UI.say('Dica: ' + MACRO_TIP);
+  B.tipStart = 'macro';
 }
 
 // ---------- Execução ----------
@@ -295,6 +368,7 @@ async function startBattle(ids, isBoss, opts = {}) {
     if (isBoss) renderView(cam, map(), worldSprites(performance.now()).filter(o => o.type !== 'boss'), performance.now());
     bgCanvas.getContext('2d').putImageData(vimg, 0, 0);
   }
+  if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd
   G.mode = 'battle';
   Music.play(isBoss ? 'boss' : 'battle');
   Sfx.encounter();
@@ -320,6 +394,8 @@ async function startBattle(ids, isBoss, opts = {}) {
   while (!result) {
     B.order = buildOrder(round === 0 ? { only: sur.free, bonus: sur.bonus } : {});
     B.round = round + 1; B.roundT = performance.now();
+    B.macro = null; B.thisRound = {};   // a tactic lasts one round
+    if (macroTipDue(G.seen, B.round, isBoss)) await macroTip();
     for (B.turn = 0; B.turn < B.order.length; B.turn++) {
       const c = B.order[B.turn];
       if (c.actor.hp <= 0 || c.skip) continue;
@@ -327,8 +403,8 @@ async function startBattle(ids, isBoss, opts = {}) {
         const m = c.actor;
         m.defending = false; // a defesa dura até a próxima vez do herói
         if (hints.length) await UI.say('Dica: ' + hints.shift());
-        let cmd = await chooseCommand(m);
-        while (cmd.type === 'run' && opts.noRun) { await UI.say(opts.noRun); cmd = await chooseCommand(m); }
+        const { cmd, entry } = await heroCommand(m, opts);
+        B.thisRound[m.id] = entry;
         UI.updateParty(null);
         if (cmd.type === 'run') {
           if (await tryRun(m, isBoss)) { result = 'fled'; break; }
@@ -342,9 +418,10 @@ async function startBattle(ids, isBoss, opts = {}) {
       if (!aliveEnemies().length) { result = 'win'; break; }
       if (!aliveParty().length) { result = 'lose'; break; }
     }
+    G.lastRound = closeRound(G.lastRound, B.thisRound, !result);
     round++;
   }
-  B.order = null;
+  B.order = null; B.macro = null;
 
   G.party.forEach(m => { m.defending = false; delete m._fallenMsg; });
   if (result === 'win') {
@@ -453,7 +530,7 @@ function drawOrder(c, now, boss) {
       color: o.side === 'party' ? pdef(a).color : 'var(--danger)',
       state: a.hp <= 0 || o.skip ? 'gone' : i < B.turn ? 'done' : i === B.turn ? 'cur' : 'next',
     };
-  }), B.round > 1 && now - B.roundT < 1600 ? B.round : 0);
+  }), B.round > 1 && now - B.roundT < 1600 ? B.round : 0, B.macro ? macroName(B.macro.slot) : '');
   // Seta sobre o inimigo que está agindo
   const cur = list[B.turn];
   if (cur && cur.side === 'enemy' && cur.actor.hp > 0 && !cur.actor.boss) {

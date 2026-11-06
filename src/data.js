@@ -200,4 +200,9 @@ const JOURNAL = {
 };
 const journalGoal = () => JOURNAL.goal();
 
+// Diário · dicas: what the game has explained so far
+const TIPS = [
+  { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
+];
+
 if (typeof module !== 'undefined') module.exports = { ENEMIES, FLOORS };

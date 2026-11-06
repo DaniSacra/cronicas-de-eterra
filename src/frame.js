@@ -98,6 +98,18 @@ const ICON_ART = {
     '................', '.....kkkkkk.....', '...kkppppppkk...', '..kppyyppppppk..', '.kppyyyyppyyppk.', '.kpyyyyyppyyypk.',
     'kppyyyyypppyyppk', 'kpppyyyppppyyppk', 'kppppyypppppyppk', 'kpppppppyyyppppk', 'kpppppppyyyypppk', '.kppppppyyyyppk.',
     '.kppppppppyyppk.', '..kppppppppppk..', '...kkppppppkk...', '.....kkkkkk.....'],
+  tatica: [ // scroll with a circular arrow: the Tática command
+    '................', '..kkkkkkkkkkkk..', '.knnnnnnnnnnnbk.', '..kkkkkkkkkkkk..', '...kyyyyyyyyk...', '...kyyggggyyk...',
+    '...kygyyyygyk...', '...kygyyygggk...', '...kygyyyyoyk...', '...kygyyyyyyk...', '...kyyggggyyk...', '...kyyyyyyyyk...',
+    '..kkkkkkkkkkkk..', '.knnnnnnnnnnnbk.', '..kkkkkkkkkkkk..', '................'],
+  fogo: [ // flame: fire magic in a tactic summary
+    '................', '.......kk.......', '......khk.......', '......khhk......', '.....khHhk..k...', '.....khHHhk.kk..',
+    '....khHHHhkkhk..', '...khHHgHHhkhk..', '...khHgggHHhhk..', '..khHggtggHHhk..', '..khHgttttgHhk..', '..khHgttttgHhk..',
+    '..khHggttggHhk..', '...khHggggHhk...', '....kkhhhhkk....', '......kkkk......'],
+  cura: [ // heart: healing or reviving in a tactic summary
+    '................', '...kkk....kkk...', '..kHHhk..kHhhk..', '.kHttHhkkHhhhhk.', '.kHtHhhhhhhhhhk.', '.kHHhhhhhhhhhDk.',
+    '.khhhhhhhhhhhDk.', '..khhhhhhhhhDk..', '...khhhhhhhDk...', '....khhhhhDk....', '.....khhhDk.....', '......khDk......',
+    '.......kk.......', '................', '................', '................'],
   pocao: recolor(POTION, { L: 'h', D: 'D' }),   // red potion
   eter: recolor(POTION, { L: 'p', D: 'B' }),    // blue ether
   elixir: recolor(POTION, { L: 'g', D: 'o' }),  // golden elixir

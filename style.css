@@ -254,6 +254,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .queue .qs.sel-frame { border-image-source: var(--frame-sel); }
 .queue .qs i { display: block; align-self: stretch; height: var(--u); }
 .queue .qs.done { opacity: .45; } .queue .qs.gone { opacity: .2; }
+.queue .round.tag { animation: none; color: var(--hi); }
+#menu .opt .ics { display: inline-flex; gap: var(--u); margin-left: calc(var(--u) * 2); vertical-align: middle; }
+#menu .opt .ics img { width: 16px; height: 16px; image-rendering: pixelated; } /* whole-number scale only */
+@media (min-width: 1200px) and (min-height: 700px) and (orientation: landscape) { #menu .opt .ics img { width: 32px; height: 32px; } }
 .queue .round { color: var(--hi); font-size: var(--f1); text-shadow: var(--u) var(--u) 0 var(--ink); margin-left: calc(var(--u) * 2); animation: blink .4s steps(1) 4; }
 /* Phone: battle commands show icons only; the selected name goes to the prompt line (ui.js cmdName) */
 .cmd-name { display: none; }

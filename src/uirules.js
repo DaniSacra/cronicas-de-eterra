@@ -31,7 +31,7 @@ function healthWord(hp, maxhp) {
 function campMenuOpts(s) {
   const opts = [
     { label: 'Itens', value: 'item', disabled: s.bagCount === 0 }, { label: 'Magia', value: 'magic' }, { label: 'Heróis', value: 'status' },
-    { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
+    { label: 'Táticas', value: 'macros' }, { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
   ];
   if (!s.inTown) opts.push({ label: 'Mapa', value: 'map' });
   opts.push({ label: 'Sair', value: 'quit' }, { label: 'Voltar', value: null });

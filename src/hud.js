@@ -42,13 +42,13 @@ const HUD = (() => {
       if (fill._w !== w) { fill._w = w; fill.style.width = w; }
       boss.classList.toggle('enraged', !!enraged); show(boss);
     },
-    // items: [{ label, color, state: 'done' | 'cur' | 'next' | 'gone' }]; round: number to flash or 0
-    queue(items, round) {
-      const key = items.map(i => i.label + i.state + i.color).join('|') + '#' + round;
+    // items: [{ label, color, state: 'done' | 'cur' | 'next' | 'gone' }]; round: number to flash or 0; tag: the tactic running
+    queue(items, round, tag = '') {
+      const key = items.map(i => i.label + i.state + i.color).join('|') + '#' + round + tag;
       if (queue._k !== key) {
         queue._k = key;
         queue.innerHTML = items.map(i => `<div class="qs ${i.state}${i.state === 'cur' ? ' sel-frame' : ''}"><span>${esc(i.label)}</span><i style="background:${i.color}"></i></div>`).join('') +
-          (round ? `<div class="round">Rodada ${round}</div>` : '');
+          (round ? `<div class="round">Rodada ${round}</div>` : '') + (tag ? `<div class="round tag">${esc(tag)}</div>` : '');
       }
       show(queue);
     },

@@ -74,7 +74,8 @@ const UI = (() => {
   }
 
   // o.style: 'list' (in the dialog, default), 'bar' (floating icon bar above o.anchor) or
-  // 'pointer' (nothing drawn: the caller shows the selection through o.onHover, e.g. an arrow over the target)
+  // 'pointer' (nothing drawn: the caller shows the selection through o.onHover, e.g. an arrow over the target).
+  // o.keys: shortcut key -> value, returned at once (e.g. '1' repeats Tática 1 from the command bar)
   function choose(opts, o = {}) {
     return new Promise(res => {
       const style = o.style || 'list';
@@ -84,7 +85,7 @@ const UI = (() => {
       } else dialogEl.classList.remove('open');
       let sel = opts.findIndex(x => !x.disabled); if (sel < 0) sel = 0;
       const start = opts.findIndex(x => !x.disabled && x.value === o.start); if (start >= 0) sel = start;
-      menu = { opts, sel, res, style, anchor: o.anchor, cancel: !!o.cancel, cols: o.cols || 2, onHover: o.onHover, icons: !!o.icons };
+      menu = { opts, sel, res, style, anchor: o.anchor, cancel: !!o.cancel, cols: o.cols || 2, onHover: o.onHover, icons: !!o.icons, keys: o.keys };
       render(); hover();
     });
   }
@@ -102,7 +103,8 @@ const UI = (() => {
     msgEl.querySelector('.cmd-name')?.remove();
     if (menu.icons) msgEl.insertAdjacentHTML('beforeend', '<span class="cmd-name"></span>');
     menu.opts.forEach((op, i) => menuEl.appendChild(optEl(op, i, op.icon ? `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`
-      : esc(op.label) + (op.hint ? `<small>${esc(op.hint)}</small>` : ''))));
+      : esc(op.label) + (op.icons ? `<span class="ics">${op.icons.map(id => `<img src="${iconUrl(id)}" alt="">`).join('')}</span>` : '')
+        + (op.hint ? `<small>${esc(op.hint)}</small>` : ''))));
     cmdName();
   }
   function optEl(op, i, html) {
@@ -169,6 +171,7 @@ const UI = (() => {
       else if (k === 'ArrowRight' || k === 'd') { if (c > 1) move(1); }
       else if ((k === 'Enter' || k === ' ' || k === 'z') && !e.repeat) pick();
       else if ((k === 'Escape' || k === 'x' || k === 'Backspace') && !e.repeat) cancel();
+      else if (menu.keys && k in menu.keys && !e.repeat) { Sfx.select(); close(menu.keys[k]); }
       return true;
     }
     if (sayR) {

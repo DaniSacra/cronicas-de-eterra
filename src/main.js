@@ -12,7 +12,7 @@ let SPR = null;
 
 const G = {
   mode: 'title', floor: 0, x: 1, y: 1, dir: 1,
-  party: [], inv: {}, opened: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {},
+  party: [], inv: {}, opened: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
   sinceFight: 0, anim: null, busy: false, queue: [], held: new Set(),
   bigMap: false, fade: 0, fadeAnim: null, flash: null, flashColor: '255,255,255', shakeUntil: 0,
 };
@@ -107,6 +107,7 @@ function onKeyDown(e) {
   if (k === 'u' && !e.repeat && canWorldMap()) { openWorldMap(); return; }
   if (k === 'n' && !e.repeat) { const m = Sfx.toggleMute(); flashNote(m ? 'Som: desligado' : 'Som: ligado'); return; }
   if (UI.handleKey(e)) return;
+  if (G.mode === 'battle' && k === 'Escape' && !e.repeat && stopMacro()) return;
   if (G.mode === 'town' && !G.busy) {
     if ((k === 'Enter' || k === ' ') && !e.repeat) { G.held.clear(); townAction(k === 'Enter'); return; }
     if (k === 'Escape' && !e.repeat) { G.held.clear(); campMenu(); return; }
@@ -386,6 +387,7 @@ async function campMenu() {
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
     if (v === 'status') await HeroView.show();
+    if (v === 'macros') await campMacros();
     if (v === 'item') {
       const keys = Object.keys(KEY_ITEMS).filter(k => G.key[k]).map(k => ({ label: G.key.lida || !KEY_ITEMS[k].sealedName ? KEY_ITEMS[k].name : KEY_ITEMS[k].sealedName, hint: KEY_ITEMS[k].desc, value: 'key:' + k }));
       const opts = [...itemOptions(), ...keys];
@@ -424,7 +426,7 @@ function saveGame() {
       v: 2, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
       inv: G.inv, opened: G.opened, explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
-      area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen,
+      area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
     }));
     return true;
   } catch (e) { return false; }
@@ -438,6 +440,7 @@ function loadGame() {
     G.gold = s.gold || 0; G.quest = s.quest ?? 1; // saves antigos já estavam na dungeon
     G.key = s.key || { carta: true }; G.intro = s.intro ?? 1;
     G.seen = s.seen || {};
+    G.macros = normalizeMacros(s.macros); G.lastRound = null; // saves without tactics get two empty slots
     G.reached = s.reached ?? (s.place === 'town' ? Object.keys(s.explored || {}).length : s.floor + 1);
     G.explored = {};
     for (const [k, v] of Object.entries(s.explored || {})) G.explored[k] = Uint8Array.from(v);
@@ -468,8 +471,22 @@ function diaryPages() {
   const notes = JOURNAL.notes.filter(n => n.show()).map(n => '· ' + n.text);
   const pages = [`Diário · ${JOURNAL.title()}\nObjetivo: ${JOURNAL.goal()}`];
   for (let k = 0; k < notes.length; k += 3) pages.push(`Diário · anotações\n` + notes.slice(k, k + 3).join('\n'));
+  const tips = TIPS.filter(t => t.show()).map(t => '· ' + t.text);
+  if (tips.length) pages.push('Diário · dicas\n' + tips.join('\n'));
   pages.push(CONTROLS_PAGE);
   return pages;
+}
+// Camp menu: see both tactics and erase one
+async function campMacros() {
+  for (;;) {
+    G.macros = normalizeMacros(G.macros);
+    const opts = G.macros.map((mc, i) => ({ label: macroName(i), value: i, icons: macroIcons(mc, G.party.map(m => m.id), SPELLS), hint: mc ? '' : 'vazia', disabled: !mc }));
+    const slot = await UI.choose(opts, { title: 'Táticas · escolha uma para apagar', cancel: true, cols: 1 });
+    if (slot == null) return;
+    const ok = await UI.choose([{ label: 'Sim, apagar', value: true }, { label: 'Não', value: false }],
+      { title: `Apagar ${macroName(slot)}?`, cancel: true, cols: 2, start: false });
+    if (ok) { G.macros[slot] = null; await UI.say(`${macroName(slot)} apagada.`); }
+  }
 }
 async function showDiary() {
   const pages = diaryPages();
@@ -521,6 +538,7 @@ async function newGame() {
   G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no capítulo
   G.inv = { pocao: 2 };
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
+  G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();
   await arrivalScene();
@@ -533,6 +551,7 @@ async function quickDungeon() {
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
   G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1 };
+  G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();
   G.town = CRYPT_FRONT;
