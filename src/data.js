@@ -50,17 +50,17 @@ const PARTY_DEFS = [
 ];
 
 const SPELLS = {
-  golpe:     { name: 'Golpe Forte', mp: 4,  target: 'enemy',      kind: 'phys',   power: 1.8, fx: 'slash' },
-  furia:     { name: 'Fúria',       mp: 8,  target: 'allEnemies', kind: 'phys',   power: 1.15, fx: 'slash' },
-  fogo:      { name: 'Fogo',        mp: 4,  target: 'enemy',      kind: 'mag',    power: 2.2, base: 8,  fx: 'fire' },
-  gelo:      { name: 'Gelo',        mp: 8,  target: 'allEnemies', kind: 'mag',    power: 1.4, base: 6,  fx: 'ice' },
-  raio:      { name: 'Raio',        mp: 12, target: 'enemy',      kind: 'mag',    power: 3.4, base: 16, fx: 'bolt' },
-  cura:      { name: 'Cura',        mp: 3,  target: 'ally',       kind: 'heal',   power: 2,   base: 20, field: true },
-  luz:       { name: 'Luz Sagrada', mp: 5,  target: 'enemy',      kind: 'holy',   power: 2,   base: 10, fx: 'holy' },
-  reviver:   { name: 'Reviver',     mp: 12, target: 'deadAlly',   kind: 'revive', field: true },
-  curaTotal: { name: 'Cura Total',  mp: 10, target: 'allAllies',  kind: 'heal',   power: 1.5, base: 15, field: true },
-  golpeBaixo: { name: 'Golpe Baixo',   mp: 3,  target: 'enemy',      kind: 'phys',   power: 1.4, pierce: true, fx: 'slash' },
-  leque:      { name: 'Leque de Facas', mp: 6, target: 'allEnemies', kind: 'phys',   power: 0.8, fx: 'slash' },
+  golpe:     { name: 'Golpe Forte', mp: 4,  target: 'enemy',      kind: 'phys',   power: 1.8, fx: 'slash', desc: 'Um golpe com toda a força.' },
+  furia:     { name: 'Fúria',       mp: 8,  target: 'allEnemies', kind: 'phys',   power: 1.15, fx: 'slash', desc: 'Gira a espada contra todos.' },
+  fogo:      { name: 'Fogo',        mp: 4,  target: 'enemy',      kind: 'mag',    power: 2.2, base: 8,  fx: 'fire', desc: 'Uma chama que queima um inimigo.' },
+  gelo:      { name: 'Gelo',        mp: 8,  target: 'allEnemies', kind: 'mag',    power: 1.4, base: 6,  fx: 'ice', desc: 'Geada sobre todos os inimigos.' },
+  raio:      { name: 'Raio',        mp: 12, target: 'enemy',      kind: 'mag',    power: 3.4, base: 16, fx: 'bolt', desc: 'Um raio forte num inimigo só.' },
+  cura:      { name: 'Cura',        mp: 3,  target: 'ally',       kind: 'heal',   power: 2,   base: 20, field: true, desc: 'Fecha as feridas de um aliado.' },
+  luz:       { name: 'Luz Sagrada', mp: 5,  target: 'enemy',      kind: 'holy',   power: 2,   base: 10, fx: 'holy', desc: 'Luz que fere. Dobra contra mortos-vivos.' },
+  reviver:   { name: 'Reviver',     mp: 12, target: 'deadAlly',   kind: 'revive', field: true, desc: 'Põe de pé um aliado caído.' },
+  curaTotal: { name: 'Cura Total',  mp: 10, target: 'allAllies',  kind: 'heal',   power: 1.5, base: 15, field: true, desc: 'Cura todo o grupo de uma vez.' },
+  golpeBaixo: { name: 'Golpe Baixo',   mp: 3,  target: 'enemy',      kind: 'phys',   power: 1.4, pierce: true, fx: 'slash', desc: 'Acerta onde a armadura não cobre.' },
+  leque:      { name: 'Leque de Facas', mp: 6, target: 'allEnemies', kind: 'phys',   power: 0.8, fx: 'slash', desc: 'Facas para todos os inimigos.' },
 };
 
 const ITEMS = {
@@ -76,6 +76,51 @@ const EQUIPS = {
   cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'spell', bonus: { mag: 6 } },
   espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 10 } },
   mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 5, mag: 5 } },
+};
+
+// Heroes screen: attribute names in full, the starting gear of each hero (shown until something better is found)
+const STAT_FULL = { atk: 'Ataque', def: 'Defesa', mag: 'Magia', agi: 'Agilidade' };
+const START_GEAR = {
+  aldo:    { arma: { name: 'Espada de viagem', icon: 'atk' },  armadura: { name: 'Túnica de couro', icon: 'def' } },
+  lyra:    { arma: { name: 'Cajado de estudo', icon: 'spell' }, armadura: { name: 'Vestido de viagem', icon: 'def' } },
+  teo:     { arma: { name: 'Maça de noviço', icon: 'atk' },    armadura: { name: 'Hábito branco', icon: 'def' } },
+  andilla: { arma: { name: 'Adaga', icon: 'atk' },             armadura: { name: 'Capa cinza', icon: 'def' } },
+};
+// The story of each hero grows with the game: a line shows once its flag is set (flags: G.seen, plus quest, bossDead, carta)
+const HERO_STORY = {
+  aldo: {
+    lines: [
+      { text: 'Chegou a Valmor sozinho, com a espada nas costas e a bolsa vazia. Diz que veio procurar trabalho.' },
+      { text: 'A vila inteira sabe que ele volta por causa da Clara, a professora. Ninguém diz isso na cara dele.' },
+      { when: 'quest', text: 'Aceitou o pedido do ancião: descer à cripta da igreja velha e calar o sino.' },
+      { when: 'bossDead', text: 'O sino de Valmor parou. Agora a estrada leva a Erukh.' },
+    ],
+    quotes: [{ text: 'Vim procurar trabalho. Só isso.' }, { when: 'bossDead', text: 'Trabalho não falta. Isso eu garanto.' }],
+  },
+  lyra: {
+    lines: [
+      { text: 'Irmã caçula do Aldo. Chegou na carroça do correio, com mais livros que bagagem.' },
+      { text: 'Veio por duas coisas: o irmão e a fonte de luz de Valmor.' },
+      { when: 'fonteLyra', text: 'Tocou a água da fonte e sentiu que ela lembra de quem passa.' },
+    ],
+    quotes: [{ text: 'Aldo vê a professora. Aldo esquece como se anda.' }, { when: 'fonteLyra', text: 'A água lembra de quem passa. Dá para sentir.' }],
+  },
+  teo: {
+    lines: [
+      { text: 'Noviço que veio ajudar a irmã Irene no inverno.' },
+      { when: 'teoWin', text: 'O grupo o achou no cemitério, cercado de mortos que não ficavam quietos.' },
+      { when: 'carta', text: 'Guarda uma carta com o selo real e não vai rompê-lo. Só a rainha pode.' },
+    ],
+    quotes: [{ text: 'Os mortos merecem descanso. Os vivos também.' }],
+  },
+  andilla: {
+    lines: [
+      { text: 'Joga dados na taverna e ganha mais do que devia.' },
+      { when: 'andillaNome', text: 'Diz que se chama Andilla. Perdeu um estojo de ganchos no cemitério e não explica para que serve.' },
+      { when: 'bossDead', text: 'Ficou no grupo. Diz que é pelo ouro.' },
+    ],
+    quotes: [{ text: 'Tudo tem preço. Até a coragem.' }, { when: 'porque', text: 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.' }],
+  },
 };
 
 const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', agi: 'AGI', hp: 'PV', mp: 'PM' };
@@ -184,4 +229,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { ENEMIES, FLOORS };
+if (typeof module !== 'undefined') module.exports = { ENEMIES, FLOORS, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };

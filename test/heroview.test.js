@@ -1,0 +1,94 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const R = require('../src/uirules.js');
+const D = require('../src/data.js');
+const { HERO_BODY, GEAR_LOOK } = require('../src/herobody.js');
+const { GridSprite } = require('../src/gridsprite.js');
+const { inPalette } = require('../src/palette.js');
+const { ICON_ART } = require('../src/frame.js');
+
+const IDS = ['aldo', 'lyra', 'teo', 'andilla'];
+
+test('full-body sprites: same-width rows, every letter colored, palette colors only, two frames, 48x64', () => {
+  for (const id of IDS) {
+    for (const def of [HERO_BODY[id], HERO_BODY[id + 'Ko']]) {
+      assert.deepEqual(GridSprite.check(def), [], id);
+      for (const c of Object.values(def.pal)) assert.ok(inPalette(c), `${id} ${c}`);
+      assert.deepEqual(GridSprite.sizeOf(def), { w: 48, h: 64 }, id);
+    }
+    assert.equal(GridSprite.frameCount(HERO_BODY[id]), 2, id);
+  }
+  for (const look of Object.values(GEAR_LOOK)) for (const c of Object.values(look)) assert.ok(inPalette(c), c);
+  for (const id of Object.keys(GEAR_LOOK)) assert.ok(D.EQUIPS[id], `${id} is an equipment`);
+});
+
+test('every skill of every hero has a description, a target text and an icon that exists', () => {
+  for (const d of D.PARTY_DEFS) for (const [, id] of d.spells) {
+    const sp = D.SPELLS[id];
+    assert.ok(sp.desc && !sp.desc.includes('—'), id);
+    assert.ok(R.TARGET_TEXT[sp.target], id);
+    assert.ok(ICON_ART[R.spellIcon(sp)], `${id}: ${R.spellIcon(sp)}`);
+  }
+});
+
+test('skills book: known by level, the rest still to come with their level', () => {
+  const lyra = D.PARTY_DEFS.find(d => d.id === 'lyra');
+  assert.deepEqual(R.spellBook(lyra.spells, 3), [{ id: 'fogo', lv: 1, known: true }, { id: 'gelo', lv: 3, known: true }, { id: 'raio', lv: 6, known: false }]);
+  assert.equal(R.spellBook(lyra.spells, 1).filter(s => s.known).length, 1);
+});
+
+test('slots show the best equipment found, or the starting gear by name, never an empty box', () => {
+  const s0 = R.slotGear('aldo', [], D.EQUIPS, D.START_GEAR);
+  assert.deepEqual(s0.map(s => [s.name, s.start]), [['Espada de viagem', true], ['Túnica de couro', true]]);
+  const s1 = R.slotGear('aldo', ['espadaFerro', 'espadaPrata'], D.EQUIPS, D.START_GEAR);
+  assert.equal(s1[0].name, 'Espada de Prata');
+  assert.deepEqual(s1[0].bonus, { atk: 10 });
+  for (const id of IDS) for (const s of R.slotGear(id, [], D.EQUIPS, D.START_GEAR)) assert.ok(s.name && ICON_ART[s.icon], `${id} ${s.slot}`);
+  // the sprite changes colors with what is equipped, and only for its owner
+  const pal = R.bodyPal(HERO_BODY.aldo.pal, 'aldo', ['espadaPrata', 'cajadoRunico'], D.EQUIPS, GEAR_LOOK);
+  assert.equal(pal.g, GEAR_LOOK.espadaPrata.g);
+  assert.equal(pal.E, HERO_BODY.aldo.pal.E);
+});
+
+test('attributes with equipment bonus and a bar against the best of the party', () => {
+  const rows = R.statRows([{ total: { atk: 20, def: 10, mag: 4, agi: 7 }, bonus: { atk: 6 } }, { total: { atk: 10, def: 5, mag: 16, agi: 10 }, bonus: {} }], 1);
+  assert.deepEqual(rows.map(r => r.key), ['atk', 'def', 'mag', 'agi']);
+  assert.equal(rows[0].frac, 0.5);
+  assert.equal(rows[2].frac, 1);
+  assert.equal(R.statRows([{ total: { atk: 20, def: 10, mag: 4, agi: 7 }, bonus: { atk: 6 } }], 0)[0].bonus, 6);
+  assert.equal(R.xpLeftText(30, 2, 42), 'Faltam 12 XP para o nível 3');
+});
+
+test('the story grows with flags and never shows a spoiler or an em dash', () => {
+  const a = D.HERO_STORY.aldo;
+  assert.equal(R.storyLines(a.lines, {}).length, 2);
+  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).length, 4);
+  assert.equal(R.storyQuote(a.quotes, {}), 'Vim procurar trabalho. Só isso.');
+  assert.equal(R.storyQuote(a.quotes, { bossDead: true }), 'Trabalho não falta. Isso eu garanto.');
+  for (const id of IDS) {
+    const st = D.HERO_STORY[id];
+    assert.ok(R.storyLines(st.lines, {}).length >= 1 && R.storyQuote(st.quotes, {}), id);
+    for (const l of [...st.lines, ...st.quotes]) assert.ok(!/—|Velkor|Morvath|Irmandade|dragão|Sindarin/i.test(l.text), l.text);
+  }
+});
+
+test('the bag groups consumables, equipment and key items; the letter keeps its sealed name', () => {
+  const g = R.bagGroups({ inv: { pocao: 3, eter: 0 }, key: { carta: true }, owned: ['espadaFerro'], items: D.ITEMS, equips: D.EQUIPS, keyItems: D.KEY_ITEMS, read: false });
+  assert.deepEqual(g.map(x => x.title), ['Consumíveis', 'Equipamentos', 'Itens-chave']);
+  assert.deepEqual(g[0].cells.map(c => [c.id, c.n]), [['pocao', 3]]);
+  assert.equal(g[2].cells[0].name, D.KEY_ITEMS.carta.sealedName);
+  assert.deepEqual(R.bagGroups({ inv: {}, key: {}, owned: [], items: D.ITEMS, equips: D.EQUIPS, keyItems: D.KEY_ITEMS }), []);
+});
+
+test('layout: three columns on wide screens, three tabs on phones; text never under the minimum', () => {
+  for (const [w, h, mode] of [[1280, 720, 'cols'], [1440, 900, 'cols'], [1920, 1080, 'cols'], [1366, 768, 'cols'], [390, 844, 'tabs'], [844, 390, 'tabs']]) {
+    assert.equal(R.heroViewMode(w, h), mode, `${w}x${h}`);
+    const dpr = w < 900 || h < 500 ? 3 : 1, f = R.heroViewFonts(w, h, dpr);
+    assert.ok(f.body >= 12, `${w}x${h} body ${f.body}`);
+    assert.equal((f.body * dpr) % 8, 0, `${w}x${h}: the font stays on its 8 px grid`);
+    assert.ok(f.big >= f.body);
+  }
+  assert.ok(R.heroViewFonts(1280, 720).body >= 16);
+  assert.deepEqual(R.heroViewViews('cols'), ['skills', 'bag']);
+  assert.deepEqual(R.heroViewViews('tabs'), ['hero', 'sheet', 'skills', 'bag']);
+});

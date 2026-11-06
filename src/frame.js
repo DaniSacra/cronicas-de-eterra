@@ -102,6 +102,14 @@ const ICON_ART = {
     '................', '..kkkkkkkkkkkk..', '.knnnnnnnnnnnbk.', '..kkkkkkkkkkkk..', '...kyyyyyyyyk...', '...kyyggggyyk...',
     '...kygyyyygyk...', '...kygyyygggk...', '...kygyyyyoyk...', '...kygyyyyyyk...', '...kyyggggyyk...', '...kyyyyyyyyk...',
     '..kkkkkkkkkkkk..', '.knnnnnnnnnnnbk.', '..kkkkkkkkkkkk..', '................'],
+  raio: [ // lightning bolt: the Raio spell
+    '................', '........kkkkk...', '.......ktggok...', '......ktggok....', '.....ktggok.....', '....ktggokkkk...',
+    '...ktgggggggk...', '...kkkkktggok...', '.......ktgok....', '......ktgok.....', '.....ktgok......', '....ktgok.......',
+    '....kgok........', '....kok.........', '....kk..........', '................'],
+  luz: [ // a small sun: holy light
+    '................', '.......kk.......', '..k....kgk...k..', '..kgk..kgk.kgk..', '...kgkkkkkkgk...', '....kktttgkk....',
+    '...kttttttgok...', 'kkkkttttttggokkk', 'kgggttttttggoggk', 'kkkkttttttggokkk', '...ktttttggok...', '....kkggggkk....',
+    '...kgkkkkkkgk...', '..kgk..kgk.kgk..', '..k....kgk...k..', '.......kk.......'],
   fogo: [ // flame: fire magic in a tactic summary
     '................', '.......kk.......', '......khk.......', '......khhk......', '.....khHhk..k...', '.....khHHhk.kk..',
     '....khHHHhkkhk..', '...khHHgHHhkhk..', '...khHgggHHhhk..', '..khHggtggHHhk..', '..khHgttttgHhk..', '..khHgttttgHhk..',

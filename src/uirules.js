@@ -106,4 +106,61 @@ function battleLayout(sizes, vw, vh, boss = false) {
   });
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint };
+// ---------- Heroes screen (src/equipview.js) ----------
+// What each slot shows: the best equipment found for that hero, or the hero's starting gear (never an empty box)
+function slotGear(heroId, ownedIds, equips, start) {
+  return heroGear(heroId, ownedIds, equips).map(s => {
+    const it = s.items.at(-1);
+    return it ? { slot: s.slot, label: s.label, name: it.name, icon: it.icon, bonus: it.bonus, id: it.id, start: false }
+      : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
+  });
+}
+// Colors of the full-body sprite: the base palette with each found equipment's look on top
+const bodyPal = (pal, heroId, ownedIds, equips, looks) =>
+  Object.assign({}, pal, ...ownedIds.filter(id => equips[id] && equips[id].who === heroId && looks[id]).map(id => looks[id]));
+
+// Skills book: every skill of the hero by level, known or still to come
+const spellBook = (spells, lv) => spells.map(([at, id]) => ({ id, lv: at, known: lv >= at }));
+const TARGET_TEXT = { enemy: 'Um inimigo', allEnemies: 'Todos os inimigos', ally: 'Um aliado', deadAlly: 'Um aliado caído', allAllies: 'O grupo' };
+const KIND_ICON = { phys: 'atk', heal: 'cura', revive: 'cura', holy: 'luz' };
+const FX_ICON = { fire: 'fogo', ice: 'spell', bolt: 'raio' };
+const spellIcon = sp => FX_ICON[sp.fx] || KIND_ICON[sp.kind] || 'spell';
+
+// Attributes: one row each, with the equipment bonus and a bar against the best of the party (0..1)
+const STAT_KEYS = ['atk', 'def', 'mag', 'agi'];
+function statRows(values, i) {
+  return STAT_KEYS.map(k => {
+    const best = Math.max(1, ...values.map(v => v.total[k]));
+    return { key: k, value: values[i].total[k], bonus: values[i].bonus[k] || 0, frac: values[i].total[k] / best };
+  });
+}
+// "Faltam 12 XP para o nível 3"
+const xpLeftText = (xp, lv, next) => `Faltam ${Math.max(0, next - xp)} XP para o nível ${lv + 1}`;
+
+// A hero's story grows with the game: each line has a flag (or none) and shows once the flag is set
+const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when]).map(l => l.text);
+// The quote: the last unlocked one
+const storyQuote = (quotes, flags) => storyLines(quotes, flags).at(-1) || '';
+
+// The party bag in three groups; the letter keeps its sealed name until it is read
+function bagGroups({ inv, key, owned, items, equips, keyItems, read }) {
+  return [
+    { title: 'Consumíveis', cells: Object.keys(items).filter(k => inv[k] > 0).map(k => ({ id: k, kind: 'item', icon: k, name: items[k].name, n: inv[k], desc: items[k].desc })) },
+    { title: 'Equipamentos', cells: owned.filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0, desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, em uso` })) },
+    { title: 'Itens-chave', cells: Object.keys(keyItems).filter(k => key[k]).map(k => ({ id: k, kind: 'key', icon: k, n: 0, desc: keyItems[k].desc,
+      name: read || !keyItems[k].sealedName ? keyItems[k].name : keyItems[k].sealedName })) },
+  ].filter(g => g.cells.length);
+}
+
+// Three columns when there is room; on a phone (portrait, or landscape with little height) three tabs
+const heroViewMode = (w, h) => (w < h || w < 900 || h < 520 ? 'tabs' : 'cols');
+// Views that Tab, Q and E cycle through: the book's two pages, or every tab on a phone
+const heroViewViews = mode => (mode === 'tabs' ? ['hero', 'sheet', 'skills', 'bag'] : ['skills', 'bag']);
+// Text sizes of the screen: body at the menu size (never under 8 px of the font at a whole scale), titles at the dialog size
+function heroViewFonts(w, h, dpr = 1) {
+  const f = fontScale(w, h, dpr);
+  return { body: f.f2, big: f.fd };
+}
+
+if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
