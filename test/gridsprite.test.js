@@ -3,11 +3,13 @@ const assert = require('node:assert/strict');
 const { GridSprite } = require('../src/gridsprite.js');
 const { inPalette } = require('../src/palette.js');
 const { HERO_FACES, HERO_FACE_BG, heroFace } = require('../src/herofaces.js');
+const { ENEMY_ART } = require('../src/enemyart.js');
 
-// Every grid sprite in the game, by name (enemies join this list in src/enemyart.js)
+// Every grid sprite in the game, by name
 const ALL = () => {
   const out = {};
   for (const id of Object.keys(HERO_FACES)) out['face:' + id] = heroFace(id);
+  for (const [id, def] of Object.entries(ENEMY_ART)) out['enemy:' + id] = def;
   return out;
 };
 

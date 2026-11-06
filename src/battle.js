@@ -15,23 +15,17 @@ const retarget = t => (t && t.hp > 0) ? t : (aliveEnemies().length ? pick(aliveE
 function makeEnemies(ids) {
   const list = ids.map((id, i) => {
     const d = ENEMIES[id];
-    return { ...d, id, maxhp: d.hp, hp: d.hp, i, canvas: Sprites.enemy(id), hitT: -1e9, atkT: -1e9, dieT: null, letter: '' };
+    const frames = Sprites.enemyFrames(id);
+    return { ...d, id, maxhp: d.hp, hp: d.hp, i, frames, canvas: frames[0], grid: Sprites.isGrid(id), hitT: -1e9, atkT: -1e9, dieT: null, letter: '' };
   });
   const counts = {};
   list.forEach(e => counts[e.id] = (counts[e.id] || 0) + 1);
   const seen = {};
   list.forEach(e => { if (counts[e.id] > 1) { seen[e.id] = (seen[e.id] || 0); e.letter = 'ABC'[seen[e.id]++]; } });
-  const n = list.length;
-  list.forEach((e, i) => {
-    e.scale = e.boss ? 1.15 : 1.3;
-    e.w = e.canvas.width * e.scale; e.h = e.canvas.height * e.scale;
-    e.x = e.boss ? VW / 2 : VW / 2 + (i - (n - 1) / 2) * (n === 3 ? 100 : 110);
-    // a janela de texto cobre cerca de 1/3 de baixo: os inimigos ficam em pé logo acima dela
-    const floorY = Math.round(VH * 0.66);
-    if (e.boss) { e.scale = Math.min(1.15, (floorY - 44) / e.canvas.height); e.w = e.canvas.width * e.scale; e.h = e.canvas.height * e.scale; }
-    e.base = e.boss ? floorY - 4 : floorY - 14;
-    e.top = e.base - e.h; e.cy = e.base - e.h / 2;
-  });
+  // Whole-number scale and positions (src/uirules.js): pixels stay square, nothing under the HUD
+  const boss = list.some(e => e.boss);
+  battleLayout(list.map(e => ({ w: e.canvas.width, h: e.canvas.height, float: e.float })), VW, VH, boss)
+    .forEach((L, i) => Object.assign(list[i], L, { cy: L.top + L.h / 2 }));
   return list;
 }
 
@@ -377,6 +371,15 @@ async function startBattle(ids, isBoss, opts = {}) {
 }
 
 // ---------- Desenho da batalha ----------
+// Pixel ellipse on the floor under an enemy (the sprite never carries its own shadow)
+function groundShadow(c, x, y, rx, alpha) {
+  c.fillStyle = `rgba(38,32,46,${(0.5 * alpha).toFixed(2)})`;
+  for (let dy = -2; dy <= 1; dy++) {
+    const half = Math.round(rx * Math.sqrt(1 - ((dy + 0.5) / 2.5) ** 2));
+    c.fillRect(x - half, y + dy, half * 2, 1);
+  }
+}
+
 function drawBattle(now) {
   const c = vctx;
   c.drawImage(bgCanvas, 0, 0, VW, VH);
@@ -389,13 +392,15 @@ function drawBattle(now) {
     let alpha = appear;
     if (e.dieT) alpha = Math.max(0, 1 - (now - e.dieT) / 700);
     if (now - e.hitT < 320 && Math.floor((now - e.hitT) / 55) % 2 === 0) continue;
-    let sc = 1;
-    if (now - e.atkT < 300) sc = 1 + 0.14 * Math.sin((now - e.atkT) / 300 * Math.PI);
-    const bob = e.float ? Math.sin(now / 380 + e.i * 1.7) * 4 : Math.sin(now / 600 + e.i) * 1;
-    const w = e.w * sc, h = e.h * sc;
+    // Idle: two frames (slow and heavy for the boss); flyers bob a few whole pixels; attacking = a quick hop forward
+    const frame = e.frames[Math.floor((now + e.i * 370) / (e.boss ? 900 : 520)) % 2];
+    const bob = e.float ? Math.round(Math.sin(now / 380 + e.i * 1.7) * 3) : 0;
+    const hop = now - e.atkT < 300 ? Math.round(5 * Math.sin((now - e.atkT) / 300 * Math.PI)) : 0;
+    const rise = e.dieT ? Math.round((now - e.dieT) / 40) : 0;
+    if (e.grid && !e.dieT) groundShadow(c, e.x, e.base, Math.round(e.w * (e.float ? 0.28 : 0.38)), alpha);
     c.globalAlpha = alpha;
     if (e.dieT) { c.filter = 'sepia(1) saturate(4) hue-rotate(-50deg)'; }
-    c.drawImage(e.canvas, e.x - w / 2, e.base - h + bob - (e.dieT ? (now - e.dieT) / 40 : 0), w, h);
+    c.drawImage(frame, e.left, e.top + bob - (e.boss ? 0 : hop) - rise, e.w, e.h);
     c.filter = 'none';
     c.globalAlpha = 1;
     // Barra de vida
@@ -408,13 +413,12 @@ function drawBattle(now) {
 
   // Chefe: barra no topo
   const boss = B.enemies.find(e => e.boss);
-  if (boss) {
-    HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
-  }
+  // Boss fight: the command/target name goes inside the boss window, so the boss keeps the whole screen
+  if (boss) HUD.boss(B.label || boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
 
   // Seta de alvo (balança em cima do inimigo escolhido) e o nome do comando/alvo na placa do topo
   const hv = B.hover;
-  if (B.label) HUD.label(B.label);
+  if (B.label && !boss) HUD.label(B.label);
   if (hv && hv.hp > 0) {
     const y = Math.max(10, hv.top - 4) - (Math.floor(now / 200) % 2) * 2;
     c.fillStyle = '#ffd23f';

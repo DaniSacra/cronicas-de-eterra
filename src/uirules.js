@@ -60,4 +60,29 @@ function takeTalk(seen, id) {
 // any other speaker name, or null for narration.
 const talkLines = (lines, heroIds, inParty) => lines.filter(([who]) => !heroIds.includes(who) || inParty(who));
 
-if (typeof module !== 'undefined') module.exports = { crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines };
+
+// Screen fit: logical resolution follows the window at a whole scale of device pixels (base 320x180 at 4x in 1280x720)
+function viewFit(bw, bh) {
+  const s = Math.max(1, Math.floor(Math.min(bw / 288, bh / 180)));
+  let w = Math.min(512, Math.max(288, Math.ceil(bw / s))), h = Math.min(900, Math.max(180, Math.ceil(bh / s)));
+  w += w & 1; h += h & 1;
+  return { w, h, s };
+}
+
+// Battle: enemies stand on a floor line just above the command bar, at the biggest whole scale that fits
+// their slot (art pixels stay square, never blurry). Common enemies keep room for the HP bar under them.
+const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26;
+function battleLayout(sizes, vw, vh, boss = false) {
+  const floor = Math.round(vh * BATTLE_FLOOR), n = sizes.length, slot = Math.floor(vw / n);
+  const base = boss ? floor : floor - 12, safe = Math.round(vh * (boss ? 0.17 : BATTLE_SAFE_TOP));
+  // one scale for the whole group, so every pixel in the scene has the same size
+  const scale = Math.max(1, Math.min(BATTLE_MAX_SCALE, ...sizes.map(({ w, h, float }) =>
+    Math.min(Math.floor((boss ? vw - 8 : slot - 2) / w), Math.floor((base - (float ? 8 : 0) - safe) / h)))));
+  return sizes.map(({ w, h, float }, i) => {
+    const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (i - (n - 1) / 2) * slot);
+    const W = w * scale, H = h * scale, left = x - Math.floor(W / 2), lift = float ? 8 : 0; // flyers hover over their shadow
+    return { x, base, scale, w: W, h: H, left, top: base - H - lift };
+  });
+}
+
+if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines };

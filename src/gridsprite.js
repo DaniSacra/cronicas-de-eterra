@@ -32,6 +32,13 @@ const GridSprite = (() => {
   // Swap colors without a new grid (variants of the same enemy or character)
   const recolor = (def, pal) => Object.assign({}, def, { pal: Object.assign({}, def.pal, pal) });
 
+  // Same, but naming colors by hex: { '#from': '#to' } (variants written against the palette, not the letters)
+  const recolorHex = (def, map) => {
+    const pal = {};
+    for (const [k, v] of Object.entries(def.pal)) if (map[v]) pal[k] = map[v];
+    return recolor(def, pal);
+  };
+
   const cache = new WeakMap();
   function render(def, frame = 0) {
     let per = cache.get(def);
@@ -43,7 +50,7 @@ const GridSprite = (() => {
     return (per[frame] = cv);
   }
 
-  return { render, toPixels, check, recolor, sizeOf, frameCount: def => framesOf(def).length };
+  return { render, toPixels, check, recolor, recolorHex, sizeOf, frameCount: def => framesOf(def).length };
 })();
 
 if (typeof module !== 'undefined') module.exports = { GridSprite };

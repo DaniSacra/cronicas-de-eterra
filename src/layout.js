@@ -4,9 +4,7 @@
   function fit() {
     const r = screenEl.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
     const bw = r.width * dpr, bh = r.height * dpr;
-    const s = Math.max(1, Math.floor(Math.min(bw / 288, bh / 180)));
-    let w = Math.min(512, Math.max(288, Math.ceil(bw / s))), h = Math.min(900, Math.max(180, Math.ceil(bh / s)));
-    w += w & 1; h += h & 1;
+    const { w, h, s } = viewFit(bw, bh);
     resizeView(w, h);
     const cw = w * s / dpr, ch = h * s / dpr;
     view.style.width = cw + 'px'; view.style.height = ch + 'px';

@@ -95,17 +95,13 @@ const EQUIPS = {
 const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', agi: 'AGI', hp: 'PV', mp: 'PM' };
 
 const ENEMIES = {
-  rato:      { name: 'Rato Gigante',    hp: 32,  atk: 15, def: 2,  agi: 8,  xp: 6,  sprite: 'rat',
-               pal: { base: '#8a6f5a', light: '#c0a088', dark: '#4a3a2e', eye: '#ff3030' }, drop: ['pocao', 0.08] },
+  rato:      { name: 'Rato Gigante',    hp: 32,  atk: 15, def: 2,  agi: 8,  xp: 6,  sprite: 'rat', drop: ['pocao', 0.08] },
   morcego:   { name: 'Morcego Vampiro', hp: 26,  atk: 14, def: 1,  agi: 14, xp: 5,  sprite: 'bat', float: true,
-               pal: { base: '#5a4070', light: '#9a7ab8', dark: '#24142f', eye: '#ffdd33' },
                skill: { name: 'Mordida Vampira', chance: 0.3, kind: 'drain', power: 1.0 } },
-  gosma:     { name: 'Gosma Verde',     hp: 40,  atk: 14, def: 5,  agi: 5,  xp: 7,  sprite: 'slime',
-               pal: { base: '#4caf50', light: '#b0f090', dark: '#1e5e22', eye: '#fff' }, drop: ['eter', 0.06] },
+  gosma:     { name: 'Gosma Verde',     hp: 40,  atk: 14, def: 5,  agi: 5,  xp: 7,  sprite: 'slime', drop: ['eter', 0.06] },
   esqueleto: { name: 'Esqueleto',       hp: 56,  atk: 20, def: 7,  agi: 8,  xp: 16, sprite: 'skeleton', undead: true,
-               pal: { base: '#ddd6c4', light: '#fffaf0', dark: '#8a8270', eye: '#ff4040' }, drop: ['pocao', 0.1] },
+               recolor: { '#a8323e': '#3a78c8', '#e86a7a': '#8ac0f0', '#3a78c8': '#a8323e', '#2c3c80': '#7a1a24', '#1c2860': '#4a0c14' }, drop: ['pocao', 0.1] },
   aranha:    { name: 'Aranha Tumular',  hp: 48,  atk: 19, def: 5,  agi: 14, xp: 15, sprite: 'spider',
-               pal: { base: '#44444f', light: '#7a7a8a', dark: '#16161c', eye: '#ff2020' },
                skill: { name: 'Ferroada', chance: 0.25, kind: 'phys', power: 1.5 } },
   goblin:    { name: 'Goblin Lanceiro', hp: 62,  atk: 21, def: 8,  agi: 9,  xp: 18, sprite: 'goblin',
                pal: { base: '#6aa040', light: '#9ad06a', dark: '#2e5418', eye: '#ffe040' }, drop: ['pocao', 0.15] },
@@ -119,16 +115,13 @@ const ENEMIES = {
                pal: { base: '#7a7266', light: '#aaa296', dark: '#3c3830', eye: '#ffa020' }, drop: ['pocao', 0.2] },
   // Cemitério de Valmor: mais fracos que os da cripta, para o Aldo aprender sozinho
   ratoCova:    { name: 'Rato de Cova', hp: 14, atk: 8,  def: 1, agi: 6,  xp: 4, sprite: 'rat',
-               pal: { base: '#7a7068', light: '#a89c90', dark: '#3e3830', eye: '#ff5050' } },
+               recolor: { '#b07c58': '#a2a2ac', '#9a6232': '#7a7a82', '#6a3a1a': '#55555e', '#4a2610': '#26262e' } }, // rato cinza do cemitério
   morcegoCova: { name: 'Morcego',      hp: 10, atk: 8,  def: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
-               pal: { base: '#5a4a5a', light: '#8a7a8a', dark: '#2a1e2a', eye: '#ffdd33' } },
-  ossada:      { name: 'Ossada',       hp: 22, atk: 10, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true,
-               pal: { base: '#c8c0aa', light: '#ece6d4', dark: '#6e6656', eye: '#c0ff60' }, drop: ['pocao', 0.2] },
-  encapuzado: { name: 'Encapuzado', hp: 28, atk: 12, def: 3, agi: 6, xp: 10, sprite: 'hooded',
-               pal: { base: '#6e6e78', light: '#a0a0aa', dark: '#2e2e36', eye: '#e02030' }, drop: ['pocao', 0.25] },
+               recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
+  ossada:      { name: 'Ossada',       hp: 22, atk: 10, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
+  encapuzado: { name: 'Encapuzado', hp: 28, atk: 12, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
   // Chefe do capítulo 1: o último padre da igreja velha, um clérigo caído que ainda toca o sino (capitulo1.md)
   sineiro:   { name: 'O Sineiro', hp: 300, atk: 16, def: 14, agi: 11, xp: 0, chama: 13, dreno: 16, sprite: 'bellringer', undead: true, boss: true,
-               pal: { base: '#3a3046', light: '#6a5a78', dark: '#16101e', eye: '#9fd8ff' },
                say: {
                  intro: 'O Sineiro ergue o sino de bronze.\n"A missa acabou faz cinquenta anos. Ninguém mais desce."',
                  enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',
@@ -206,3 +199,5 @@ const JOURNAL = {
   ],
 };
 const journalGoal = () => JOURNAL.goal();
+
+if (typeof module !== 'undefined') module.exports = { ENEMIES, FLOORS };

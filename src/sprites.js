@@ -273,15 +273,23 @@ const Sprites = (() => {
     ell(c, 48, 43, 3, 3, '#3a2a22');
   };
 
+  // Enemies drawn on the grid (src/enemyart.js) come in two idle frames; variants are a palette swap.
+  // The others still use the old drawings above until their turn comes (docs/arte/estilo.md).
   const cache = {};
-  function enemy(id) {
+  function enemyFrames(id) {
     if (cache[id]) return cache[id];
-    const e = ENEMIES[id];
-    const big = e.sprite === 'lich' || e.sprite === 'bellringer';
+    const e = ENEMIES[id], art = ENEMY_ART[e.sprite];
+    if (art) {
+      const def = e.recolor ? GridSprite.recolorHex(art, e.recolor) : art;
+      return (cache[id] = [0, 1].map(f => GridSprite.render(def, f)));
+    }
+    const big = e.sprite === 'lich';
     const c = cv(big ? 128 : 64, big ? 112 : 64);
     draw[e.sprite](c.getContext('2d'), e.pal);
-    return (cache[id] = c);
+    return (cache[id] = [c, c]);
   }
+  const enemy = id => enemyFrames(id)[0];
+  const isGrid = id => !!ENEMY_ART[ENEMIES[id].sprite];
   function toTex(c) { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; return { w: c.width, h: c.height, d }; }
   function world() {
     const mk = (fn, w = 64, h = 64) => { const c = cv(w, h); fn(c.getContext('2d')); return toTex(c); };
@@ -293,5 +301,5 @@ const Sprites = (() => {
       tomb: mk(c => draw.tomb(c)),
     };
   }
-  return { enemy, world };
+  return { enemy, enemyFrames, isGrid, world };
 })();
