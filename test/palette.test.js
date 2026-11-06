@@ -37,13 +37,27 @@ test('hero expressions: every mood keeps the 32x32 grid and stays inside the mas
   }
 });
 
-test('story NPC portraits (Berta, Clara, Hugo, the elder) are 32x32 grids in the master palette', () => {
+test('every NPC portrait is a 32x32 grid in the master palette', () => {
   const { NPC_FACES } = require('../src/npcfaces.js');
   const { GridSprite } = require('../src/gridsprite.js');
-  assert.deepEqual(Object.keys(NPC_FACES).sort(), ['berta', 'bertoldo', 'clara', 'hugo']);
   for (const [id, def] of Object.entries(NPC_FACES)) {
     assert.deepEqual(GridSprite.check(def), [], id);
     assert.equal(def.rows.length, 32); for (const r of def.rows) assert.equal(r.length, 32, id);
     for (const c of [...Object.values(def.pal), ...def.bg]) assert.ok(inPalette(c), `${id} ${c}`);
   }
+});
+
+test('every story speaker has a grid portrait', () => {
+  const { NPC_FACES } = require('../src/npcfaces.js');
+  const { HERO_FACES } = require('../src/herofaces.js');
+  Object.assign(globalThis, { NPC_FACES, HERO_FACES, PARTY_DEFS: [{ id: 'aldo', name: 'Aldo' }] });
+  const { Portraits } = require('../src/portraits.js');
+  const speakers = ['Aldo', 'Ana, a fiandeira', 'Ancião Bertoldo', 'Andilla', 'Berta, a taverneira', 'Bigode', 'Bruno, soldado de folga',
+    'Caio', 'Carta de Shulkhan', 'Clara, a professora', 'Dona Marta', 'Dora, a mercadora', 'Encapuzado', 'Guarda Hugo', 'Irmã Irene',
+    'Lia', 'Lápide', 'Mensageiro', 'Morvath, o Lich-Rei', 'Moça dos dados', 'Nino', 'O Sineiro', 'Rui, o lavrador', 'Tomé, o pescador', 'Bilhete'];
+  for (const name of speakers) {
+    const key = Portraits.keyFor(name);
+    assert.ok(key && (NPC_FACES[key] || HERO_FACES[key]), name);
+  }
+  assert.equal(Portraits.keyFor('Esqueleto'), null);
 });
