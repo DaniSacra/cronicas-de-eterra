@@ -99,6 +99,22 @@ test('goalSpot: the arrow sends an old save without Lyra back to the tavern befo
   assert.deepEqual(run.json('goalSpot()'), run.json(`BUILDINGS.find(b => b.id === 'tavern').door`));
 });
 
+test('Clara: one scene on the first day, another once Lyra is in the party', async () => {
+  const { G, log, run } = story(['aldo']);
+  run(`enterTown({ x: 12, y: 11, dir: 2 }, 'valmor')`);
+  const clara = () => run(`talkTo(TOWN.npcs.find(n => n.def.id === 'clara'))`);
+  await clara();
+  assert.ok(log.includes('Clara, a professora:\nAldo. Voltou.'));
+  assert.ok(!log.some(t => t.startsWith('Lyra')));
+  G.party.push(run(`newMember(PARTY_DEFS.find(d => d.id === 'lyra'))`));
+  log.length = 0;
+  await clara();
+  assert.equal(log[1], 'Lyra~alegre:\nAldo vê a professora. Aldo esquece como se anda.');
+  log.length = 0;
+  await clara();
+  assert.ok(!log.some(t => t.startsWith('Lyra')), 'each scene plays once');
+});
+
 test('nobody calls Aldo "forasteiro" anymore', () => {
   for (const f of fs.readdirSync(`${__dirname}/../src`)) assert.doesNotMatch(fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8'), /forasteir/i, f);
 });

@@ -440,22 +440,39 @@ async function talkTo(n) {
   } finally { n.talking = false; }
 }
 
-// Clara e Aldo: ele gosta dela e tropeça nas palavras; ela é discreta e só deixa escapar um olhar (uma vez só)
+// Clara e Aldo: ele gosta dela e tropeça nas palavras; ela é discreta e só deixa escapar um olhar.
+// Duas cenas, uma vez cada: sozinho no primeiro dia, e com a Lyra narrando o irmão depois que ela chega.
 async function claraTalk(n) {
-  const nm = 'Clara, a professora';
-  if (G.seen['talk:clara'] || G.bossDead) return say(nm, byStage(n.def.lines));
-  await partyTalk('clara', [
-    [null, () => `${heroName('aldo')} vê a professora e para no meio da rua.`],
+  const nm = 'Clara, a professora', a = heroName('aldo'), lyra = inParty('lyra');
+  if (G.bossDead || G.seen[lyra ? 'talk:claraLyra' : 'talk:clara']) return say(nm, byStage(n.def.lines));
+  if (lyra) return partyTalk('claraLyra', [
+    [null, `${a} vê a professora e para no meio da rua.`],
+    ['lyra', `${a} vê a professora. ${a} esquece como se anda.`, 'alegre'],
     ['aldo', 'Clara.'],
-    [nm, () => `${heroName('aldo')}. Bom dia.`],
+    [nm, `${a}. Voltou.`],
+    ['aldo', 'Voltei. Para o inverno. Tem trabalho. Quer dizer, vim pelo trabalho. Também.'],
+    ['lyra', `${a} explica demais. ${a} sempre explica demais quando está nervoso.`],
+    ['aldo', `${heroName('lyra')}.`, 'bravo'],
+    [nm, `Oi, ${heroName('lyra')}. Com licença, a aula vai começar.`],
+    [null, 'Clara se afasta. Antes da esquina, olha para trás uma vez.'],
+    ['lyra', `Ela olhou para trás. ${a} viu. ${a} vai pensar nisso a semana inteira.`, 'alegre'],
+    ['aldo', 'Eu não vou pensar em nada.'],
+    ['teo', `Você ficou vermelho, ${a}.`],
+    ['andilla', 'Vermelho de frio, claro.'],
+    ['lyra', `${a} diz que é frio. ${a} mente muito mal.`, 'alegre'],
+  ]);
+  await partyTalk('clara', [
+    [null, `${a} vê a professora e para no meio da rua.`],
+    ['aldo', 'Clara.'],
+    [nm, `${a}. Voltou.`],
     ['aldo', 'Voltei. Para o inverno. Tem trabalho por aqui. Quer dizer, vim pelo trabalho. Também.'],
     [nm, 'Que bom.'],
     [null, 'Ela ajeita o xale e olha para as crianças.'],
     ['aldo', 'Você está... As crianças estão bem? O Nino cresceu.'],
     [nm, 'Estão bem. Com licença, a aula vai começar.'],
     [null, 'Clara se afasta. Antes da esquina, olha para trás uma vez.'],
-    [null, () => `${heroName('aldo')} fica parado, coçando a nuca.`],
-    ['teo', () => `Você ficou vermelho, ${heroName('aldo')}.`],
+    [null, `${a} fica parado, coçando a nuca.`],
+    ['teo', `Você ficou vermelho, ${a}.`],
     ['andilla', 'Vermelho de frio, claro.'],
   ]);
 }
