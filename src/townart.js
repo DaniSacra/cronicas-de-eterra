@@ -460,6 +460,7 @@ const TownArt = (() => {
   const ICONS = {
     mug: { rows: ['.www..', 'wWWWw.', 'oyyyoo', 'oyYyo.o', 'oyYyoo', 'oyyyo.', '.ooo..'], pal: { w: '#ffffff', W: '#e8e8e0', o: '#4a2a10', y: '#f0b030', Y: '#ffe070' } },
     potion: { rows: ['..oo...', '..oo...', '.oRRo..', 'oRhRRo.', 'oRRRro.', '.oooo..'], pal: { o: '#2a1010', R: '#e03a40', r: '#901820', h: '#ffb0b0' } },
+    book: { rows: ['.RRRRR.', 'RrYYYRw', 'RrRRRRw', 'RrYYRRw', 'RrRRRRw', '.qqqqqq'], pal: { R: '#a8323e', r: '#7a1a24', Y: '#f0d860', w: '#ffffff', q: '#4a0c14' } },
     anvil: { rows: ['ooooooo', 'oIIIIIo', '.oIiio.', '..oio..', '.ooooo.'], pal: { o: '#1a1a22', I: '#a0a8b8', i: '#5a6070' } },
   };
 
@@ -470,6 +471,7 @@ const TownArt = (() => {
     shop:    { roof: 'gold', wallH: 18, beams: true, awning: true, sign: 'potion', signCol: 1 },
     smith:   { roof: 'slate', wallH: 18, stoneWall: true, chimneys: [0.72], glow: true, chimGlow: true, sign: 'anvil', signCol: -1 },
     sara:    { roof: 'teal', wallH: 18, beams: true, chimneys: [0.25], shutter: '#2a7a8a', flowers: true },
+    school:  { roof: 'blue', wallH: 18, beams: true, chimneys: [0.82], shutter: '#c8a040', sign: 'book', signCol: -1 },
     joaquim: { roof: 'brown', wallH: 18, beams: true, chimneys: [0.75], shutter: '#7a8a3a' },
   };
 

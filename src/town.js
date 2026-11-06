@@ -20,6 +20,7 @@ const BUILDINGS = [
   { id: 'joaquim', x: 16, y: 15, w: 3, h: 2 },
   { id: 'crypt', x: 26, y: 15, w: 3, h: 3 },
   { id: 'tavern', x: 20, y: 14, w: 5, h: 3 },
+  { id: 'school', x: 14, y: 9, w: 4, h: 2 }, // a escolinha da Clara, entre as crianças (Nino e Lia)
 ];
 // Lampiões de rua (cada um ocupa um tile de grama ao lado de uma rua; ver test/winter.test.js)
 const LAMPS = [[11, 7], [7, 5], [19, 7], [29, 7], [13, 17], [25, 19]];
@@ -73,13 +74,13 @@ const NPC_DEFS = [
   { id: 'tome', name: 'Tomé, o pescador', x: 9, y: 11, dir: 3, wander: 0, lines: {
     start: [() => `${heroName('aldo')}! Veio pescar? Ah, não. Veio pelo... trabalho.`, 'Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há fontes de luz que curam qualquer ferida e guardam a memória de quem passa.'],
     won: ['Os peixes voltaram! E eu achando que era a minha isca.'] } },
-  { id: 'nino', name: 'Nino', x: 14, y: 12, dir: 2, wander: 3, lines: {
+  { id: 'nino', name: 'Nino', x: 17, y: 12, dir: 2, wander: 3, lines: {
     arrive: [() => nextStep()],
     start: [() => `${heroName('aldo')}, me ensina a segurar a espada? A professora disse que não. Mas ela sorriu quando disse.`, 'Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.', () => nextStep()],
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
-  { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, onTalk: claraTalk, lines: {
+  { id: 'clara', name: 'Clara, a professora', x: 14, y: 12, dir: 0, wander: 1, onTalk: claraTalk, lines: {
     start: [() => `Bom dia, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
     quest: ['Vão descer na igreja velha?', 'Voltem. Os quatro.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
@@ -101,6 +102,7 @@ function buildTownMap() {
   rect(12, 6, 12, 18, TILE.PATH);     // rua que desce
   rect(6, 18, 29, 18, TILE.PATH);     // rua do sul, até a cripta
   rect(9, 10, 11, 10, TILE.PATH);     // trilha do lago
+  rect(13, 11, 16, 11, TILE.PATH);    // da rua até a porta da escola
   for (const b of BUILDINGS) set(b.door.x, b.door.y + 1, TILE.PATH);
   // Portão do cemitério, colado à capela, ligado à rua principal
   set(5, 4, TILE.PATH); set(5, 5, TILE.PATH); set(5, 3, TILE.GATE);
@@ -547,6 +549,7 @@ async function enterBuilding(b) {
   if (b.id === 'elder') return elderTalk();
   if (b.id === 'chapel') return chapel();
   if (b.id === 'shop') return shop();
+  if (b.id === 'school') return school();
   const homes = {
     smith: ['Gaspar, o ferreiro', {
       start: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina de prata, se acharem uma lá embaixo.'],
@@ -598,6 +601,16 @@ async function elderTalk() {
   Sfx.chest();
   await UI.say('O ancião entrega 2 Poções ao grupo.\nNova missão: reunir um grupo de quatro e descer à cripta.');
 }
+
+// A escolinha: ninguém lá dentro, só a lousa e os desenhos das crianças
+const SCHOOL = {
+  start: [() => 'A escolinha de Valmor. Na lousa, a letra caprichada da Clara: "Hoje, as estações do ano."',
+    () => `Num canto, um desenho de criança: um homem de espada e, embaixo, em letra torta: ${heroName('aldo').toUpperCase()}.`],
+  quest: ['As carteiras estão vazias. Com a igreja velha assim, as crianças ficam perto de casa.',
+    () => `O desenho de ${heroName('aldo')} continua no canto. Alguém desenhou um coração do lado e depois apagou.`],
+  won: ['Na lousa, alguém desenhou quatro heróis e um sino quebrado.', 'Embaixo, na letra da Clara: "Voltem."'],
+};
+const school = () => SCHOOL[G.bossDead ? 'won' : G.quest ? 'quest' : 'start'].reduce((p, t) => p.then(() => UI.say(typeof t === 'function' ? t() : t)), Promise.resolve());
 
 async function chapel() {
   const nm = 'Irmã Irene';

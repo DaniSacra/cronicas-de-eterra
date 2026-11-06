@@ -118,3 +118,18 @@ test('Clara: one scene on the first day, another once Lyra is in the party', asy
 test('nobody calls Aldo "forasteiro" anymore', () => {
   for (const f of fs.readdirSync(`${__dirname}/../src`)) assert.doesNotMatch(fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8'), /forasteir/i, f);
 });
+
+test('the school stands by Clara and the children, and its board remembers Aldo', async () => {
+  const { G, log, run } = story(['aldo'], { intro: 1 });
+  const b = run.json(`BUILDINGS.find(b => b.id === 'school')`), near = id => {
+    const n = run.json(`NPC_DEFS.find(n => n.id === '${id}')`);
+    return Math.abs(n.x - b.door.x) + Math.abs(n.y - b.door.y) <= 4;
+  };
+  for (const id of ['clara', 'nino', 'lia']) assert.ok(near(id), `${id} is next to the school`);
+  run(`enterTown({ x: 16, y: 11, dir: 0 }, 'valmor')`);
+  await run(`enterBuilding(BUILDINGS.find(b => b.id === 'school'))`);
+  assert.ok(log.some(t => t.includes('em letra torta: ALDO.')));
+  G.bossDead = true; log.length = 0;
+  await run(`enterBuilding(BUILDINGS.find(b => b.id === 'school'))`);
+  assert.equal(log.at(-1), 'Embaixo, na letra da Clara: "Voltem."');
+});
