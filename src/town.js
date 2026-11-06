@@ -21,6 +21,8 @@ const BUILDINGS = [
   { id: 'crypt', x: 26, y: 15, w: 3, h: 3 },
   { id: 'tavern', x: 20, y: 14, w: 5, h: 3 },
 ];
+// Lampiões de rua (cada um ocupa um tile de grama ao lado de uma rua; ver test/winter.test.js)
+const LAMPS = [[11, 7], [7, 5], [19, 7], [29, 7], [13, 17], [25, 19]];
 BUILDINGS.forEach(b => { b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
 
 // Aparência: pele, cabelo, roupa, pernas, e o jeito de cada um (campos de estilo em src/folk.js)
@@ -124,6 +126,7 @@ function buildTownMap() {
     else if (r < 0.48) g[id(x, y)] = TILE.FLOWER;
   }
 
+  for (const [x, y] of LAMPS) set(x, y, TILE.BUSH); // obstáculo; o desenho do lampião sai de TownArt
   const bld = new Int8Array(N * TOWN_H).fill(-1);
   BUILDINGS.forEach((b, i) => { for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) bld[id(x, y)] = i; });
   return { g, bld };
@@ -157,6 +160,7 @@ const AREAS = {
   valmor: makeArea('Vila de Valmor', 'VALMOR', TOWN_W, TOWN_H, buildTownMap().g, BUILDINGS, TILE.TREE),
   taverna: makeArea('Taverna Poney Saltitante', 'TAVERNA', 14, 10, buildTavernMap(), [], TILE.WALL),
 };
+Object.assign(AREAS.valmor, { winter: true, dusk: true, lamps: LAMPS }); // inverno ao entardecer: neve, janelas acesas, lampiões
 AREAS.taverna.music = () => 'tavern'; // giga da Poney Saltitante
 
 const TOWN = {
@@ -660,6 +664,7 @@ function drawTown(now) {
     }
     c.save(); c.translate(x + 8, y + spr.height - 7); c.rotate(-Math.PI / 2); c.drawImage(spr, -8, -spr.height / 2); c.restore();
   }
+  TownArt.weather(c, A, now, camX, camY, VW, VH); // fumaça, anoitecer com poças de luz, neve caindo
   // Setinha amarela sobre o próximo lugar da história, balançando
   const goal = goalSpot();
   if (goal) {

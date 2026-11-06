@@ -35,6 +35,19 @@ const TownArt = (() => {
   const ROCK = P(['#3c3630', '#6c6256', '#968a78', '#bcb09a']);
   const CLIFF_LIP = rgb('#24501f'), SHORE = rgb('#2a5a24');
 
+  // ---------- Inverno: o mesmo desenho com outras cores (docs/arte/estilo.md, família neve) ----------
+  const SNOW = { hi: '#ffffff', lt: '#e8eff8', md: '#cbd8ec', sh: '#a4b8da', dk: '#7488b8', ou: '#4a5a8c' };
+  const SNOWG = P([SNOW.md, SNOW.lt, SNOW.hi]);
+  const ICE = P([SNOW.hi, SNOW.lt, SNOW.md, SNOW.sh, SNOW.dk]);
+  const DEEP = P(['#2c3c80', '#3a78c8', '#1c2860']);
+  const W_EDGE = rgb(SNOW.sh), W_MORTAR = rgb(SNOW.md), W_LIP = rgb(SNOW.dk);
+  const LEAF_W = ['#14402a', '#2a5440', '#3a9a6a', '#4ad08a', '#90e0b0'];
+  const PINE_W = ['#103630', '#15433c', '#205e54', '#3a9a6a', '#7ac09a'];
+  let snow = false;            // ligado por layer(A) enquanto desenha uma área de inverno
+  let LIGHTS = [], SMOKE = []; // poças de luz e chaminés encontradas no desenho (camada de luz e fumaça)
+  const wpal = (pal, swap) => snow ? Object.assign({}, pal, swap) : pal;   // o mesmo enfeite com neve em cima
+  const shade = a => snow ? `rgba(44,60,128,${a})` : `rgba(14,36,14,${a})`;
+
   const tileAt = (A, x, y) => (x >= 0 && y >= 0 && x < A.W && y < A.H) ? A.g[y * A.W + x] : null;
   const pathLike = t => t === TILE.PATH || t === TILE.GATE || t === TILE.DOOR;
 
@@ -63,7 +76,15 @@ const TownArt = (() => {
     return { gap: d2 - d1, id, dx: bx, dy: by };
   }
 
+  // Neve: quase toda clara, montes com sombra azul suave e um brilho aqui e ali
+  function snowAt(gx, gy) {
+    const n = noise(gx / 15, gy / 15, 1) * 0.75 + noise(gx / 4, gy / 4, 2) * 0.25, odd = (gx + gy) & 1;
+    if (hash(gx, gy, 3) > 0.985) return SNOWG[2];
+    if (n < 0.33 || (n < 0.39 && odd)) return SNOWG[0];
+    return n > 0.74 && odd ? SNOWG[2] : SNOWG[1];
+  }
   function grassAt(gx, gy) {
+    if (snow) return snowAt(gx, gy);
     const n = noise(gx / 15, gy / 15, 1) * 0.75 + noise(gx / 4, gy / 4, 2) * 0.25;
     let b = n * 4 - 0.5; const f = b - Math.floor(b); b = Math.floor(b);
     if (f > 0.7 && ((gx + gy) & 1)) b++;
@@ -76,6 +97,15 @@ const TownArt = (() => {
   const dirtAt = (gx, gy) => { const r = hash(gx, gy, 4); return r < 0.1 ? DIRT[1] : r > 0.92 ? DIRT[2] : DIRT[0]; };
 
   function groundPixel(A, t, x, y, gx, gy, lx, ly, valmor) {
+    if (t === TILE.WATER && snow) {
+      // lago congelando: gelo claro nas bordas, água funda e escura no meio
+      const d = edgeDist(A, x, y, lx, ly, u => u === TILE.WATER), rim = 3 + noise(gx / 5, gy / 5, 23) * 5;
+      if (d < 1) return ICE[3];
+      if (d < rim) { const k = noise(gx / 2.5, gy / 2.5, 24); return hash(gx, gy, 25) < 0.025 ? ICE[4] : k > 0.62 ? ICE[0] : k < 0.3 ? ICE[2] : ICE[1]; }
+      if (d < rim + 1) return ICE[3];
+      const w = noise(gx / 7, gy / 2.5, 22);
+      return w > 0.7 ? DEEP[1] : w < 0.3 ? DEEP[2] : DEEP[0];
+    }
     if (t === TILE.WATER) {
       const north = tileAt(A, x, y - 1);
       if (north !== null && north !== TILE.WATER) { if (ly === 0) return BANK[0]; if (ly < 3) return BANK[ly]; if (ly === 3) return WATER[4]; }
@@ -89,7 +119,7 @@ const TownArt = (() => {
     if (t === TILE.CLIFF) {
       // borda norte: barranco de pedra com grama em cima
       if (ly < 3) return grassAt(gx, gy);
-      if (ly === 3 || ly === 15) return ly === 3 ? CLIFF_LIP : ROCK[0];
+      if (ly === 3 || ly === 15) return ly === 3 ? (snow ? W_LIP : CLIFF_LIP) : ROCK[0];
       const cb = cobble(gx, gy + 3, 7);
       if (cb.gap < 1.1) return ROCK[0];
       if (cb.gap < 2.2) return cb.dy > 0 ? ROCK[1] : ROCK[3];
@@ -99,25 +129,27 @@ const TownArt = (() => {
       const d = edgeDist(A, x, y, lx, ly, pathLike);
       const bite = noise(gx / 3, gy / 3, 5) * 3.4;
       if (d < bite - 0.6) return grassAt(gx, gy);          // tufos de grama mordendo a borda
-      if (d < bite + 0.4) return PATH_EDGE;
+      if (d < bite + 0.4) return snow ? W_EDGE : PATH_EDGE;
       const dirtZone = !valmor || (y === 10 && x >= 9 && x <= 11) || noise(gx / 11, gy / 11, 7) < 0.24;
       const cb = cobble(gx, gy, 7);
       if (dirtZone && cb.id > 0.3) return dirtAt(gx, gy);  // terra batida, com uma pedra aqui e ali
-      if (cb.gap < 1.2) return dirtZone ? DIRT[1] : MORTAR;
+      if (cb.gap < 1.2) return dirtZone ? DIRT[1] : snow ? W_MORTAR : MORTAR;   // no inverno, neve entre as pedras
       if (cb.gap < 2.3) return cb.dy > 0.3 ? ST_DARK : cb.dy < -0.3 ? ST_LIGHT : STONES[Math.floor(cb.id * 4)];
       return STONES[Math.floor(cb.id * 4)];
     }
-    if ((lx === 15 && tileAt(A, x + 1, y) === TILE.WATER) || (lx === 0 && tileAt(A, x - 1, y) === TILE.WATER) || (ly === 0 && tileAt(A, x, y - 1) === TILE.WATER)) return SHORE;
+    if ((lx === 15 && tileAt(A, x + 1, y) === TILE.WATER) || (lx === 0 && tileAt(A, x - 1, y) === TILE.WATER) || (ly === 0 && tileAt(A, x, y - 1) === TILE.WATER)) return snow ? W_EDGE : SHORE;
     return grassAt(gx, gy);
   }
 
   // ---------- Copas, arbustos e pedras: bolhas sombreadas com contorno ----------
   // blobs: [cx, cy, r], de trás para a frente; pal: [contorno, escuro, médio, claro, brilho]
   const SPR = {};
+  // No inverno cada cacho ganha um gorro de neve no alto (luz do alto à esquerda: brilho à esquerda, sombra à direita)
   function blobSprite(key, w, h, blobs, pal, extra) {
+    key += snow ? ':w' : '';
     if (SPR[key]) return SPR[key];
     const cv = canvas(w, h), c = cv.getContext('2d'), img = c.createImageData(w, h);
-    const own = new Int8Array(w * h).fill(-1), cols = P(pal);
+    const own = new Int8Array(w * h).fill(-1), cols = P([...pal, SNOW.dk, SNOW.md, SNOW.lt, SNOW.hi]);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       for (let i = blobs.length - 1; i >= 0; i--) { const [cx, cy, r] = blobs[i]; if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r) { own[y * w + x] = i; break; } }
     }
@@ -134,6 +166,10 @@ const TownArt = (() => {
         const dith = ((x + y) & 1) ? 0.06 : -0.06;
         k = L + dith > 0.5 ? 4 : L + dith > 0.12 ? 3 : L + dith > -0.32 ? 2 : 1;
       }
+      if (snow) {
+        const [cx, cy, r] = blobs[o], sx = (x + 0.5 - cx) / r, sy = (y + 0.5 - cy) / r, edge = -0.4 + (hash(x, o, 97) - 0.5) * 0.3;
+        if (sy < edge) k = k === 0 ? 5 : sy < edge - 0.3 && sx < 0.1 ? 8 : sx > 0.35 ? 6 : 7;
+      }
       const p = (y * w + x) * 4, col = cols[k];
       img.data[p] = col[0]; img.data[p + 1] = col[1]; img.data[p + 2] = col[2]; img.data[p + 3] = 255;
     }
@@ -147,14 +183,14 @@ const TownArt = (() => {
   const PINE = ['#10301e', '#1d5a38', '#2c7a46', '#469a56', '#80c070'];
   const fruit = spots => c => { for (const [x, y] of spots) { R(c, x, y, 2, 2, '#d8282a'); R(c, x, y, 1, 1, '#ff9a8a'); R(c, x + 1, y + 1, 1, 1, '#7a1010'); } };
   const TREES = {
-    round: () => blobSprite('round', 22, 20, [[11, 6, 6], [6, 9, 5.5], [16, 9, 5.5], [8, 4.5, 4], [14.5, 4.5, 4], [5.5, 13.5, 5], [16.5, 13.5, 5], [11, 13, 6]], LEAF),
-    fruit: () => blobSprite('fruit', 22, 20, [[11, 7, 6.5], [5.5, 10, 5], [16.5, 10, 5], [10, 4, 4.5], [6, 14, 4.5], [16, 14, 4.5], [11, 13.5, 5.5]], LEAF_Y,
-      fruit([[6, 9], [15, 7], [11, 12], [9, 4], [17, 12], [4, 13]])),
-    pine: () => blobSprite('pine', 22, 22, [[11, 3.5, 3.2], [11, 7, 4.6], [11, 11, 6], [11, 15.5, 7.2]], PINE),
+    round: () => blobSprite('round', 22, 20, [[11, 6, 6], [6, 9, 5.5], [16, 9, 5.5], [8, 4.5, 4], [14.5, 4.5, 4], [5.5, 13.5, 5], [16.5, 13.5, 5], [11, 13, 6]], snow ? LEAF_W : LEAF),
+    fruit: () => blobSprite('fruit', 22, 20, [[11, 7, 6.5], [5.5, 10, 5], [16.5, 10, 5], [10, 4, 4.5], [6, 14, 4.5], [16, 14, 4.5], [11, 13.5, 5.5]], snow ? LEAF_W : LEAF_Y,
+      snow ? null : fruit([[6, 9], [15, 7], [11, 12], [9, 4], [17, 12], [4, 13]])),
+    pine: () => blobSprite('pine', 22, 22, [[11, 3.5, 3.2], [11, 7, 4.6], [11, 11, 6], [11, 15.5, 7.2]], snow ? PINE_W : PINE),
   };
   const BUSHES = {
-    bush: () => blobSprite('bush', 16, 13, [[8, 5, 4.5], [4.5, 7.5, 4], [11.5, 7.5, 4], [8, 9, 4.5]], ['#16341c', '#2a742c', '#43963a', '#66b84a', '#a8dc70']),
-    berry: () => blobSprite('berry', 16, 13, [[8, 5, 4.5], [4.5, 7.5, 4], [11.5, 7.5, 4], [8, 9, 4.5]], ['#16341c', '#2a742c', '#43963a', '#66b84a', '#a8dc70'],
+    bush: () => blobSprite('bush', 16, 13, [[8, 5, 4.5], [4.5, 7.5, 4], [11.5, 7.5, 4], [8, 9, 4.5]], snow ? PINE_W : ['#16341c', '#2a742c', '#43963a', '#66b84a', '#a8dc70']),
+    berry: () => blobSprite('berry', 16, 13, [[8, 5, 4.5], [4.5, 7.5, 4], [11.5, 7.5, 4], [8, 9, 4.5]], snow ? PINE_W : ['#16341c', '#2a742c', '#43963a', '#66b84a', '#a8dc70'],
       fruit([[5, 6], [10, 4], [11, 8], [7, 9]])),
     grim: () => blobSprite('grim', 16, 13, [[8, 5, 4.5], [4.5, 7.5, 4], [11.5, 7.5, 4], [8, 9, 4.5]], ['#18241c', '#2a4430', '#3a5c40', '#50744e', '#6a8a60']),
     rock: () => blobSprite('rock', 16, 13, [[11.5, 6, 2.8], [6.5, 6.5, 3.6], [5, 9.5, 3.2], [10, 9.5, 3.6], [13, 10, 2.4]], ['#34343e', '#62646e', '#8a8c98', '#b0b2bc', '#d6d8e0'],
@@ -163,7 +199,7 @@ const TownArt = (() => {
 
   // Sombra oval em degraus, para baixo e para a direita
   function shadow(c, cx, cy, rx, ry, a = 0.3) {
-    c.fillStyle = `rgba(14,36,14,${a})`;
+    c.fillStyle = shade(a);
     for (let yy = -ry; yy <= ry; yy++) { const half = Math.round(rx * Math.sqrt(1 - (yy / (ry + 0.5)) ** 2)); c.fillRect(cx - half, cy + yy, half * 2, 1); }
   }
 
@@ -245,15 +281,33 @@ const TownArt = (() => {
     '......ooooo.....',
   ];
 
-  function drawStump(c, X, Y) { shadow(c, X + 9, Y + 14, 7, 2); pix(c, X + 2, Y + 4, STUMP_ROWS, STUMP); }
+  // Lampião de rua: poste de ferro, vidro aceso, gorro de neve no inverno (cores da paleta mestre)
+  const LAMP_ROWS = [
+    '...ooo...', '..oSSSo..', '.oSSSSSo.', 'ooIIIIIoo', '.oyYYYyo.', '.oYWWWYo.', '.oYWWWYo.', '.oyYWYyo.', '.oyyyyyo.', 'ooIIIIIoo',
+    '...oio...', '...oIo...', '...oIo...', '...oIo...', '...oIo...', '...oIo...', '...oIo...', '...oIo...', '...oIo...',
+    '..ooIoo..', '..oiIIo..', '.ooooooo.',
+  ];
+  function drawLamp(c, X, Y) {
+    pix(c, X + 3, Y - 6, LAMP_ROWS, { o: '#26202e', I: '#55555e', i: '#7a7a82', S: snow ? SNOW.lt : '#55555e', y: '#e8b840', Y: '#f0d860', W: '#fff6c0' });
+    LIGHTS.push({ x: X + 8, y: Y + 6, r: 30 });
+  }
+  // Inverno: capim seco furando a neve e pedrinhas com neve em cima
+  function stalks(c, x, y) {
+    for (const [a, h] of [[0, 2], [1, 3], [3, 2]]) { R(c, x + a, y + 3 - h, 1, h, '#c89c38'); R(c, x + a, y + 3 - h, 1, 1, '#f0d860'); }
+    R(c, x - 1, y + 3, 6, 1, SNOW.md);
+  }
+
+  function drawStump(c, X, Y) { shadow(c, X + 9, Y + 14, 7, 2); pix(c, X + 2, Y + 4, STUMP_ROWS, wpal(STUMP, { T: SNOW.hi, t: SNOW.lt })); }
   function drawMushrooms(c, X, Y) { shadow(c, X + 8, Y + 14, 6, 1); pix(c, X + 2, Y + 5, MUSH_BIG, MUSH); pix(c, X + 10, Y + 9, MUSH_SMALL, MUSH); pix(c, X + 11, Y + 3, MUSH_SMALL, MUSH); }
   function drawCrates(c, X, Y) {
     shadow(c, X + 9, Y + 14, 8, 2);
-    pix(c, X + 1, Y + 6, CRATE, WOOD); pix(c, X + 3, Y - 1, CRATE, WOOD); pix(c, X + 9, Y + 5, BARREL, WOOD);
+    const w = wpal(WOOD, { W: SNOW.lt });
+    pix(c, X + 1, Y + 6, CRATE, w); pix(c, X + 3, Y - 1, CRATE, w); pix(c, X + 9, Y + 5, BARREL, w);
   }
   function drawBarrels(c, X, Y) {
     shadow(c, X + 9, Y + 14, 8, 2);
-    pix(c, X + 1, Y + 1, BARREL, WOOD); pix(c, X + 7, Y + 5, BARREL, WOOD); pix(c, X + 1, Y + 7, CRATE, WOOD);
+    const w = wpal(WOOD, { W: SNOW.lt });
+    pix(c, X + 1, Y + 1, BARREL, w); pix(c, X + 7, Y + 5, BARREL, w); pix(c, X + 1, Y + 7, CRATE, w);
   }
 
   // ---------- Detalhes pequenos do chão (sem ocupar o tile) ----------
@@ -269,13 +323,19 @@ const TownArt = (() => {
   }
   function groundDetail(c, A, t, x, y, valmor) {
     const X = x * TS, Y = y * TS;
-    if (t === TILE.WATER && hash(x, y, 30) < 0.3 && [[0, -1], [1, 0], [0, 1], [-1, 0]].every(([a, b]) => tileAt(A, x + a, y + b) === TILE.WATER)) {
+    if (t === TILE.WATER && !snow && hash(x, y, 30) < 0.3 && [[0, -1], [1, 0], [0, 1], [-1, 0]].every(([a, b]) => tileAt(A, x + a, y + b) === TILE.WATER)) {
       const px = X + 3 + Math.floor(hash(x, y, 31) * 6), py = Y + 4 + Math.floor(hash(x, y, 32) * 6);
       pix(c, px, py, ['.oooo.', 'oGGgGo', 'oGg.oo', '.oooo.'], { o: '#1e5a2a', G: '#4aa848', g: '#7ccc60' });
       if (hash(x, y, 33) < 0.5) pix(c, px + 4, py - 1, ['.p.', 'pPp'], { p: '#ff8ab0', P: '#fff0f4' });
       return;
     }
     if (t !== TILE.GRASS && t !== TILE.FLOWER) return;
+    if (snow) {
+      const k = t === TILE.FLOWER ? 3 : hash(x, y, 31) < 0.3 ? 1 : 0;
+      for (let i = 0; i < k; i++) stalks(c, X + 1 + Math.floor(hash(x, y, 40 + i) * 11), Y + 1 + Math.floor(hash(x, y, 50 + i) * 11));
+      if (hash(x, y, 33) < 0.1) { const px = X + 2 + Math.floor(hash(x, y, 34) * 11), py = Y + 3 + Math.floor(hash(x, y, 35) * 10); R(c, px, py, 3, 2, '#7a7a82'); R(c, px, py, 3, 1, SNOW.lt); R(c, px, py + 2, 3, 1, SNOW.sh); }
+      return;
+    }
     const n = Math.floor(hash(x, y, 31) * 3);
     for (let i = 0; i < n; i++) tuft(c, X + Math.floor(hash(x, y, 40 + i) * 11), Y + Math.floor(hash(x, y, 50 + i) * 11));
     if (hash(x, y, 33) < 0.12) { const px = X + 2 + Math.floor(hash(x, y, 34) * 11), py = Y + 3 + Math.floor(hash(x, y, 35) * 10); R(c, px, py, 3, 2, '#8a8c98'); R(c, px, py, 1, 1, '#d0d2dc'); R(c, px, py + 2, 3, 1, '#3e5a2a'); }
@@ -321,6 +381,11 @@ const TownArt = (() => {
           if (rx > w * 0.7) col = col === h ? l : col === l ? m : col;   // lado direito mais escuro
           if (x === lo + 1 || x === hi - 2) col = d;                      // beiral
         }
+        if (snow) {
+          // manto de neve sobre as telhas, borda de baixo ondulada; as últimas fileiras ficam à mostra
+          const e = Math.round((bot - top) * 0.55) - Math.floor(noise(x / 3, top, 98) * 3);
+          if (ry < e && col !== o) col = ry === e - 1 ? SNOW.sh : rx > w * 0.7 ? SNOW.md : ry === 1 || (ry < 4 && hash(x, y, 99) < 0.3) ? SNOW.hi : SNOW.lt;
+        }
         R(c, x, y, 1, 1, col);
       }
     }
@@ -341,12 +406,16 @@ const TownArt = (() => {
   }
 
   function windowAt(c, x, y, o = {}) {
-    const glass = o.glow ? ['#fff0a0', '#f0b040', '#d07820'] : ['#a8d8f8', '#4a74b8', '#2c4a88'];
+    const glow = o.glow || snow;   // no inverno toda casa tem gente dentro, perto do fogo
+    if (glow) LIGHTS.push({ x: x + 4, y: y + 12, r: 13 });
+    const glass = glow ? ['#fff0a0', '#f0b040', '#d07820'] : ['#a8d8f8', '#4a74b8', '#2c4a88'];
     pix(c, x, y, [
       'ooooooooo', 'oFFFFFFFo', 'oFgbFbbFo', 'oFbbFbBFo', 'oFFFFFFFo', 'oFbbFbBFo', 'oFbBFBBFo', 'oFFFFFFFo', 'ooooooooo',
     ], { o: OUT, F: '#a46c34', g: glass[0], b: glass[1], B: glass[2] });
     if (o.shutter) { R(c, x - 2, y, 2, 9, OUT); R(c, x + 9, y, 2, 9, OUT); R(c, x - 2, y + 1, 1, 7, o.shutter); R(c, x + 10, y + 1, 1, 7, o.shutter); R(c, x - 1, y + 1, 1, 7, shadeHex(o.shutter, 0.7)); R(c, x + 9, y + 1, 1, 7, shadeHex(o.shutter, 0.7)); }
-    if (o.flowers) {
+    if (o.flowers && snow) { R(c, x - 1, y + 8, 11, 3, OUT); R(c, x, y + 9, 9, 1, '#a0602c'); R(c, x, y + 8, 9, 1, SNOW.lt); }
+    else if (snow) R(c, x + 1, y + 8, 7, 1, SNOW.lt);
+    else if (o.flowers) {
       R(c, x - 1, y + 8, 11, 3, OUT); R(c, x, y + 9, 9, 1, '#a0602c'); R(c, x, y + 8, 9, 1, '#3a8a34');
       for (let i = 0; i < 4; i++) { const col = ['#ff6a8a', '#ffd84a', '#ff6a8a', '#f8f8f0'][i]; R(c, x + 1 + i * 2, y + 7, 1, 1, col); }
     }
@@ -372,6 +441,8 @@ const TownArt = (() => {
   function chimney(c, x, top, glow) {
     R(c, x, top, 8, 13, OUT); stones(c, x + 1, x + 7, top + 3, top + 12, STONE, 5);
     R(c, x - 1, top, 10, 3, OUT); R(c, x, top + 1, 8, 1, '#b4bccc'); R(c, x + 2, top, 4, 1, glow ? '#ff9a30' : '#1a1418');
+    if (snow) { R(c, x - 1, top - 1, 3, 1, SNOW.lt); R(c, x + 6, top - 1, 3, 1, SNOW.md); R(c, x, top + 1, 8, 1, SNOW.lt); }
+    SMOKE.push({ x: x + 4, y: top - 1, seed: SMOKE.length });
   }
 
   function dormer(c, x, y, pal) {
@@ -404,7 +475,7 @@ const TownArt = (() => {
 
   function houseShadow(c, b) {
     const X = b.x * TS, Y = b.y * TS, W = b.w * TS, H = b.h * TS;
-    c.fillStyle = 'rgba(14,36,14,.3)';
+    c.fillStyle = shade(0.3);
     c.fillRect(X + W + 2, Y + 2, 4, H + 1); c.fillRect(X + 3, Y + H, W + 3, 3);
   }
 
@@ -442,12 +513,16 @@ const TownArt = (() => {
     // Telhado, chaminés, sótão
     for (const f of s.chimneys || []) chimney(c, Math.round(X + W * f) - 4, Y - 12, s.chimGlow);
     drawRoof(c, X - 2, X + W + 2, Y - 6, bot + 1, pal);
+    if (snow) icicles(c, X - 1, X + W + 1, bot + 1);
     for (const f of s.chimneys || []) { const cx = Math.round(X + W * f) - 4; R(c, cx, Y - 6, 8, 5, OUT); stones(c, cx + 1, cx + 7, Y - 6, Y - 2, STONE, 6); }
     for (const f of s.dormers || []) dormer(c, Math.round(X + W * f) - 6, Y + 2, pal);
     if (b.id === 'chapel') chapelTower(c, X, Y, W, pal);
     if (b.id === 'chapel') rose(c, dx + 4, bot + 2);
   }
 
+  function icicles(c, x0, x1, y) {
+    for (let x = x0; x < x1; x++) { const r = hash(x, y, 99); if (r < 0.18) { R(c, x, y, 1, 1 + Math.floor(r * 17), SNOW.md); R(c, x, y, 1, 1, SNOW.lt); } }
+  }
   function awning(c, x0, x1, y, dx) {
     for (let x = x0; x < x1; x++) {
       if (x >= dx && x < dx + TS) continue;
@@ -460,8 +535,10 @@ const TownArt = (() => {
   function lantern(c, x, y) {
     R(c, x, y, 4, 1, '#3c3c48'); R(c, x + 3, y, 1, 3, '#3c3c48');
     pix(c, x + 1, y + 3, ['.oo.', 'oyYo', 'oYyo', '.oo.'], { o: '#2a2a34', y: '#ffd040', Y: '#fff4b0' });
+    LIGHTS.push({ x: x + 2, y: y + 10, r: 22 });
   }
   function stainedGlass(c, x, y) {
+    if (snow) LIGHTS.push({ x: x + 4, y: y + 12, r: 12 });
     pix(c, x, y, [
       '..ooooo..', '.oRRbRRo.', 'oRbYYYbRo', 'obYbGbYbo', 'oYbRRRbYo', 'obYbGbYbo', 'oRbYYYbRo', 'obRbGbRbo', 'oRbRbRbRo', 'ooooooooo',
     ], { o: '#2a2a40', R: '#d8384a', b: '#3a5ac0', Y: '#f8d048', G: '#4ab060' });
@@ -538,8 +615,10 @@ const TownArt = (() => {
     if (BORDER(A, x, y)) return r < 0.3 ? 'pine' : 'round';
     return r < 0.3 ? 'fruit' : r < 0.55 ? 'pine' : 'round';
   }
+  const lampAt = (A, x, y) => !!A.lamps && A.lamps.some(([a, b]) => a === x && b === y);
   function objShadow(c, A, t, x, y, valmor) {
     const X = x * TS, Y = y * TS, spot = valmor && SPOTS[`${x},${y}`];
+    if (lampAt(A, x, y)) return shadow(c, X + 9, Y + 15, 4, 1);
     if (spot === 'scarecrow') return shadow(c, X + 9, Y + 15, 5, 1);
     if (spot === 'well') return shadow(c, X + 10, Y + 15, 9, 2);
     if (t === TILE.TREE) shadow(c, X + 10, Y + 14, 8, 2, 0.32);
@@ -549,17 +628,18 @@ const TownArt = (() => {
     const X = x * TS, Y = y * TS;
     if (t >= TILE.GATE) return drawGraveTile(c, t, X, Y, x, y, (px, py, col) => R(c, px, py, 1, 1, col), () => 0.5);
     const spot = valmor && SPOTS[`${x},${y}`];
-    if (spot === 'well') return pix(c, X, Y - 4, WELL_ROWS, WELL);
+    if (lampAt(A, x, y)) return drawLamp(c, X, Y);
+    if (spot === 'well') return pix(c, X, Y - 4, WELL_ROWS, wpal(WELL, { R: SNOW.lt }));
     if (spot === 'crates') return drawCrates(c, X, Y);
     if (spot === 'barrels') return drawBarrels(c, X, Y);
-    if (spot === 'scarecrow') return pix(c, X, Y - 7, SCARE_ROWS, SCARE);
+    if (spot === 'scarecrow') return pix(c, X, Y - 7, SCARE_ROWS, wpal(SCARE, { H: SNOW.lt }));
     if (t === TILE.TREE) return drawTree(c, X, Y, treeKind(A, x, y));
     if (t === TILE.BUSH) {
       if (!valmor) return c.drawImage(BUSHES.grim(), X, Y + 2);
       const r = hash(x, y, 21);
       if (r < 0.45) return c.drawImage((hash(x, y, 22) < 0.5 ? BUSHES.berry : BUSHES.bush)(), X, Y + 2);
       if (r < 0.62) return drawStump(c, X, Y);
-      if (r < 0.8) return drawMushrooms(c, X, Y);
+      if (r < 0.8) return snow ? drawStump(c, X, Y) : drawMushrooms(c, X, Y);   // cogumelo não nasce na neve
       return c.drawImage(BUSHES.rock(), X, Y + 2);
     }
   }
@@ -572,7 +652,7 @@ const TownArt = (() => {
     for (const oy of [-32, 0, 32]) for (const [x, y, k] of trees) for (const ox of [-32, 0, 32]) {
       const s = TREES[k](); c.drawImage(s, x + ox - 3, y + oy - 8);
     }
-    R(c, 0, 0, 32, 32, 'rgba(0,0,0,.45)');
+    R(c, 0, 0, 32, 32, snow ? 'rgba(21,30,78,.45)' : 'rgba(0,0,0,.45)');
     return cv;
   }
 
@@ -580,6 +660,7 @@ const TownArt = (() => {
   function layer(A) {
     const W = A.W * TS, H = A.H * TS, cv = canvas(W, H), c = cv.getContext('2d');
     const valmor = A === AREAS.valmor;
+    snow = !!A.winter; LIGHTS = []; SMOKE = [];
     const img = c.createImageData(W, H), data = img.data;
     for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
       const t = A.g[y * A.W + x];
@@ -604,8 +685,66 @@ const TownArt = (() => {
       for (const b of A.buildings) if (b.y + b.h - 1 === y) drawHouse(c, b);
     }
     if (A.outside === TILE.TREE) A.edgeTile = forestTile();
+    A.lights = LIGHTS; A.smoke = SMOKE; snow = false;
     return cv;
   }
 
-  return { layer, hash };
+  // ---------- Luz e clima (por quadro, por cima dos personagens) ----------
+  // Poças de luz em degraus: cada anel tira um pouco do anoitecer e põe um pouco de âmbar. Sem degradê suave.
+  const lightRings = r => [{ r, cut: 0.35, warm: 0.05 }, { r: Math.round(r * 0.68), cut: 0.45, warm: 0.07 }, { r: Math.round(r * 0.38), cut: 0.6, warm: 0.09 }];
+  const DUSK = 'rgba(28,40,96,.32)';   // noite #1c2860
+  function disc(c, cx, cy, r) {
+    const ry = Math.round(r * 0.7);    // achatada: chão em 3/4
+    for (let yy = -ry; yy <= ry; yy++) { const half = Math.round(r * Math.sqrt(1 - (yy / (ry + 0.5)) ** 2)); c.fillRect(cx - half, cy + yy, half * 2, 1); }
+  }
+  function lightLayer(A) {
+    const cv = canvas(A.W * TS, A.H * TS), c = cv.getContext('2d');
+    c.fillStyle = DUSK; c.fillRect(0, 0, cv.width, cv.height);
+    c.globalCompositeOperation = 'destination-out';
+    for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(0,0,0,${g.cut})`; disc(c, l.x, l.y, g.r); }
+    c.globalCompositeOperation = 'source-over';
+    for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(240,216,96,${g.warm})`; disc(c, l.x, l.y, g.r); }
+    return cv;
+  }
+
+  // Fumaça de chaminé: uma coluna de baforadas sobe e vão para a direita (vento), clareiam e somem
+  const PUFFS = 6;
+  function smokePuff(k, now, seed) {
+    const t = (now / 3000 + k / PUFFS + seed * 0.37) % 1;
+    if (t > 0.92) return null;
+    return { dx: Math.round(t * 10 + Math.sin(t * 6 + seed) * 1.5), dy: -Math.round(t * 30), s: t < 0.15 ? 2 : t < 0.4 ? 3 : t < 0.7 ? 4 : 5,
+      thin: t > 0.65 };   // no fim fica rala (pontilhada) e some
+  }
+  // Floco de neve i, em coordenadas de tela; cai devagar e balança
+  function flake(i, now, w, h) {
+    const sp = 0.6 + hash(i, 1, 61) * 0.8, mod = (v, m) => ((v % m) + m) % m;
+    return { x: Math.floor(mod(hash(i, 2, 61) * w + now * 0.004 * sp + Math.sin(now / 900 + i) * 5, w)),
+      y: Math.floor(mod(hash(i, 3, 61) * h + now * 0.018 * sp, h)), s: hash(i, 4, 61) > 0.8 ? 2 : 1, col: sp > 1 ? SNOW.hi : SNOW.lt };
+  }
+  // Baforada redonda: brilho no alto à esquerda, sombra embaixo à direita
+  function puff(c, cx, cy, r, thin) {
+    for (let y = -r; y < r; y++) for (let x = -r; x < r; x++) {
+      const d = (x + 0.5) ** 2 + (y + 0.5) ** 2;
+      if (d > r * r || (thin && ((x + y + cx + cy) & 1))) continue;
+      const l = x + y;
+      c.fillStyle = l <= -r ? SNOW.hi : l >= r - 1 || d > (r - 0.8) ** 2 && l > 0 ? '#a2a2ac' : SNOW.lt;   // sombra cinza neutra: não some na neve azulada
+      c.fillRect(cx + x, cy + y, 1, 1);
+    }
+  }
+  function weather(c, A, now, camX, camY, vw, vh) {
+    if (!A.winter) return;
+    for (const sm of A.smoke || []) for (let k = 0; k < PUFFS; k++) {
+      const p = smokePuff(k, now, sm.seed); if (!p) continue;
+      puff(c, sm.x + p.dx - camX, sm.y + p.dy - camY - p.s, p.s, p.thin);
+    }
+    if (A.dusk) { if (!A.light) A.light = lightLayer(A); c.drawImage(A.light, -camX, -camY); }
+    for (let i = 0; i < 40; i++) { const f = flake(i, now, vw, vh); c.fillStyle = f.col; c.fillRect(f.x, f.y, f.s, f.s); }
+  }
+
+  // Toda cor nova do inverno (o teste confere que estão na paleta mestre)
+  const WINTER_COLORS = [...Object.values(SNOW), ...LEAF_W, ...PINE_W, '#2c3c80', '#3a78c8', '#1c2860', '#26202e', '#55555e', '#7a7a82',
+    '#a2a2ac', '#e8b840', '#f0d860', '#fff6c0', '#c89c38'];
+  return { layer, hash, weather, lightRings, smokePuff, flake, SNOW, WINTER_COLORS, PUFFS };
 })();
+
+if (typeof module !== 'undefined') module.exports = { TownArt };

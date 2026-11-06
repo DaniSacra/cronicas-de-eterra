@@ -6,6 +6,7 @@ const PALETTE = {
   vida:     ['#90e0b0', '#4ad08a', '#3a9a6a', '#2a5440', '#14402a'], // life and nature: grass, trees, slimes
   misterio: ['#f0a8f8', '#a84ad8', '#72308e', '#40145a', '#3a1448'], // mystery and magic: crypt, spells, spectres
   perigo:   ['#e86a7a', '#a8323e', '#7a1a24', '#4a0c14', '#26202e'], // danger: enemy eyes, damage, bosses
+  neve:     ['#e8eff8', '#cbd8ec', '#a4b8da', '#7488b8', '#4a5a8c'], // snow and ice: winter ground, roofs, frozen lake, smoke
   materia:  ['#f4cca0', '#d8a478', '#b07c58', '#9a6232', '#6a3a1a', '#a2a2ac', '#7a7a82', '#55555e'], // skin, wood and stone
   // Every other color the hero portraits (src/herofaces.js) already use, so they stay pixel-identical
   retratos: ['#ffffff', '#ffe080', '#f8a0a0', '#f0d070', '#f0c850', '#f0c090', '#f0b050', '#f0a080', '#e8f0e8', '#e8c0a0',

@@ -276,7 +276,7 @@ function graveSeen(kind) {
 
 AREAS.cemiterio = makeArea('Cemitério de Valmor', 'CEMITERIO', 16, 12, buildCemeteryMap(), [], TILE.DEADTREE);
 Object.assign(AREAS.cemiterio, {
-  fog: true, dimCol: '10,24,56',
+  fog: true, winter: true, dimCol: '10,24,56',
   dim: () => (G.seen.cem3 && G.seen.teoWin) ? 0.1 : 0.3,
   music: () => cemDone() ? 'town' : 'cemetery',
   cast: () => [

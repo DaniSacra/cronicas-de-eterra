@@ -47,6 +47,7 @@ Todo sprite é uma grade, como os retratos dos heróis:
 | Noite e frio | `#8ac0f0 #3a78c8 #2c3c80 #1c2860 #151e4e` | Céu, sombra do cenário, geada |
 | Vida e natureza | `#90e0b0 #4ad08a #3a9a6a #2a5440 #14402a` | Grama, árvores, gosmas |
 | Mistério e magia | `#f0a8f8 #a84ad8 #72308e #40145a #3a1448` | Cripta, magia, espectros |
+| Neve e gelo | `#e8eff8 #cbd8ec #a4b8da #7488b8 #4a5a8c` | Chão de inverno, neve nos telhados e copas, lago congelado |
 | Perigo | `#e86a7a #a8323e #7a1a24 #4a0c14 #26202e` | Olhos de inimigos, dano, chefes |
 | Pele, madeira e pedra | `#f4cca0 #d8a478 #b07c58 #9a6232 #6a3a1a #a2a2ac #7a7a82 #55555e` | Rostos, casas, muros, ossos |
 
@@ -86,6 +87,10 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
 
 - **Vila de Valmor:** inverno aconchegante, neve nos telhados, janelas âmbar, fumaça nas chaminés, lampiões
   com poças de luz.
+  Feito em `src/townart.js`: a área com `winter` troca grama por neve, folhas pela família vida, põe gorro de
+  neve nas copas e nos telhados e acende as janelas. A área com `dusk` ganha a camada de luz: um véu azul de
+  anoitecer (`#1c2860`) com poças em três anéis de degrau, que tiram o véu e põem âmbar. Fumaça e neve caindo
+  são desenhadas por quadro, em pixels inteiros. Lampiões ficam em `LAMPS` (`src/town.js`).
 - **Cripta:** azul e roxo, velas, cogumelos que brilham. Tocha quente perto do grupo, escuro com a distância.
 
 ## NPCs e heróis ganham vida
