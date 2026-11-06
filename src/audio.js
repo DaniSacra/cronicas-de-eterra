@@ -272,7 +272,7 @@ const Music = (() => {
   }
   function newBus(ac) {
     const g = ac.createGain(), f = ac.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 6500; g.gain.value = 0.35;
+    f.type = 'lowpass'; f.frequency.value = 6500; g.gain.value = 0.45;
     g.connect(f); f.connect(Sfx.master);
     return { g, f };
   }
