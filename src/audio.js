@@ -73,7 +73,9 @@ const Sfx = (() => {
     // Entrada do chefe: badalada grave e um baque
     bossEncounter() { tone(130.8, 2, 'sine', 0.09); tone(311, 1.4, 'sine', 0.03); noise(0.4, 0.12, 0, 200); },
     defend() { tone(330, 0.12, 'square', 0.04); tone(494, 0.1, 'square', 0.03, null, 0.05); },
-    flee() { for (const d of [0, 0.07, 0.14, 0.21]) noise(0.05, 0.06, d, 400); },
+    flee() { for (const d of [0, 0.07, 0.14, 0.21]) noise(0.05, 0.14, d, 900, 0.8); tone(392, 0.25, 'triangle', 0.04, 784, 0.2); },
+    // Item de missão: duas notas graves e calmas (a carta do mensageiro), nada do jingle de tesouro
+    keyItem() { tone(294, 0.5, 'triangle', 0.045); tone(440, 0.7, 'triangle', 0.03, null, 0.12); },
     fall() { tone(330, 0.5, 'triangle', 0.05, 110); },
     coin() { tone(1318, 0.05, 'square', 0.035); tone(1760, 0.12, 'square', 0.035, null, 0.05); },
     bell() { for (const d of [0, 1.3]) { tone(196, 2.4, 'sine', 0.09, null, d); tone(466, 1.6, 'sine', 0.035, null, d); tone(590, 1.1, 'triangle', 0.02, null, d); } },

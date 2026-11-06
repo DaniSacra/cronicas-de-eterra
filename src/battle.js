@@ -40,7 +40,7 @@ async function hitEnemy(e, dmg, color = '#fff') {
   if (e.hp <= 0) {
     await wait(260);
     e.dieT = performance.now(); Sfx.die();
-    await bsay(e.boss ? e.say.stagger : `${ename(e)} foi derrotado!`);
+    await bsay(e.boss ? e.say.stagger : `${ename(e)} cai!`);
   } else await wait(380);
 }
 
@@ -360,7 +360,7 @@ async function tryRun(m, isBoss) {
   const ea = aliveEnemies().reduce((s, e) => s + e.agi, 0) / aliveEnemies().length;
   const chance = Math.min(0.9, Math.max(0.2, 0.55 + (stat(m, 'agi') - ea) * 0.03));
   if (Math.random() < chance) { Sfx.flee(); await bsay('Vocês escaparam!'); return true; }
-  await bsay('Não conseguiram fugir!');
+  Sfx.bump(); await bsay('Não conseguiram fugir!');
   return false;
 }
 
