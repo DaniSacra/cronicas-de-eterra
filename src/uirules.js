@@ -48,7 +48,7 @@ function heroGear(heroId, ownedIds, equips) {
 // "ATQ +6, DEF +5"
 const bonusText = (bonus, names) => Object.entries(bonus).map(([k, v]) => `${names[k]} +${v}`).join(', ');
 
-// Party talks (docs/mundo/historias/capitulo1.md, "Conversas do grupo"): each talk plays once per save.
+// Party talks (docs/mundo/historias/prologo.md, "Conversas do grupo"): each talk plays once per save.
 // takeTalk marks it in `seen` and says whether it should play now.
 function takeTalk(seen, id) {
   const k = 'talk:' + id;

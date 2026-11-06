@@ -244,6 +244,12 @@ const Sprites = (() => {
         c.fillStyle = '#140a04'; c.fillRect(14, 36, 36, 6);
       }
     },
+    clue(c) { // no chão do túnel: rastro de sangue seco e um pedaço de capa marrom, de viajante
+      for (const [x, y, rx] of [[14, 60, 5], [24, 58, 4], [33, 61, 6], [44, 58, 3]]) ell(c, x, y, rx, 1.6, '#4a1416');
+      poly(c, [30, 52, 46, 49, 54, 56, 48, 62, 34, 63, 27, 58], '#7a4a26', '#3a200e', 1);
+      line(c, [33, 55, 47, 52], '#9a6434', 1); line(c, [36, 60, 49, 57], '#5a3418', 1);
+      ell(c, 41, 57, 3, 1.4, '#5a1618');
+    },
     fountain(c) {
       ell(c, 32, 34, 30, 30, rg(c, 32, 34, 30, [[0, 'rgba(120,220,255,.35)'], [1, 'rgba(0,0,0,0)']]));
       ell(c, 32, 58, 27, 5, '#3a3e4a');
@@ -299,6 +305,7 @@ const Sprites = (() => {
       fountain: mk(c => draw.fountain(c)),
       boss: toTex(enemy('sineiro')),
       tomb: mk(c => draw.tomb(c)),
+      clue: mk(c => draw.clue(c)),
     };
   }
   return { enemy, enemyFrames, isGrid, world };

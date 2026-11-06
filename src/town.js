@@ -95,7 +95,7 @@ const NPC_DEFS = [
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     desceu: [() => `O ${heroName('aldo')} desceu na cripta! Eu contei pra todo mundo. Duas vezes.`, 'Vocês viram esqueleto? Grande? Maior que o Seu Joaquim?'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
-  // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
+  // A professora de Valmor: a razão de Aldo voltar (nome provisório, prologo.md)
   { id: 'clara', name: 'Clara, a professora', x: 14, y: 12, dir: 0, wander: 1, onTalk: claraTalk, lines: {
     arrive: [() => `Boa tarde, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
     start: [() => `Bom dia, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
@@ -185,7 +185,7 @@ AREAS.taverna.music = () => 'tavern'; // giga da Poney Saltitante
 AREAS.taverna.cozy = 'rgba(40,20,14,.38)'; // penumbra quente; a lareira, as velas e a lamparina abrem poças de luz
 
 const TOWN = {
-  A: AREAS.valmor, p: null, followers: [], npcs: [], step: 0, dim: 0,
+  A: AREAS.valmor, p: null, followers: [], npcs: [], roamers: [], step: 0, dim: 0,
   inside(x, y) { return x >= 0 && y >= 0 && x < this.A.W && y < this.A.H; },
   tileAt(x, y) { return this.inside(x, y) ? this.A.g[y * this.A.W + x] : this.A.outside; },
   buildingAt(x, y) { const i = this.inside(x, y) ? this.A.bld[y * this.A.W + x] : -1; return i >= 0 ? this.A.buildings[i] : null; },
@@ -300,6 +300,8 @@ function enterTown(pos, area = 'valmor', cast = null) {
   TOWN.p = newActor(pos.x, pos.y, pos.dir);
   TOWN.followers = G.party.slice(1).map(() => newActor(pos.x, pos.y, pos.dir));
   TOWN.npcs = (cast || areaNpcs(area)).map(spawnNpc);
+  spawnRoamers(); // renascem a cada entrada na área
+  lookAround();
   G.queue.length = 0; G.held.clear();
   TOWN.moved = false;
   Music.play(TOWN.A.music ? TOWN.A.music() : 'town');
@@ -318,6 +320,42 @@ async function goArea(ex) {
 
 const npcAt = (x, y) => TOWN.npcs.find(n => n.x === x && n.y === y);
 const partyAt = (x, y) => [TOWN.p, ...TOWN.followers].some(a => a.x === x && a.y === y);
+
+// ---------- Visão (áreas com vision: { radius }; regras em src/vision.js) ----------
+const areaSeen = () => seenTiles(G.explored, areaKey(G.area), TOWN.A.W * TOWN.A.H);
+function lookAround() { const V = TOWN.A.vision; if (V) markSight(areaSeen(), TOWN.A.W, TOWN.A.H, TOWN.p.x, TOWN.p.y, V.radius); }
+const visibleAt = (x, y) => !TOWN.A.vision || inSight(x, y, TOWN.p.x, TOWN.p.y, TOWN.A.vision.radius);
+
+// ---------- Errantes (áreas com roamers: () => [{ foe, ids, speed, x, y }]) ----------
+// Andam perto de onde nasceram, vêm atrás do grupo quando o veem e lutam ao encostar nele
+const roamerAt = (x, y) => TOWN.roamers.find(r => r.x === x && r.y === y);
+const roamFree = (x, y) => TOWN.walkable(x, y) && !npcAt(x, y) && !roamerAt(x, y) && !partyAt(x, y) && !(TOWN.A.reserved && TOWN.A.reserved(x, y));
+function spawnRoamers() {
+  TOWN.roamers = (TOWN.A.roamers ? TOWN.A.roamers() : []).map(d => ({ ...newActor(d.x, d.y, 2), def: d, home: { x: d.x, y: d.y }, range: d.range || 2, wait: rnd(600, 1800), calm: 0 }));
+}
+const touchingParty = r => [TOWN.p, ...TOWN.followers].some(a => Math.abs(a.x - r.x) + Math.abs(a.y - r.y) === 1);
+function updateRoamers(dt) {
+  const radius = TOWN.A.vision ? TOWN.A.vision.radius : 6;
+  for (const r of TOWN.roamers) {
+    if (r.calm > 0) r.calm -= dt;
+    if (r.t < 1 || (r.wait -= dt) > 0) continue;
+    const { to, chase } = roamerStep(r, TOWN.p, radius, roamFree);
+    r.wait = chase ? (to ? 0 : 300) : rnd(900, 2400);
+    if (!to || !roamFree(to.x, to.y)) continue; // o próximo passo é o próprio grupo: o encontro começa a luta
+    r.dir = to.x > r.x ? 1 : to.x < r.x ? 3 : to.y > r.y ? 2 : 0;
+    moveActor(r, to.x, to.y, r.def.speed);
+  }
+}
+// Volta da batalha para a área (luz e música do lugar)
+function backToArea() { G.mode = 'town'; TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0; Music.play(TOWN.A.music ? TOWN.A.music() : 'town'); }
+async function roamerFight(r) {
+  const res = await startBattle(r.def.ids, false);
+  if (res === 'lose') return gameOver();
+  backToArea();
+  if (res === 'win') { TOWN.roamers = TOWN.roamers.filter(o => o !== r); return; }
+  const s = retreatSpot(r, TOWN.p, roamFree); // fugiram: ele recua e volta a andar
+  Object.assign(r, { x: s.x, y: s.y, fx: s.x, fy: s.y, t: 1, calm: 3000, wait: 600 });
+}
 
 function townDir(k) {
   switch (k) {
@@ -345,6 +383,8 @@ function tryTownMove(d) {
   if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada vai para o oeste e depois sobe para o norte, até Erukh.\n' + (G.bossDead ? 'A viagem começa no próximo capítulo.' : 'Vocês não podem partir enquanto a vila corre perigo.'))); return; }
   const ex = (TOWN.A.exits || []).find(e => e.x === nx && e.y === ny);
   if (ex) { townBusy(() => goArea(ex)); return; }
+  const foe = roamerAt(nx, ny);
+  if (foe) { townBusy(() => roamerFight(foe)); return; }
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny && d === 0) { townBusy(() => enterBuilding(b)); return; }
   // Moradores só conversam com Espaço (townAction); andar contra eles só esbarra
@@ -353,6 +393,7 @@ function tryTownMove(d) {
   for (let i = F.length - 1; i > 0; i--) moveActor(F[i], F[i - 1].x, F[i - 1].y, 180);
   if (F[0]) moveActor(F[0], P.x, P.y, 180);
   moveActor(P, nx, ny, 180);
+  lookAround();
   TOWN.moved = true;
   F.forEach(f => { f.dir = f.x !== f.fx ? (f.x > f.fx ? 1 : 3) : f.y !== f.fy ? (f.y > f.fy ? 2 : 0) : f.dir; });
   if (++TOWN.step % 2) Sfx.step();
@@ -377,12 +418,17 @@ function townAction(openMenu = true) {
 
 function updateTown(dt) {
   const P = TOWN.p;
-  for (const a of [P, ...TOWN.followers, ...TOWN.npcs]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
+  for (const a of [P, ...TOWN.followers, ...TOWN.npcs, ...TOWN.roamers]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
   // Gatilhos ao pisar (lutas e achados do cemitério, cena do Teo...)
   if (P.t >= 1 && TOWN.moved && !G.busy && !UI.busy()) {
     TOWN.moved = false;
     const fn = TOWN.A.onStep && TOWN.A.onStep(P.x, P.y);
     if (fn) { townBusy(fn); return; }
+  }
+  updateRoamers(dt);
+  if (P.t >= 1 && !G.busy && !UI.busy()) {
+    const r = TOWN.roamers.find(r => r.t >= 1 && !(r.calm > 0) && touchingParty(r));
+    if (r) { townBusy(() => roamerFight(r)); return; }
   }
   if (P.t >= 1 && !G.busy && !UI.busy()) {
     let d = null;
@@ -428,12 +474,13 @@ async function claraTalk(n) {
     ['andilla', 'Vermelho de frio, claro.'],
     ['lyra', 'Frio. Sei.', 'alegre'],
   ];
-  const bye = [nm, `Oi, ${heroName('lyra')}. Com licença, preciso levar as crianças para casa.`];
+  const leave = stage() === 'arrive' ? 'preciso levar as crianças para casa' : 'a aula vai começar'; // tarde da chegada ou manhã
+  const bye = [nm, `Oi, ${heroName('lyra')}. Com licença, ${leave}.`];
   // a Lyra chega depois: se o Aldo já viu a Clara sozinho, o reencontro não se repete
   if (lyra) return partyTalk('claraLyra', G.seen['talk:clara'] ? [
     [null, `${a} vê a professora de novo e para no meio da rua.`],
     ['lyra', `${a} vê a professora. ${a} esquece como se anda.`, 'alegre'],
-    [nm, `Duas vezes no mesmo dia, ${a}.`],
+    [nm, G.intro ? 'De novo por aqui?' : `Duas vezes no mesmo dia, ${a}.`],
     ['aldo', 'Eu estava passando.'],
     bye, ...tail,
   ] : [
@@ -454,7 +501,7 @@ async function claraTalk(n) {
     [nm, 'Que bom.'],
     [null, 'Ela ajeita o xale e olha para as crianças.'],
     ['aldo', 'Você está... As crianças estão bem? O Nino cresceu.'],
-    [nm, 'Estão bem. Com licença, preciso levar as crianças para casa.'],
+    [nm, `Estão bem. Com licença, ${leave}.`],
     [null, 'Clara se afasta. Antes da esquina, olha para trás uma vez.'],
     [null, `${a} fica parado, coçando a nuca.`],
     ['teo', `Você ficou vermelho, ${a}.`],
@@ -468,6 +515,7 @@ function nextStep() {
   if (!inParty('lyra')) return 'Sua irmã chegou na carroça do correio. Está na taverna, procurando você.';
   if (!inParty('teo')) return 'A Berta mandou olhar o cemitério? O portão fica ao lado da capela, no alto da vila, à esquerda.';
   if (!G.intro) return 'Voltem à taverna. A Berta vai querer saber o que vocês viram.';
+  if (!inParty('andilla')) return 'A moça dos dados ficou na taverna. Disse que devia uma a vocês.';
   if (!G.quest) return 'O ancião Bertoldo mora na casa de telhado verde, no alto da vila.';
   if (G.party.length < 4) return 'O ancião quer quatro. Tem gente esperando para descer, lá na taverna.';
   return 'Vocês são quatro. Falem com o Hugo, na porta da igreja velha.';
@@ -482,7 +530,7 @@ function goalSpot() {
   if (a === 'valmor') {
     if (!G.seen.job || !inParty('lyra')) return door('tavern'); // a Lyra espera pelo irmão na taverna
     if (!inParty('teo')) return { x: 5, y: 3 };          // portão do cemitério
-    if (!G.intro) return door('tavern');
+    if (!G.intro || !inParty('andilla')) return door('tavern');
     if (!G.quest) return door('elder');
     if (!four) return door('tavern');
     if (!G.seen.hugo4) return npc('guard');
@@ -491,7 +539,7 @@ function goalSpot() {
   if (a === 'taverna') {
     if (!inParty('lyra')) return npc('lyra');
     if (!G.seen.job) return npc('berta');
-    if (G.quest && !four) return npc('andilla');
+    if (G.intro && !inParty('andilla')) return npc('andilla'); // saves de antes da noite nova: ela espera aqui
     return { x: 7, y: 9 };                                // a porta
   }
   if (a === 'cemiterio') {
@@ -522,6 +570,7 @@ async function enterBuilding(b) {
   if (b.id === 'crypt') {
     if (!G.quest || G.party.length < 4 || !G.seen.hugo4) { await guardTalk(null); return; }
     await partyTalk('igreja', TALKS.igreja);
+    await askWhyAtDoor();
     const ok = await UI.choose([{ label: 'Descer', value: true }, { label: 'Ficar', value: false }],
       { title: 'Entre as paredes rachadas da igreja velha, uma escada desce para a cripta.', cancel: true });
     if (ok) await enterDungeon();
@@ -558,7 +607,6 @@ async function enterTavern() {
   enterTown(TAVERN_INSIDE, 'taverna');
   await fadeTo(0, 300);
   if (!inParty('lyra') && !G.bossDead) await lyraArrives(); // a irmã do Aldo espera por ele lá dentro
-  if (needsIntroductions()) await introductions(); // a Berta apresenta quem quer descer à cripta
 }
 async function leaveTavern() {
   Sfx.select();
@@ -577,7 +625,7 @@ async function elderTalk() {
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
     'É o selo real. E vocês não abriram. Bom.',
-    'Se mataram por ela, o que tem dentro é maior que Valmor.',
+    'Se quase mataram um homem por ela, o que tem dentro é maior que Valmor.',
     'O homem que a trouxe delira "o selo... o selo". As covas abrem sozinhas.',
     'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',
     'Tudo aponta para o mesmo lugar. Debaixo da igreja velha, no fundo da cripta, dorme um rei, selado na guerra de Elun.',
@@ -644,6 +692,32 @@ async function shop() {
 }
 
 // ---------- Desenho por quadro ----------
+// Névoa da visão: uma máscara de um pixel por tile (com uma borda preta em volta do mapa), ampliada com suavização,
+// dá a borda macia. Primeiro tira a cor do que está fora do raio, depois escurece: névoa no que já foi visto, preto no resto.
+const SIGHT_MASKS = {};
+function drawSight(c, A, lp, camX, camY) {
+  const W = A.W + 2, H = A.H + 2, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS, py = lp.y / TS;
+  let M = SIGHT_MASKS[A.name];
+  if (!M) {
+    const mk = () => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d'); return { cv, cx, img: cx.createImageData(W, H) }; };
+    M = SIGHT_MASKS[A.name] = { gray: mk(), dark: mk() };
+  }
+  const g = M.gray.img.data, d = M.dark.img.data;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const tx = x - 1, ty = y - 1, i = (y * W + x) * 4, inMap = tx >= 0 && ty >= 0 && tx < A.W && ty < A.H;
+    const k = inMap ? Math.min(1, Math.max(0, (Math.hypot(tx - px, ty - py) - (r - 1)) / 1.5)) : 1; // 0 perto do grupo, 1 além do raio
+    const a = inMap && seen[ty * A.W + tx] ? 0.6 * k : k;
+    g[i] = g[i + 1] = g[i + 2] = 128; g[i + 3] = 255 * k;
+    d[i] = d[i + 1] = 4; d[i + 2] = 12; d[i + 3] = 255 * a;
+  }
+  M.gray.cx.putImageData(M.gray.img, 0, 0); M.dark.cx.putImageData(M.dark.img, 0, 0);
+  const X = -camX - TS, Y = -camY - TS;
+  c.save(); c.imageSmoothingEnabled = true;
+  c.globalCompositeOperation = 'saturation'; c.drawImage(M.gray.cv, X, Y, W * TS, H * TS);
+  c.globalCompositeOperation = 'source-over'; c.drawImage(M.dark.cv, X, Y, W * TS, H * TS);
+  c.restore();
+}
+
 // bare: só o lugar, sem gente nem setinha (fundo da batalha)
 function drawTown(now, bare = false) {
   const c = vctx;
@@ -653,7 +727,7 @@ function drawTown(now, bare = false) {
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
-  c.save(); c.translate(-camX, -camY); c.fillStyle = A.edge; c.fillRect(camX, camY, VW, VH); c.restore();
+  c.save(); c.translate(-camX, -camY); c.fillStyle = A.vision ? '#000' : A.edge; c.fillRect(camX, camY, VW, VH); c.restore();
   c.drawImage(A.layer, -camX, -camY);
 
   // Brilho da água
@@ -678,7 +752,8 @@ function drawTown(now, bare = false) {
   const list = bare ? [] : [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
-    ...TOWN.npcs.map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
+    ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
+    ...TOWN.roamers.filter(r => visibleAt(r.x, r.y)).map(r => ({ a: r, foe: true, spr: () => foeSprite(r, now) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
@@ -695,6 +770,7 @@ function drawTown(now, bare = false) {
     c.save(); c.translate(x + 8, y + spr.height - 7); c.rotate(-Math.PI / 2); c.drawImage(spr, -8, -spr.height / 2); c.restore();
   }
   TownArt.weather(c, A, now, camX, camY, VW, VH); // fumaça, anoitecer com poças de luz, neve caindo
+  if (A.vision) drawSight(c, A, lp, camX, camY);
   // Setinha amarela sobre o próximo lugar da história, balançando
   const goal = !bare && goalSpot();
   if (goal) {
@@ -703,6 +779,11 @@ function drawTown(now, bare = false) {
     c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(gx - 3.5, gy); c.lineTo(gx + 3.5, gy); c.lineTo(gx, gy + 4.5); c.closePath(); c.fill();
   }
   if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  if (A.vision) { // a luz quente do lampião em volta do grupo
+    const gx = lp.x - camX + TS / 2, gy = lp.y - camY + TS / 2, R = A.vision.radius * TS, gr = c.createRadialGradient(gx, gy, 0, gx, gy, R);
+    gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');
+    c.globalCompositeOperation = 'lighter'; c.fillStyle = gr; c.fillRect(gx - R, gy - R, R * 2, R * 2); c.globalCompositeOperation = 'source-over';
+  }
   // Névoa baixa (cemitério): faixas claras deslizando devagar
   if (A.fog) {
     // faixas com borda macia em cima e embaixo; cada faixa é mais densa no meio e some nas pontas

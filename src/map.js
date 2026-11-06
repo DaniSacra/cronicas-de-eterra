@@ -134,7 +134,31 @@ function generateFloor(fi) {
   let startDir = DIRS.findIndex(([dx, dy]) => g[id(1 + dx, 1 + dy)] !== 1);
   if (startDir < 0) startDir = 1;
 
-  return { size: N, grid: g, objects, stairs, wallVar, start: { x: 1, y: 1, dir: startDir }, dist };
+  // Pista no túnel (def.clue): o primeiro tile de túnel cavado, no caminho da escada até a fonte, por onde todo
+  // caminho até a fonte e até o chefe tem de passar. Não sorteia nada: o resto do mapa não muda.
+  let clue = null;
+  const fountain = objects.find(o => o.type === 'fountain');
+  if (def.clue && fountain) {
+    const path = [];
+    for (let c = id(fountain.x, fountain.y); dist[c] > 0;) {
+      path.unshift(c);
+      const cx = c % N, cy = (c / N) | 0;
+      c = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => id(cx + dx, cy + dy)).find(n => g[n] !== 1 && dist[n] === dist[c] - 1);
+    }
+    const reachWithout = cut => {
+      const seen = new Uint8Array(N * N), q = [id(1, 1)]; seen[cut] = seen[id(1, 1)] = 1;
+      for (let qi = 0; qi < q.length; qi++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = q[qi] + dy * N + dx;
+        if (g[n] !== 1 && !seen[n]) { seen[n] = 1; q.push(n); }
+      }
+      return seen;
+    };
+    const blocks = c => { const r = reachWithout(c); return !r[id(fountain.x, fountain.y)] && objects.every(o => o.type !== 'boss' || !r[id(o.x, o.y)]); };
+    const c = path.find(c => inTunnel(dist[c]) && blocks(c)) ?? path.find(c => dist[c] > 1 && blocks(c));
+    if (c !== undefined) clue = { x: c % N, y: (c / N) | 0 };
+  }
+
+  return { size: N, grid: g, objects, stairs, wallVar, start: { x: 1, y: 1, dir: startDir }, dist, clue };
 }
 
 if (typeof module !== 'undefined') module.exports = { generateFloor, mulberry32 };

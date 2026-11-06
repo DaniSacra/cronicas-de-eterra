@@ -9,11 +9,12 @@ const GAME = {
 };
 
 // Primeira missão: uma cripta curta, de um andar só, para aprender a jogar (pedido do Daniel, 2026-11-04).
-// A fonte fica no meio do caminho; no fundo, o Sineiro guarda o túmulo do rei (docs/mundo/historias/capitulo1.md).
+// A fonte fica no meio do caminho; no fundo, o Sineiro guarda o túmulo do rei (docs/mundo/historias/prologo.md).
 const FLOORS = [
   {
     name: 'Cripta da Igreja Velha', short: 'B1', seed: 7331, size: 15, rooms: 2, loops: 0.06, fountainAt: 0.5, boss: true,
     tunnels: [[0.12, 0.4], [0.58, 0.86]], // trechos de túnel cavado entre salas da cripta antiga
+    clue: true, // rastro de sangue e capa marrom no túnel, antes da fonte (o mensageiro passou por ali)
     pal: { stone: [92, 94, 136], mortar: [24, 20, 44], floor: [72, 68, 104], floorJ: [26, 22, 46], ceil: [40, 34, 70], accent: [58, 128, 118] }, // pedra azulada, limo verde-água (docs/arte/estilo.md: cripta azul e roxa)
     loot: ['pocao', 'espadaFerro', 'eter', 'cajadoRunico', 'pocao'],
     enemies: ['rato', 'morcego', 'gosma'], maxGroup: 3,
@@ -40,7 +41,8 @@ const PARTY_DEFS = [
     spells: [[1, 'cura'], [2, 'luz'], [4, 'reviver'], [6, 'curaTotal']], skillWord: 'Magia',
   },
   {
-    id: 'andilla', name: 'Andilla', cls: 'Ladina', color: '#e05a5a',
+    // até dizer o nome na noite da taverna (G.seen.andillaAnon), ela é a moça dos dados também no cartão e na batalha
+    id: 'andilla', get name() { return typeof G !== 'undefined' && G.seen && G.seen.andillaAnon ? 'Moça dos dados' : 'Andilla'; }, cls: 'Ladina', color: '#e05a5a',
     base: { hp: 34, mp: 10, atk: 11, def: 5, mag: 4, agi: 14 },
     grow: { hp: 6, mp: 2, atk: 2.5, def: 1.2, mag: 0.5, agi: 1.6 },
     spells: [[1, 'golpeBaixo'], [4, 'leque']], skillWord: 'Truque',
@@ -104,7 +106,7 @@ const ENEMIES = {
                recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
   ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
   encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
-  // Chefe do capítulo 1 (capitulo1.md)
+  // Chefe do prólogo (prologo.md)
   sineiro:   { name: 'O Sineiro', hp: 600, atk: 24, def: 14, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
                say: {
                  intro: 'O Sineiro ergue o sino de bronze.\n"A missa acabou faz cinquenta anos. Ninguém mais desce."',
@@ -113,13 +115,14 @@ const ENEMIES = {
                  aoe: 'O Sineiro toca a Badalada! O som atravessa os ossos.',
                  drain: t => `O Sineiro entoa um dobre fúnebre por ${t}!`,
                  stagger: 'O Sineiro cambaleia...',
+                 whisper: n => `O Sineiro sussurra: "${n}... a missa vai começar."`, // o aviso da Ana: chamar pelo nome
                  noRun: 'O Sineiro barra a última porta. Não há para onde fugir!',
                } },
 };
 
 // Itens de missão (não aparecem na batalha)
 const KEY_ITEMS = {
-  // O texto da carta fica em docs/mundo/historias/capitulo1.md até o capítulo em que ela for aberta
+  // O texto da carta fica em docs/mundo/historias/prologo.md até o capítulo em que ela for aberta
   carta: { name: 'Carta com o selo real', desc: 'Item de missão',
     sealedName: 'Carta com o selo real', sealed: ['O selo real está inteiro.', 'Teo não vai rompê-lo. Só a rainha pode.'] },
   estojo: { name: 'Estojo de ganchos', desc: 'Item de missão',
@@ -150,20 +153,21 @@ const JOURNAL = {
     { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
     { show: () => G.key.estojo || inParty('andilla'), text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
-    { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, noviço do Templo, veio conosco.' },
+    { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, noviço da Ordem de Erukh, veio conosco.' },
     { show: () => G.intro, text: 'Um mensageiro ferido caiu na taverna com uma carta para a rainha.' },
-    { show: () => G.intro, text: 'Dois encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
-    { show: () => G.intro, text: 'A moça dos dados sumiu antes da luta. Usa capa cinza, como eles.' },
+    { show: () => G.intro, text: 'Os encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
+    { show: () => G.intro && inParty('andilla'), get text() { return `A moça dos dados se chama ${heroName('andilla')}. Ganha no dado e na faca. Não diz de onde vem.`; } },
+    { show: () => G.intro && inParty('andilla'), get text() { return `${heroName('andilla')} viu gente de capa cinza cavando no cemitério. Não diz o que fazia lá.`; } },
     { show: () => G.intro, text: 'A carta tem o selo real. Teo não quer rompê-lo: quem abrir tem de ter o direito.' },
     { show: () => G.intro, text: 'De madrugada, um sino tocou ao longe. Ninguém sabe quem tocou.' },
     { show: () => G.quest, text: 'O mensageiro delira "o selo... o selo" e não diz o próprio nome.' },
     { show: () => G.quest, text: 'O sino era o da igreja velha, vazia há cinquenta anos. Sob ela, no fundo da cripta, dorme um rei. O ancião não quis dizer o nome.' },
     { show: () => G.quest, text: 'Os paladinos que fecharam a cripta eram quatro. O ancião quer quatro para descer.' },
     { show: () => inParty('lyra'), get text() { return `Lyra, irmã caçula de ${heroName('aldo')}, chegou na carroça do correio. Veio ver o irmão e a fonte de luz da cripta.`; } },
-    { show: () => inParty('andilla'), get text() { return `A moça dos dados era ${heroName('andilla')}. Fugiu da taverna porque já tinha visto aquelas lâminas no cemitério.`; } },
     { show: () => G.seen.paladino, text: 'Na lápide da cova mais antiga, o símbolo de um paladino.' },
     { show: () => G.reached >= 1, text: 'A marca dos encapuzados está pintada na parede da cripta. Eles já estiveram aqui.' },
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },
+    { show: () => G.seen.pistaTunel, text: 'No túnel da cripta, sangue seco e um pedaço de capa marrom, de viajante. Alguém desceu ali sem ser dos encapuzados.' },
     { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo cede, e "o homem do sumo sacerdote" não pode sair de Valmor. Quem é V.?' },
     { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados adoram Morvath?' },
     { show: () => G.bossDead, text: 'O Sineiro, um morto da igreja velha, guardava a última porta. Era ele quem tocava o sino.' },

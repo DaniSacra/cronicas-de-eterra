@@ -131,9 +131,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--text); letter-spacing: 2px; }
 .title p { margin: 0; font-size: 16px; color: var(--light); text-shadow: 3px 3px 0 var(--ink); }
 .title p.small { font-size: 8px; color: var(--dim); }
-.title .sub.end { display: flex; flex-direction: column; gap: 1em; max-width: min(90vw, 40em); text-align: center; letter-spacing: 0; }
-.title .sub.end p { font-size: var(--f2); line-height: 1.5; color: var(--text); text-shadow: none; }
+.title .sub.end { display: flex; flex-direction: column; gap: .55em; max-width: min(90vw, 40em); text-align: center; letter-spacing: 0; }
+.title .sub.end p { font-size: var(--f2); line-height: 1.35; color: var(--text); text-shadow: none; }
 #overlay.ov-end { padding-bottom: 38vh; }
+@media (max-width: 500px) { .title .sub.end p { font-size: var(--f1); } } /* phone: the end text fits above the menu */
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
 @media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
 

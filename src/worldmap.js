@@ -28,7 +28,7 @@ const WORLD_POIS = [
         : G.seen.altar ? 'No altar, escreveram "O rei voltará".'
         : G.seen.lapide ? 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.'
         : 'O ancião quer um grupo de quatro para descer.') },
-  { id: 'templo', nome: 'Templo de Erukh', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
+  { id: 'templo', nome: 'Grande Templo de Hyarmeth', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
     text: () => 'O templo mais conhecido de Hyarmeth, do outro lado do mar. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
       '' },
   { id: 'erukh', nome: 'Erukh', reino: 'Imladrin', tipo: 'Capital', x: 215, y: 125, show: () => true, visto: () => false,

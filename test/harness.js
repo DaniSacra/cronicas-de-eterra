@@ -11,12 +11,12 @@ function loadStory(G, o = {}) {
     UI: { say: async t => { log.push(t); }, choose: async (opts, oo) => (o.choose ? o.choose(opts, oo || {}) : picks.length ? picks.shift() : opts[0].value),
       buildParty() {}, updateParty() {}, cardFloat() {}, cardGlow() {}, cardHit() {}, markCard() {}, busy: () => false },
     Sfx: new Proxy({}, { get: () => () => {} }), Music: { play() {}, stop() {} }, TownArt: { layer: () => null },
-    fadeTo: async () => {}, wait: async () => {}, shake() {}, saveGame: () => true, townHint() {}, placeHint() {},
+    fadeTo: async () => {}, wait: async () => {}, shake() {}, saveGame: () => true, keepSeen: k => { (ctx.kept = ctx.kept || []).push(k); }, townHint() {}, placeHint() {},
     startBattle: async () => 'win', gameOver: async () => {},
     ...o.ctx,
   };
   vm.createContext(ctx);
-  for (const f of ['palette', 'data', 'map', 'uirules', 'party', ...(o.files || ['town', 'opening'])])
+  for (const f of ['palette', 'data', 'map', 'uirules', 'party', 'vision', ...(o.files || ['town', 'opening'])])
     vm.runInContext(fs.readFileSync(`${__dirname}/../src/${f}.js`, 'utf8'), ctx, { filename: f });
   const run = code => vm.runInContext(code, ctx);
   // values from the vm realm have other prototypes: compare them as plain JSON
@@ -24,7 +24,7 @@ function loadStory(G, o = {}) {
   return { log, picks, run, ctx };
 }
 const newG = (ids, extra = {}) => ({
-  mode: 'town', area: 'valmor', busy: false, queue: [], held: new Set(), key: {}, inv: {}, gold: 40, seen: {}, ...extra, party: ids,
+  mode: 'town', area: 'valmor', busy: false, queue: [], held: new Set(), key: {}, inv: {}, explored: {}, gold: 40, seen: {}, ...extra, party: ids,
 });
 // party ids become members once party.js (newMember) is loaded
 function story(ids, extra) {

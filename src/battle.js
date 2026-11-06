@@ -279,6 +279,11 @@ async function enemyAct(e) {
 // Chefe: golpe, ataque em todos e dreno; as falas vêm de ENEMIES[id].say
 async function bossAct(e) {
   const S = e.say;
+  // O aviso da Ana se paga: na segunda rodada, uma vez por save (fica no save mesmo se o grupo cair), ele chama alguém pelo nome
+  if (S.whisper && B.round === 2 && !G.seen.sussurro) {
+    const t = ['teo', 'lyra', 'andilla', 'aldo'].map(id => G.party.find(m => m.id === id)).find(m => m && m.hp > 0);
+    if (t) { G.seen.sussurro = 1; keepSeen('sussurro'); Sfx.dark(); await bsay(S.whisper(pdef(t).name)); }
+  }
   if (!e.enraged && e.hp < e.maxhp * 0.5) {
     e.enraged = true;
     Sfx.dark(); shake(500);

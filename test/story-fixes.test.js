@@ -2,28 +2,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { story } = require('./harness.js');
 
-test('before the elder, the dice girl keeps the case and does not join; at the introductions she joins and Lyra asks her question', async () => {
-  const { G, log, run } = story(['aldo', 'lyra', 'teo'], { intro: 1, seen: { job: 1 }, key: { estojo: true } });
-  run(`enterTown({ x: 7, y: 8, dir: 0 }, 'taverna')`);
-  assert.deepEqual(run.json('goalSpot()'), { x: 7, y: 9 }, 'the arrow points to the door, not to her');
-  await run(`andillaTalk(TOWN.npcs.find(n => n.def.id === 'andilla'))`);
-  assert.equal(G.party.length, 3);
-  assert.equal(G.key.estojo, true);
-  assert.ok(log.some(t => t.startsWith('Moça dos dados:\nEsse estojo aí é meu.')));
-  assert.ok(!log.some(t => t.startsWith('Andilla')), 'no name before she says it');
-  log.length = 0;
-  await run('elderTalk()');
-  assert.ok(log.some(t => t.includes('Mas três não descem lá')));
-  run(`enterTown({ x: 7, y: 8, dir: 0 }, 'taverna')`);
-  log.length = 0;
-  await run('introductions()');
-  assert.equal(G.party.length, 4);
-  assert.equal(G.key.estojo, false);
-  assert.ok(G.seen.porque, 'Lyra asked why');
-  const first = log.findIndex(t => t.startsWith('Andilla'));
-  assert.ok(log[first].includes('Andilla. Abro o que está fechado'), 'her first line under her name is her name');
-});
-
 test('an old save that reaches the elder with four hears the right lines', async () => {
   const { log, run } = story(['aldo', 'lyra', 'teo', 'andilla'], { intro: 1, seen: { job: 1 } });
   await run('elderTalk()');

@@ -59,7 +59,7 @@ function worldSprites(now) {
     if (o.type === 'boss' && G.bossDead) { s.type = 'tomb'; s.spr = SPR.tomb; s.scale = 0.75; }
     else if (o.type === 'boss') { s.spr = SPR.boss; s.scale = 0.95; s.emit = 0.55; s.lift = 0.04 + Math.sin(now / 500) * 0.03; }
     return s;
-  });
+  }).concat(map().clue ? [{ x: map().clue.x + 0.5, y: map().clue.y + 0.5, type: 'clue', spr: SPR.clue, scale: 0.5 }] : []);
 }
 
 function exploreHint() {
@@ -217,6 +217,14 @@ async function onStep() {
     G.busy = false; exploreHint();
     return;
   }
+  const pista = map().clue;
+  if (pista && G.x === pista.x && G.y === pista.y && !G.seen.pistaTunel) { // no chão do túnel, no caminho obrigatório
+    G.seen.pistaTunel = 1; G.busy = true; G.held.clear(); G.queue.length = 0;
+    await clue(TUNNEL_CLUE);
+    await partyTalk('pista', TALKS.pista);
+    G.busy = false; exploreHint();
+    return;
+  }
   G.sinceFight++;
   const chance = G.sinceFight < 5 ? 0 : Math.min(0.22, 0.05 + (G.sinceFight - 5) * 0.012);
   if (Math.random() < chance) {
@@ -337,28 +345,7 @@ const FLOOR_CLUES = [
   [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."']],
 ];
 const FLOOR_TALKS = ['olho'];
-// Conversas do grupo (docs/mundo/historias/capitulo1.md)
-const TALKS = {
-  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.', 'preocupado'], ['lyra', 'Então não vieram a Valmor só pela carta.']],
-  lapide: [['teo', 'Morvath. O rei que o ancião não quis nomear.'], ['andilla', 'Rei enterrado com a coroa, e a gente aqui de mão vazia.', 'alegre'],
-    ['teo', () => `${heroName('andilla')}.`, 'bravo'], ['andilla', 'Brincadeira. Quase toda.', 'alegre']],
-  bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
-    ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.', 'preocupado']],
-  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.', 'bravo'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
-  igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
-    ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
-  sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
-  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
-    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo'],
-    ['lyra', () => `${heroName('aldo')} ficou quieto. Quando ${heroName('aldo')} fica quieto assim, é raiva.`, 'preocupado'],
-    ['lyra', 'Você está inteiro? Ótimo. A professora não gosta de remendo.', 'alegre']],
-  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
-    ['aldo', 'Se alguém tirou um rei daquele buraco, ele não vai ficar longe de Valmor. Eu vou.'],
-    ['lyra', () => `${heroName('aldo')} diz que vai pela carta. ${heroName('aldo')} vai por uma certa professora.`, 'alegre'],
-    ['aldo', () => `${heroName('lyra')}.`, 'bravo'], ['lyra', porqueRoad], // a resposta das apresentações (G.seen.porque)
-    ['teo', 'Até a rainha, ninguém toca nela.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
-    ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.', 'alegre']],
-};
+// The party talks (TALKS) and the tunnel clue live with the rest of the prologue story, in src/opening.js
 const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
   if (G.seen['andar' + f] || !FLOOR_CLUES[f]) return;
@@ -418,8 +405,7 @@ async function campMenu() {
 // ---------- Salvar / carregar ----------
 function saveGame() {
   try {
-    const explored = {};
-    for (const [k, v] of Object.entries(G.explored)) explored[k] = Array.from(v);
+    const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
       inv: G.inv, opened: G.opened, explored, bossDead: G.bossDead,
@@ -428,6 +414,13 @@ function saveGame() {
     }));
     return true;
   } catch (e) { return false; }
+}
+// Marks one flag in the existing save without saving the rest (e.g. mid boss fight: a loss reloads the old state)
+function keepSeen(k) {
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (s) { s.seen = { ...(s.seen || {}), [k]: 1 }; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); }
+  } catch (e) { /* sem save neste navegador */ }
 }
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 function loadGame() {
@@ -440,8 +433,7 @@ function loadGame() {
     G.seen = s.seen || {};
     G.macros = normalizeMacros(s.macros); G.lastRound = null; // saves without tactics get two empty slots
     G.reached = s.reached ?? (s.place === 'town' ? Object.keys(s.explored || {}).length : s.floor + 1);
-    G.explored = {};
-    for (const [k, v] of Object.entries(s.explored || {})) G.explored[k] = Uint8Array.from(v);
+    G.explored = unpackExplored(s.explored);
     // saves da versão de 3 andares: quem estava no B2/B3 volta ao começo da cripta
     if (s.floor >= FLOORS.length) loadFloor(0); else loadFloor(s.floor, { x: s.x, y: s.y, dir: s.dir });
     // saves da versão 1 (Aldo, Lyra e Teo): a ladina entra no grupo
@@ -517,7 +509,7 @@ async function titleScreen() {
     `<p class="foot">${esc(GAME.credit)}</p>`, 'ov-title');
   document.getElementById('party').innerHTML = '';
   const v = await UI.choose([{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !hasSave() },
-    { label: 'Direto à cripta', hint: 'grupo de 4, pula o capítulo', value: 'dungeon' }],
+    { label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }],
     { title: '', cols: 1 });
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
@@ -534,7 +526,7 @@ async function titleScreen() {
 }
 
 async function newGame() {
-  G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no capítulo
+  G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no prólogo
   G.inv = { pocao: 2 };
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   G.macros = normalizeMacros(); G.lastRound = null;
@@ -569,12 +561,14 @@ async function gameOver() {
   else await newGame();
 }
 
-// Fim do capítulo 1: o Sineiro cai, o túmulo do rei está arrombado e vazio, Tobias acorda (capitulo1.md)
+// Fim do Prólogo · O Sino de Valmor: o Sineiro cai, o túmulo do rei está arrombado e vazio, Tobias acorda (prologo.md)
 async function ending() {
   G.bossDead = true; G.busy = true;
   G.flashColor = '255,255,255'; G.flash = { t0: performance.now(), dur: 1500 };
   Music.stop(); Sfx.bellFar();
+  await say2('O Sineiro', '"Ele prometeu... que o rei traria os fiéis de volta..."');
   await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
+  if (inParty('lyra')) await say2('Lyra~alegre', 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
   await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
   await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
   await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
@@ -590,12 +584,13 @@ async function ending() {
   if (inParty('teo')) await say2('Teo', 'Fechada. Como veio.');
   await say2(null, 'Tobias chora em silêncio.');
   await say2('Tobias', 'O que eu vi lá embaixo é da rainha. Levem a carta a ela.');
+  await say2(heroName('aldo'), 'Lá embaixo? Você viu quem abriu o túmulo?');
+  await say2('Tobias', 'Da rainha.');
   await say2('Tobias', 'Em Erukh, não confiem em ninguém antes dela.');
   await UI.say('Naquela noite, os mortos de Valmor não se levantam. E o sino da igreja velha não toca.');
   await UI.say('Na manhã seguinte, na estrada do oeste.');
   await partyTalk('estrada', TALKS.estrada);
-  const lv = G.party.map(m => `${pdef(m).name} Nv ${m.lv}`).join(' · ');
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO CAPÍTULO 1')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>${esc(lv)}</p><p>Obrigado por jogar!</p></div></div>`, 'ov-dark ov-end');
+  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-dark ov-end');
   saveGame();
   const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: 2 });
   UI.hideOverlay();
