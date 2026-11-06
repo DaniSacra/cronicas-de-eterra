@@ -155,3 +155,4 @@ const HERO_FACE_BG = {
   lyra: ['#432c78', '#38246a', '#2e1e5a', '#24184a'],
   andilla: ['#62202e', '#541a28', '#461622', '#38111c'],
 };
+if (typeof module !== 'undefined') module.exports = { HERO_FACES, HERO_FACE_BG };
