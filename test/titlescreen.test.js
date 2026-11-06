@@ -40,6 +40,8 @@ test('the logo and the menu never cover Erukh, Aldo or Lyra, at a whole scale, o
     }
     assert.ok(Math.abs(L.erukh.x + L.erukh.w / 2 - L.W / 2) <= L.W * 0.1, `${tag}: Erukh near the center`);
     assert.equal(L.ruin.x + L.ruin.w, L.W, `${tag}: the ruin is anchored to the right`);
+    for (const k of [0, 0.5, 1]) { const y = T.cloudY(L.clouds, k); if (y === null) continue; const cloud = { x: 0, y: y - 2, w: L.W, h: 8 };
+      for (const art of ['logo', 'erukh']) assert.ok(!T.rectsCross(cloud, L[art]), `${tag}: a cloud crosses the ${art}`); }
   }
 });
 

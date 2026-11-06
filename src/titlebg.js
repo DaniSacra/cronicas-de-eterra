@@ -223,8 +223,11 @@ function titleLayout({ W, H, px, f1, f2 }) {
   const aldo = { x: ruin.x + 26, y: ruin.y - 28, w: 28, h: 30 };
   const lyra = { x: ruin.x + 56, y: ruin.y - 44, w: 34, h: 46 };
   const star = { x: cx - 7, y: Math.max(Math.round((logo.y + logo.h + erukh.y) / 2) - 7, erukh.y - 34), w: 15, h: 15 };
-  return { W, H, hy, cx, logo, menu, erukh, ruin, aldo, lyra, star };
+  const clouds = { y0: logo.y + logo.h + 4, y1: erukh.y - 2 }; // nuvens só na faixa entre o logo e Erukh
+  return { W, H, hy, cx, logo, menu, erukh, ruin, aldo, lyra, star, clouds };
 }
+// A cloud is 8 rows tall (y - 2 to y + 5): its y inside the band; null when the band is too thin (no clouds then)
+const cloudY = ({ y0, y1 }, k) => (y1 - y0 < 8 ? null : y0 + 2 + Math.floor(k * (y1 - y0 - 7)));
 const rectsCross = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 // Descida de câmera da abertura: do céu até a cena em cerca de 2 s; qualquer entrada pula para o fim
@@ -335,7 +338,7 @@ const TitleBG = (() => {
     c.putImageData(img, 0, 0);
     // dinâmicos: estrelas, nuvens, tufos de grama na beira da ruína
     const stars = Array.from({ length: Math.round(W * (hy + D) / 300) }, () => ({ x: Math.floor(r() * W), y: Math.floor(r() * (hy * 0.45 + D)) - D, p: r() * 6, col: TITLE_C.stars[Math.floor(r() * 3)], life: r() < 0.3 ? Infinity : 6000 + r() * 40000 }));
-    const clouds = Array.from({ length: Math.max(4, Math.round(W / 70)) }, (_, i) => ({ x: r() * W * 1.5, y: hy - 60 - Math.floor(r() * 50) + (i % 2) * 18, w: 18 + Math.floor(r() * 30), lo: i % 2, s: 0.0015 + r() * 0.002 }));
+    const clouds = Array.from({ length: Math.max(4, Math.round(W / 70)) }, (_, i) => ({ x: r() * W * 1.5, y: cloudY(L.clouds, r()), w: 18 + Math.floor(r() * 30), lo: i % 2, s: 0.0015 + r() * 0.002 })).filter(cl => cl.y !== null);
     const tufts = Array.from({ length: 14 }, (_, i) => ({ x: R.x + 6 + i * 8 + Math.floor(r() * 4), h: 2 + Math.floor(r() * 3), flower: r() < 0.3 ? TITLE_C.flowers[i % 2] : null }))
       .filter(t => t.x < W - 2 && !(t.x > L.aldo.x - 2 && t.x < L.lyra.x + L.lyra.w));
     return { L, D, bg: cv, river, stars, clouds, tufts, top };
@@ -402,4 +405,4 @@ const TitleBG = (() => {
   return { draw, intro, layout: layoutNow };
 })();
 
-if (typeof module !== 'undefined') module.exports = { TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS };
+if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS };
