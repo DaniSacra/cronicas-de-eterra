@@ -50,39 +50,49 @@ const LOOKS = {
 };
 
 const say = (name, lines) => lines.reduce((p, l) => p.then(() => UI.say(`${name}:\n${typeof l === 'function' ? l() : l}`)), Promise.resolve());
-// Etapas da vila: arrive (Aldo acabou de chegar) · start (depois da noite na taverna) · quest (missão do ancião) · won
-const stage = () => G.bossDead ? 'won' : G.quest ? 'quest' : G.intro ? 'start' : 'arrive';
-const STAGE_FALLBACK = { arrive: ['arrive', 'start'], start: ['start'], quest: ['quest', 'start'], won: ['won', 'quest', 'start'] };
+// Etapas da vila: arrive (Aldo acabou de chegar) · start (depois da noite na taverna) · quest (missão do ancião)
+// · desceu (o grupo já foi à cripta e voltou: curiosidade e dúvida) · won (o Sineiro caiu: orgulho, e a dúvida do túmulo vazio)
+const stage = () => G.bossDead ? 'won' : G.reached >= 1 ? 'desceu' : G.quest ? 'quest' : G.intro ? 'start' : 'arrive';
+const STAGE_FALLBACK = { arrive: ['arrive', 'start'], start: ['start'], quest: ['quest', 'start'], desceu: ['desceu', 'quest', 'start'], won: ['won', 'quest', 'start'] };
 const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return o[k]; return o.start || o.quest || o.won; };
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, lines: {
     start: [() => `${heroName('aldo')}! De volta para o inverno, é? Pena: a igreja velha está fechada por ordem do ancião.`, 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
     quest: ['Que a luz os guie lá embaixo. Voltem vivos.'],
-    won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.'] } },
+    desceu: ['Vocês subiram inteiros. Primeira vez que alguém sobe dessa escada falando.', () => `O que tem lá embaixo, ${heroName('aldo')}? Não, não me conta. Eu ainda tenho que ficar aqui de guarda.`],
+    won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.', 'Mas se o túmulo estava vazio, quem é que eu fiquei guardando esse tempo todo?'] } },
   { id: 'lia', name: 'Lia', x: 18, y: 8, dir: 2, wander: 2, lines: {
     start: ['Meu gato fugiu ontem à noite...', 'Ele nunca foge. Acho que ficou com medo dos barulhos que vêm da cripta.'],
+    quest: ['Vocês vão lá embaixo? Se virem um gato laranja, é o Bigode!'],
+    desceu: ['Vocês desceram mesmo! O Bigode não estava lá, né? Ele tem medo de escuro.'],
     won: ['O Bigode voltou pra casa! Ele voltou sozinho... mas obrigada mesmo assim!'] } },
   { id: 'rui', name: 'Rui, o lavrador', x: 6, y: 7, dir: 2, wander: 2, lines: {
     arrive: ['Toda noite ouço algo arranhando debaixo da terra.', 'Eu falei das covas vazias e ninguém acreditou. Agora acreditam?'],
     start: ['Ouviu o sino de madrugada? É o da igreja velha.', 'Aquela igreja está vazia faz cinquenta anos. Quem é que toca?'],
-    won: ['Dormi a noite inteira pela primeira vez em semanas!'] } },
+    quest: ['Vão descer? Levem uma pá. Eu levaria.'],
+    desceu: ['Desceram e voltaram! Viram quem abriu as covas?', 'Ninguém acreditou em mim. Agora a vila inteira só fala disso.'],
+    won: ['Dormi a noite inteira pela primeira vez em semanas!', 'Mas aquelas covas cavadas com pá... Morto não usa pá.'] } },
   { id: 'marta', name: 'Dona Marta', x: 23, y: 8, dir: 2, wander: 1, lines: {
     start: [() => `O ${heroName('aldo')} de volta. A escola agradece. Digo, a vila agradece.`, 'Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
     quest: ['Lá embaixo, leiam as paredes. Os antigos escreviam tudo.', 'Levem poções. Muitas poções. A Dora vende na loja de telhado dourado.'],
-    won: ['Meu avô ficaria orgulhoso de vocês.'] } },
+    desceu: ['Leram as paredes? Minha avó dizia que os paladinos escreviam até na pedra do chão.'],
+    won: ['Minha avó ficaria orgulhosa de vocês.', 'Mas eu não durmo tranquila. Paladino nenhum deixaria aquele túmulo vazio.'] } },
   { id: 'tome', name: 'Tomé, o pescador', x: 9, y: 11, dir: 3, wander: 0, lines: {
     start: [() => `${heroName('aldo')}! Veio pescar? Ah, não. Veio pelo... trabalho.`, 'Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há fontes de luz que curam qualquer ferida e guardam a memória de quem passa.'],
+    desceu: ['Viram a fonte de luz? Cura mesmo qualquer ferida? Meu joelho quer saber.'],
     won: ['Os peixes voltaram! E eu achando que era a minha isca.'] } },
   { id: 'nino', name: 'Nino', x: 17, y: 12, dir: 2, wander: 3, lines: {
     arrive: [() => nextStep()],
     start: [() => `${heroName('aldo')}, me ensina a segurar a espada? A professora disse que não. Mas ela sorriu quando disse.`, 'Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.', () => nextStep()],
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
+    desceu: [() => `O ${heroName('aldo')} desceu na cripta! Eu contei pra todo mundo. Duas vezes.`, 'Vocês viram esqueleto? Grande? Maior que o Seu Joaquim?'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
   { id: 'clara', name: 'Clara, a professora', x: 14, y: 12, dir: 0, wander: 1, onTalk: claraTalk, lines: {
     start: [() => `Bom dia, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
     quest: ['Vão descer na igreja velha?', 'Voltem. Os quatro.'],
+    desceu: ['Voltaram. Todos. Que bom.', 'O Nino contou para a escola inteira. Eu fingi que não ouvi.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
   { id: 'cat', name: 'Bigode', x: 20, y: 17, dir: 3, wander: 4, cat: true, lines: {
     start: ['Miau?'], won: ['Purrrr...'] } },
@@ -437,9 +447,9 @@ async function claraTalk(n) {
 // O próximo passo da história, dito do mesmo jeito por quem dá direção (Hugo, Nino, ancião)
 function nextStep() {
   if (!G.seen.job) return 'Procurando trabalho? A Berta, na taverna de telhado vermelho, lá embaixo, sempre precisa de braços.';
+  if (!inParty('lyra')) return 'Sua irmã chegou na carroça do correio. Está na taverna, procurando você.';
   if (!inParty('teo')) return 'A Berta mandou olhar o cemitério? O portão fica ao lado da capela, no alto da vila, à esquerda.';
   if (!G.intro) return 'Voltem à taverna. A Berta vai querer saber o que vocês viram.';
-  if (!inParty('lyra')) return 'Sua irmã chegou na carroça do correio. Está na taverna, procurando você.';
   if (!G.quest) return 'O ancião Bertoldo mora na casa de telhado verde, no alto da vila.';
   if (G.party.length < 4) return 'O ancião quer quatro. Tem gente esperando para descer, lá na taverna.';
   return 'Vocês são quatro. Falem com o Hugo, na porta da igreja velha.';
@@ -452,17 +462,17 @@ function goalSpot() {
   const npc = id => { const n = TOWN.npcs.find(a => a.def.id === id); return n && { x: n.x, y: n.y }; };
   const a = G.area, four = G.party.length >= 4;
   if (a === 'valmor') {
-    if (!G.seen.job) return door('tavern');
+    if (!G.seen.job || !inParty('lyra')) return door('tavern'); // a Lyra espera pelo irmão na taverna
     if (!inParty('teo')) return { x: 5, y: 3 };          // portão do cemitério
-    if (!G.intro || !inParty('lyra')) return door('tavern'); // saves antigos: a Lyra espera na taverna
+    if (!G.intro) return door('tavern');
     if (!G.quest) return door('elder');
     if (!four) return door('tavern');
     if (!G.seen.hugo4) return npc('guard');
     return door('crypt');
   }
   if (a === 'taverna') {
+    if (!inParty('lyra')) return npc('lyra');
     if (!G.seen.job) return npc('berta');
-    if (G.intro && !inParty('lyra')) return npc('lyra');
     if (G.quest && !four) return npc('andilla');
     if (G.intro && !G.quest && G.key.estojo) return npc('andilla');
     return { x: 7, y: 9 };                                // a porta
@@ -508,14 +518,17 @@ async function enterBuilding(b) {
   const homes = {
     smith: ['Gaspar, o ferreiro', {
       start: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina de prata, se acharem uma lá embaixo.'],
+      desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
       won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
     sara: ['Sara', {
       start: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
       quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
+      desceu: ['Vocês desceram onde o meu marido desceu. E voltaram falando. Obrigada por isso.'],
       won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
     joaquim: ['Seu Joaquim', {
       start: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
-      won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.'] }],
+      desceu: ['Desceram, é? Na minha época, a gente voltava com um osso de lembrança.'],
+      won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.', 'Na minha época, túmulo vazio queria dizer encrenca. Ainda quer.'] }],
   }[b.id];
   if (homes) await say(homes[0], byStage(homes[1]));
 }
@@ -525,6 +538,7 @@ async function enterTavern() {
   await fadeTo(1, 300);
   enterTown(TAVERN_INSIDE, 'taverna');
   await fadeTo(0, 300);
+  if (!inParty('lyra') && !G.bossDead) await lyraArrives(); // a irmã do Aldo espera por ele lá dentro
   if (needsIntroductions()) await introductions(); // a Berta apresenta quem quer descer à cripta
 }
 async function leaveTavern() {
@@ -539,6 +553,7 @@ async function elderTalk() {
   if (G.bossDead) { await say(nm, ['Os mortos voltaram a dormir, e o sino se calou. Valmor deve isso a vocês.', 'Mas um túmulo arrombado e vazio... Alguém levou o rei lá de baixo, e nós nem vimos.', 'Levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
   if (!G.intro) { await say(nm, [`${heroName('aldo')}. De volta outra vez. A Berta sempre precisa de braços.`, nextStep()]); return; }
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
+  if (G.quest && G.reached >= 1) { await say(nm, ['Voltaram. A cripta deixa vocês subirem, por enquanto.', 'Não parem antes do fundo. O que acorda os mortos ainda está lá embaixo.', 'Nas catacumbas, procurem as fontes de luz. E a irmã Irene cuida dos feridos.']); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
@@ -578,6 +593,7 @@ async function chapel() {
       arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
+      desceu: ['Voltaram da cripta. Deixem-me ver esses ferimentos.', 'O mensageiro se mexeu quando vocês passaram pela porta. Como se soubesse onde vocês estiveram.'],
       won: ['O mensageiro já se levanta sozinho. E o sino da igreja velha se calou.', 'Esta noite, enfim, eu durmo.'] }));
     if (v === 'pray') {
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }

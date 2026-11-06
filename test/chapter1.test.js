@@ -3,21 +3,31 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { story } = require('./harness.js');
 
-test('dawn: Lyra joins in the tavern right after the messenger night, so the party reaches the elder with three', async () => {
-  const { G, log, run } = story(['aldo', 'teo'], { seen: { job: 1, teoWin: 1 } });
-  run(`enterTown({ x: 7, y: 8, dir: 0 }, 'taverna')`);
-  await run('nightScene()');
-  assert.deepEqual([...G.party.map(m => m.id)], ['aldo', 'teo', 'lyra']);
-  assert.equal(G.intro, 1);
+test('Lyra has her own entrance: she joins on the first tavern visit, goes to the cemetery with Aldo, and the party meets the elder with three', async () => {
+  const { G, log, run } = story(['aldo']);
+  run(`enterTown(TAVERN_FRONT, 'valmor')`);
+  assert.deepEqual(run.json('goalSpot()'), run.json(`BUILDINGS.find(b => b.id === 'tavern').door`));
+  await run('enterTavern()');
+  assert.deepEqual([...G.party.map(m => m.id)], ['aldo', 'lyra']);
   assert.ok(log.includes('Lyra~alegre:\nALDO!'));
-  const joined = log.indexOf('Lyra entrou para o grupo!'), soup = log.indexOf('A sopa da Berta devolve as forças ao grupo.');
-  assert.ok(joined > 0 && soup > joined, 'Lyra joins before the soup');
+  await run(`talkTo(TOWN.npcs.find(n => n.def.id === 'berta'))`);
+  assert.equal(G.seen.job, 1);
+  assert.ok(log.includes('Berta:\nVoltem inteiros e o quarto é de vocês. A sopa também.'));
+  Object.assign(G.seen, { cem1: 1, cem2: 1, cem3: 1 });
+  run(`enterTown({ x: 10, y: 2, dir: 0 }, 'cemiterio')`);
+  log.length = 0;
+  await run('teoScene()');
+  assert.deepEqual([...G.party.map(m => m.id)], ['aldo', 'lyra', 'teo']);
+  assert.ok(log.includes('Teo:\nVocês são irmãos?'));
+  run(`enterTown(TAVERN_FRONT, 'valmor')`);
+  log.length = 0;
+  await run('enterTavern()');   // a noite do mensageiro
+  assert.equal(G.intro, 1);
+  assert.ok(!log.includes('Lyra~alegre:\nALDO!'), 'no second entrance');
   log.length = 0;
   await run('elderTalk()');
   assert.ok(log.some(t => t.includes('Mas três não descem lá')), 'the elder sees three');
-  assert.equal(G.quest, 1);
 });
-
 test('introductions call only Andilla, and still work when she is already in the party', async () => {
   {
     const { G, log, run } = story(['aldo', 'teo', 'lyra'], { intro: 1, quest: 1, seen: { job: 1 } });
@@ -52,19 +62,30 @@ test('the answer to "por que descer" is stored once and Lyra brings it back on t
   assert.equal(run('porqueRoad()'), null, 'old saves have no answer: the road line is skipped');
 });
 
-test('old save from dawn on without Lyra: she waits in the tavern, the arrow points at her, talking recruits her', async () => {
+test('old save from dawn on without Lyra: the arrow sends Aldo to the tavern, where she makes her entrance', async () => {
   const { G, log, run } = story(['aldo', 'teo'], { intro: 1, seen: { job: 1, teoWin: 1 } });
-  run(`enterTown({ x: 7, y: 8, dir: 0 }, 'taverna')`);
-  const lyra = run(`TOWN.npcs.find(n => n.def.id === 'lyra')`);
-  assert.ok(lyra, 'Lyra is in the tavern');
-  assert.deepEqual(run.json('goalSpot()'), { x: lyra.x, y: lyra.y });
-  await run(`talkTo(TOWN.npcs.find(n => n.def.id === 'lyra'))`);
-  assert.equal(log[0], 'Lyra~alegre:\nAté que enfim! Vim ver meu irmão e a fonte. Nessa ordem. Mais ou menos.');
+  run(`enterTown(TAVERN_FRONT, 'valmor')`);
+  assert.deepEqual(run.json('goalSpot()'), run.json(`BUILDINGS.find(b => b.id === 'tavern').door`));
+  await run('enterTavern()');
+  assert.ok(log.includes('Lyra~alegre:\nALDO!'));
   assert.ok(G.party.some(m => m.id === 'lyra'));
-  run(`enterTown({ x: 22, y: 17, dir: 2 }, 'valmor')`);
+  run(`enterTown(TAVERN_FRONT, 'valmor')`);
   assert.deepEqual(run.json('goalSpot()'), run.json(`BUILDINGS.find(b => b.id === 'elder').door`));
 });
 
+test('after the crypt, the village talks about it: curious while the party is still going down, proud and doubtful after the bell stops', async () => {
+  const { G, log, run } = story(['aldo', 'teo', 'lyra', 'andilla'], { intro: 1, quest: 1, reached: 1, seen: { job: 1, hugo4: 1 } });
+  run(`enterTown({ x: 22, y: 17, dir: 2 }, 'valmor')`);
+  const talk = id => run(`talkTo(TOWN.npcs.find(n => n.def.id === '${id}'))`);
+  assert.equal(run('stage()'), 'desceu');
+  await talk('rui');
+  assert.equal(log[0], 'Rui, o lavrador:\nDesceram e voltaram! Viram quem abriu as covas?');
+  G.bossDead = true; log.length = 0;
+  await talk('rui');
+  assert.ok(log.includes('Rui, o lavrador:\nMas aquelas covas cavadas com pá... Morto não usa pá.'));
+  for (const id of ['guard', 'lia', 'rui', 'marta', 'tome', 'nino', 'clara'])
+    assert.ok(run(`NPC_DEFS.find(n => n.id === '${id}').lines.desceu`), `${id} has something to say after the party goes down`);
+});
 test('goalSpot: the arrow sends an old save without Lyra back to the tavern before the elder', () => {
   const { run } = story(['aldo', 'teo'], { intro: 1, seen: { job: 1, teoWin: 1 } });
   run(`enterTown({ x: 22, y: 17, dir: 2 }, 'valmor')`);

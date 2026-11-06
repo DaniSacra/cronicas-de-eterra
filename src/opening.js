@@ -68,18 +68,22 @@ const TAVERN_NPCS = [
   { id: 'berta', name: 'Berta, a taverneira', x: 10, y: 2, dir: 2, wander: 0, lines: {
     start: ['O ancião Bertoldo mora na casa de telhado verde, ao norte. Vão!'],
     quest: ['Encapuzados abrindo covas... Ladrão de cova, é o que eles são.', 'Lá embaixo não tem sopa. Comprem poções com a Dora.'],
-    won: ['Eu disse que a sopa estava paga. Sentem, heróis.'] },
+    desceu: ['Desceram e voltaram! A sopa está quente. Contem tudo, mas comam primeiro.'],
+    won: ['Eu disse que a sopa estava paga. Sentem, heróis.', 'Agora me digam: se o túmulo estava vazio, quem é que anda por aí com um rei nas costas?'] },
     onTalk: n => say(n.def.name, [...byStage(n.def.lines), ...(!G.bossDead && !inParty('andilla') ? ['Ela fia a conta, mas nunca levou um pão da cozinha.'] : [])]) },
   { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: {
     start: ['Aquela marca... Não. Não é conversa para esta noite.', 'Vão falar com o ancião. Eu fico aqui, fiando.'],
     quest: ['Lá embaixo, se alguém chamar vocês pelo nome... não respondam.'],
+    desceu: ['Desceram... E a marca? Estava lá embaixo também?', 'Não. Não me contem. Eu já sei demais.'],
     won: ['Aquela marca... Eu vi uma vez, menina. Num inverno que não acabava.', 'Não era coisa de ladrão de cova. Ladrão de cova não reza.', 'Vou fiar um cachecol para cada um. Lá fora a geada não perdoa.'] } },
   { id: 'bruno', look: 'bruno', name: 'Bruno, soldado de folga', x: 2, y: 7, dir: 0, wander: 0, lines: {
     start: ['Vimos as lâminas e sentamos de novo. Não conta pra ninguém.'],
+    desceu: ['Vocês desceram mesmo? Eu nem consegui levantar da cadeira aquela noite.'],
     won: ['Da próxima vez, a gente levanta primeiro. Prometo.'] } },
   { id: 'caio', look: 'caio', name: 'Caio, soldado de folga', x: 4, y: 6, dir: 3, wander: 0, lines: {
     start: ['Aquele olho cortado ao meio... Já vi em algum lugar. Não lembro onde.'],
     quest: ['Ainda não lembrei onde vi aquele olho. Está na ponta da língua.'],
+    desceu: ['Viram aquele olho lá embaixo também? Eu sabia que conhecia de algum lugar.'],
     won: ['Lembrei! Vi aquele olho numa caravana. Ia para o norte, para Erukh.', 'À saúde dos heróis de Valmor!'] } },
 ];
 
@@ -90,21 +94,22 @@ const TAVERN_AFTERNOON = [
   { id: 'rui', name: 'Rui', x: 1, y: 3, dir: 1, wander: 0, lines: { arrive: [() => `${A()}! Eu falei das covas e ninguém acreditou. Você acredita, né? Vai lá ver.`] } },
 ];
 async function bertaJob() {
-  if (G.seen.job) { await line('Berta', inParty('teo') ? 'Já de volta? Contem tudo.' : 'Volte inteiro e o quarto é seu. A sopa também.'); return; }
+  const back = G.party.length > 1 ? 'Voltem inteiros e o quarto é de vocês. A sopa também.' : 'Volte inteiro e o quarto é seu. A sopa também.';
+  if (G.seen.job) { await line('Berta', inParty('teo') ? 'Já de volta? Contem tudo.' : back); return; }
   await line('Berta', `Olha quem a geada trouxe. ${A()}, de novo.`);
   await line('Aldo', 'Vim pelo trabalho.');
   await line('Berta', 'Claro que veio. A escola continua no mesmo lugar, se o trabalho mudar de ideia.');
   await line('Berta', 'Quarto e sopa, dez moedas. Ou um favor, que eu conheço essa bolsa vazia.');
   await line('Rui', 'As covas do cemitério amanheceram abertas de novo. Vazias. Como se alguém tivesse saído de dentro.');
+  if (inParty('lyra')) await line('Lyra', `Covas abertas por dentro? ${A()}, isso não é trabalho. É capítulo de livro.`, 'preocupado');
   await line('Berta', 'Para com isso, Rui.');
-  await line('Berta', 'O Hugo não pode largar a igreja velha. Dê uma olhada no cemitério, atrás da capela, no alto da vila.');
-  await line('Berta', 'Volte inteiro e o quarto é seu. A sopa também.');
+  await line('Berta', `O Hugo não pode largar a igreja velha. ${G.party.length > 1 ? 'Deem' : 'Dê'} uma olhada no cemitério, atrás da capela, no alto da vila.`);
+  await line('Berta', back);
   G.seen.job = 1;
   await UI.say('Objetivo: investigar as covas abertas no cemitério, atrás da capela.\nA setinha amarela mostra o caminho.');
 }
 
-// Manhã em diante: a ladina espera na taverna até entrar no grupo. A Lyra entra no amanhecer (nightScene);
-// só espera aqui em saves antigos, de antes de ela ser a irmã do Aldo.
+// A Lyra espera na taverna desde a primeira visita e entra no grupo ali (lyraArrives); a ladina espera até as apresentações
 const LYRA_DEF = { id: 'lyra', name: 'Lyra', x: 11, y: 6, dir: 0, wander: 0, onTalk: lyraTalk };
 const ANDILLA_DEF = { id: 'andilla', look: 'andilla', get name() { return heroName('andilla'); }, x: 12, y: 7, dir: 3, wander: 0, onTalk: andillaTalk };
 
@@ -164,13 +169,8 @@ async function introductions() {
   G.busy = false; townHint();
 }
 
-// Só em saves antigos: a Lyra esperava na taverna e entra no grupo ao conversar
-async function lyraTalk(n) {
-  await line('Lyra', 'Até que enfim! Vim ver meu irmão e a fonte. Nessa ordem. Mais ou menos.', 'alegre');
-  recruit('lyra', n);
-  await joined('Lyra');
-  saveGame();
-}
+function lyraTalk(n) { return lyraArrives(n); } // saves antigos: ela ainda espera na taverna
+
 async function andillaTalk(n) {
   const nm = heroName('andilla');
   if (!G.key.estojo) {
@@ -200,33 +200,29 @@ async function andillaReveal() {
   await line('Berta', 'Fugir eu entendo. Deixar a conta, não.');
 }
 
-// Amanhecer: a Lyra, irmã caçula do Aldo, chega na carroça do correio e entra no grupo
-const DAWN_CAST = TAVERN_NPCS.filter(d => d.id === 'berta' || d.id === 'ana').map(d => ({ ...d, onTalk: undefined }));
-async function lyraArrives() {
-  enterTown({ x: 6, y: 4, dir: 2 }, 'taverna', DAWN_CAST);
-  G.busy = true;
-  await fadeTo(0, 800);
-  await UI.say('Ao amanhecer, chega a carroça do correio. A porta da taverna se abre com força.');
-  const lyra = addActor({ id: 'lyra', name: 'Lyra', x: 7, y: 9, dir: 0 });
+// Primeira visita à taverna: a Lyra, irmã caçula do Aldo, já está lá e entra no grupo (cada herói tem a sua entrada)
+async function lyraArrives(lyra = TOWN.npcs.find(n => n.def.id === 'lyra')) {
+  if (!lyra || inParty('lyra')) return;
+  lyra.talking = true;
+  const P = TOWN.p, path = [];
+  for (let x = lyra.x; x !== P.x; x += Math.sign(P.x - x)) path.push([x + Math.sign(P.x - x), lyra.y]);  // anda até a frente do Aldo
+  for (let y = lyra.y; y !== P.y - 1; y += Math.sign(P.y - 1 - y)) path.push([P.x, y + Math.sign(P.y - 1 - y)]);
+  await UI.say('Numa mesa do canto, uma moça de capa roxa, com mais livros que bagagem, levanta num pulo.');
   await line('Lyra', `${A().toUpperCase()}!`, 'alegre');
-  await walkPath(lyra, [[7, 8], [7, 7], [7, 6], [7, 5], [6, 5]], 220);
-  lyra.dir = 0;
-  await UI.say('Uma moça de capa roxa, com mais livros que bagagem, se joga no pescoço dele.');
+  await walkPath(lyra, path, 200);
+  lyra.dir = 2; P.dir = 0;
+  await UI.say('Ela se joga no pescoço dele.');
   await line('Lyra', `${A()} vê a irmã caçula e tenta parecer bravo. ${A()} não consegue.`, 'alegre');
   await line('Aldo', 'Lyra. O que você está fazendo aqui?');
   await line('Lyra', "Sua carta dizia: 'vou a Valmor procurar trabalho'. Eu li: 'vou a Valmor ver a Clara'. Vim ajudar.");
   await line('Aldo', 'Não foi isso que eu escrevi.', 'bravo');
   await line('Lyra', 'Não com essas palavras.', 'alegre');
-  await line('Teo', 'Vocês são irmãos?');
-  await line('Lyra', 'Ele é o mais velho. Eu sou a mais esperta.', 'alegre');
-  await line('Aldo', 'Ela é a que fala.');
-  await line('Berta', 'A pequena Lyra! Da última vez, mal alcançava o balcão.');
+  await line('Berta', 'A pequena Lyra! Da última vez, mal alcançava o balcão. Chegou hoje cedo, na carroça do correio, e perguntou de você a manhã inteira.');
   await line('Lyra', 'E dizem que Valmor tem uma fonte de luz lá embaixo. Duas coisas para ver nesta vila.');
-  await line('Lyra', `Que cara é essa, ${A()}? Aconteceu alguma coisa.`, 'preocupado');
-  await UI.say(`${A()} conta da noite: o mensageiro, a carta, os encapuzados.`);
-  await line('Lyra', 'Então eu chego atrasada para a briga e cedo para o problema. Eu vou junto.');
+  await line('Lyra', `Aonde ${A()} for, eu vou junto. Alguém tem que contar essa história direito.`, 'alegre');
   recruit('lyra', lyra);
   await joined('Lyra');
+  saveGame();
 }
 
 // ---------- Passo 2 · O cemitério (área de cima, atrás da capela) ----------
@@ -253,17 +249,17 @@ function buildCemeteryMap() {
 // Três lutas de aprendizado, visíveis e fixas, uma dica cada
 const CEM_FIGHTS = {
   rato:     { foe: 'rat',  name: 'Rato de Cova', x: 5,  y: 8, dir: 1, flag: 'cem1', ids: ['ratoCova'],
-    intro: 'Um rato do tamanho de um gato sai de uma cova!', hint: 'Sozinho, cada golpe conta. Escolha Atacar e o alvo.' },
+    intro: 'Um rato do tamanho de um gato sai de uma cova!', hint: 'Cada golpe conta. Escolha Atacar e o alvo.' },
   morcegos: { foe: 'bats', name: 'Morcegos',     x: 10, y: 4, dir: 3, flag: 'cem2', ids: ['morcegoCova', 'morcegoCova'],
-    intro: 'Dois morcegos descem do muro!', hint: 'Técnica gasta PM: o Golpe Forte de Aldo bate quase em dobro. Defender segura o golpe seguinte.' },
+    intro: 'Dois morcegos descem do muro!', hint: () => `Técnica e Magia gastam PM: o Golpe Forte de Aldo bate quase em dobro${inParty('lyra') ? ', e o Fogo de Lyra queima os dois de uma vez' : ''}. Defender segura o golpe seguinte.` },
   ossada:   { foe: 'bone', name: 'Ossada',       x: 12, y: 3, dir: 2, flag: 'cem3', ids: ['ossada'],
-    intro: 'Uma mão de osso rompe a terra. Uma Ossada se levanta!', hint: 'PV baixo? Item → Poção. Sozinho, ninguém cura você.' },
+    intro: 'Uma mão de osso rompe a terra. Uma Ossada se levanta!', hint: 'PV baixo? Item → Poção. Ainda não há ninguém no grupo que saiba curar.' },
 };
 const cemDone = () => G.seen.cem3 && G.seen.teoWin;
 
 async function cemFight(n) {
   const f = CEM_FIGHTS[n.def.id];
-  const r = await startBattle(f.ids, false, { intro: f.intro, hints: G.seen['dica_' + f.flag] ? [] : [f.hint] });
+  const r = await startBattle(f.ids, false, { intro: f.intro, hints: G.seen['dica_' + f.flag] ? [] : [typeof f.hint === 'function' ? f.hint() : f.hint] });
   G.seen['dica_' + f.flag] = 1;
   if (r === 'lose') return gameOver();
   G.mode = 'town';
@@ -300,8 +296,13 @@ async function teoScene() {
   TOWN.dim = AREAS.cemiterio.dim(); Music.play(AREAS.cemiterio.music());
   await line('Teo', 'Obrigado. Sou Teo, noviço do Templo. Vim ajudar a irmã Irene no inverno.');
   await line('Teo', 'Rezo por estas covas há três noites e elas continuam abrindo.', 'preocupado');
-  await line('Teo', 'Mortos não se levantam sozinhos. Vou com você até descobrir quem os chama.', 'bravo');
+  await line('Teo', `Mortos não se levantam sozinhos. Vou com ${G.party.length > 2 ? 'vocês' : 'você'} até descobrir quem os chama.`, 'bravo');
   await joined('Teo');
+  if (inParty('lyra')) {
+    await line('Teo', 'Vocês são irmãos?');
+    await line('Lyra', 'Ele é o mais velho. Eu sou a mais esperta.', 'alegre');
+    await line('Aldo', 'Ela é a que fala.');
+  }
   saveGame();
   await UI.say('Objetivo: voltar à taverna e contar à Berta o que viram.');
 }
@@ -327,6 +328,7 @@ Object.assign(AREAS.cemiterio, {
     G.busy = true;
     await UI.say('O cemitério de Valmor. Névoa baixa, corvos no muro e covas abertas por toda parte.');
     await line('Aldo', 'Rui não estava exagerando.', 'preocupado');
+    if (inParty('lyra')) await line('Lyra', `${A()} diz que não tem medo de cemitério. ${A()} está segurando a espada com as duas mãos.`, 'alegre');
     await UI.say('Entre as covas, alguma coisa se mexe. A setinha amarela mostra onde.');
     saveGame(); // perder no cemitério volta para cá
   },
@@ -361,8 +363,8 @@ Object.assign(AREAS.cemiterio, {
 AREAS.valmor.exits = [{ x: 5, y: 3, to: 'cemiterio', pos: { x: 8, y: 10, dir: 0 },
   check: () => G.seen.job ? null : 'O portão do cemitério está amarrado com corda. Melhor perguntar na vila antes.' }];
 AREAS.taverna.exits = [{ x: 7, y: 9, enter: () => leaveTavern() }];
-AREAS.taverna.cast = () => !G.intro ? TAVERN_AFTERNOON
-  : [...TAVERN_NPCS, ...(inParty('lyra') ? [] : [LYRA_DEF]), ...(inParty('andilla') ? [] : [ANDILLA_DEF])];
+AREAS.taverna.cast = () => [...(!G.intro ? TAVERN_AFTERNOON : TAVERN_NPCS), ...(inParty('lyra') ? [] : [LYRA_DEF]),
+  ...(!G.intro || inParty('andilla') ? [] : [ANDILLA_DEF])];
 
 // ---------- Passo 4 · A noite na taverna ----------
 const NIGHT_CAST = [
@@ -383,7 +385,7 @@ async function nightScene() {
   // A noite: Aldo e Teo à mesa, soldados jogando dados com a moça de capa cinza
   enterTown({ x: 2, y: 4, dir: 0 }, 'taverna', NIGHT_CAST);
   G.busy = true;
-  TOWN.followers = [newActor(4, 3, 3)];
+  TOWN.followers = G.party.slice(1).map((m, i) => i ? newActor(3, 4, 0) : newActor(4, 3, 3)); // Teo e Lyra à mesa com o Aldo
   await fadeTo(0, 900);
   await UI.say('Noite de geada na Taverna Poney Saltitante.');
   await line('Caio', 'Mais uma rodada, moça. Hoje eu ganho.');
@@ -435,6 +437,7 @@ async function nightScene() {
   await line('Teo', 'É o selo real. Não cabe a mim rompê-lo.');
   await line('Aldo', 'Quase mataram um homem por ela.', 'bravo');
   await line('Teo', 'Por isso mesmo. Quem abrir tem de ter o direito.');
+  if (inParty('lyra')) await line('Lyra', 'Então ninguém abre. Mas eu quero muito saber quem a quer tanto assim.');
   await line('Caio', 'E a moça dos dados? Sumiu antes da primeira lâmina.');
   await line('Berta', 'Capa cinza, igual à deles. Eu sabia que não devia fiar a conta dela.');
   await line('Rui', 'As covas abertas... e agora isso. Na mesma semana.');
@@ -446,8 +449,6 @@ async function nightScene() {
   await UI.say('Os soldados de folga levam o mensageiro até a capela.');
   await UI.say('Ninguém dorme. Teo passa a noite com a carta fechada no colo.');
   await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
-  await lyraArrives();
-  await fadeTo(1, 800);
   await UI.say('A sopa da Berta devolve as forças ao grupo.');
   for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
   UI.updateParty();
