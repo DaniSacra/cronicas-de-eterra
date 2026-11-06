@@ -111,6 +111,8 @@ async function chooseCommand(m) {
       if (it == null) continue;
       const t = await chooseTarget(ITEMS[it].target, `${ITEMS[it].name} em quem?`);
       if (t == null) continue;
+      const useless = itemUseless(it, t);   // nada a curar: escolhe de novo, sem perder a vez
+      if (useless) { await bsay(useless); continue; }
       return { type: 'item', item: it, target: t };
     }
     if (v === 'def') return { type: 'defend' };

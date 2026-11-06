@@ -55,21 +55,28 @@ function healMp(m, n) {
 }
 function revive(m, frac) { m.hp = Math.max(1, Math.floor(maxHp(m) * frac)); UI.cardFloat(m, 'VIVO!', '#ffe070'); UI.cardGlow(m); }
 
+// An item that would do nothing stays in the bag, with the reason (null when it works)
+function itemUseless(id, target) {
+  const name = target && target.id && pdef(target).name;
+  if ((id === 'pocao' || id === 'eter') && target.hp <= 0) return `${name} caiu. ${id === 'pocao' ? 'A poção' : 'O éter'} não tem efeito.`;
+  if (id === 'pocao' && target.hp >= maxHp(target)) return `${name} já está com os PV cheios.`;
+  if (id === 'eter' && target.mp >= maxMp(target)) return `${name} já está com os PM cheios.`;
+  if (id === 'pena' && target.hp > 0) return `${name} não precisa disso.`;
+  if (id === 'elixir' && G.party.every(m => m.hp >= maxHp(m) && m.mp >= maxMp(m))) return 'O grupo já está inteiro. O Elixir fica guardado.';
+  return null;
+}
+
 // Retorna a mensagem do efeito
 function applyItem(id, target) {
   if (!G.inv[id]) return 'Não há mais ' + ITEMS[id].name + '!';
+  const useless = itemUseless(id, target);
+  if (useless) return useless;
   G.inv[id]--;
   let msg = '';
   switch (id) {
-    case 'pocao':
-      if (target.hp <= 0) { G.inv[id]++; return `${pdef(target).name} está caído. A poção não tem efeito.`; }
-      msg = `${pdef(target).name} recupera ${healHp(target, 50)} PV.`; Sfx.heal(); break;
-    case 'eter':
-      if (target.hp <= 0) { G.inv[id]++; return `${pdef(target).name} está caído. O éter não tem efeito.`; }
-      msg = `${pdef(target).name} recupera ${healMp(target, 20)} PM.`; Sfx.heal(); break;
-    case 'pena':
-      if (target.hp > 0) { G.inv[id]++; return `${pdef(target).name} não precisa disso.`; }
-      revive(target, 0.5); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
+    case 'pocao': msg = `${pdef(target).name} recupera ${healHp(target, 50)} PV.`; Sfx.heal(); break;
+    case 'eter': msg = `${pdef(target).name} recupera ${healMp(target, 20)} PM.`; Sfx.heal(); break;
+    case 'pena': revive(target, 0.5); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
     case 'elixir':
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
       msg = 'O Elixir restaura todo o grupo!'; Sfx.holy(); break;
