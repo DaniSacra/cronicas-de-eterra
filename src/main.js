@@ -350,9 +350,14 @@ const TALKS = {
     ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
   sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
   tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
-    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo']],
-  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'], ['andilla', 'Ele volta. Tem uma professora esperando.', 'alegre'],
-    ['aldo', 'Tem uma sopa paga.'], ['teo', 'A carta vai como veio: fechada.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
+    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo'],
+    ['lyra', () => `${heroName('aldo')} ficou quieto. Quando ${heroName('aldo')} fica quieto assim, é raiva.`, 'preocupado'],
+    ['lyra', 'Você está inteiro? Ótimo. A professora não gosta de remendo.', 'alegre']],
+  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
+    ['aldo', 'Se alguém tirou um rei daquele buraco, ele não vai ficar longe de Valmor. Eu vou.'],
+    ['lyra', () => `${heroName('aldo')} diz que vai pela carta. ${heroName('aldo')} vai por uma certa professora.`, 'alegre'],
+    ['aldo', () => `${heroName('lyra')}.`, 'bravo'], ['lyra', porqueRoad], // a resposta das apresentações (G.seen.porque)
+    ['teo', 'Até a rainha, ninguém toca nela.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
     ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.', 'alegre']],
 };
 const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
