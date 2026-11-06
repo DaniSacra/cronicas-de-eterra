@@ -155,4 +155,7 @@ const HERO_FACE_BG = {
   lyra: ['#432c78', '#38246a', '#2e1e5a', '#24184a'],
   andilla: ['#62202e', '#541a28', '#461622', '#38111c'],
 };
-if (typeof module !== 'undefined') module.exports = { HERO_FACES, HERO_FACE_BG };
+// A hero portrait as a GridSprite definition: the face grid over its window bands
+const heroFace = key => Object.assign({}, HERO_FACES[key], { bg: HERO_FACE_BG[key] || HERO_FACE_BG.default || ['#2c3c80', '#243270', '#1c2860', '#151e4e'] });
+
+if (typeof module !== 'undefined') module.exports = { HERO_FACES, HERO_FACE_BG, heroFace };
