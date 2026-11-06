@@ -94,6 +94,14 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
 - **Cripta:** azul e roxo, velas, cogumelos que brilham. Tocha quente perto do grupo, escuro com a distância.
   Feito: pedra azulada com limo verde-água (`FLOORS[0].pal`), paredes com velas e com cogumelos emissivos
   (`src/textures.js`, variantes 6 e 7) e a cor da luz por distância em `torchTint` (`src/uirules.js`).
+- **Tela de título (amanhecer sobre Erukh):** céu em faixas da noite ao dourado com pontilhado Bayer só na
+  borda de cada faixa e um brilho atrás da capital; a estrela do título acima de Erukh; nuvens em duas camadas com
+  a borda de baixo dourada; cordilheira azulada com neve acesa do lado do sol; colinas mais claras e azuis com a
+  distância; rio em S com estrada até o portão. Erukh tem 64x44, com muralha, torres, telhados pontudos, cúpula do
+  templo, estandartes e janelas âmbar. Aldo (sentado) e Lyra (em pé, apontando, capa ao vento) de costas, em grade,
+  dois quadros, sobre a ruína com musgo e um entalhe gasto, no terço direito. A câmera desce do céu em 2 s
+  (qualquer tecla pula). Feito em `src/titlebg.js`; `titleLayout` dá os retângulos e o teste garante que logo e
+  menu nunca cobrem Erukh nem os irmãos. Em pé, o horizonte sobe para pouco além do meio e a ruína vai junto.
 
 ## NPCs e heróis ganham vida
 
@@ -110,6 +118,8 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   saem de `docs/arte/gerador/faces.cjs`. NPCs andam em quatro tempos e respiram parados (`Folk.pose`).
 - A fonte pixel da interface é a Press Start 2P (Google Fonts). Uma fonte própria, desenhada em grade, fica para
   depois: exige gerar um arquivo de fonte ou desenhar todo texto no canvas.
+- Tela de título nova (v63): amanhecer sobre Erukh com os irmãos na ruína, menu compacto translúcido no canto de
+  baixo à esquerda, logo no alto sem moldura de pergaminho.
 
 ## Ordem de produção
 
