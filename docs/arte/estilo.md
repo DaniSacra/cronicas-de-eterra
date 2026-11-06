@@ -92,6 +92,8 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   anoitecer (`#1c2860`) com poças em três anéis de degrau, que tiram o véu e põem âmbar. Fumaça e neve caindo
   são desenhadas por quadro, em pixels inteiros. Lampiões ficam em `LAMPS` (`src/town.js`).
 - **Cripta:** azul e roxo, velas, cogumelos que brilham. Tocha quente perto do grupo, escuro com a distância.
+  Feito: pedra azulada com limo verde-água (`FLOORS[0].pal`), paredes com velas e com cogumelos emissivos
+  (`src/textures.js`, variantes 6 e 7) e a cor da luz por distância em `torchTint` (`src/uirules.js`).
 
 ## NPCs e heróis ganham vida
 
@@ -100,6 +102,14 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   Clara, Hugo, o ancião) ganham retrato no estilo dos heróis.
 - **Heróis:** retratos atuais mantidos como estão. Quatro expressões cada: normal, alegre, preocupado, bravo.
   Sprite chibi com o mesmo cabelo, roupa e acessório do retrato. Cor de identidade no cartão, no golpe e na magia.
+
+## Feito até agora
+
+- Etapas 1 a 5 aplicadas (novembro de 2026). Expressões dos heróis em `HERO_MOODS` (`src/herofaces.js`); quem fala
+  escolhe o rosto com `Nome~alegre`, `Nome~preocupado` ou `Nome~bravo`. Retratos de Berta, Clara, Hugo e do ancião
+  saem de `docs/arte/gerador/faces.cjs`. NPCs andam em quatro tempos e respiram parados (`Folk.pose`).
+- A fonte pixel da interface é a Press Start 2P (Google Fonts). Uma fonte própria, desenhada em grade, fica para
+  depois: exige gerar um arquivo de fonte ou desenhar todo texto no canvas.
 
 ## Ordem de produção
 

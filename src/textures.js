@@ -94,6 +94,48 @@ function makeTextures(pal, seed) {
     return c;
   }
 
+  // Velas num ressalto de pedra: três chamas pequenas (emissivas) e o halo quente na pedra
+  function candles(x, y) {
+    let c = brick(x, y, 0);
+    const CANDLES = [[20, 40], [31, 37], [43, 42]]; // x, topo da cera
+    let glow = 0;
+    for (const [cx, top] of CANDLES) glow = Math.max(glow, 1 - Math.hypot(x - cx, (y - top + 3) * 0.8) / 16);
+    if (glow > 0) c = [c[0] + glow * glow * 130, c[1] + glow * glow * 80, c[2] + glow * glow * 30];
+    let emit = false;
+    if (y >= 49 && y <= 53) { c = mul(pal.stone, y === 49 ? 1.25 : 0.8 + fbm(x, y) * 0.2); if (y === 53) c = mul(pal.mortar, 0.7); } // ressalto
+    for (const [cx, top] of CANDLES) {
+      const dx = x - cx;
+      if (y >= top && y < 49 && Math.abs(dx + 0.5) <= 2) c = dx <= -2 ? [250, 240, 214] : dx >= 1 ? [190, 172, 140] : [232, 222, 196]; // cera
+      if (y >= top && y < top + 3 && Math.abs(dx + 0.5) <= 2 && hash(x, y) < 0.3) c = [255, 250, 230];                               // pingo
+      const fy = top - 2 - y;                                                                                                   // chama
+      if (fy >= 0 && fy < 6 && Math.abs(dx + 0.5) <= (fy < 2 ? 1.6 : fy < 4 ? 1.1 : 0.6)) { c = fy < 2 && Math.abs(dx + 0.5) < 1 ? [255, 250, 220] : fy < 4 ? [255, 210, 90] : [255, 140, 40]; emit = true; }
+      if (y === top - 1 && dx === 0) c = [60, 40, 30];                                                                          // pavio
+    }
+    return [...c, emit];
+  }
+
+  // Cogumelos que brilham, nascendo do pé da parede (verde-água e lilás, emissivos)
+  function mushrooms(x, y) {
+    let c = brick(x, y, 0);
+    const CAPS = [[14, 56, 6, 0], [25, 59, 4, 1], [39, 54, 7, 0], [51, 58, 5, 1], [31, 61, 3, 0]]; // x, y do chapéu, raio, cor
+    const COL = [[[150, 255, 226], [70, 210, 180], [30, 120, 110]], [[246, 180, 255], [176, 100, 230], [90, 40, 130]]];
+    let glow = 0;
+    for (const [cx, cy, r, k] of CAPS) glow = Math.max(glow, (1 - Math.hypot(x - cx, y - cy) / (r * 3)) * (k ? 0.8 : 1));
+    if (glow > 0) c = [c[0] + glow * glow * 40, c[1] + glow * glow * 110, c[2] + glow * glow * 120];
+    let emit = false;
+    for (const [cx, cy, r, k] of CAPS) {
+      const dx = x - cx, dy = y - cy;
+      if (dy > 0 && dy < 64 - cy && Math.abs(dx) < Math.max(1, r * 0.28)) c = [200, 196, 214];                 // pé
+      if (dy <= 0 && dy > -r * 0.75 && Math.abs(dx) < r * Math.sqrt(1 - (dy / (r * 0.75)) ** 2)) {           // chapéu em meia-lua
+        const t = (dx + dy) / r;                                                                                // luz do alto à esquerda
+        c = COL[k][t < -0.5 ? 0 : t < 0.3 ? 1 : 2];
+        if (hash(x * 3, y * 5) < 0.12 && t < 0.3) c = [255, 255, 255];                                          // pintas
+        emit = true;
+      }
+    }
+    return [...c, emit];
+  }
+
   function torch(x, y) {
     let c = brick(x, y, 0);
     const dx = x - 32 + 0.5, dy = y - 28;
@@ -198,8 +240,8 @@ function makeTextures(pal, seed) {
   }
 
   return {
-    // 0 pedra · 1 pedra rachada com teia · 2 tocha · 3 ossário · 4 túnel com escoras · 5 túnel com ferramentas
-    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch), tex(ossuary), tex((x, y) => tunnel(x, y, 0)), tex((x, y) => tunnel(x, y, 1))],
+    // 0 pedra · 1 pedra rachada com teia · 2 tocha · 3 ossário · 4 túnel com escoras · 5 túnel com ferramentas · 6 velas · 7 cogumelos
+    walls: [tex((x, y) => brick(x, y, 0)), tex((x, y) => brick(x, y, 1)), tex(torch), tex(ossuary), tex((x, y) => tunnel(x, y, 0)), tex((x, y) => tunnel(x, y, 1)), tex(candles), tex(mushrooms)],
     floor: tex(floorT),
     ceil: tex(ceilT),
     stairs: tex(stairsT),

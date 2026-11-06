@@ -107,7 +107,8 @@ function generateFloor(fi) {
     if (ends[i]) objects.push({ type: 'chest', x: ends[i].x, y: ends[i].y, loot });
   });
 
-  // Variação das paredes: 0 normal, 1 musgo/rachada, 2 tocha, 3 ossário, 4/5 túnel cavado (com ferramentas).
+  // Variação das paredes: 0 normal, 1 musgo/rachada, 2 tocha, 3 ossário, 4/5 túnel cavado (com ferramentas),
+  // 6 velas num ressalto, 7 cogumelos que brilham. O sorteio é o mesmo de sempre: o mapa não muda.
   // Com def.tunnels, o caminho alterna cripta antiga e túnel cavado pela distância desde a escada:
   // as faixas [início, fim) de def.tunnels (frações da maior distância) são túnel.
   const wallVar = new Uint8Array(N * N);
@@ -124,6 +125,8 @@ function generateFloor(fi) {
     else if (open && r < 0.09) wallVar[id(x, y)] = 2;
     else if (r < 0.15) wallVar[id(x, y)] = 3; // nicho de ossário
     else if (r < 0.24) wallVar[id(x, y)] = 1;
+    else if (open && r < 0.31) wallVar[id(x, y)] = 6;
+    else if (open && r < 0.38) wallVar[id(x, y)] = 7;
   }
 
   // Direção inicial: primeira aberta

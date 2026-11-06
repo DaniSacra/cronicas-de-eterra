@@ -17,7 +17,8 @@ let TEX = null;
 // Janela desenhada no canvas: a mesma moldura 9-slice das janelas em CSS (src/frame.js)
 function drawWindow(c, x, y, w, h, variant) { drawFrame(c, x, y, w, h, variant); }
 
-function light(d) { return 1.25 / (1 + d * d * 0.1); }
+// Luz da tocha do grupo: forte perto, fraca longe; a cor vem de torchTint (src/uirules.js)
+function light(d) { return 1.3 / (1 + d * d * 0.13); }
 
 function renderView(cam, map, sprites, now) {
   const px = cam.x, py = cam.y, a = cam.a;
@@ -30,7 +31,7 @@ function renderView(cam, map, sprites, now) {
   // Chão e teto
   for (let y = half; y < VH; y++) {
     const rd = half / (y - half + 0.5);
-    const sh = light(rd) * fl, sr = sh * 1.1, sg = sh * 0.97, sb = sh * 0.84;
+    const sh = light(rd) * fl, tt = torchTint(rd), sr = sh * tt[0], sg = sh * tt[1], sb = sh * tt[2];
     let fx = px + rd * r0x, fy = py + rd * r0y;
     const stx = rd * (r1x - r0x) / VW, sty = rd * (r1y - r0y) / VW;
     const rf = y * VW, rc = (VH - 1 - y) * VW;
@@ -70,15 +71,15 @@ function renderView(cam, map, sprites, now) {
     if (side === 1 && rdy < 0) tx = 63 - tx;
     const wv = (mx >= 0 && my >= 0 && mx < N && my < N) ? map.wallVar[my * N + mx] : 0;
     const D = TEX.walls[wv].d, E = TEX.walls[wv].e;
-    const sh = light(perp) * fl * (side ? 0.78 : 1);
+    const sh = light(perp) * fl * (side ? 0.78 : 1), tt = torchTint(perp);
     const emitS = fl * 1.05;
     const step = 64 / lh;
     const y0 = Math.max(0, ds), y1 = Math.min(VH - 1, de);
     let tp = (y0 - half + lh / 2) * step;
     for (let y = y0; y <= y1; y++) {
       const ti = ((tp | 0) & 63) * 64 + tx; tp += step;
-      const s = E[ti] ? (sh > emitS ? sh : emitS) : sh;
-      const r = D[ti * 3] * s * 1.1, gg = D[ti * 3 + 1] * s * 0.97, b = D[ti * 3 + 2] * s * 0.84;
+      const em = E[ti], s = em ? (sh > emitS ? sh : emitS) : sh;   // o que brilha sozinho não pega a cor da tocha
+      const r = D[ti * 3] * s * (em ? 1 : tt[0]), gg = D[ti * 3 + 1] * s * (em ? 1 : tt[1]), b = D[ti * 3 + 2] * s * (em ? 1 : tt[2]);
       vbuf[y * VW + x] = 0xff000000 | ((b > 255 ? 255 : b) << 16) | ((gg > 255 ? 255 : gg) << 8) | (r > 255 ? 255 : r);
     }
   }
@@ -96,6 +97,7 @@ function renderView(cam, map, sprites, now) {
     const bottom = half + full / 2 - (o.lift || 0) * full, top = bottom - sh;
     const left = scrX - sw / 2;
     let shade = light(tY) * fl; if (o.emit) shade = Math.max(shade, o.emit);
+    const st = o.emit ? [1, 1, 1] : torchTint(tY);
     const xa = Math.max(0, Math.floor(left)), xb = Math.min(VW, Math.ceil(left + sw));
     const ya = Math.max(0, Math.floor(top)), yb = Math.min(VH, Math.ceil(bottom));
     for (let x = xa; x < xb; x++) {
@@ -104,7 +106,7 @@ function renderView(cam, map, sprites, now) {
       for (let y = ya; y < yb; y++) {
         const v = Math.floor((y - top) * S.h / sh); if (v < 0 || v >= S.h) continue;
         const i = (v * S.w + u) * 4; if (S.d[i + 3] < 128) continue;
-        const r = S.d[i] * shade * 1.05, gg = S.d[i + 1] * shade, b = S.d[i + 2] * shade * 0.92;
+        const r = S.d[i] * shade * st[0], gg = S.d[i + 1] * shade * st[1], b = S.d[i + 2] * shade * st[2];
         vbuf[y * VW + x] = 0xff000000 | ((b > 255 ? 255 : b) << 16) | ((gg > 255 ? 255 : gg) << 8) | (r > 255 ? 255 : r);
       }
     }

@@ -82,3 +82,11 @@ test('party card face: worried when hurt, fierce on its battle turn', () => {
   assert.equal(R.cardMood(10, 50, true), 'preocupado');
   assert.equal(R.cardMood(0, 50, true), 'normal');
 });
+
+test('crypt light: warm next to the torch, cold blue far away, changing smoothly', () => {
+  const [nr, , nb] = R.torchTint(0.5), [fr, , fb] = R.torchTint(10);
+  assert.ok(nr > nb, 'near is warm');
+  assert.ok(fb > fr, 'far is cold');
+  let last = R.torchTint(0);
+  for (let d = 0.25; d < 8; d += 0.25) { const t = R.torchTint(d); assert.ok(t[0] <= last[0] && t[2] >= last[2], `d=${d}`); last = t; }
+});

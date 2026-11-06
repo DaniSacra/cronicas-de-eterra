@@ -56,6 +56,11 @@ function takeTalk(seen, id) {
   seen[k] = 1;
   return true;
 }
+// Crypt light: the party's torch is warm up close and fades to a cold blue with distance (docs/arte/estilo.md)
+function torchTint(d) {
+  const k = d < 1 ? 0 : d > 6 ? 1 : (d - 1) / 5;
+  return [1.18 - 0.4 * k, 1.0 - 0.1 * k, 0.76 + 0.42 * k];
+}
 // A speaker may carry a mood for the portrait: "Aldo~bravo" shows "Aldo" with the angry face
 function splitMood(name) {
   const m = /^(.*?)~(alegre|preocupado|bravo)$/.exec(name || '');
@@ -96,4 +101,4 @@ function battleLayout(sizes, vw, vh, boss = false) {
   });
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, cardMood };
+if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, cardMood, torchTint };

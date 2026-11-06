@@ -14,7 +14,7 @@ const FLOORS = [
   {
     name: 'Cripta da Igreja Velha', short: 'B1', seed: 7331, size: 15, rooms: 2, loops: 0.06, fountainAt: 0.5, boss: true,
     tunnels: [[0.12, 0.4], [0.58, 0.86]], // trechos de túnel cavado entre salas da cripta antiga
-    pal: { stone: [104, 98, 88], mortar: [28, 25, 22], floor: [70, 64, 56], floorJ: [30, 26, 22], ceil: [42, 38, 34], accent: [76, 94, 50] }, // calcário velho, musgo
+    pal: { stone: [92, 94, 136], mortar: [24, 20, 44], floor: [72, 68, 104], floorJ: [26, 22, 46], ceil: [40, 34, 70], accent: [58, 128, 118] }, // pedra azulada, limo verde-água (docs/arte/estilo.md: cripta azul e roxa)
     loot: ['pocao', 'espadaFerro', 'eter', 'cajadoRunico', 'pocao'],
     enemies: ['rato', 'morcego', 'gosma'], maxGroup: 3,
   },
