@@ -46,10 +46,11 @@ const Portraits = (() => {
   }
 
   const cache = {};
-  function draw(key) {
-    if (cache[key]) return cache[key];
+  // mood (alegre | preocupado | bravo) only changes the hand-drawn hero faces
+  function draw(key, mood) {
     // Hand-drawn hero faces (src/herofaces.js): the 32×32 grid over the background bands
-    if (HERO_FACES[key]) return (cache[key] = GridSprite.render(heroFace(key)));
+    if (HERO_FACES[key]) return GridSprite.render(heroFace(key, mood));
+    if (cache[key]) return cache[key];
     const F = FACES[key];
     const cv = document.createElement('canvas'); cv.width = cv.height = 32;
     const c = cv.getContext('2d');

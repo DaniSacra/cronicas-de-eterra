@@ -340,20 +340,20 @@ const FLOOR_CLUES = [
 const FLOOR_TALKS = ['olho'];
 // Conversas do grupo (docs/mundo/historias/capitulo1.md)
 const TALKS = {
-  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.'], ['lyra', 'Então não vieram a Valmor só pela carta.']],
-  lapide: [['teo', 'Morvath. O rei que o ancião não quis nomear.'], ['andilla', 'Rei enterrado com a coroa, e a gente aqui de mão vazia.'],
-    ['teo', () => `${heroName('andilla')}.`], ['andilla', 'Brincadeira. Quase toda.']],
+  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.', 'preocupado'], ['lyra', 'Então não vieram a Valmor só pela carta.']],
+  lapide: [['teo', 'Morvath. O rei que o ancião não quis nomear.'], ['andilla', 'Rei enterrado com a coroa, e a gente aqui de mão vazia.', 'alegre'],
+    ['teo', () => `${heroName('andilla')}.`, 'bravo'], ['andilla', 'Brincadeira. Quase toda.', 'alegre']],
   bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
-    ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.']],
-  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
+    ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.', 'preocupado']],
+  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.', 'bravo'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
   igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
-    ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.']],
-  sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.'], ['aldo', 'Fiquem atrás de mim.'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.']],
-  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
-    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.'], ['aldo', 'Chegamos tarde.']],
-  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'], ['andilla', 'Ele volta. Tem uma professora esperando.'],
+    ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
+  sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
+  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
+    ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo']],
+  estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'], ['andilla', 'Ele volta. Tem uma professora esperando.', 'alegre'],
     ['aldo', 'Tem uma sopa paga.'], ['teo', 'A carta vai como veio: fechada.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
-    ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.']],
+    ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.', 'alegre']],
 };
 const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {

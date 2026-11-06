@@ -27,13 +27,14 @@ const UI = (() => {
   }
 
   // Quem fala: nome em dourado e retrato na janela de cima (src/portraits.js); narração fica sem retrato
-  function setSpeaker(name) {
+  function setSpeaker(label) {
+    const { name, mood } = splitMood(label);
     speakerEl.textContent = name || '';
     const key = Portraits.keyFor(name);
     dialogEl.classList.toggle('has-face', !!key);
     if (!key) return;
     const fc = faceEl.getContext('2d');
-    fc.imageSmoothingEnabled = false; fc.clearRect(0, 0, 32, 32); fc.drawImage(Portraits.draw(key), 0, 0);
+    fc.imageSmoothingEnabled = false; fc.clearRect(0, 0, 32, 32); fc.drawImage(Portraits.draw(key, mood), 0, 0);
   }
 
   // Texto letra a letra; Enter/clique durante a digitação mostra o resto de uma vez
@@ -212,8 +213,12 @@ const UI = (() => {
       card.classList.toggle('dead', m.hp <= 0);
       card.classList.toggle('low', m.hp > 0 && m.hp < mh * 0.3);
       if (activeId !== undefined) card.classList.toggle('active', m.id === activeId);
+      const img = card.querySelector('.pf'), mood = cardMood(m.hp, mh, card.classList.contains('active') && G.mode === 'battle');
+      if (img && img.dataset.mood !== mood) { img.dataset.mood = mood; img.src = faceUrl(Portraits.keyFor(pdef(m).name), mood); }
     }
   }
+  const faceUrls = {};
+  const faceUrl = (key, mood) => faceUrls[key + mood] || (faceUrls[key + mood] = Portraits.draw(key, mood).toDataURL());
   function cardFloat(m, text, color) {
     const card = document.getElementById('card-' + m.id); if (!card) return;
     const s = document.createElement('span'); s.className = 'float'; s.textContent = text; s.style.color = color;

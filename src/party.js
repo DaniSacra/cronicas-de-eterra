@@ -15,12 +15,12 @@ const inParty = id => G.party.some(m => m.id === id);
 const HERO_IDS = PARTY_DEFS.map(d => d.id);
 
 // A party talk plays once per save (G.seen['talk:'+id]); heroes not in the party are skipped.
-// lines: [[heroId | speaker | null, text or () => text], ...]
+// lines: [[heroId | speaker | null, text or () => text, mood?], ...] (mood: alegre | preocupado | bravo)
 async function partyTalk(id, lines) {
   if (!takeTalk(G.seen, id)) return;
-  for (const [who, t] of talkLines(lines, HERO_IDS, inParty)) {
+  for (const [who, t, mood] of talkLines(lines, HERO_IDS, inParty)) {
     const text = typeof t === 'function' ? t() : t, name = HERO_IDS.includes(who) ? heroName(who) : who;
-    await UI.say(name ? `${name}:\n${text}` : text);
+    await UI.say(name ? `${name}${mood ? '~' + mood : ''}:\n${text}` : text);
   }
 }
 

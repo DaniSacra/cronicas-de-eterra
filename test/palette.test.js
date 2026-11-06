@@ -21,3 +21,18 @@ test('hero portraits use only master palette colors', () => {
     for (const ch of new Set(f.rows.join('').replace(/\./g, ''))) assert.ok(inPalette(f.pal[ch]), `${id}: ${ch} ${f.pal[ch]}`);
   for (const [id, bands] of Object.entries(HERO_FACE_BG)) for (const c of bands) assert.ok(inPalette(c), `${id} bg ${c}`);
 });
+
+test('hero expressions: every mood keeps the 32x32 grid and stays inside the master palette', () => {
+  const { HERO_MOODS, MOODS, heroFace } = require('../src/herofaces.js');
+  const { GridSprite } = require('../src/gridsprite.js');
+  for (const id of Object.keys(HERO_FACES)) {
+    assert.deepEqual(Object.keys(HERO_MOODS[id]).sort(), MOODS.filter(m => m !== 'normal').sort(), id);
+    for (const mood of MOODS) {
+      const def = heroFace(id, mood);
+      assert.deepEqual(GridSprite.check(def), [], `${id} ${mood}`);
+      assert.equal(def.rows.length, 32); for (const r of def.rows) assert.equal(r.length, 32);
+      for (const c of Object.values(def.pal)) assert.ok(inPalette(c), `${id} ${mood} ${c}`);
+      if (mood !== 'normal') assert.notDeepEqual(def.rows, HERO_FACES[id].rows, `${id} ${mood} changes the face`);
+    }
+  }
+});

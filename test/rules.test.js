@@ -68,3 +68,17 @@ test('party talk: plays once per save and skips heroes not in the party', () => 
   const got = R.talkLines(lines, heroes, id => id === 'aldo' || id === 'andilla').map(l => l[1]);
   assert.deepEqual(got, ['a', 'narração', 'c', 'd']);
 });
+
+test('speaker mood: "Aldo~bravo" shows Aldo with the angry face', () => {
+  assert.deepEqual(R.splitMood('Aldo~bravo'), { name: 'Aldo', mood: 'bravo' });
+  assert.deepEqual(R.splitMood('Guarda Hugo'), { name: 'Guarda Hugo', mood: null });
+  assert.deepEqual(R.splitMood('Aldo~sono'), { name: 'Aldo~sono', mood: null }, 'unknown moods are not stripped');
+  assert.deepEqual(R.splitMood(null), { name: null, mood: null });
+});
+
+test('party card face: worried when hurt, fierce on its battle turn', () => {
+  assert.equal(R.cardMood(50, 50, false), 'normal');
+  assert.equal(R.cardMood(50, 50, true), 'bravo');
+  assert.equal(R.cardMood(10, 50, true), 'preocupado');
+  assert.equal(R.cardMood(0, 50, true), 'normal');
+});

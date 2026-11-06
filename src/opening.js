@@ -6,7 +6,7 @@ const TAVERN_INSIDE = { x: 7, y: 8, dir: 0 };   // ao entrar pela porta
 const TAVERN_FRONT = { x: 22, y: 17, dir: 2 };  // na vila, em frente à porta
 const ARRIVAL = { x: 1, y: 6, dir: 1 };         // Aldo entra pela estrada do oeste
 
-const line = (who, text) => UI.say(`${who}:\n${text}`);
+const line = (who, text, mood) => UI.say(`${who}${mood ? '~' + mood : ''}:\n${text}`); // mood: alegre | preocupado | bravo
 const joined = async name => { Sfx.levelup(); await UI.say(`${name} entrou para o grupo!`); };
 
 async function walkPath(a, path, ms = 360) {
@@ -46,7 +46,7 @@ async function arrivalScene() {
     await walkPath(nino, [[8, 6], [7, 6], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6]], 260);
   }
   await line('Nino', 'Você é cavaleiro? Essa espada é de verdade?');
-  await line('Aldo', 'De verdade. E com fome. Onde se come por aqui?');
+  await line('Aldo', 'De verdade. E com fome. Onde se come por aqui?', 'alegre');
   await line('Nino', 'Na Berta! O telhado vermelho, lá embaixo. Fala que fui eu que mandei!');
   if (nino) {
     await walkPath(nino, [[3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [8, 6]], 260);
@@ -119,7 +119,7 @@ async function introductions() {
   if (inParty('teo')) await line('Teo', 'Teo, noviço do Templo de Erukh. Eu curo os feridos. E guardo uma carta que não é minha.');
   if (lyra) {
     await line('Lyra', 'Lyra. Maga, vinda de longe, com mais livros que bagagem.');
-    await line('Lyra', 'Lá embaixo há fontes de luz que guardam a memória de quem passa. Quero ver uma.');
+    await line('Lyra', 'Lá embaixo há fontes de luz que guardam a memória de quem passa. Quero ver uma.', 'alegre');
     await line('Lyra', 'Antes, me digam: por que vocês vão descer?');
     const r = await UI.choose([
       { label: 'Pelos mortos de Valmor.', value: 'Resposta de herói. Gosto.' },
@@ -127,7 +127,7 @@ async function introductions() {
       { label: 'Pelo ouro.', value: 'Resposta honesta. Essa é rara.' },
     ], { title: 'Por que descer à cripta?', cols: 1 });
     await line('Lyra', r);
-    await line('Lyra', 'Vocês têm a licença; eu tenho o fogo.');
+    await line('Lyra', 'Vocês têm a licença; eu tenho o fogo.', 'alegre');
     recruit('lyra', lyra); await joined('Lyra');
   }
   if (andilla) {
@@ -158,7 +158,7 @@ async function lyraTalk(n) {
     { label: 'Pelo ouro.', value: 'Resposta honesta. Essa é rara.' },
   ], { title: 'Por que descer à cripta?', cols: 1 });
   await line('Lyra', r);
-  await line('Lyra', 'Eu desço pela fonte. Vocês têm a licença; eu tenho o fogo.');
+  await line('Lyra', 'Eu desço pela fonte. Vocês têm a licença; eu tenho o fogo.', 'alegre');
   recruit('lyra', n);
   await joined('Lyra');
   saveGame();
@@ -245,7 +245,7 @@ async function teoScene() {
     await line('Teo', '...que os que dormem fiquem em paz, pela luz de Elun.');
     Sfx.dark(); shake(300);
     await UI.say('A terra da cova estremece. Duas Ossadas se erguem atrás do clérigo.');
-    await line('Aldo', 'Abaixe-se!');
+    await line('Aldo', 'Abaixe-se!', 'bravo');
     if (teo) { await walkPath(teo, [[8, 2], [9, 2]], 220); teo.dir = 2; }
     recruit('teo', teo);
   }
@@ -262,8 +262,8 @@ async function teoScene() {
   G.seen.teoWin = 1;
   TOWN.dim = AREAS.cemiterio.dim(); Music.play(AREAS.cemiterio.music());
   await line('Teo', 'Obrigado. Sou Teo, noviço do Templo. Vim ajudar a irmã Irene no inverno.');
-  await line('Teo', 'Rezo por estas covas há três noites e elas continuam abrindo.');
-  await line('Teo', 'Mortos não se levantam sozinhos. Vou com você até descobrir quem os chama.');
+  await line('Teo', 'Rezo por estas covas há três noites e elas continuam abrindo.', 'preocupado');
+  await line('Teo', 'Mortos não se levantam sozinhos. Vou com você até descobrir quem os chama.', 'bravo');
   await joined('Teo');
   saveGame();
   await UI.say('Objetivo: voltar à taverna e contar à Berta o que viram.');
@@ -289,7 +289,7 @@ Object.assign(AREAS.cemiterio, {
     G.seen.cemEntrou = 1;
     G.busy = true;
     await UI.say('O cemitério de Valmor. Névoa baixa, corvos no muro e covas abertas por toda parte.');
-    await line('Aldo', 'Rui não estava exagerando.');
+    await line('Aldo', 'Rui não estava exagerando.', 'preocupado');
     await UI.say('Entre as covas, alguma coisa se mexe. A setinha amarela mostra onde.');
     saveGame(); // perder no cemitério volta para cá
   },
@@ -376,7 +376,7 @@ async function nightScene() {
   await line('Encapuzado', 'A carta. E ninguém mais precisa sangrar esta noite.');
   await UI.say('Quando Aldo olha de novo, a cadeira da moça dos dados está vazia.');
   TOWN.p.dir = 2;
-  await line('Aldo', 'Acho que vocês erraram de taverna.');
+  await line('Aldo', 'Acho que vocês erraram de taverna.', 'bravo');
 
   const r = await startBattle(['encapuzado', 'encapuzado'], false, {
     surprise: 'ambush',
@@ -396,7 +396,7 @@ async function nightScene() {
   await UI.say('A velha Ana para de fiar. Olha a marca por muito tempo e não diz nada.');
   await line('Aldo', 'Teo... o que diz a carta?');
   await line('Teo', 'É o selo real. Não cabe a mim rompê-lo.');
-  await line('Aldo', 'Quase mataram um homem por ela.');
+  await line('Aldo', 'Quase mataram um homem por ela.', 'bravo');
   await line('Teo', 'Por isso mesmo. Quem abrir tem de ter o direito.');
   await line('Caio', 'E a moça dos dados? Sumiu antes da primeira lâmina.');
   await line('Berta', 'Capa cinza, igual à deles. Eu sabia que não devia fiar a conta dela.');

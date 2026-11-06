@@ -155,7 +155,49 @@ const HERO_FACE_BG = {
   lyra: ['#432c78', '#38246a', '#2e1e5a', '#24184a'],
   andilla: ['#62202e', '#541a28', '#461622', '#38111c'],
 };
-// A hero portrait as a GridSprite definition: the face grid over its window bands
-const heroFace = key => Object.assign({}, HERO_FACES[key], { bg: HERO_FACE_BG[key] || HERO_FACE_BG.default || ['#2c3c80', '#243270', '#1c2860', '#151e4e'] });
+// Expressions (worried = small open mouth and a sweat drop; angry = brows down to the middle): patches [row, col, letters] over the normal face. Every face uses the same letters for skin (s),
+// brow (n), mouth (m) and eye white (w); P (blush) and G (sweat drop) are added to every palette.
+const MOOD_PAL = { P: '#f8a0a0', G: '#8ac0f0' };
+const HERO_MOODS = {
+  aldo: {
+    alegre: [[13, 10, 'snns'], [14, 10, 'nssn'], [15, 11, 'ss'], [13, 18, 'snns'], [14, 18, 'nssn'], [15, 19, 'ss'], [16, 10, 'PP'], [16, 20, 'PP'], [19, 13, 'mwwwm'], [20, 14, 'mmm']],
+    preocupado: [[12, 11, 'nns'], [11, 13, 'n'], [12, 18, 'snn'], [11, 18, 'n'], [19, 14, 'smms'], [20, 15, 'mm'], [13, 22, 'G'], [14, 22, 'G']],
+    bravo: [[11, 11, 'n'], [12, 11, 'snn'], [13, 13, 'n'], [11, 21, 'n'], [12, 18, 'nns'], [13, 18, 'n'], [19, 13, 'mmmmm']],
+  },
+  teo: {
+    alegre: [[13, 10, 'snns'], [14, 10, 'nssn'], [15, 11, 'ss'], [13, 18, 'snns'], [14, 18, 'nssn'], [15, 19, 'ss'], [16, 10, 'PP'], [16, 20, 'PP'], [19, 14, 'mwwm'], [20, 15, 'mm']],
+    preocupado: [[12, 11, 'nns'], [11, 13, 'n'], [20, 15, 'mm'], [13, 22, 'G'], [14, 22, 'G']],
+    bravo: [[11, 11, 'n'], [12, 11, 'snn'], [13, 13, 'n'], [12, 18, 'nn'], [13, 18, 'n'], [19, 14, 'mmmm']],
+  },
+  lyra: {
+    alegre: [[13, 10, 'snns'], [14, 10, 'nssn'], [15, 10, 'ssss'], [13, 18, 'snns'], [14, 18, 'nssn'], [15, 18, 'ssss'], [19, 14, 'mwwwm'], [20, 15, 'mmm']],
+    preocupado: [[12, 11, 'nns'], [11, 13, 'n'], [12, 18, 'snn'], [11, 18, 'n'], [18, 14, 's'], [18, 18, 's'], [19, 15, 'smm'], [20, 16, 'mm'], [13, 22, 'G'], [14, 22, 'G']],
+    bravo: [[11, 11, 'n'], [12, 11, 'snn'], [13, 13, 'n'], [11, 20, 'n'], [12, 18, 'nns'], [13, 18, 'n'], [18, 14, 's'], [18, 18, 's'], [19, 14, 'mmmmm']],
+  },
+  andilla: {
+    alegre: [[13, 10, 'snns'], [14, 10, 'nssn'], [13, 18, 'n'], [14, 18, 'ss'], [16, 10, 'PP'], [16, 18, 'P'], [18, 17, 's'], [19, 13, 'mwwm'], [20, 14, 'mm']],
+    preocupado: [[12, 12, 'ss'], [11, 12, 'nn'], [18, 17, 's'], [19, 13, 'smms'], [20, 14, 'mm'], [13, 20, 'G'], [14, 20, 'G']],
+    bravo: [[11, 9, 'nn'], [12, 9, 'ss'], [13, 13, 'n'], [18, 17, 's'], [19, 12, 'mmmmmm']],
+  },
+};
+const MOODS = ['normal', 'alegre', 'preocupado', 'bravo'];
 
-if (typeof module !== 'undefined') module.exports = { HERO_FACES, HERO_FACE_BG, heroFace };
+const applyPatches = (rows, patches) => rows.map((row, y) => {
+  let r = row;
+  for (const [py, x, str] of patches) if (py === y) r = r.slice(0, x) + str + r.slice(x + str.length);
+  return r;
+});
+
+// A hero portrait as a GridSprite definition: the face grid (with an expression) over its window bands.
+// Memoized so GridSprite's canvas cache keeps working.
+const heroFaceMemo = {};
+const heroFace = (key, mood = 'normal') => {
+  const id = `${key}|${mood}`;
+  if (heroFaceMemo[id]) return heroFaceMemo[id];
+  const f = HERO_FACES[key], patches = (HERO_MOODS[key] || {})[mood];
+  const def = Object.assign({}, f, { bg: HERO_FACE_BG[key] || ['#2c3c80', '#243270', '#1c2860', '#151e4e'] });
+  if (patches) Object.assign(def, { rows: applyPatches(f.rows, patches), pal: Object.assign({}, f.pal, MOOD_PAL) });
+  return (heroFaceMemo[id] = def);
+};
+
+if (typeof module !== 'undefined') module.exports = { HERO_FACES, HERO_FACE_BG, HERO_MOODS, MOODS, heroFace };

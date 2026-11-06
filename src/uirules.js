@@ -56,6 +56,17 @@ function takeTalk(seen, id) {
   seen[k] = 1;
   return true;
 }
+// A speaker may carry a mood for the portrait: "Aldo~bravo" shows "Aldo" with the angry face
+function splitMood(name) {
+  const m = /^(.*?)~(alegre|preocupado|bravo)$/.exec(name || '');
+  return m ? { name: m[1], mood: m[2] } : { name: name || null, mood: null };
+}
+// Face on a party card: worried when hurt, fierce on its turn in battle, else the normal face
+function cardMood(hp, maxHp, acting) {
+  if (hp <= 0) return 'normal';
+  if (hp < maxHp * 0.3) return 'preocupado';
+  return acting ? 'bravo' : 'normal';
+}
 // Lines are [who, text]: who is a hero id (dropped when that hero is not in the party),
 // any other speaker name, or null for narration.
 const talkLines = (lines, heroIds, inParty) => lines.filter(([who]) => !heroIds.includes(who) || inParty(who));
@@ -85,4 +96,4 @@ function battleLayout(sizes, vw, vh, boss = false) {
   });
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines };
+if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, cardMood };
