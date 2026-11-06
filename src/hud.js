@@ -9,7 +9,7 @@ const HUD = (() => {
 
   const place = make(bar, 'chip', '<span class="pl"></span><span class="coin"></span><span class="gd"></span>');
   bar.prepend(place);
-  const boss = make(top, 'win danger-frame boss', '<div class="nm"></div><div class="bar"><i></i></div>');
+  const boss = make(top, 'win danger-frame boss', '<div class="nm"></div><div class="bar"><i></i></div><div class="cmd"></div>');
   const queue = make(top, 'queue');
   const label = make(top, 'win label');
   const note = make(top, 'win note');
@@ -36,8 +36,8 @@ const HUD = (() => {
     title(t, x, y) { text(title, t); at(title, x, y); show(title); },
     note(t) { text(note, t); show(note); },
     label(t) { text(label, t); show(label); },
-    boss(name, frac, enraged) {
-      text(boss.querySelector('.nm'), name);
+    boss(name, frac, enraged, cmd = '') {
+      text(boss.querySelector('.nm'), name); text(boss.querySelector('.cmd'), cmd);
       const w = Math.round(1000 * frac) / 10 + '%', fill = boss.querySelector('i');
       if (fill._w !== w) { fill._w = w; fill.style.width = w; }
       boss.classList.toggle('enraged', !!enraged); show(boss);

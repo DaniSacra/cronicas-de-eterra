@@ -274,6 +274,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #hudtop [hidden] { display: none !important; }
 #hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f2); }
 #hudtop .boss .bar { height: calc(var(--u) * 4); margin-bottom: 0; }
+#hudtop .boss .cmd { font-size: var(--f1); color: var(--gold); min-height: 1em; margin-top: var(--u); } #hudtop .boss .cmd:empty { display: none; }
 #hudtop .boss .bar i { background: linear-gradient(#c890f0 0 50%, #8a4ad0 50%); transition: width .3s steps(6); }
 #hudtop .boss.enraged .bar i { background: linear-gradient(#f28a9a 0 50%, var(--danger) 50%); }
 #hudtop .note { padding: calc(var(--u) * 2) calc(var(--u) * 4); font-size: var(--f1); }

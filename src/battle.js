@@ -372,6 +372,7 @@ const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 
 // opts: surprise (força o resultado), intro (texto de entrada), hints (dicas do tutorial), noRun (texto ao tentar fugir)
 async function startBattle(ids, isBoss, opts = {}) {
   // Fundo: a vila ou a taverna como estão na tela; na dungeon, a imagem do raycaster
+  if (G.mode === 'town') Layout.normal(); // a batalha usa a escala de sempre, mesmo vinda de uma área com zoom
   bgCanvas.width = VW; bgCanvas.height = VH;
   const veil = battleVeil(isBoss);
   if (G.mode === 'town') { drawTown(performance.now(), true); bgCanvas.getContext('2d').drawImage(view, 0, 0); } // só o lugar, sem os moradores
@@ -504,11 +505,11 @@ function drawBattle(now) {
   // Chefe: barra no topo
   const boss = B.enemies.find(e => e.boss);
   // Boss fight: the boss window always shows the name; commands and narration use the plaque below it
-  if (boss) HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged);
+  if (boss) HUD.boss(boss.name, Math.max(0, boss.hp / boss.maxhp), boss.enraged, B.label);
 
   // Seta de alvo (balança em cima do inimigo escolhido) e o nome do comando/alvo na placa do topo
   const hv = B.hover;
-  if (B.label) HUD.label(B.label);
+  if (B.label && !boss) HUD.label(B.label); // no chefe, o comando sai na placa, longe do rosto dele
   if (hv && hv.hp > 0) {
     const y = Math.max(10, hv.top - 10) - (Math.floor(now / 200) % 2) * 2; // acima da barra de PV
     c.fillStyle = '#ffd23f';
