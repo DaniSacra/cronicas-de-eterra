@@ -718,16 +718,29 @@ function drawSight(c, A, lp, camX, camY) {
   c.restore();
 }
 
+// Rows of the scene covered by the open dialog box (0 when closed)
+function dialogRows() {
+  const d = document.getElementById('dialog');
+  if (!d || !d.classList.contains('open')) return 0;
+  const v = view.getBoundingClientRect(), b = d.getBoundingClientRect();
+  if (b.top < v.top + v.height / 2) return 0; // a box at the top covers nothing below
+  return Math.max(0, Math.min(VH * 0.6, (v.bottom - b.top) * VH / v.height));
+}
+
 // bare: só o lugar, sem gente nem setinha (fundo da batalha)
 function drawTown(now, bare = false) {
   const c = vctx;
   const A = TOWN.A, lp = actorPos(TOWN.p);
-  const cam = (pos, size, view) => Math.round(size < view ? (size - view) / 2 : Math.max(0, Math.min(size - view, pos + 8 - view / 2)));
-  const camX = cam(lp.x, A.W * TS, VW), camY = cam(lp.y, A.H * TS, VH);
+  // with the dialog open, the camera centers the party in the part of the scene above the box (eased, 200 ms)
+  const padB = bare ? 0 : dialogRows();
+  TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
+  const camX = camAxis(lp.x, A.W * TS, VW), camY = camAxis(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
-  c.save(); c.translate(-camX, -camY); c.fillStyle = A.vision ? '#000' : A.edge; c.fillRect(camX, camY, VW, VH); c.restore();
+  c.save(); c.translate(-camX, -camY); c.fillStyle = A.edge; c.fillRect(camX, camY, VW, VH);
+  if (A.vision) { c.fillStyle = `rgba(${A.dimCol || '0,0,0'},.9)`; c.fillRect(camX, camY, VW, VH); } // além do mapa: a borda, no escuro da névoa
+  c.restore();
   c.drawImage(A.layer, -camX, -camY);
 
   // Brilho da água
