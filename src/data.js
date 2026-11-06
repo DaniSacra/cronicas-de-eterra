@@ -184,7 +184,7 @@ const JOURNAL = {
     { show: () => G.quest, text: 'O mensageiro delira "o selo... o selo" e não diz o próprio nome.' },
     { show: () => G.quest, text: 'O sino era o da igreja velha, vazia há cinquenta anos. Sob ela, no fundo da cripta, dorme um rei. O ancião não quis dizer o nome.' },
     { show: () => G.quest, text: 'Os paladinos que fecharam a cripta eram quatro. O ancião quer quatro para descer.' },
-    { show: () => inParty('lyra'), text: 'Lyra, uma maga, quer ver a fonte de luz da cripta. Veio conosco.' },
+    { show: () => inParty('lyra'), get text() { return `Lyra, irmã caçula de ${heroName('aldo')}, chegou na carroça do correio. Veio ver o irmão e a fonte de luz da cripta.`; } },
     { show: () => inParty('andilla'), get text() { return `A moça dos dados era ${heroName('andilla')}. Fugiu da taverna porque já tinha visto aquelas lâminas no cemitério.`; } },
     { show: () => G.seen.paladino, text: 'Na lápide da cova mais antiga, o símbolo de um paladino.' },
     { show: () => G.reached >= 1, text: 'A marca dos encapuzados está pintada na parede da cripta. Eles já estiveram aqui.' },

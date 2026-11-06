@@ -465,6 +465,7 @@ function nextStep() {
   if (!G.seen.job) return 'Procurando trabalho? A Berta, na taverna de telhado vermelho, lá embaixo, sempre precisa de braços.';
   if (!inParty('teo')) return 'A Berta mandou olhar o cemitério? O portão fica ao lado da capela, no alto da vila, à esquerda.';
   if (!G.intro) return 'Voltem à taverna. A Berta vai querer saber o que vocês viram.';
+  if (!inParty('lyra')) return 'Sua irmã chegou na carroça do correio. Está na taverna, procurando você.';
   if (!G.quest) return 'O ancião Bertoldo mora na casa de telhado verde, no alto da vila.';
   if (G.party.length < 4) return 'O ancião quer quatro. Tem gente esperando para descer, lá na taverna.';
   return 'Vocês são quatro. Falem com o Hugo, na porta da igreja velha.';
@@ -479,7 +480,7 @@ function goalSpot() {
   if (a === 'valmor') {
     if (!G.seen.job) return door('tavern');
     if (!inParty('teo')) return { x: 5, y: 3 };          // portão do cemitério
-    if (!G.intro) return door('tavern');
+    if (!G.intro || !inParty('lyra')) return door('tavern'); // saves antigos: a Lyra espera na taverna
     if (!G.quest) return door('elder');
     if (!four) return door('tavern');
     if (!G.seen.hugo4) return npc('guard');
@@ -487,7 +488,8 @@ function goalSpot() {
   }
   if (a === 'taverna') {
     if (!G.seen.job) return npc('berta');
-    if (G.quest && !four) return npc('andilla') || npc('lyra');
+    if (G.intro && !inParty('lyra')) return npc('lyra');
+    if (G.quest && !four) return npc('andilla');
     if (G.intro && !G.quest && G.key.estojo) return npc('andilla');
     return { x: 7, y: 9 };                                // a porta
   }

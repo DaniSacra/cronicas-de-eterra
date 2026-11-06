@@ -6,6 +6,7 @@ const TAVERN_INSIDE = { x: 7, y: 8, dir: 0 };   // ao entrar pela porta
 const TAVERN_FRONT = { x: 22, y: 17, dir: 2 };  // na vila, em frente à porta
 const ARRIVAL = { x: 1, y: 6, dir: 1 };         // Aldo entra pela estrada do oeste
 
+const A = () => heroName('aldo'); // Lyra conta o irmão em terceira pessoa: sempre pelo nome do herói
 const line = (who, text, mood) => UI.say(`${who}${mood ? '~' + mood : ''}:\n${text}`); // mood: alegre | preocupado | bravo
 const joined = async name => { Sfx.levelup(); await UI.say(`${name} entrou para o grupo!`); };
 
@@ -37,19 +38,23 @@ async function arrivalScene() {
   enterTown(ARRIVAL, 'valmor');
   G.busy = true;
   await fadeTo(0, 900);
-  await UI.say('Valmor, no sul gelado de Eterra. A geada chegou cedo este ano.');
-  await UI.say('Aldo, espada nas costas e bolsa quase vazia, procura trabalho para o inverno.');
+  await UI.say('Valmor, no sul gelado de Imladrin. A geada chegou cedo este ano.');
+  await UI.say(`De tempos em tempos, ${A()} volta a Valmor. Sempre diz que é pelo trabalho.`);
   const nino = TOWN.npcs.find(n => n.def.id === 'nino');
   if (nino) {
     nino.talking = true;
     placeActor(nino, 9, 6, 3);
     await walkPath(nino, [[8, 6], [7, 6], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6]], 260);
   }
-  await line('Nino', 'Você é cavaleiro? Essa espada é de verdade?');
-  await line('Aldo', 'De verdade. E com fome. Onde se come por aqui?', 'alegre');
-  await line('Nino', 'Na Berta! O telhado vermelho, lá embaixo. Fala que fui eu que mandei!');
+  await line('Nino', `${A()}! Você voltou! Trouxe a espada?`);
+  await line('Aldo', 'Trouxe. E fome. A Berta ainda está de pé?', 'alegre');
+  await line('Nino', 'Está! E a professora Clara também. Ela não perguntou de você. Mas olhou pra estrada a semana inteira.');
+  await line('Aldo', 'Vai brincar, Nino.', 'preocupado');
+  await line('Nino', 'Vou contar pra ela que você chegou!');
+  const away = nino && walkPath(nino, [[3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [8, 6]], 260); // Nino sai correndo enquanto Aldo responde
+  await line('Aldo', 'Não precisa contar nada pra ninguém.');
   if (nino) {
-    await walkPath(nino, [[3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [8, 6]], 260);
+    await away;
     TOWN.npcs = TOWN.npcs.filter(n => n !== nino);
     TOWN.npcs.push(spawnNpc(nino.def));
   }
@@ -81,12 +86,15 @@ const TAVERN_NPCS = [
 // Tarde da chegada: só Berta, Ana e Rui (os soldados e a moça dos dados chegam à noite)
 const TAVERN_AFTERNOON = [
   { id: 'berta', name: 'Berta, a taverneira', x: 10, y: 2, dir: 2, wander: 0, onTalk: bertaJob },
-  { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: { arrive: ['Leve um lampião. A névoa do cemitério engole a gente.'] } },
-  { id: 'rui', name: 'Rui', x: 1, y: 3, dir: 1, wander: 0, lines: { arrive: ['Eu falei das covas e ninguém acreditou. Vai lá ver, vai.'] } },
+  { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: { arrive: [() => `${A()}. Leve um lampião. A névoa do cemitério engole a gente.`] } },
+  { id: 'rui', name: 'Rui', x: 1, y: 3, dir: 1, wander: 0, lines: { arrive: [() => `${A()}! Eu falei das covas e ninguém acreditou. Você acredita, né? Vai lá ver.`] } },
 ];
 async function bertaJob() {
   if (G.seen.job) { await line('Berta', inParty('teo') ? 'Já de volta? Contem tudo.' : 'Volte inteiro e o quarto é seu. A sopa também.'); return; }
-  await line('Berta', 'Quarto e sopa, dez moedas. Ou um favor, se o forasteiro souber usar essa espada.');
+  await line('Berta', `Olha quem a geada trouxe. ${A()}, de novo.`);
+  await line('Aldo', 'Vim pelo trabalho.');
+  await line('Berta', 'Claro que veio. A escola continua no mesmo lugar, se o trabalho mudar de ideia.');
+  await line('Berta', 'Quarto e sopa, dez moedas. Ou um favor, que eu conheço essa bolsa vazia.');
   await line('Rui', 'As covas do cemitério amanheceram abertas de novo. Vazias. Como se alguém tivesse saído de dentro.');
   await line('Berta', 'Para com isso, Rui.');
   await line('Berta', 'O Hugo não pode largar a igreja velha. Dê uma olhada no cemitério, atrás da capela, no alto da vila.');
@@ -95,41 +103,45 @@ async function bertaJob() {
   await UI.say('Objetivo: investigar as covas abertas no cemitério, atrás da capela.\nA setinha amarela mostra o caminho.');
 }
 
-// Manhã em diante: Lyra e a ladina esperam na taverna até entrarem no grupo
+// Manhã em diante: a ladina espera na taverna até entrar no grupo. A Lyra entra no amanhecer (nightScene);
+// só espera aqui em saves antigos, de antes de ela ser a irmã do Aldo.
 const LYRA_DEF = { id: 'lyra', name: 'Lyra', x: 11, y: 6, dir: 0, wander: 0, onTalk: lyraTalk };
 const ANDILLA_DEF = { id: 'andilla', look: 'andilla', get name() { return heroName('andilla'); }, x: 12, y: 7, dir: 3, wander: 0, onTalk: andillaTalk };
 
-// Com a licença do ancião, a Berta apresenta quem espera para descer à cripta e todos se apresentam
+// "Por que descer?": a Lyra pergunta ao irmão nas apresentações e lembra a resposta na estrada (G.seen.porque)
+const PORQUE = {
+  mortos: { label: 'Pelos mortos de Valmor.', reply: a => `${a} diz que é pelos mortos. ${a} acredita nisso. Quase todo.`,
+    road: a => `${a} desceu pelos mortos. Eles dormem de novo. ${a} está orgulhoso e não vai dizer.` },
+  carta: { label: 'Pela carta.', reply: a => `${a} diz que é pela carta. ${a} gosta de coisas que cabem na mão.`,
+    road: a => `${a} desceu pela carta. Ela continua inteira. ${a} também.` },
+  ouro: { label: 'Pelo ouro.', mood: 'alegre', reply: a => `${a} diz que é pelo ouro. Com essa bolsa vazia, essa até é verdade.`,
+    road: a => `${a} desceu pelo ouro. Voltou sem nenhum. ${a} está feliz mesmo assim.` },
+};
+async function askPorque() {
+  const k = await UI.choose(Object.entries(PORQUE).map(([value, p]) => ({ label: p.label, value })), { title: 'Por que descer à cripta?', cols: 1 });
+  G.seen.porque = k;
+  await line('Lyra', PORQUE[k].reply(A()), PORQUE[k].mood);
+}
+const porqueRoad = () => PORQUE[G.seen.porque] ? PORQUE[G.seen.porque].road(A()) : null; // saves antigos não têm resposta
+
+// Com a licença do ancião, a Berta chama quem mais quer descer (só a Andilla) e todos se apresentam
 const needsIntroductions = () => G.quest && !G.bossDead && G.party.length < 4 && !G.seen.apresentacao;
 async function introductions() {
   G.busy = true; G.seen.apresentacao = 1;
-  const actor = id => TOWN.npcs.find(n => n.def.id === id);
-  const lyra = !inParty('lyra') && actor('lyra'), andilla = !inParty('andilla') && actor('andilla'), nm = heroName('andilla');
+  const andilla = !inParty('andilla') && TOWN.npcs.find(n => n.def.id === 'andilla'), nm = heroName('andilla');
   await line('Berta', 'Licença do ancião? Então vocês não são os únicos querendo descer.');
-  await line('Berta', 'Ei, vocês duas! Venham cá. Esse povo vai descer.');
-  await Promise.all([
-    lyra && walkPath(lyra, [[10, 6], [9, 6], [8, 6], [8, 7]]),
-    andilla && walkPath(andilla, [[11, 7], [10, 7], [9, 7], [9, 8]]),
-  ]);
-  if (lyra) lyra.dir = 3;
-  if (andilla) andilla.dir = 3;
+  if (andilla) {
+    await line('Berta', 'Ei, você! Venha cá. Esse povo vai descer.');
+    await walkPath(andilla, [[11, 7], [10, 7], [9, 7], [9, 8]]);
+    andilla.dir = 3;
+  }
   TOWN.p.dir = 1;
   await line('Berta', 'Ninguém desce sozinho. Cada um diz quem é, e eu sirvo a sopa.');
-  await line('Aldo', 'Aldo. Espada, estrada e pouca conversa. Cheguei ontem procurando pouso.');
-  if (inParty('teo')) await line('Teo', 'Teo, noviço do Templo de Erukh. Eu curo os feridos. E guardo uma carta que não é minha.');
-  if (lyra) {
-    await line('Lyra', 'Lyra. Maga, vinda de longe, com mais livros que bagagem.');
-    await line('Lyra', 'Lá embaixo há fontes de luz que guardam a memória de quem passa. Quero ver uma.', 'alegre');
-    await line('Lyra', 'Antes, me digam: por que vocês vão descer?');
-    const r = await UI.choose([
-      { label: 'Pelos mortos de Valmor.', value: 'Resposta de herói. Gosto.' },
-      { label: 'Pela carta.', value: 'Resposta de mensageiro. Serve.' },
-      { label: 'Pelo ouro.', value: 'Resposta honesta. Essa é rara.' },
-    ], { title: 'Por que descer à cripta?', cols: 1 });
-    await line('Lyra', r);
-    await line('Lyra', 'Vocês têm a licença; eu tenho o fogo.', 'alegre');
-    recruit('lyra', lyra); await joined('Lyra');
-  }
+  await line('Aldo', `${A()}. Espada, estrada e pouca conversa.`);
+  const lyra = inParty('lyra');
+  if (lyra) await line('Lyra', `E coração mole. ${A()} odeia que eu conte isso.`, 'alegre');
+  if (inParty('teo')) await line('Teo', 'Teo, noviço da Ordem de Erukh. Eu curo os feridos. E guardo uma carta que não é minha.');
+  if (lyra) await line('Lyra', 'Lyra, irmã dele. Maga. Eu falo, ele luta. Funciona há vinte anos.');
   if (andilla) {
     await andillaReveal();
     await line(nm, `${nm}. Abro o que está fechado e desarmo o que não devia estar armado.`);
@@ -140,25 +152,21 @@ async function introductions() {
     await line(nm, 'Lá embaixo tem tranca e armadilha. E dizem que enterraram um rei com a coroa. Rei morto não precisa de coroa.');
     recruit('andilla', andilla); await joined(nm);
   }
-  await line('Berta', 'Quatro. Agora o Hugo deixa passar. Voltem vivos, que a sopa de amanhã já está paga.');
+  if (lyra) {
+    await line('Lyra', 'Antes de descer, uma pergunta. Por que você vai, maninho?');
+    await askPorque();
+    if (inParty('andilla')) await line(nm, 'Vocês dois são sempre assim?');
+    if (inParty('teo')) await line('Teo', 'Desde ontem, pelo menos.');
+  }
+  await line('Berta', G.party.length >= 4 ? 'Quatro. Agora o Hugo deixa passar. Voltem vivos, que a sopa de amanhã já está paga.'
+    : 'Falta um. A pequena Lyra está ali no canto, querendo ver o irmão.');
   saveGame();
   G.busy = false; townHint();
 }
 
+// Só em saves antigos: a Lyra esperava na taverna e entra no grupo ao conversar
 async function lyraTalk(n) {
-  if (!G.quest) {
-    await line('Lyra', 'Fontes de luz que guardam a memória de quem passa. Vim de longe para ver uma.');
-    await line('Lyra', 'Cheguei hoje cedo, na carroça do correio. Disseram na estrada que Valmor tem uma, lá embaixo.');
-    return;
-  }
-  await line('Lyra', 'Licença do ancião, é? Então me digam: por que vocês vão descer?');
-  const r = await UI.choose([
-    { label: 'Pelos mortos de Valmor.', value: 'Resposta de herói. Gosto.' },
-    { label: 'Pela carta.', value: 'Resposta de mensageiro. Serve.' },
-    { label: 'Pelo ouro.', value: 'Resposta honesta. Essa é rara.' },
-  ], { title: 'Por que descer à cripta?', cols: 1 });
-  await line('Lyra', r);
-  await line('Lyra', 'Eu desço pela fonte. Vocês têm a licença; eu tenho o fogo.', 'alegre');
+  await line('Lyra', 'Até que enfim! Vim ver meu irmão e a fonte. Nessa ordem. Mais ou menos.', 'alegre');
   recruit('lyra', n);
   await joined('Lyra');
   saveGame();
@@ -190,6 +198,35 @@ async function andillaReveal() {
   await line(nm, 'Eu já tinha visto aquelas lâminas curvas. No cemitério, de noite, com gente de capa cinza cavando.');
   await line(nm, 'Quando eles entraram aqui, eu soube quem eram. Saí antes que me reconhecessem.');
   await line('Berta', 'Fugir eu entendo. Deixar a conta, não.');
+}
+
+// Amanhecer: a Lyra, irmã caçula do Aldo, chega na carroça do correio e entra no grupo
+const DAWN_CAST = TAVERN_NPCS.filter(d => d.id === 'berta' || d.id === 'ana').map(d => ({ ...d, onTalk: undefined }));
+async function lyraArrives() {
+  enterTown({ x: 6, y: 4, dir: 2 }, 'taverna', DAWN_CAST);
+  G.busy = true;
+  await fadeTo(0, 800);
+  await UI.say('Ao amanhecer, chega a carroça do correio. A porta da taverna se abre com força.');
+  const lyra = addActor({ id: 'lyra', name: 'Lyra', x: 7, y: 9, dir: 0 });
+  await line('Lyra', `${A().toUpperCase()}!`, 'alegre');
+  await walkPath(lyra, [[7, 8], [7, 7], [7, 6], [7, 5], [6, 5]], 220);
+  lyra.dir = 0;
+  await UI.say('Uma moça de capa roxa, com mais livros que bagagem, se joga no pescoço dele.');
+  await line('Lyra', `${A()} vê a irmã caçula e tenta parecer bravo. ${A()} não consegue.`, 'alegre');
+  await line('Aldo', 'Lyra. O que você está fazendo aqui?');
+  await line('Lyra', "Sua carta dizia: 'vou a Valmor procurar trabalho'. Eu li: 'vou a Valmor ver a Clara'. Vim ajudar.");
+  await line('Aldo', 'Não foi isso que eu escrevi.', 'bravo');
+  await line('Lyra', 'Não com essas palavras.', 'alegre');
+  await line('Teo', 'Vocês são irmãos?');
+  await line('Lyra', 'Ele é o mais velho. Eu sou a mais esperta.', 'alegre');
+  await line('Aldo', 'Ela é a que fala.');
+  await line('Berta', 'A pequena Lyra! Da última vez, mal alcançava o balcão.');
+  await line('Lyra', 'E dizem que Valmor tem uma fonte de luz lá embaixo. Duas coisas para ver nesta vila.');
+  await line('Lyra', `Que cara é essa, ${A()}? Aconteceu alguma coisa.`, 'preocupado');
+  await UI.say(`${A()} conta da noite: o mensageiro, a carta, os encapuzados.`);
+  await line('Lyra', 'Então eu chego atrasada para a briga e cedo para o problema. Eu vou junto.');
+  recruit('lyra', lyra);
+  await joined('Lyra');
 }
 
 // ---------- Passo 2 · O cemitério (área de cima, atrás da capela) ----------
@@ -409,7 +446,8 @@ async function nightScene() {
   await UI.say('Os soldados de folga levam o mensageiro até a capela.');
   await UI.say('Ninguém dorme. Teo passa a noite com a carta fechada no colo.');
   await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
-  await UI.say('Ao amanhecer, chega a carroça do correio. Dela desce uma moça de capa roxa, com mais livros que bagagem.');
+  await lyraArrives();
+  await fadeTo(1, 800);
   await UI.say('A sopa da Berta devolve as forças ao grupo.');
   for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
   UI.updateParty();

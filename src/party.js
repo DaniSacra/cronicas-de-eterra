@@ -19,7 +19,9 @@ const HERO_IDS = PARTY_DEFS.map(d => d.id);
 async function partyTalk(id, lines) {
   if (!takeTalk(G.seen, id)) return;
   for (const [who, t, mood] of talkLines(lines, HERO_IDS, inParty)) {
-    const text = typeof t === 'function' ? t() : t, name = HERO_IDS.includes(who) ? heroName(who) : who;
+    const text = typeof t === 'function' ? t() : t;
+    if (!text) continue; // a line may depend on the save (e.g. no answer stored)
+    const name = HERO_IDS.includes(who) ? heroName(who) : who;
     await UI.say(name ? `${name}${mood ? '~' + mood : ''}:\n${text}` : text);
   }
 }
