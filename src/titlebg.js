@@ -241,11 +241,44 @@ function makeDescent(t0, dur = TITLE_DESCENT_MS) {
   };
 }
 
+// ---------- Shared by both versions of the title (A here, B in src/titlebg2.js) ----------
+const TITLE_BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+function titleRng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+const titleCanvas = (w, h) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; return { cv, c }; };
+// what the layout needs from the page: logical size, CSS pixels per logical pixel and the interface letters
+function titleMetrics() {
+  const view = document.getElementById('view'), cs = getComputedStyle(document.documentElement);
+  return { W: VW, H: VH, px: (parseFloat(view.style.width) || VW) / VW, f1: parseFloat(cs.getPropertyValue('--f1')) || 8, f2: parseFloat(cs.getPropertyValue('--f2')) || 16 };
+}
+// the camera descent, shared so switching versions keeps the same clock
+const TitleCam = {
+  descent: null, t0: 0,
+  at(now) { return this.descent ? this.descent.at(now) : 1; },
+  // starts the descent; resolves when it ends or when the player presses something
+  intro() {
+    const d = this.descent = makeDescent(this.t0 = performance.now());
+    return new Promise(res => {
+      const skip = () => d.skip(), evs = ['keydown', 'pointerdown'];
+      evs.forEach(e => window.addEventListener(e, skip, { once: true }));
+      const tick = () => { if (d.done(performance.now())) { evs.forEach(e => window.removeEventListener(e, skip)); res(); } else requestAnimationFrame(tick); };
+      tick();
+    });
+  },
+};
+// a flock of three birds now and then
+function titleBirds(put, L, now) {
+  const bt = now % 14000;
+  if (bt >= 6000) return;
+  const k = bt / 6000, flap = Math.floor(now / 200) % 2;
+  for (const [dx, dy] of [[0, 0], [7, 3], [13, -2]]) {
+    const x = L.W + 10 - k * (L.W + 40) + dx, y = L.hy - 70 + dy + Math.sin(k * 6) * 3;
+    put(x, y + flap, TITLE_C.bird); put(x + 1, y + 1 - flap, TITLE_C.bird); put(x + 2, y + flap, TITLE_C.bird);
+  }
+}
+
 const TitleBG = (() => {
-  let cache = null, descent = null, t0 = 0;
-  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
-  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-  const canvas = (w, h) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; return { cv, c }; };
+  let cache = null;
+  const BAYER = TITLE_BAYER, rng = titleRng, canvas = titleCanvas;
 
   // Erukh: muralha, torres de telhado pontudo, casas, a grande cúpula do templo e estandartes; borda acesa pelo sol
   function city() {
@@ -344,16 +377,12 @@ const TitleBG = (() => {
     return { L, D, bg: cv, river, stars, clouds, tufts, top };
   }
 
-  function layoutNow() {
-    const view = document.getElementById('view'), cs = getComputedStyle(document.documentElement);
-    const px = (parseFloat(view.style.width) || VW) / VW;
-    return titleLayout({ W: VW, H: VH, px, f1: parseFloat(cs.getPropertyValue('--f1')) || 8, f2: parseFloat(cs.getPropertyValue('--f2')) || 16 });
-  }
+  const layoutNow = () => titleLayout(titleMetrics());
 
   function draw(c, now) {
     const L = layoutNow();
     if (!cache || cache.L.W !== L.W || cache.L.H !== L.H || cache.L.menu.h !== L.menu.h) cache = build(L);
-    const { D } = cache, p = descent ? descent.at(now) : 1, oy = Math.round(D * (1 - p)), T = now - t0;
+    const { D } = cache, oy = Math.round(D * (1 - TitleCam.at(now))), T = now - TitleCam.t0;
     c.imageSmoothingEnabled = false;
     c.drawImage(cache.bg, 0, -D + oy);
     const put = (x, y, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y) + oy, 1, 1); };
@@ -365,15 +394,7 @@ const TitleBG = (() => {
       c.fillStyle = body; c.fillRect(x + 4, cl.y + oy, cl.w - 8, 2); c.fillRect(x, cl.y + 2 + oy, cl.w, 3); c.fillRect(x + Math.round(cl.w * 0.3), cl.y - 2 + oy, Math.round(cl.w * 0.4), 2);
       c.fillStyle = lit; c.fillRect(x + 1, cl.y + 5 + oy, cl.w - 2, 1);
     }
-    // um bando de três pássaros, de vez em quando
-    const bt = now % 14000;
-    if (bt < 6000) {
-      const k = bt / 6000, flap = Math.floor(now / 200) % 2;
-      for (const [dx, dy] of [[0, 0], [7, 3], [13, -2]]) {
-        const x = L.W + 10 - k * (L.W + 40) + dx, y = L.hy - 70 + dy + Math.sin(k * 6) * 3;
-        put(x, y + flap, TITLE_C.bird); put(x + 1, y + 1 - flap, TITLE_C.bird); put(x + 2, y + flap, TITLE_C.bird);
-      }
-    }
+    titleBirds(put, L, now);
     // brilho no rio: as cores giram em ciclo
     const ph = Math.floor(now / 260);
     for (let i = 0; i < cache.river.length; i += 3) { const [x, y] = cache.river[i]; if ((x + y * 3 + ph) % 7 === 0) put(x, y, TITLE_C.river[1 + (ph + i) % 3]); }
@@ -391,18 +412,7 @@ const TitleBG = (() => {
     }
   }
 
-  // Abertura: começa a descida; resolve quando ela termina ou quando o jogador aperta algo
-  function intro() {
-    t0 = performance.now(); descent = makeDescent(t0);
-    return new Promise(res => {
-      const skip = () => descent.skip();
-      const evs = ['keydown', 'pointerdown'];
-      evs.forEach(e => window.addEventListener(e, skip, { once: true }));
-      const tick = () => { if (descent.done(performance.now())) { evs.forEach(e => window.removeEventListener(e, skip)); res(); } else requestAnimationFrame(tick); };
-      tick();
-    });
-  }
-  return { draw, intro, layout: layoutNow };
+  return { draw, layout: layoutNow };
 })();
 
-if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS };
+if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS, TITLE_BAYER, titleRng };
