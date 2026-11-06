@@ -17,7 +17,7 @@ const WORLD_POIS = [
       (G.bossDead ? 'Os mortos voltaram a dormir. A estrada para Erukh está aberta.'
         : G.intro ? 'Um mensageiro caiu ferido na taverna. Encapuzados queriam a carta que ele trazia.'
         : G.seen.job ? 'Alguém, ou alguma coisa, anda abrindo as covas do cemitério.'
-        : `${heroName('aldo')} acabou de chegar, procurando pouso para o inverno.`) },
+        : `${heroName('aldo')} voltou, como sempre, procurando trabalho para o inverno.`) },
   { id: 'cemiterio', nome: 'Cemitério de Valmor', reino: 'Imladrin', tipo: 'Cemitério', x: 160, y: 610, show: () => G.seen.job, visto: () => G.seen.cemEntrou,
     text: () => 'Atrás da capela, no alto da vila.\n' +
       (G.seen.covas ? 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.'

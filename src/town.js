@@ -56,7 +56,7 @@ const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, lines: {
-    start: ['Alto! A igreja velha está fechada por ordem do ancião Bertoldo.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
+    start: [() => `${heroName('aldo')}! De volta para o inverno, é? Pena: a igreja velha está fechada por ordem do ancião.`, 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
     quest: ['Que a luz os guie lá embaixo. Voltem vivos.'],
     won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.'] } },
   { id: 'lia', name: 'Lia', x: 18, y: 8, dir: 2, wander: 2, lines: {
@@ -67,20 +67,20 @@ const NPC_DEFS = [
     start: ['Ouviu o sino de madrugada? É o da igreja velha.', 'Aquela igreja está vazia faz cinquenta anos. Quem é que toca?'],
     won: ['Dormi a noite inteira pela primeira vez em semanas!'] } },
   { id: 'marta', name: 'Dona Marta', x: 23, y: 8, dir: 2, wander: 1, lines: {
-    start: ['Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
+    start: [() => `O ${heroName('aldo')} de volta. A escola agradece. Digo, a vila agradece.`, 'Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
     quest: ['Lá embaixo, leiam as paredes. Os antigos escreviam tudo.', 'Levem poções. Muitas poções. A Dora vende na loja de telhado dourado.'],
     won: ['Meu avô ficaria orgulhoso de vocês.'] } },
   { id: 'tome', name: 'Tomé, o pescador', x: 9, y: 11, dir: 3, wander: 0, lines: {
-    start: ['Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há fontes de luz que curam qualquer ferida e guardam a memória de quem passa.'],
+    start: [() => `${heroName('aldo')}! Veio pescar? Ah, não. Veio pelo... trabalho.`, 'Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há fontes de luz que curam qualquer ferida e guardam a memória de quem passa.'],
     won: ['Os peixes voltaram! E eu achando que era a minha isca.'] } },
   { id: 'nino', name: 'Nino', x: 14, y: 12, dir: 2, wander: 3, lines: {
     arrive: [() => nextStep()],
-    start: ['Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.', () => nextStep()],
+    start: [() => `${heroName('aldo')}, me ensina a segurar a espada? A professora disse que não. Mas ela sorriu quando disse.`, 'Eu não tenho medo de esqueleto!', '...Tá bom, tenho um pouquinho.', () => nextStep()],
     quest: ['Vocês vão mesmo descer? Uau! Me tragam um osso!'],
     won: ['Quando eu crescer, quero ser herói igual a vocês!'] } },
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, capitulo1.md)
   { id: 'clara', name: 'Clara, a professora', x: 12, y: 12, dir: 2, wander: 1, onTalk: claraTalk, lines: {
-    start: ['Bom dia.', 'O Nino não fala de outra coisa: o cavaleiro da espada de verdade.'],
+    start: [() => `Bom dia, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
     quest: ['Vão descer na igreja velha?', 'Voltem. Os quatro.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
   { id: 'cat', name: 'Bigode', x: 20, y: 17, dir: 3, wander: 4, cat: true, lines: {
@@ -532,14 +532,14 @@ async function enterBuilding(b) {
   if (b.id === 'shop') return shop();
   const homes = {
     smith: ['Gaspar, o ferreiro', {
-      start: ['Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina de prata, se acharem uma lá embaixo.'],
+      start: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina de prata, se acharem uma lá embaixo.'],
       won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
     sara: ['Sara', {
       start: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
       quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
       won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
     joaquim: ['Seu Joaquim', {
-      start: ['Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
+      start: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
       won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.'] }],
   }[b.id];
   if (homes) await say(homes[0], byStage(homes[1]));
@@ -562,7 +562,7 @@ async function leaveTavern() {
 async function elderTalk() {
   const nm = 'Ancião Bertoldo';
   if (G.bossDead) { await say(nm, ['Os mortos voltaram a dormir, e o sino se calou. Valmor deve isso a vocês.', 'Mas um túmulo arrombado e vazio... Alguém levou o rei lá de baixo, e nós nem vimos.', 'Levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
-  if (!G.intro) { await say(nm, ['Forasteiro? Bem-vindo a Valmor.', nextStep()]); return; }
+  if (!G.intro) { await say(nm, [`${heroName('aldo')}. De volta outra vez. A Berta sempre precisa de braços.`, nextStep()]); return; }
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Nas catacumbas, procurem as fontes de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
@@ -590,7 +590,7 @@ async function chapel() {
     ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3 });
     if (v === null) return;
     if (v === 'talk') await say(nm, byStage({
-      arrive: ['Bem-vindo, forasteiro. A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
+      arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', 'O noviço Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       won: ['O mensageiro já se levanta sozinho. E o sino da igreja velha se calou.', 'Esta noite, enfim, eu durmo.'] }));
@@ -605,11 +605,13 @@ async function chapel() {
 
 async function shop() {
   const nm = 'Dora, a mercadora';
+  const hello = G.seen.dora ? 'O que vai ser?' : `${heroName('aldo')}! O freguês que nunca tem moeda. O que vai ser?`;
+  G.seen.dora = 1;
   for (;;) {
     const v = await UI.choose([
       ...SHOP.map(([id, price]) => ({ label: `${ITEMS[id].name} ${price}`, hint: `tem ${G.inv[id] || 0}`, value: id, disabled: G.gold < price })),
       { label: 'Sair', value: null },
-    ], { title: `${nm}: O que vai ser? (${G.gold} moedas)`, cancel: true, cols: 2 });
+    ], { title: `${nm}: ${hello} (${G.gold} moedas)`, cancel: true, cols: 2 });
     if (v === null) { await say(nm, ['Voltem sempre! E voltem inteiros.']); return; }
     const price = SHOP.find(([id]) => id === v)[1];
     G.gold -= price; G.inv[v] = (G.inv[v] || 0) + 1; Sfx.chest();

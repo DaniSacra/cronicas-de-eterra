@@ -99,3 +99,6 @@ test('goalSpot: the arrow sends an old save without Lyra back to the tavern befo
   assert.deepEqual(run.json('goalSpot()'), run.json(`BUILDINGS.find(b => b.id === 'tavern').door`));
 });
 
+test('nobody calls Aldo "forasteiro" anymore', () => {
+  for (const f of fs.readdirSync(`${__dirname}/../src`)) assert.doesNotMatch(fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8'), /forasteir/i, f);
+});
