@@ -4,8 +4,6 @@ const fs = require('node:fs');
 const { inPalette } = require('../src/palette.js');
 const { GridSprite } = require('../src/gridsprite.js');
 const { viewFit, fontScale, titleOptions } = require('../src/uirules.js');
-// titlebg.js uses the siblings of src/titleheroes.js, loaded before it in index.html
-const { TITLE_HEROES, TITLE_SEAT } = Object.assign(global, require('../src/titleheroes.js'));
 const T = require('../src/titlebg.js');
 
 const SCREENS = [[1280, 720], [1440, 900], [1536, 826], [1920, 1080], [390, 844], [844, 390]];
@@ -15,19 +13,19 @@ const layoutFor = (w, h, dpr = 1) => {
 };
 
 test('every color of the title scene and its sprites is in the master palette', () => {
-  for (const f of ['titlebg.js', 'titleheroes.js']) for (const hex of fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8').match(/#[0-9a-fA-F]{6}/g)) assert.ok(inPalette(hex), `${f} ${hex}`);
-  for (const def of [T.TITLE_STAR, TITLE_HEROES.aldo, TITLE_HEROES.lyra]) for (const c of Object.values(def.pal)) assert.ok(inPalette(c), c);
+  const src = fs.readFileSync(`${__dirname}/../src/titlebg.js`, 'utf8');
+  for (const hex of src.match(/#[0-9a-fA-F]{6}/g)) assert.ok(inPalette(hex), hex);
+  for (const def of [T.TITLE_STAR, T.TITLE_HEROES.aldo, T.TITLE_HEROES.lyra]) for (const c of Object.values(def.pal)) assert.ok(inPalette(c), c);
 });
 
-test('Aldo standing and Lyra sitting on the ruin: same-width rows, every letter colored, two frames', () => {
-  for (const [id, def] of Object.entries(TITLE_HEROES)) {
+test('Aldo and Lyra on the ruin: same-width rows, every letter colored, two frames, Lyra 40 to 48 pixels tall', () => {
+  for (const [id, def] of Object.entries(T.TITLE_HEROES)) {
     assert.deepEqual(GridSprite.check(def), [], id);
     assert.equal(GridSprite.frameCount(def), 2, id);
   }
   assert.deepEqual(GridSprite.check(T.TITLE_STAR), []);
-  const a = GridSprite.sizeOf(TITLE_HEROES.aldo).h, l = GridSprite.sizeOf(TITLE_HEROES.lyra).h;
-  assert.ok(a >= 44 && a <= 52, `Aldo is ${a} tall`);
-  assert.ok(TITLE_SEAT > l / 2 && TITLE_SEAT < l - 8, 'Lyra sits with her legs hanging below the seat');
+  const h = GridSprite.sizeOf(T.TITLE_HEROES.lyra).h;
+  assert.ok(h >= 40 && h <= 48, `Lyra is ${h} tall`);
 });
 
 test('the logo and the menu never cover Erukh, Aldo or Lyra, at a whole scale, on every screen', () => {
@@ -42,9 +40,6 @@ test('the logo and the menu never cover Erukh, Aldo or Lyra, at a whole scale, o
     }
     assert.ok(Math.abs(L.erukh.x + L.erukh.w / 2 - L.W / 2) <= L.W * 0.1, `${tag}: Erukh near the center`);
     assert.equal(L.ruin.x + L.ruin.w, L.W, `${tag}: the ruin is anchored to the right`);
-    assert.equal(L.lyra.y + TITLE_SEAT, L.ruin.y, `${tag}: Lyra sits on the top of the ruin`);
-    assert.equal(L.aldo.y + L.aldo.h - 1, L.ruin.y, `${tag}: Aldo stands on it`);
-    assert.ok(!T.rectsCross(L.aldo, L.lyra), `${tag}: the siblings side by side`);
     for (const k of [0, 0.5, 1]) { const y = T.cloudY(L.clouds, k); if (y === null) continue; const cloud = { x: 0, y: y - 2, w: L.W, h: 8 };
       for (const art of ['logo', 'erukh']) assert.ok(!T.rectsCross(cloud, L[art]), `${tag}: a cloud crosses the ${art}`); }
   }

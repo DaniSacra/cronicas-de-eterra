@@ -519,7 +519,7 @@ async function titleScreen() {
   document.getElementById('game').classList.add('on-title');
   document.getElementById('party').innerHTML = '';
   UI.hideOverlay();
-  await TitleCam.intro(); // the camera comes down from the sky; any key, click or touch skips it
+  await TitleBG.intro(); // the camera comes down from the sky; any key, click or touch skips it
   placeTitle();
   UI.showOverlay(`<div class="title title-logo"><h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p>` +
     `<p class="foot">${esc(GAME.credit)}</p></div>`, 'ov-title');

@@ -29,8 +29,180 @@ const TITLE_STAR = {
   pal: { a: '#f0d860', b: '#fff6c0', c: '#c89c38', g: '#8ac0f0', w: '#ffffff' },
 };
 
-// Aldo de pé apontando para Erukh e Lyra sentada na borda da ruína: TITLE_HEROES e TITLE_SEAT vêm de
-// src/titleheroes.js (gerado por docs/arte/gerador/titleheroes.cjs).
+// Aldo sentado na borda (escudo redondo e espada nas costas) e Lyra em pé apontando para Erukh, os dois de costas.
+// Mesmas cores dos retratos; contorno da própria cor. Quadros: Aldo respira; cabelo e capa da Lyra ao vento.
+const TITLE_HEROES = {
+  aldo: {
+    pal: { k: '#2a1408', h: '#6a3a1a', j: '#9a6232', i: '#4a2610', s: '#f0c090', t: '#d09868', b: '#f0b050', c: '#d08a30', d: '#a0601c', g: '#8ac0f0', e: '#3a78c8', f: '#1a2a5a', y: '#e8b840', r: '#8a5418', l: '#6a3020', m: '#cbd8ec' },
+    frames: [
+      [
+        '........k.kjkkjkkhkhk.......',
+        '.......khkkkjjjjjkkkhk......',
+        '.......kkhjjjjjjjhhkkhk.....',
+        '......khkjjjjhhhhhhhkkhk....',
+        '.......khjjhhhhhhhhhhkk.k...',
+        '......kkjjhhhhhhhhhhik.kyk..',
+        '.....khjjjhhhhhhhhhiiikmk...',
+        '......khjjhhhhhhhhiiiikjk...',
+        '......kstjhhhhhhhiiiiikjk...',
+        '......ksjhhhhhhhiiiiikjk....',
+        '......kttihhhhhiiiiiikjk....',
+        '.......kkihhhhiiiiiikykkk...',
+        '........kkiiiiiiiiiyyyyyyk..',
+        '.......kbbbciiiiidddkkkkk...',
+        '......kbbbcyyygyyydddk......',
+        '....kkbbbcygggggeeydddkk....',
+        '...kcbdbbygggeeeeeeyddcdk...',
+        '...kcbdbyyggeeeeeeeyrdcdk...',
+        '...kcbdbyygeeeyeeefrrdcdk...',
+        '...kcbdbyggeeyyyefffrdcdk...',
+        '...kcbdbyygeeeyefffrrdcdk...',
+        '...kcbdbyrfeeeeffffrrdcdk...',
+        '...kcbdbbrffeefffffrddcdk...',
+        '....kkkkkkrfffffffrkkkkk....',
+        '...kcbdbbbcrrrfrrrddddcdk...',
+        '...kssdkbbbcrrrrrdddkdttk...',
+        '...kssdlllyllllyllllydttk...',
+        '....kkllllllllllllllllkk....',
+        '.....kllllllllllllllllk.....',
+        '......kkkkkkkkkkkkkkkk......',
+      ],
+      [
+        '.........khkkhkkhk.k........',
+        '........k.kjkkjkkhkhk.......',
+        '.......khkkkjjjjjkkkhk......',
+        '.......kkhjjjjjjjhhkkhk.....',
+        '......khkjjjjhhhhhhhkkhk....',
+        '.......khjjhhhhhhhhhhkk.k...',
+        '......kkjjhhhhhhhhhhik.kyk..',
+        '.....khjjjhhhhhhhhhiiikmk...',
+        '......khjjhhhhhhhhiiiikjk...',
+        '......kstjhhhhhhhiiiiikjk...',
+        '......ksjhhhhhhhiiiiikjk....',
+        '......kttihhhhhiiiiiikjk....',
+        '.......kkihhhhiiiiiikykkk...',
+        '........kkiiiiiiiiiyyyyyyk..',
+        '.......kbbbciiiiidddkkkkk...',
+        '......kbbbcyyygyyydddk......',
+        '....kkbbbcygggggeeydddkk....',
+        '...kcbdbbygggeeeeeeyddcdk...',
+        '...kcbdbyyggeeeeeeeyrdcdk...',
+        '...kcbdbyygeeeyeeefrrdcdk...',
+        '...kcbdbyggeeyyyefffrdcdk...',
+        '...kcbdbyygeeeyefffrrdcdk...',
+        '...kcbdbyrfeeeeffffrrdcdk...',
+        '...kcbdbbrffeefffffrddcdk...',
+        '...kcbdbbbrfffffffrdddcdk...',
+        '...kssdkbbbrrrfrrrddkdttk...',
+        '...kssdlllylrrrrrlllydttk...',
+        '....kkllllllllllllllllkk....',
+        '.....kllllllllllllllllk.....',
+        '......kkkkkkkkkkkkkkkk......',
+      ],
+    ],
+  },
+  lyra: {
+    pal: { o: '#8a5418', h: '#f0d860', j: '#fff6c0', i: '#c89c38', x: '#e8b840', q: '#40145a', b: '#c880e0', c: '#a050c0', d: '#72308e', s: '#f4cca0', t: '#d8a478', w: '#9a6232', v: '#40e0d8', a: '#ffffff', n: '#3a1448' },
+    frames: [
+      [
+        '..................................',
+        '..............ooooo...............',
+        '............oojjjjjoo.............',
+        '...........ojjjjjjhhho...q........',
+        '..........ojjjhhhhhhhho.qaq.......',
+        '.........ojjjhhhhhhhhhhqvvvq......',
+        '.........ojjhxxxxxxxxhiavvvvq.....',
+        '.........oxxxhhhhhhhhxxqvvvq......',
+        '........ojjjhhhhhhhhiiiiqvq.......',
+        '........osjjhhhhhhhiiiioqwq.......',
+        '........osjhhhhhhhiiiiioqwq.......',
+        '.........otihhhhhiiiiiioqwq.......',
+        '..........oihhhhiiiiiio.qwq.......',
+        '.o........ojiihiiiiiio..qwq.......',
+        'osooqq....ojjhiiiiiiiqq.qwq.......',
+        '.ossbbqqq.ojjihhihiiinnqqwq.......',
+        '..otccbbbqojjihhihiiinnqqwq.......',
+        '...oqqcccbbjjihhihiiinnnqwq.......',
+        '......qqqccjjihhihiiidnnnwq.......',
+        '.........qqjjihhihiiicnnnwq.......',
+        '..........ojjihhihiiidcnsso.......',
+        '..........ojjihhihiiidncnwq.......',
+        '..........ojjihhihiiidnnnwq.......',
+        '..........ojjihhihiiidnnnwqq......',
+        '..........qbjjihhiihddddnwnnq.....',
+        '.........qbbjjihhiiidddnnwnq......',
+        '.........qbbjjihhiiidddnnwnq......',
+        '.........qbbjjihhiiiddddnwnnq.....',
+        '.........qbbbjhihiihddddnwnnq.....',
+        '........qbbbcjhihiiddddddwnnnq....',
+        '........qbbbcjhihiiddddddwnnnnq...',
+        '........qbbbcjhihiiddddddwnnnq....',
+        '........qbbbcccccccddddddwnnnnq...',
+        '........qbbbcccccccddddddwnnnnq...',
+        '.......qbbbcccccccccdddddwnnnnnq..',
+        '.......qbbbcccccccccdddddwnnnnnq..',
+        '.......qbbbcccccccccdddddwdnnnnnq.',
+        '.......qbbbcccccccccdddddwdnnnnnq.',
+        '......qbbbbcccccccccdddddwdnnnnnq.',
+        '......qbbbbcccccccccdddddwddnnnnnq',
+        '......qbbbbcccccccccdddddwddnnnnnq',
+        '......qbbbbcccccccccdddddwqqqqqqq.',
+        '......qbbbbcxccxccxcdddddwq.......',
+        '.......qqqqqqqqoqqqqqqqqqwq.......',
+        '.........................q........',
+        '..................................',
+      ],
+      [
+        '..................................',
+        '..............ooooo...............',
+        '............oojjjjjoo.............',
+        '...........ojjjjjjhhho...q........',
+        '..........ojjjhhhhhhhho.qaq.......',
+        '.........ojjjhhhhhhhhhhqvvvq......',
+        '.........ojjhxxxxxxxxhiavvvvq.....',
+        '.........oxxxhhhhhhhhxxqvvvq......',
+        '........ojjjhhhhhhhhiiiiqvq.......',
+        '........osjjhhhhhhhiiiioqwq.......',
+        '........osjhhhhhhhiiiiioqwq.......',
+        '.........otihhhhhiiiiiioqwq.......',
+        '..........oihhhhiiiiiio.qwq.......',
+        '.o........ojiihiiiiiio..qwq.......',
+        'osooqq....ojjhiiiiiiiqq.qwq.......',
+        '.ossbbqqq.ojjihhihiiinnqqwq.......',
+        '..otccbbbqojjihhihiiinnqqwq.......',
+        '...oqqcccbbjjihhihiiidnnnwq.......',
+        '......qqqccjjihhihiiinnnqwq.......',
+        '.........qqjjihhihiiicnnnwq.......',
+        '..........ojjihhihiiidcnsso.......',
+        '..........qbjjihhihhiiicnwq.......',
+        '..........qbjjihhihhiiinnwq.......',
+        '..........qbjjihhihhiiinnwnq......',
+        '..........qbbjjihhihihdnnwnq......',
+        '.........qbbbjjihhihiiddnwnnq.....',
+        '.........qbbbjjihhihiiddnwnnq.....',
+        '.........qbbbjjihhihiidddwnnnq....',
+        '.........qbbbcjjihhiihdddwnnnqq...',
+        '........qbbbccjjihhiiddddwnnnnnq..',
+        '........qbbbccjjihhiiddddwnnnnq...',
+        '........qbbbccjjihhiiddddwnnnnq...',
+        '........qbbbcccccccddddddwnnnnnq..',
+        '........qbbbcccccccddddddwnnnnnq..',
+        '.......qbbbcccccccccdddddwdnnnnnq.',
+        '.......qbbbcccccccccdddddwddnnnnnq',
+        '.......qbbbcccccccccdddddwdnnnnnq.',
+        '.......qbbbcccccccccdddddwddnnnnnq',
+        '......qbbbbcccccccccdddddwddnnnnnq',
+        '......qbbbbcccccccccdddddwddnnnnnn',
+        '......qbbbbcccccccccdddddwddnnnnnn',
+        '......qbbbbcccccccccdddddwqqqqqqqq',
+        '......qbbbbcxccxccxcdddddwq.......',
+        '.......qqqqqqqqoqqqqqqqqqwq.......',
+        '.........................q........',
+        '..................................',
+      ],
+    ],
+  },
+};
 
 // ---------- Layout (pixels lógicos) ----------
 // W, H: tamanho lógico da tela; px: pixels de CSS por pixel lógico; f1, f2: letras pequena e média da interface (CSS).
@@ -48,9 +220,8 @@ function titleLayout({ W, H, px, f1, f2 }) {
   const cx = Math.round(W * 0.44);
   const erukh = { x: cx - 32, y: hy - 14 - 44, w: 64, h: 44 };
   const ry = Math.min(H - 58, hy + 40), ruin = { x: W - 118, y: ry, w: 118, h: H - ry };
-  const size = def => ({ w: def.frames[0][0].length, h: def.frames[0].length });
-  const lyra = Object.assign({ x: ruin.x + 6, y: ruin.y - TITLE_SEAT }, size(TITLE_HEROES.lyra));      // sentada na borda
-  const as = size(TITLE_HEROES.aldo), aldo = Object.assign({ x: ruin.x + 46, y: ruin.y - as.h + 1 }, as); // de pé ao lado
+  const aldo = { x: ruin.x + 26, y: ruin.y - 28, w: 28, h: 30 };
+  const lyra = { x: ruin.x + 56, y: ruin.y - 44, w: 34, h: 46 };
   const star = { x: cx - 7, y: Math.max(Math.round((logo.y + logo.h + erukh.y) / 2) - 7, erukh.y - 34), w: 15, h: 15 };
   const clouds = { y0: logo.y + logo.h + 4, y1: erukh.y - 2 }; // nuvens só na faixa entre o logo e Erukh
   return { W, H, hy, cx, logo, menu, erukh, ruin, aldo, lyra, star, clouds };
@@ -70,44 +241,11 @@ function makeDescent(t0, dur = TITLE_DESCENT_MS) {
   };
 }
 
-// ---------- Shared by both versions of the title (A here, B in src/titlebg2.js) ----------
-const TITLE_BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
-function titleRng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-const titleCanvas = (w, h) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; return { cv, c }; };
-// what the layout needs from the page: logical size, CSS pixels per logical pixel and the interface letters
-function titleMetrics() {
-  const view = document.getElementById('view'), cs = getComputedStyle(document.documentElement);
-  return { W: VW, H: VH, px: (parseFloat(view.style.width) || VW) / VW, f1: parseFloat(cs.getPropertyValue('--f1')) || 8, f2: parseFloat(cs.getPropertyValue('--f2')) || 16 };
-}
-// the camera descent, shared so switching versions keeps the same clock
-const TitleCam = {
-  descent: null, t0: 0,
-  at(now) { return this.descent ? this.descent.at(now) : 1; },
-  // starts the descent; resolves when it ends or when the player presses something
-  intro() {
-    const d = this.descent = makeDescent(this.t0 = performance.now());
-    return new Promise(res => {
-      const skip = () => d.skip(), evs = ['keydown', 'pointerdown'];
-      evs.forEach(e => window.addEventListener(e, skip, { once: true }));
-      const tick = () => { if (d.done(performance.now())) { evs.forEach(e => window.removeEventListener(e, skip)); res(); } else requestAnimationFrame(tick); };
-      tick();
-    });
-  },
-};
-// a flock of three birds now and then
-function titleBirds(put, L, now) {
-  const bt = now % 14000;
-  if (bt >= 6000) return;
-  const k = bt / 6000, flap = Math.floor(now / 200) % 2;
-  for (const [dx, dy] of [[0, 0], [7, 3], [13, -2]]) {
-    const x = L.W + 10 - k * (L.W + 40) + dx, y = L.hy - 70 + dy + Math.sin(k * 6) * 3;
-    put(x, y + flap, TITLE_C.bird); put(x + 1, y + 1 - flap, TITLE_C.bird); put(x + 2, y + flap, TITLE_C.bird);
-  }
-}
-
 const TitleBG = (() => {
-  let cache = null;
-  const BAYER = TITLE_BAYER, rng = titleRng, canvas = titleCanvas;
+  let cache = null, descent = null, t0 = 0;
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+  const canvas = (w, h) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; return { cv, c }; };
 
   // Erukh: muralha, torres de telhado pontudo, casas, a grande cúpula do templo e estandartes; borda acesa pelo sol
   function city() {
@@ -202,16 +340,20 @@ const TitleBG = (() => {
     const stars = Array.from({ length: Math.round(W * (hy + D) / 300) }, () => ({ x: Math.floor(r() * W), y: Math.floor(r() * (hy * 0.45 + D)) - D, p: r() * 6, col: TITLE_C.stars[Math.floor(r() * 3)], life: r() < 0.3 ? Infinity : 6000 + r() * 40000 }));
     const clouds = Array.from({ length: Math.max(4, Math.round(W / 70)) }, (_, i) => ({ x: r() * W * 1.5, y: cloudY(L.clouds, r()), w: 18 + Math.floor(r() * 30), lo: i % 2, s: 0.0015 + r() * 0.002 })).filter(cl => cl.y !== null);
     const tufts = Array.from({ length: 14 }, (_, i) => ({ x: R.x + 6 + i * 8 + Math.floor(r() * 4), h: 2 + Math.floor(r() * 3), flower: r() < 0.3 ? TITLE_C.flowers[i % 2] : null }))
-      .filter(t => t.x < W - 2 && !(t.x > L.lyra.x + 6 && t.x < L.aldo.x + L.aldo.w - 4));
+      .filter(t => t.x < W - 2 && !(t.x > L.aldo.x - 2 && t.x < L.lyra.x + L.lyra.w));
     return { L, D, bg: cv, river, stars, clouds, tufts, top };
   }
 
-  const layoutNow = () => titleLayout(titleMetrics());
+  function layoutNow() {
+    const view = document.getElementById('view'), cs = getComputedStyle(document.documentElement);
+    const px = (parseFloat(view.style.width) || VW) / VW;
+    return titleLayout({ W: VW, H: VH, px, f1: parseFloat(cs.getPropertyValue('--f1')) || 8, f2: parseFloat(cs.getPropertyValue('--f2')) || 16 });
+  }
 
   function draw(c, now) {
     const L = layoutNow();
     if (!cache || cache.L.W !== L.W || cache.L.H !== L.H || cache.L.menu.h !== L.menu.h) cache = build(L);
-    const { D } = cache, oy = Math.round(D * (1 - TitleCam.at(now))), T = now - TitleCam.t0;
+    const { D } = cache, p = descent ? descent.at(now) : 1, oy = Math.round(D * (1 - p)), T = now - t0;
     c.imageSmoothingEnabled = false;
     c.drawImage(cache.bg, 0, -D + oy);
     const put = (x, y, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y) + oy, 1, 1); };
@@ -223,7 +365,15 @@ const TitleBG = (() => {
       c.fillStyle = body; c.fillRect(x + 4, cl.y + oy, cl.w - 8, 2); c.fillRect(x, cl.y + 2 + oy, cl.w, 3); c.fillRect(x + Math.round(cl.w * 0.3), cl.y - 2 + oy, Math.round(cl.w * 0.4), 2);
       c.fillStyle = lit; c.fillRect(x + 1, cl.y + 5 + oy, cl.w - 2, 1);
     }
-    titleBirds(put, L, now);
+    // um bando de três pássaros, de vez em quando
+    const bt = now % 14000;
+    if (bt < 6000) {
+      const k = bt / 6000, flap = Math.floor(now / 200) % 2;
+      for (const [dx, dy] of [[0, 0], [7, 3], [13, -2]]) {
+        const x = L.W + 10 - k * (L.W + 40) + dx, y = L.hy - 70 + dy + Math.sin(k * 6) * 3;
+        put(x, y + flap, TITLE_C.bird); put(x + 1, y + 1 - flap, TITLE_C.bird); put(x + 2, y + flap, TITLE_C.bird);
+      }
+    }
     // brilho no rio: as cores giram em ciclo
     const ph = Math.floor(now / 260);
     for (let i = 0; i < cache.river.length; i += 3) { const [x, y] = cache.river[i]; if ((x + y * 3 + ph) % 7 === 0) put(x, y, TITLE_C.river[1 + (ph + i) % 3]); }
@@ -241,7 +391,18 @@ const TitleBG = (() => {
     }
   }
 
-  return { draw, layout: layoutNow };
+  // Abertura: começa a descida; resolve quando ela termina ou quando o jogador aperta algo
+  function intro() {
+    t0 = performance.now(); descent = makeDescent(t0);
+    return new Promise(res => {
+      const skip = () => descent.skip();
+      const evs = ['keydown', 'pointerdown'];
+      evs.forEach(e => window.addEventListener(e, skip, { once: true }));
+      const tick = () => { if (descent.done(performance.now())) { evs.forEach(e => window.removeEventListener(e, skip)); res(); } else requestAnimationFrame(tick); };
+      tick();
+    });
+  }
+  return { draw, intro, layout: layoutNow };
 })();
 
-if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS, TITLE_BAYER, titleRng };
+if (typeof module !== 'undefined') module.exports = { cloudY, TITLE_C, TITLE_STAR, TITLE_HEROES, titleLayout, rectsCross, makeDescent, TITLE_DESCENT_MS };
