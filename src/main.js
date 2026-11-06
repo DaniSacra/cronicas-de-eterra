@@ -685,6 +685,7 @@ let last = performance.now();
 const gameEl = document.getElementById('game'), hudTop = document.getElementById('hudtop');
 function frame(now) {
   const dt = Math.min(50, now - last); last = now;
+  Layout.check(); // zoom in small areas, normal scale everywhere else
   // Faixa do grupo: na dungeon, na batalha e com o menu aberto (na vila a cena fica livre)
   gameEl.classList.toggle('show-party', G.mode === 'battle' || (G.mode === 'explore' && !G.bigMap) || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
   wmBtn.hidden = !canWorldMap();

@@ -90,3 +90,26 @@ test('crypt light: warm next to the torch, cold blue far away, changing smoothly
   let last = R.torchTint(0);
   for (let d = 0.25; d < 8; d += 0.25) { const t = R.torchTint(d); assert.ok(t[0] <= last[0] && t[2] >= last[2], `d=${d}`); last = t; }
 });
+
+test('small areas fill the view with a little zoom (never more than 1.5x), the rest keeps the normal scale', () => {
+  const cem = { room: { w: 256, h: 192 } };
+  assert.deepEqual(R.viewFit(1280, 720), { w: 320, h: 180, s: 4 }, 'unchanged without a room');
+  const pc = R.viewFit(1280, 720, cem);
+  assert.equal(pc.s, 5);
+  assert.ok(pc.w <= 256 && pc.h <= 192, 'on a PC the cemetery covers the whole view');
+  const phone = R.viewFit(1170, 2532, cem); // 390x844 at 3x
+  assert.equal(phone.s, 6, 'portrait phone: 1.5x the normal 4');
+  assert.ok(phone.w <= 256, 'and the cemetery fills the width');
+  for (const [w, h] of [[1920, 1080], [2560, 1440], [844 * 3, 390 * 3]]) {
+    const n = R.viewFit(w, h), z = R.viewFit(w, h, cem);
+    assert.ok(z.s >= n.s && z.s <= Math.floor(n.s * 1.5), `${w}x${h}`);
+  }
+});
+
+test('town camera: centered on the party above the dialog box, small areas centered in the free part', () => {
+  assert.equal(R.camAxis(100, 400, 180), 18);
+  assert.equal(R.camAxis(390, 400, 180), 220, 'clamped at the bottom edge');
+  assert.equal(R.camAxis(390, 400, 180, 60), 280, 'with the box open it may pass the bottom edge');
+  assert.equal(R.camAxis(50, 100, 180), -40, 'smaller than the view: centered');
+  assert.equal(R.camAxis(50, 100, 180, 60), -10, 'and centered above the box');
+});

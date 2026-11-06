@@ -11,7 +11,7 @@ function loadStory(G, o = {}) {
     UI: { say: async t => { log.push(t); }, choose: async (opts, oo) => (o.choose ? o.choose(opts, oo || {}) : picks.length ? picks.shift() : opts[0].value),
       buildParty() {}, updateParty() {}, cardFloat() {}, cardGlow() {}, cardHit() {}, markCard() {}, busy: () => false },
     Sfx: new Proxy({}, { get: () => () => {} }), Music: { play() {}, stop() {} }, TownArt: { layer: () => null },
-    fadeTo: async () => {}, wait: async () => {}, shake() {}, saveGame: () => true, keepSeen: k => { (ctx.kept = ctx.kept || []).push(k); }, townHint() {}, placeHint() {},
+    fadeTo: async () => {}, wait: async () => {}, shake() {}, saveGame: () => true, Layout: { check() {}, normal() {} }, keepSeen: k => { (ctx.kept = ctx.kept || []).push(k); }, townHint() {}, placeHint() {},
     startBattle: async () => 'win', gameOver: async () => {},
     ...o.ctx,
   };

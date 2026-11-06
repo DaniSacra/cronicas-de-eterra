@@ -83,11 +83,20 @@ const talkLines = (lines, heroIds, inParty) => lines.filter(([who]) => !heroIds.
 
 
 // Screen fit: logical resolution follows the window at a whole scale of device pixels (base 320x180 at 4x in 1280x720)
-function viewFit(bw, bh) {
+// o.room: a small area (logical px) that should fill the view: zoom in up to 1.5x the normal scale, never less
+function viewFit(bw, bh, o = {}) {
   const s = Math.max(1, Math.floor(Math.min(bw / 288, bh / 180)));
-  let w = Math.min(512, Math.max(288, Math.ceil(bw / s))), h = Math.min(900, Math.max(180, Math.ceil(bh / s)));
+  const z = o.room ? Math.max(s, Math.min(Math.floor(s * 1.5), Math.floor(Math.max(bw / o.room.w, bh / o.room.h)))) : s;
+  const lo = z > s ? 1 : 0; // zoomed in, the view may be smaller than 288x180
+  let w = Math.min(512, Math.max(lo || 288, Math.ceil(bw / z))), h = Math.min(900, Math.max(lo || 180, Math.ceil(bh / z)));
   w += w & 1; h += h & 1;
-  return { w, h, s };
+  return { w, h, s: z };
+}
+// Town camera on one axis: centered on the party in the part of the view left free (pad: rows covered by the
+// dialog box at the bottom), so it may go past the bottom edge while the box is open; small areas stay centered.
+function camAxis(pos, size, view, pad = 0) {
+  const v = view - pad;
+  return Math.round(size < v ? (size - v) / 2 : Math.max(0, Math.min(size - v, pos + 8 - v / 2)));
 }
 
 // Battle: enemies stand on a floor line just above the command bar, at the biggest whole scale that fits
@@ -162,5 +171,5 @@ function heroViewFonts(w, h, dpr = 1) {
   return { body: f.f2, big: f.fd };
 }
 
-if (typeof module !== 'undefined') module.exports = { viewFit, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
