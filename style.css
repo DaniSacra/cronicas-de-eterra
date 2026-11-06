@@ -138,9 +138,20 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
 @media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
 
-/* Menu do título: janela estreita no centro */
-#game.on-title #dialog { width: min(26em, 90%); margin-bottom: 4vh; }
-#game.on-title #msgbox { min-height: 0; }
+/* Título: logo no céu e menu compacto no canto de baixo à esquerda, nas posições de titleLayout (src/titlebg.js) */
+#overlay.ov-title { display: block !important; background: none; pointer-events: none; }
+.title.title-logo { position: fixed; left: var(--tl-x); top: var(--tl-y); width: var(--tl-w); gap: calc(var(--tl-f) / 2); }
+.title.title-logo h1 { font-size: var(--tl-f); letter-spacing: 0; line-height: 1.3; }
+.title.title-logo .sub { font-size: var(--tl-sub); padding: 0; letter-spacing: 0; border: none; border-image: none; color: var(--hi); text-shadow: 2px 2px 0 #0c0a18; }
+.title.title-logo .foot { position: static; display: block; font-size: var(--f1); color: var(--light); white-space: nowrap; }
+#game.on-title #dialog { position: fixed; left: var(--tm-x); top: var(--tm-y); width: auto; margin: 0; }
+#game.on-title #msgbox { min-height: 0; background: rgba(12, 14, 40, .62); border: none; border-image: none; padding: 10px 14px 10px 10px;
+  text-shadow: 2px 2px 0 #0c0a18; animation: none; }
+#game.on-title .opt { color: var(--light); }
+#game.on-title .opt.sel { color: var(--hi); }
+#game.on-title .opt.dis { color: #7488b8; }
+#game.on-title .opt small { color: #cbd8ec; display: block; margin: .4em 0 0; }
+#game.on-title #menu { grid-template-columns: 1fr !important; gap: .3em; margin-top: 0; }
 #game.on-title #msg:empty, #game.on-title #msg:has(span:empty) { display: none; }
 
 /* ---- Toque ---- */

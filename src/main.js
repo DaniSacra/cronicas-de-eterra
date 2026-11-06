@@ -499,15 +499,27 @@ function emblemSvg() {
 // A fonte pixel achata as maiúsculas acentuadas (Ô parece Ø, Í vira í); nos títulos o acento é desenhado por cima da letra
 const ACCENTS = { 'Â': 'A^', 'Ê': 'E^', 'Ô': 'O^', 'Á': 'A´', 'É': 'E´', 'Í': 'I´', 'Ó': 'O´', 'Ú': 'U´', 'Ã': 'A~', 'Õ': 'O~' };
 const logoText = t => esc(t).replace(/[ÂÊÔÁÉÍÓÚÃÕ]/g, ch => `<span class="acc">${ACCENTS[ch][0]}<i>${ACCENTS[ch][1]}</i></span>`);
+// Title layout: the logo and the menu go where titleLayout (src/titlebg.js) leaves Erukh and the siblings uncovered
+function placeTitle() {
+  const g = document.getElementById('game'), r = view.getBoundingClientRect(), L = TitleBG.layout(), px = r.width / VW;
+  const set = (k, v) => g.style.setProperty(k, v + 'px');
+  set('--tl-x', r.left + L.logo.x * px); set('--tl-y', r.top + L.logo.y * px); set('--tl-w', L.logo.w * px);
+  set('--tl-f', L.logo.L * px); set('--tl-sub', crispPx(L.logo.L / 2 * px, window.devicePixelRatio || 1));
+  set('--tm-x', r.left + L.menu.x * px); set('--tm-y', r.top + L.menu.y * px); set('--tm-w', L.menu.w * px);
+}
+window.addEventListener('resize', () => { if (G.mode === 'title') placeTitle(); });
 async function titleScreen() {
   G.mode = 'title'; G.busy = true;
   Music.play('title');
   loadFloor(0);
   document.title = GAME.tab;
   document.getElementById('game').classList.add('on-title');
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p></div>` +
-    `<p class="foot">${esc(GAME.credit)}</p>`, 'ov-title');
   document.getElementById('party').innerHTML = '';
+  UI.hideOverlay();
+  await TitleBG.intro(); // the camera comes down from the sky; any key, click or touch skips it
+  placeTitle();
+  UI.showOverlay(`<div class="title title-logo"><h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p>` +
+    `<p class="foot">${esc(GAME.credit)}</p></div>`, 'ov-title');
   const v = await UI.choose([{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !hasSave() },
     { label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }],
     { title: '', cols: 1 });
@@ -681,7 +693,7 @@ function frame(now) {
   const F = FLOORS[G.floor];
   HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
   if (G.mode === 'title') {
-    TitleBG.draw(vctx, now); // paisagem de Eterra à noite (src/titlebg.js)
+    TitleBG.draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js)
   } else if (G.mode === 'town') {
     updateTown(dt);
     drawTown(now);
