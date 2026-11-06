@@ -235,7 +235,7 @@ const WorldMap = (() => {
   // Side panel list: every known place, grouped by kingdom; a click selects it on the map
   function renderList() {
     const groups = {};
-    for (const it of items) if (!it.isReino) (groups[it.reino || '—'] ||= []).push(it);
+    for (const it of items) if (!it.isReino) (groups[it.reino || 'Outros lugares'] ||= []).push(it);
     list.replaceChildren(...Object.entries(groups).flatMap(([reino, its]) => {
       const h = document.createElement('h3'); h.textContent = reino;
       return [h, ...its.map(it => {

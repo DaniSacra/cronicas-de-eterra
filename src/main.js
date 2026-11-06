@@ -304,7 +304,7 @@ async function enterDungeon() {
   cam.x = G.x + 0.5; cam.y = G.y + 0.5; cam.a = dirAngle(G.dir);
   Music.play('explore');
   await fadeTo(0, 700);
-  await UI.say(`${FLOORS[0].short} — ${FLOORS[0].name}\nPara voltar à vila, retornem a esta escada.`);
+  await UI.say(`${FLOORS[0].short} · ${FLOORS[0].name}\nPara voltar à vila, retornem a esta escada.`);
   await floorClues(0);
   saveGame();
   G.busy = false; exploreHint();
@@ -325,7 +325,7 @@ async function descend() {
   cam.x = G.x + 0.5; cam.y = G.y + 0.5; cam.a = dirAngle(G.dir);
   await fadeTo(0, 700);
   const f = FLOORS[G.floor];
-  await UI.say(`${f.short} — ${f.name}` + (f.boss ? '\nUm sino toca, em algum lugar lá embaixo.' : ''));
+  await UI.say(`${f.short} · ${f.name}` + (f.boss ? '\nUm sino toca, em algum lugar lá embaixo.' : ''));
   await floorClues(G.floor);
 }
 
@@ -525,7 +525,7 @@ async function titleScreen() {
   Sfx.init();
   if (v === 'dungeon') return quickDungeon();
   if (v === 'load' && loadGame()) {
-    await UI.say(G.mode === 'town' ? `Jogo carregado. ${TOWN.A.name}.` : `Jogo carregado. ${FLOORS[G.floor].short} — ${FLOORS[G.floor].name}`, { auto: 1600 });
+    await UI.say(G.mode === 'town' ? `Jogo carregado. ${TOWN.A.name}.` : `Jogo carregado. ${FLOORS[G.floor].short} · ${FLOORS[G.floor].name}`, { auto: 1600 });
     if (G.seen.migrou === 0) { G.seen.migrou = 1; Sfx.levelup(); await UI.say(`Uma ladina de capa cinza, ${heroName('andilla')}, juntou-se ao grupo.`); saveGame(); }
     G.busy = false; exploreHint();
   } else {

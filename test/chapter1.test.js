@@ -126,3 +126,10 @@ test('the school stands by Clara and the children, and its board remembers Aldo'
   await run(`enterBuilding(BUILDINGS.find(b => b.id === 'school'))`);
   assert.equal(log.at(-1), 'Embaixo, na letra da Clara: "Voltem."');
 });
+
+test('no player text uses an em dash', () => {
+  for (const f of fs.readdirSync(`${__dirname}/../src`)) {
+    const strings = fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8').match(/'[^'\n]*'|`[^`\n]*`|"[^"\n]*"/g) || [];
+    for (const t of strings) assert.doesNotMatch(t, /—/, `${f}: ${t}`);
+  }
+});
