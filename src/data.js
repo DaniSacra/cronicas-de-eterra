@@ -36,7 +36,7 @@ const PARTY_DEFS = [
     id: 'aldo', name: 'Aldo', cls: 'Guerreiro', color: '#e0a040',
     base: { hp: 48, mp: 0, atk: 13, def: 22.5, res: 4, mag: 3, agi: 7 },
     grow: { hp: 10, mp: 0, atk: 3, def: 5, res: 1, mag: 0.5, agi: 1 },
-    spells: [[4, 'golpe'], [12, 'quebraJunta'], [18, 'furia']], skillWord: 'Técnica', energy: true,
+    spells: [[1, 'golpe'], [6, 'quebraJunta'], [12, 'furia']], skillWord: 'Técnica', energy: true,
   },
   {
     id: 'lyra', name: 'Lyra', cls: 'Maga', color: '#d070e0',
@@ -55,7 +55,7 @@ const PARTY_DEFS = [
     id: 'andilla', get name() { return typeof G !== 'undefined' && G.seen && G.seen.andillaAnon ? 'Moça dos dados' : 'Andilla'; }, cls: 'Ladina', color: '#e05a5a',
     base: { hp: 34, mp: 0, atk: 11, def: 12.5, res: 6, mag: 4, agi: 14 },
     grow: { hp: 6, mp: 0, atk: 2.5, def: 3, res: 2, mag: 0.5, agi: 1.6 },
-    spells: [[3, 'leque'], [7, 'golpeBaixo']], skillWord: 'Truque', energy: true,
+    spells: [[1, 'golpeBaixo'], [6, 'leque']], skillWord: 'Truque', energy: true,
   },
 ];
 

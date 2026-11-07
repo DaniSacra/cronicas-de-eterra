@@ -58,10 +58,10 @@ test('Phase 2a: the exact skills table, by level', () => {
   const { PARTY_DEFS } = require('../src/data.js');
   const table = Object.fromEntries(PARTY_DEFS.map(d => [d.id, d.spells]));
   assert.deepEqual(table, {
-    aldo: [[4, 'golpe'], [12, 'quebraJunta'], [18, 'furia']],
+    aldo: [[1, 'golpe'], [6, 'quebraJunta'], [12, 'furia']],
     lyra: [[1, 'fogo'], [3, 'gelo'], [5, 'raio']],
     teo: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [10, 'curaTotal']],
-    andilla: [[3, 'leque'], [7, 'golpeBaixo']],
+    andilla: [[1, 'golpeBaixo'], [6, 'leque']],
   });
 });
 

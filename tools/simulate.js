@@ -164,9 +164,9 @@ const LINES = [
 const TIERS = [
   ['Aldo', 'golpe', 20, 4, ['loboGeada', 'loboGeada']],
   ['Aldo', 'quebraJunta', 40, 12, ['esqueleto', 'esqueleto']],
-  ['Aldo', 'furia', 80, 18, ['cavaleiro', 'cavaleiro', 'cavaleiro']],
-  ['Andilla', 'leque', 20, 4, ['gosma', 'gosma']],
-  ['Andilla', 'leque', 20, 4, ['gosma', 'gosma', 'gosma']],
+  ['Aldo', 'furia', 80, 12, ['cavaleiro', 'cavaleiro', 'cavaleiro']],
+  ['Andilla', 'leque', 20, 6, ['gosma', 'gosma']],
+  ['Andilla', 'leque', 20, 6, ['gosma', 'gosma', 'gosma']],
   ['Andilla', 'golpeBaixo', 20, 8, ['cavaleiro']],
 ];
 const PACE = 30; // rounds of the steady measure; SHORT is a fight of the usual length, for comparison
