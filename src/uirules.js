@@ -94,6 +94,9 @@ function viewFit(bw, bh, o = {}) {
 }
 // Town camera on one axis: centered on the party in the part of the view left free (pad: rows covered by the
 // dialog box at the bottom), so it may go past the bottom edge while the box is open; small areas stay centered.
+// Room the camera keeps for the dialog box. Within a scene (busy) it never shrinks: lines with or without a face, one
+// line or three, and the short gaps between them would make the scene dance up and down. Free again, it lets go.
+function dialogPad(hold, rows, busy) { return rows > 0 ? Math.max(hold, rows) : busy ? hold : 0; }
 function camAxis(pos, size, view, pad = 0) {
   const v = view - pad;
   return Math.round(size < v ? (size - v) / 2 : Math.max(0, Math.min(size - v, pos + 8 - v / 2)));
@@ -183,5 +186,5 @@ const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

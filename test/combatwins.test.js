@@ -31,3 +31,12 @@ test('the Teo fight has no forced advantage', () => {
   const fight = src.slice(src.indexOf('Duas Ossadas se erguem') - 200, src.indexOf('Duas Ossadas se erguem'));
   assert.ok(!fight.includes("surprise: 'advantage'"));
 });
+
+test('the camera room for the dialog box holds through a scene and lets go when the game is free', () => {
+  let hold = 0;
+  hold = R.dialogPad(hold, 43, true); assert.equal(hold, 43);
+  hold = R.dialogPad(hold, 0, true); assert.equal(hold, 43, 'the box closes between lines: the scene stays put');
+  hold = R.dialogPad(hold, 30, true); assert.equal(hold, 43, 'a smaller box (no face) does not move it down');
+  hold = R.dialogPad(hold, 82, true); assert.equal(hold, 82, 'a bigger box moves it up once');
+  assert.equal(R.dialogPad(hold, 0, false), 0, 'free to walk: the camera comes back');
+});

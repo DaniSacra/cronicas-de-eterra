@@ -735,7 +735,7 @@ function drawTown(now, bare = false) {
   const c = vctx;
   const A = TOWN.A, lp = actorPos(TOWN.p);
   // with the dialog open, the camera centers the party in the part of the scene above the box (eased, 200 ms)
-  const padB = bare ? 0 : dialogRows();
+  const padB = bare ? 0 : (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
   const camX = camAxis(lp.x, A.W * TS, VW), camY = camAxis(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
