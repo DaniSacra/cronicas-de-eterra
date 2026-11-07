@@ -721,17 +721,16 @@ function drawSight(c, A, lp, camX, camY) {
   c.restore();
 }
 
-// Rows of the scene covered by the open dialog box (0 when closed)
+// Rows of the scene covered by the open dialog box (0 when closed). The speaker's face sits in the left corner
+// and is left out, so a face showing up never moves the scene; the room of a five-line box is kept from the
+// first line, so a long line does not either
 function dialogRows() {
   const d = document.getElementById('dialog');
   if (!d || !d.classList.contains('open')) return 0;
-  const v = view.getBoundingClientRect(), b = d.getBoundingClientRect();
+  const mb = document.getElementById('msgbox'), ms = getComputedStyle(mb);
+  const v = view.getBoundingClientRect(), b = mb.getBoundingClientRect();
   if (b.top < v.top + v.height / 2) return 0; // a box at the top covers nothing below
-  // the room of the speaker's face is kept even for narration, so a face showing up never pushes the scene up
-  // and so is the room of a five-line box, so a long line does not either
-  const cs = getComputedStyle(document.documentElement), mb = document.getElementById('msgbox'), ms = getComputedStyle(mb);
-  const extra = faceRoom(d.classList.contains('has-face'), parseFloat(cs.getPropertyValue('--face')), parseFloat(cs.getPropertyValue('--u')))
-    + boxRoom(mb.offsetHeight, parseFloat(ms.lineHeight), parseFloat(ms.paddingTop) + parseFloat(ms.paddingBottom) + parseFloat(ms.borderTopWidth) + parseFloat(ms.borderBottomWidth));
+  const extra = boxRoom(mb.offsetHeight, parseFloat(ms.lineHeight), parseFloat(ms.paddingTop) + parseFloat(ms.paddingBottom) + parseFloat(ms.borderTopWidth) + parseFloat(ms.borderBottomWidth));
   return Math.max(0, Math.min(VH * 0.6, (v.bottom - b.top + extra) * VH / v.height));
 }
 
@@ -739,10 +738,10 @@ function dialogRows() {
 function drawTown(now, bare = false) {
   const c = vctx;
   const A = TOWN.A, lp = actorPos(TOWN.p);
-  // with the dialog open, the camera centers the party in the part of the scene above the box (eased, 200 ms)
+  // with the dialog open, the camera moves only if the box would cover the party (eased, 200 ms)
   const padB = bare ? 0 : (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
-  const camX = camAxis(lp.x, A.W * TS, VW), camY = camAxis(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
+  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }

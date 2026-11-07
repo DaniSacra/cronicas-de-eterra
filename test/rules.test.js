@@ -112,4 +112,9 @@ test('town camera: centered on the party above the dialog box, small areas cente
   assert.equal(R.camAxis(390, 400, 180, 60), 280, 'with the box open it may pass the bottom edge');
   assert.equal(R.camAxis(50, 100, 180), -40, 'smaller than the view: centered');
   assert.equal(R.camAxis(50, 100, 180, 60), -10, 'and centered above the box');
+  assert.equal(R.camLift(100, 400, 180, 60), 18, 'party already above the box: the camera stays put');
+  assert.equal(R.camLift(200, 400, 180, 60), 118, 'party just above the box: no move');
+  assert.equal(R.camLift(200, 400, 180, 100), 152, 'party under the box: lifted just enough, not centered (168)');
+  assert.equal(R.camLift(200, 400, 180, 170), 203, 'never more than centering above the box');
+  assert.equal(R.camLift(170, 400, 180), R.camAxis(170, 400, 180), 'box closed: same as before');
 });
