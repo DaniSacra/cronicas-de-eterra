@@ -46,7 +46,7 @@ test('the night: the dice girl plays, stays when the hooded men come, fights unn
     assert.ok(at.full, 'the soup of Berta: the party starts the night fight rested');
     assert.equal(run('globalThis.savedAt'), 'TAVERN_FRONT', 'saved at the tavern door before the night');
     assert.equal(at.name, 'Moça dos dados', 'no name on her card in the fight');
-    assert.equal(at.hint, 'Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.');
+    assert.equal(at.hint, 'Os inimigos agiram primeiro: a ordem de quem age está no topo. A moça dos dados é a mais rápida.');
     const i = t => { const k = log.indexOf(t); assert.ok(k >= 0, t); return k; };
     i('Moça dos dados~alegre:\nNinguém tira. Eu tiro.');
     i('Lyra~alegre:\nVocê nunca vai descobrir como ela faz, Aldo.');
@@ -58,7 +58,7 @@ test('the night: the dice girl plays, stays when the hooded men come, fights unn
     assert.ok(name > i('Teo:\nPor isso mesmo. Quem abrir tem de ter o direito.'), 'the introductions come after the letter');
     assert.ok(i('Andilla entrou para o grupo!') > i('Andilla~alegre:\nViu? Eu sempre ganho.'));
     assert.ok(log.includes(estojo ? 'Andilla~alegre:\nMeus ganchos! Achei que tinham ficado para os mortos. Te devo uma, cavaleiro. Eu nunca devo duas.'
-      : 'Andilla:\nLarguei meus ganchos lá quando uma cova se mexeu. Se acharem, são meus.'));
+      : 'Andilla:\nLarguei meus ganchos lá quando eles me viram. Se acharem, são meus.'));
     assert.equal(G.key.estojo, false);
     assert.ok(!G.seen.andillaAnon && run('heroName("andilla")') === 'Andilla');
     assert.ok(!log.some(t => /cadeira da moça|Sumiu antes|fiar a conta|sopa de amanhã/.test(t)), 'the old lines are gone');

@@ -126,7 +126,7 @@ async function pickAlly(kind, title, o = {}) {
     return null;
   }
   if (G.party.length === 1 && !opts[0].disabled) return G.party[0];
-  return UI.choose(opts, { title, cancel: true, cols: G.party.length > 3 ? 2 : 3, ...o });
+  return UI.choose(opts, { title, cancel: true, cols: G.party.length > 3 ? 2 : 3, party: true, ...o });
 }
 
 function itemOptions() {
@@ -149,7 +149,7 @@ function levelUp(m) {
 function levelUpLines(ups) {
   const byLv = new Map();
   for (const u of ups) byLv.set(u.lv, [...(byLv.get(u.lv) || []), u.name]);
-  const and = ns => ns.length > 1 ? ns.slice(0, -1).join(', ') + ' e ' + ns.at(-1) : ns[0];
+  const and = names => { const ns = names.map((n, i) => (i ? midName(n) : n)); return ns.length > 1 ? ns.slice(0, -1).join(', ') + ' e ' + ns.at(-1) : ns[0]; };
   return [
     ...[...byLv].map(([lv, ns]) => `${and(ns)} ${ns.length > 1 ? 'subiram' : 'subiu'} para o nível ${lv}!`),
     ...ups.filter(u => u.learned.length).map(u => `${u.name} aprendeu: ${u.learned.join(', ')}!`),

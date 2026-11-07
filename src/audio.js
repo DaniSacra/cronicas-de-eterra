@@ -361,7 +361,8 @@ const Music = (() => {
     if (cur && RESUME.has(cur)) saved[cur] = step % SONGS[cur].len;
     if (timer) clearInterval(timer); timer = null; cur = null;
   }
-  function stop() { halt(); want = null; if (bus && Sfx.ctx) { fadeOut(bus); bus = null; } }
+  // stop is a scene cut: the next song starts from its first note (only a battle keeps the place of the song it cut)
+  function stop() { halt(); for (const k in saved) delete saved[k]; want = null; if (bus && Sfx.ctx) { fadeOut(bus); bus = null; } }
   return {
     // opts.delay: segundos de silêncio antes da primeira nota (o chefe espera a badalada)
     play(name, opts = {}) {

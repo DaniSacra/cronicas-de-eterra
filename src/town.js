@@ -590,7 +590,8 @@ async function enterBuilding(b) {
   if (b.id === 'school') return school();
   const homes = {
     smith: ['Gaspar, o ferreiro', {
-      arrive: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'],
+      arrive: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', () => inParty('teo') ? 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'
+        : 'Contra mortos-vivos, aço comum não basta. Luz faz mais que espada.'],
       start: ['Lâmina curva, me contaram. Não é aço daqui. Quem forja assim mora longe.'],
       quest: ['Mostra essa espada. Hum. Lá embaixo, mire nas juntas. Osso quebra na junta.'],
       desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
@@ -629,7 +630,8 @@ async function elderTalk() {
   if (!G.intro) { await say(nm, [`${heroName('aldo')}. De volta outra vez.`, nextStep()]); return; }
   // only old saves reach this line: the party is four before the elder since the tavern night
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
-  if (G.quest && G.reached >= 1) { await say(nm, ['Voltaram. A cripta deixa vocês subirem, por enquanto.', 'Não parem antes do fundo. O que acorda os mortos ainda está lá embaixo.', 'Na cripta, procurem a fonte de luz. E a irmã Irene cuida dos feridos.']); return; }
+  if (G.quest && G.reached >= 1) { await say(nm, ['Voltaram. A cripta deixa vocês subirem, por enquanto.', 'Não parem antes do fundo. O que acorda os mortos ainda está lá embaixo.',
+    G.seen.lapide || G.seen.bilhete ? 'Morvath... Então vocês leram o nome. Não o digam aqui em cima.' : 'Na cripta, procurem a fonte de luz. E a irmã Irene cuida dos feridos.']); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Na cripta, procurem a fonte de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
@@ -668,7 +670,7 @@ async function chapel() {
   for (;;) {
     const v = await UI.choose([
       { label: 'Orar', hint: 'restaura e salva', value: 'pray' }, { label: 'Conversar', value: 'talk' }, { label: 'Sair', value: null },
-    ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3 });
+    ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3, party: true });
     if (v === null) return;
     if (v === 'talk') await say(nm, byStage({
       arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', inParty('teo') ? 'Teo, você voltou inteiro. Graças a Elun.' : 'O jovem Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
@@ -685,17 +687,22 @@ async function chapel() {
   }
 }
 
+// Dora's greeting: the first visit always greets Aldo, then the line of the stage; she sees the purse after the boss
+function doraHello(st, gold, first, aldo) {
+  const line = st === 'won' ? (gold < 15 ? 'Os heróis de Valmor! Ainda sem moeda, aposto.' : 'Os heróis de Valmor! E com a bolsa pesada, pela primeira vez.')
+    : st === 'desceu' ? 'Voltaram! Lá embaixo poção some rápido, né?'
+    : st === 'quest' ? 'Para a cripta? Poção primeiro, coragem depois.' : 'O que vai ser?';
+  return first ? `${aldo}! O freguês que nunca tem moeda. ${line}` : line;
+}
 async function shop() {
   const nm = 'Dora, a mercadora';
-  const st = stage(), hello = st === 'won' ? 'Os heróis de Valmor! Ainda sem moeda, aposto.'
-    : st === 'quest' ? 'Para a cripta? Poção primeiro, coragem depois.'
-    : G.seen.dora ? 'O que vai ser?' : `${heroName('aldo')}! O freguês que nunca tem moeda. O que vai ser?`, solo = G.party.length === 1;
+  const hello = doraHello(stage(), G.gold, !G.seen.dora, heroName('aldo')), solo = G.party.length === 1;
   G.seen.dora = 1;
   for (;;) {
     const v = await UI.choose([
       ...SHOP.map(([id, price]) => ({ label: `${ITEMS[id].name} ${price}`, hint: `tem ${G.inv[id] || 0}`, value: id, disabled: G.gold < price })),
       { label: 'Sair', value: null },
-    ], { title: `${nm}:\n${hello}  (${G.gold} moedas)`, cancel: true, cols: 2 });
+    ], { title: `${nm}:\n${hello}  (${G.gold} moedas)`, cancel: true, cols: 2, party: true });
     if (v === null) { await say(nm, [solo ? 'Volte sempre! E volte inteiro.' : 'Voltem sempre! E voltem inteiros.']); return; }
     const price = SHOP.find(([id]) => id === v)[1];
     G.gold -= price; G.inv[v] = (G.inv[v] || 0) + 1; Sfx.coin();
@@ -705,7 +712,7 @@ async function shop() {
 // ---------- Desenho por quadro ----------
 // Névoa da visão: uma máscara de um pixel por tile (com uma borda preta em volta do mapa), ampliada com suavização,
 // dá a borda macia. Primeiro tira a cor do que está fora do raio, depois escurece: névoa no que já foi visto, preto no resto.
-const SIGHT_MASKS = {};
+const SIGHT_MASKS = {}, SIGHT_DARK = [4, 4, 12]; // the never-seen dark, also past the map's edge
 function drawSight(c, A, lp, camX, camY) {
   const W = A.W + 2, H = A.H + 2, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS, py = lp.y / TS;
   let M = SIGHT_MASKS[A.name];
@@ -719,7 +726,7 @@ function drawSight(c, A, lp, camX, camY) {
     const k = inMap ? Math.min(1, Math.max(0, (Math.hypot(tx - px, ty - py) - (r - 1)) / 1.5)) : 1; // 0 perto do grupo, 1 além do raio
     const a = inMap && seen[ty * A.W + tx] ? 0.6 * k : k;
     g[i] = g[i + 1] = g[i + 2] = 128; g[i + 3] = 255 * k;
-    d[i] = d[i + 1] = 4; d[i + 2] = 12; d[i + 3] = 255 * a;
+    [d[i], d[i + 1], d[i + 2]] = SIGHT_DARK; d[i + 3] = 255 * a;
   }
   M.gray.cx.putImageData(M.gray.img, 0, 0); M.dark.cx.putImageData(M.dark.img, 0, 0);
   const X = -camX - TS, Y = -camY - TS;
@@ -754,7 +761,8 @@ function drawTown(now, bare = false) {
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
   c.save(); c.translate(-camX, -camY); c.fillStyle = A.edge; c.fillRect(camX, camY, VW, VH);
-  if (A.vision) { c.fillStyle = `rgba(${A.dimCol || '0,0,0'},.9)`; c.fillRect(camX, camY, VW, VH); } // além do mapa: a borda, no escuro da névoa
+  // além do mapa: o mesmo escuro opaco da névoa (sem emenda no celular em pé); no fundo da batalha, a borda à meia-luz
+  if (A.vision) { c.fillStyle = bare ? `rgba(${A.dimCol || '0,0,0'},.9)` : `rgb(${SIGHT_DARK})`; c.fillRect(camX, camY, VW, VH); }
   c.restore();
   c.drawImage(A.layer, -camX, -camY);
 
@@ -812,8 +820,8 @@ function drawTown(now, bare = false) {
     gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');
     c.globalCompositeOperation = 'lighter'; c.fillStyle = gr; c.fillRect(gx - R, gy - R, R * 2, R * 2); c.globalCompositeOperation = 'source-over';
   }
-  // Névoa baixa (cemitério): faixas claras deslizando devagar
-  if (A.fog) {
+  // Névoa baixa (cemitério): faixas claras deslizando devagar; o fundo da batalha fica sem elas
+  if (A.fog && !bare) {
     // faixas com borda macia em cima e embaixo; cada faixa é mais densa no meio e some nas pontas
     for (let i = 0; i < 3; i++) {
       const y = Math.round(VH * (0.22 + i * 0.28)), h = 40, w = VW * 0.9;

@@ -38,6 +38,12 @@ function campMenuOpts(s) {
   return { title: `Menu · ${s.gold} moedas`, opts };
 }
 
+// Starting over replaces the save: with one, ask first, with No already selected
+async function replaceSaveOk(saved) {
+  return !saved || UI.choose([{ label: 'Sim', value: true }, { label: 'Não', value: false }],
+    { title: 'Começar de novo? O jogo salvo será substituído.', cols: 2, start: false });
+}
+
 // Equipment screen: what one hero carries in each slot, from the ids of the equipment the party found
 const GEAR_SLOTS = [['arma', 'Arma'], ['armadura', 'Armadura']];
 function heroGear(heroId, ownedIds, equips) {
@@ -104,11 +110,11 @@ function camAxis(pos, size, view, pad = 0) {
   return Math.round(size < v ? (size - v) / 2 : Math.max(0, Math.min(size - v, pos + 8 - v / 2)));
 }
 // Town camera with the dialog open: it moves only when the box would cover the party, and only as much as
-// needed to keep the party (16 px tall, plus one tile of margin) above the box; never past the centered view
+// needed to keep the party (16 px tall, plus a small margin) above the box; never past the centered view
 function camLift(pos, size, view, pad = 0) {
   const base = camAxis(pos, size, view);
   if (!pad) return base;
-  const need = Math.round(pos + 32 - (view - pad));
+  const need = Math.round(pos + 20 - (view - pad));
   return Math.max(base, Math.min(camAxis(pos, size, view, pad), need));
 }
 
@@ -136,6 +142,21 @@ function slotGear(heroId, ownedIds, equips, start) {
     return it ? { slot: s.slot, label: s.label, name: it.name, icon: it.icon, bonus: it.bonus, id: it.id, start: false }
       : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
   });
+}
+// Saves from the 3-floor version: gear found on floors that no longer exist is read back from the bonus it left on
+// each hero, the biggest pieces first (Espada de Prata before Espada de Ferro)
+function gearFromBonus(party, ownedIds, equips) {
+  const size = b => Object.values(b).reduce((s, v) => s + v, 0), found = [];
+  for (const m of party) {
+    const left = { ...m.bonus };
+    for (const id of ownedIds) if (equips[id].who === m.id) for (const [k, v] of Object.entries(equips[id].bonus)) left[k] = (left[k] || 0) - v;
+    const cands = Object.keys(equips).filter(id => equips[id].who === m.id && !ownedIds.includes(id)).sort((a, b) => size(equips[b].bonus) - size(equips[a].bonus));
+    for (const id of cands) {
+      const b = Object.entries(equips[id].bonus);
+      if (b.every(([k, v]) => (left[k] || 0) >= v)) { b.forEach(([k, v]) => { left[k] -= v; }); found.push(id); }
+    }
+  }
+  return found;
 }
 // Colors of the full-body sprite: the base palette with each found equipment's look on top
 const bodyPal = (pal, heroId, ownedIds, equips, looks) =>
@@ -186,9 +207,17 @@ function heroViewFonts(w, h, dpr = 1) {
 
 // Battle names: the dice girl is "Moça" on her card and "Mç" in the turn queue; lines keep "Moça dos dados"
 const shortName = name => (name === 'Moça dos dados' ? 'Moça' : name);
+// Names in the middle of a line keep their article: "ataca o Sineiro", "Fogo no Sineiro", "Truque da moça dos dados";
+// plain names stay plain ("em Aldo", "de Lyra"). prep: '', 'em' or 'de'
+const ARTICLE_NAMES = { 'O Sineiro': ['o', 'Sineiro'], 'Moça dos dados': ['a', 'moça dos dados'] };
+function midName(name, prep = '') {
+  const a = ARTICLE_NAMES[name];
+  if (!a) return prep ? `${prep} ${name}` : name;
+  return `${prep ? { em: 'n', de: 'd' }[prep] + a[0] : a[0]} ${a[1]}`;
+}
 const queueTag = name => (name === 'Moça dos dados' ? 'Mç' : name.slice(0, 2));
 // "Lyra usa Fogo em Encapuzado B!" when the spell hits one enemy; just the spell otherwise
-const spellLine = (who, spell, target) => `${who} usa ${spell}${target ? ' em ' + target : ''}!`;
+const spellLine = (who, spell, target) => `${who} usa ${spell}${target ? ' ' + midName(target, 'em') : ''}!`;
 // Before the boss: a warning when the party is still weak (average level under 4); empty otherwise
 const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length < 4 ? 'O sino pesa. Talvez seja melhor voltar mais forte.\n' : '');
 
@@ -201,5 +230,5 @@ const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudb
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

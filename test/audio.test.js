@@ -84,3 +84,14 @@ test('a tab in the background suspends the audio clock and resumes it on return'
   document.hidden = false; listeners.visibilitychange();
   assert.equal(ac.state, 'running');
 });
+
+test('a scene cut (stop) forgets the place; the song starts over', () => {
+  const { Music, advance } = loadAudio();
+  Music.play('tavern'); advance(5);
+  assert.ok(Music.step > 5);
+  Music.stop();
+  Music.play('tavern'); assert.ok(Music.step < 5, 'from the top after a stop');
+  advance(5); const at = Music.step;
+  Music.play('battle'); advance(2); Music.play('tavern');
+  assert.ok(Music.step >= at, 'a battle still keeps the place');
+});

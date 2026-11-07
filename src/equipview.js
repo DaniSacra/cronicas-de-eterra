@@ -5,12 +5,14 @@ const HeroView = (() => {
   let root, open = false, cur = 0, view = 'skills', sel = 0, frame = 0, timer = null, done = null;
   const STAGE_W = 96, STAGE_H = 78; // the hero's stage in art pixels: stained glass, pedestal and the 48x64 sprite; the slots sit on the sides
 
-  // Equipment the party found: opened chests whose loot is an equipment (works for old saves)
+  // Equipment the party found: opened chests whose loot is an equipment; saves from the 3-floor version also opened
+  // chests on floors that no longer exist, so that gear is read from the bonus it left
   function ownedEquips() {
     const ids = [];
     for (let f = 0; f < FLOORS.length; f++) for (const o of getMap(f).objects)
       if (o.type === 'chest' && EQUIPS[o.loot] && G.opened[`${f}:${o.x},${o.y}`]) ids.push(o.loot);
-    return ids;
+    const old = Object.keys(G.opened || {}).some(k => parseInt(k, 10) >= FLOORS.length);
+    return old ? [...ids, ...gearFromBonus(G.party, ids, EQUIPS)] : ids;
   }
   const face = id => { const key = Portraits.keyFor(heroName(id)); return key ? Portraits.draw(key).toDataURL() : ''; };
   const icon = (id, st) => `<img class="hv-ico" src="${iconUrl(id, st)}" alt="">`;
@@ -27,6 +29,7 @@ const HeroView = (() => {
       <div class="hv-modes"></div>
       <section class="hv-col hv-c1 win"></section><section class="hv-col hv-c2 win"></section><section class="hv-col hv-c3 win"></section>`;
     document.getElementById('screen').appendChild(root);
+    root.addEventListener('scroll', ev => { if (ev.target.classList && ev.target.classList.contains('hv-col')) more(ev.target); }, true);
     root.addEventListener('click', ev => {
       ev.stopPropagation();
       const b = ev.target.closest('[data-act]');
@@ -93,7 +96,7 @@ const HeroView = (() => {
     return bar('PV', m.hp, maxHp(m), '') + bar('PM', m.mp, maxMp(m), 'mp') +
       `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}</span>
         <b>${r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em><div class="hv-cmp"><i style="width:${Math.round(100 * r.frac)}%"></i></div></div>`).join('')}</div>
-      <div class="hv-story"><small>História</small>${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div>`;
+      <div class="hv-story"><small>História</small>${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div><div class="hv-more">▼</div>`;
   }
 
   // ---------- Column 3: the book, with the skills page and the bag page ----------
@@ -145,6 +148,14 @@ const HeroView = (() => {
     drawCanvas();
     const s = root.querySelector('.hv-row.sel, .hv-item.sel');
     if (s) s.scrollIntoView({ block: 'nearest' });
+    root.querySelectorAll('.hv-col').forEach(more);
+  }
+  // the ▼ shows while a column still has text below
+  const more = c => c.classList.toggle('more', c.scrollTop + c.clientHeight < c.scrollHeight - 2);
+  // PageUp/PageDown scroll the sheet (the open column on phones)
+  function page(d) {
+    const c = mode() === 'tabs' ? [...root.querySelectorAll('.hv-col')].find(x => x.offsetParent) : root.querySelector('.hv-c2');
+    if (c) c.scrollBy(0, d * c.clientHeight * 0.8);
   }
   function drawCanvas() {
     const cv = root.querySelector('.hv-body'), stage = root.querySelector('.hv-stage');
@@ -197,6 +208,7 @@ const HeroView = (() => {
     else if (k === 'Tab' || k === 'e') cycle(1);
     else if (k === 'q') cycle(-1);
     else if (k === 'Enter' || k === ' ') use();
+    else if (k === 'PageDown' || k === 'PageUp') page(k === 'PageDown' ? 1 : -1);
     else if (['Escape', 'x', 'Backspace'].includes(k)) close();
   }
   return { show, close, key, isOpen: () => open };

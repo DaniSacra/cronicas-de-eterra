@@ -79,8 +79,10 @@ const UI = (() => {
   // o.style: 'list' (in the dialog, default), 'bar' (floating icon bar above o.anchor) or
   // 'pointer' (nothing drawn: the caller shows the selection through o.onHover, e.g. an arrow over the target).
   // o.keys: shortcut key -> value, returned at once (e.g. '1' repeats Tática 1 from the command bar)
+  // o.party: the menu is about the heroes' PV and PM, so the town shows the party strip with it
   function choose(opts, o = {}) {
     return new Promise(res => {
+      menuEl.dataset.party = o.party ? '1' : '';
       const style = o.style || 'list';
       if (style === 'list') {
         if (o.title !== undefined) { const t = splitSpeaker(o.title); setSpeaker(t.who); setText(t.text, false, true); }
@@ -214,8 +216,11 @@ const UI = (() => {
       card.querySelector('.lv').textContent = 'Nv ' + m.lv;
       card.querySelector('.hp i').style.width = (100 * m.hp / mh) + '%';
       card.querySelector('.mp i').style.width = (mm ? 100 * m.mp / mm : 0) + '%';
-      card.querySelector('.hpn').textContent = `PV ${m.hp}/${mh}`;
-      card.querySelector('.mpn').textContent = `PM ${m.mp}/${mm}`;
+      // low screens hide the labels; three-digit numbers drop the blank column of each glyph, so they fit on one line
+      for (const [sel, lbl, v, max] of [['.hpn', 'PV', m.hp, mh], ['.mpn', 'PM', m.mp, mm]]) {
+        const el = card.querySelector(sel);
+        el.innerHTML = `<b>${lbl} </b>${v}/${max}`; el.classList.toggle('long', `${v}/${max}`.length > 5);
+      }
       card.classList.toggle('dead', m.hp <= 0);
       card.classList.toggle('defending', !!m.defending && G.mode === 'battle');
       card.classList.toggle('low', m.hp > 0 && m.hp < mh * 0.3);

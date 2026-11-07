@@ -110,7 +110,7 @@ async function chooseCommand(m) {
     }
     if (v === 'spell') {
       const sp = await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
-        { title: `${d.skillWord} de ${d.name} (PM ${m.mp})`, cancel: true, cols: 2 });
+        { title: `${d.skillWord} ${midName(d.name, 'de')} (PM ${m.mp})`, cancel: true, cols: 2 });
       if (sp == null) continue;
       const t = await chooseTarget(SPELLS[sp].target, `${SPELLS[sp].name} em quem?`);
       if (t == null) continue;
@@ -169,7 +169,8 @@ async function heroCommand(m, opts) {
       if (!B.macro.entries[m.id]) await bsay(`${pdef(m).name} não estava na ${macroName(cmd.slot)}.`);
       continue;
     }
-    if (cmd.type === 'run' && opts.noRun) { await UI.say(opts.noRun); continue; }
+    const noRun = opts.noRun || (B.boss && B.enemies.find(e => e.boss).say.noRun); // the boss bars the door: choose again
+    if (cmd.type === 'run' && noRun) { await UI.say(noRun); continue; }
     return { cmd, entry: macroEntry(cmd) };
   }
 }
@@ -199,7 +200,7 @@ async function partyAct(c) {
   if (c.type === 'defend') { a.defending = true; Sfx.defend(); UI.updateParty(); await bsay(`${an} se defende.`); return; }
   if (c.type === 'attack') {
     const t = retarget(c.target); if (!t) return;
-    await bsay(`${an} ataca ${ename(t)}!`);
+    await bsay(`${an} ataca ${midName(ename(t))}!`);
     addFx('slash', t.x, t.cy, 300); Sfx.slash(); await wait(180);
     if (Math.random() < 0.05) { Sfx.miss(); addNum(t.x, t.top + 10, 'ERROU', '#aaa'); await bsay('Errou!'); return; }
     const crit = Math.random() < 0.08;
@@ -258,7 +259,7 @@ async function enemyAct(e) {
   const t = pick(targets);
   const sk = e.skill;
   if (sk && Math.random() < sk.chance) {
-    await bsay(`${ename(e)} usa ${sk.name} em ${pdef(t).name}!`);
+    await bsay(`${ename(e)} usa ${sk.name} ${midName(pdef(t).name, 'em')}!`);
     if (sk.kind === 'phys') { await enemyAttack(e, t, sk.power); }
     else if (sk.kind === 'drain') {
       const d = await enemyAttack(e, t, sk.power);
@@ -269,7 +270,7 @@ async function enemyAct(e) {
       await wait(350);
     }
   } else {
-    await bsay(`${ename(e)} ataca ${pdef(t).name}!`);
+    await bsay(`${ename(e)} ataca ${midName(pdef(t).name)}!`);
     await enemyAttack(e, t);
   }
   await checkFallen(t);

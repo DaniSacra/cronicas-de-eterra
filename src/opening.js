@@ -74,7 +74,7 @@ const TAVERN_NPCS = [
     start: ['Aquela marca... Não. Não é conversa para agora.', 'Vão falar com o ancião. Eu fico aqui, fiando.'],
     quest: ['Lá embaixo, se alguém chamar vocês pelo nome... não respondam.'],
     desceu: ['Desceram... E a marca? Estava lá embaixo também?', 'Não. Não me contem. Eu já sei demais.'],
-    won: ['O padre Anselmo tocava aquele sino. Naquele inverno, ele desceu na cripta com gente de capa cinza. Não voltou.', 'Não era coisa de ladrão de cova. Ladrão de cova não reza.', 'Vou fiar um cachecol para cada um. Lá fora a geada não perdoa.'] } },
+    won: ['O padre Anselmo tocava aquele sino. Naquele inverno, ele desceu na cripta com gente de capa cinza. Não voltou.', 'Não era coisa de ladrão de cova. Ladrão de cova não leva o padre junto.', 'Vou fiar um cachecol para cada um. Lá fora a geada não perdoa.'] } },
   { id: 'bruno', look: 'bruno', name: 'Bruno, soldado de folga', x: 2, y: 7, dir: 0, wander: 0, lines: {
     start: ['Vimos as lâminas e sentamos de novo. Não conta pra ninguém.'],
     quest: ['Esses dados dela são de onde? Nunca vi osso pintado assim.'],
@@ -90,8 +90,8 @@ const TAVERN_NPCS = [
 // Tarde da chegada: só Berta, Ana e Rui (os soldados e a moça dos dados chegam à noite)
 const TAVERN_AFTERNOON = [
   { id: 'berta', name: 'Berta, a taverneira', x: 10, y: 2, dir: 2, wander: 0, onTalk: bertaJob },
-  { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: { arrive: [() => `${A()}. Leve um lampião. A névoa do cemitério engole a gente.`] } },
-  { id: 'rui', name: 'Rui', x: 1, y: 3, dir: 1, wander: 0, lines: { arrive: [() => `${A()}! Eu falei das covas e ninguém acreditou. Você acredita, né? Vai lá ver.`] } },
+  { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: { arrive: [() => G.seen.job ? `${A()}. Leve um lampião. A névoa do cemitério engole a gente.` : `Frio de rachar, ${A()}. A Berta está te esperando no balcão.`] } },
+  { id: 'rui', name: 'Rui', x: 1, y: 3, dir: 1, wander: 0, lines: { arrive: [() => G.seen.job ? `${A()}! Eu falei das covas e ninguém acreditou. Você acredita, né? Vai lá ver.` : `${A()}! Fala com a Berta. Ela tem uma notícia que ninguém quer ouvir.`] } },
 ];
 async function bertaJob() {
   const back = G.party.length > 1 ? 'Voltem inteiros e o quarto é de vocês. A sopa também.' : 'Volte inteiro e o quarto é seu. A sopa também.';
@@ -248,6 +248,7 @@ async function teoScene() {
     recruit('teo', teo);
   }
   const r = await startBattle(['ossada', 'ossada'], false, {
+    surprise: 'normal', // Aldo shouted "Abaixe-se!": nobody is caught off guard
     intro: 'Duas Ossadas se erguem atrás do clérigo!', noRun: 'As Ossadas cercam a cova. Não dá para fugir!',
     hints: G.seen.dica_teo ? [] : ['Teo cura com Magia. Contra mortos-vivos, a Luz Sagrada fere em dobro.'],
   });
@@ -354,7 +355,7 @@ async function introduceAndilla() {
     await line('Aldo', 'Então isso aqui é seu.');
     await line(nm, 'Meus ganchos! Achei que tinham ficado para os mortos. Te devo uma, cavaleiro. Eu nunca devo duas.', 'alegre');
     G.key.estojo = false;
-  } else await line(nm, 'Larguei meus ganchos lá quando uma cova se mexeu. Se acharem, são meus.');
+  } else await line(nm, 'Larguei meus ganchos lá quando eles me viram. Se acharem, são meus.');
   await line('Berta', 'Ela lutou pela minha taverna. A conta dela está paga.');
   await line(nm, 'Viu? Eu sempre ganho.', 'alegre');
   await joined(nm);
@@ -435,8 +436,9 @@ async function nightScene() {
   const r = await startBattle(['encapuzado', 'encapuzado', 'encapuzado'], false, {
     surprise: 'ambush', grave: true,
     intro: 'Três encapuzados puxam lâminas curvas!',
-    hints: ['Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.', 'A moça dos dados age rápido: o Golpe Baixo dela atravessa a defesa.',
-      'Teo cura os feridos com Magia, e Defender reduz o dano até a próxima vez do herói.'],
+    // two hints, one per hero turn: the first comes before anyone acts (the dice girl is almost always first)
+    hints: ['Os inimigos agiram primeiro: a ordem de quem age está no topo. A moça dos dados é a mais rápida.',
+      'Teo cura os feridos com Magia. Defender reduz o dano até a próxima vez do herói.'],
     noRun: 'Não dá para fugir: o mensageiro está caído no balcão!',
   });
   if (r === 'lose') return gameOver();
@@ -489,7 +491,7 @@ const TALKS = {
     ['teo', () => `${heroName('andilla')}.`, 'bravo'], ['andilla', 'Brincadeira. Quase toda.', 'alegre']],
   bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
     ['teo', 'O mensageiro. Se ele estava aqui embaixo, foi aqui que o feriram.'], ['lyra', 'E V. queria que ele não saísse de Valmor. Quase conseguiu.', 'preocupado']],
-  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.', 'bravo'], ['aldo', '"O rei voltará." Então é para ele que eles rezam.']],
+  altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.', 'bravo'], ['aldo', '"O rei voltará." Então é por ele que eles esperam.']],
   igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
     ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
   sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],

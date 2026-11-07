@@ -76,6 +76,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #game.show-party #party { display: grid; }
 .card { position: relative; display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 4); font-size: var(--f2); }
 .card .info { flex: 1; min-width: 0; }
+.card .num { white-space: nowrap; letter-spacing: -.04em; } /* "PV 128/128" never breaks */ .card .num b { font-weight: inherit; } .card .num.long { letter-spacing: -.125em; }
 .card .pfw { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; }
 .card .pf { display: block; width: 64px; height: 64px; image-rendering: pixelated;
   box-shadow: 0 0 0 var(--u) var(--rim2), 0 0 0 calc(var(--u) * 2) var(--rim), 0 0 0 calc(var(--u) * 3) var(--ink); margin: calc(var(--u) * 3); }
@@ -201,7 +202,13 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* Telas baixas (celular deitado): faixa do grupo em uma linha e diálogo mais curto */
 @media (max-height: 500px) {
-  .card { padding: 4px 8px; } .card .bar.mp, .card .mpn { display: none; } .card .bar { margin: 3px 0 2px; }
+  .card { padding: 4px 8px; } .card .bar { margin: 3px 0 2px; }
+  /* PV and PM both stay: two thin bars, one under the other, and the numbers side by side on one line */
+  .card .info { display: grid; grid-template-columns: auto auto; justify-content: space-between; column-gap: 6px;
+    grid-template-areas: 'nm nm' 'hp hp' 'mp mp' 'hpn mpn'; }
+  .card .nm { grid-area: nm; } .card .bar.hp { grid-area: hp; } .card .bar.mp { grid-area: mp; margin-top: 1px; }
+  .card .hpn { grid-area: hpn; } .card .mpn { grid-area: mpn; } .card .bar { height: 3px; padding: 0; }
+  .card .info { column-gap: 4px; } .card .num { letter-spacing: -.125em; } .card .num b { display: none; } .card .mpn { color: #2a5aa0; } /* no room for "PV"/"PM": the PM number is blue like its bar */
   #msgbox { min-height: 0; padding: 8px 12px; } #menu { gap: .3em 1.5em; margin-top: .3em; } #bottom { padding: 6px; gap: 4px; }
 }
 
@@ -328,7 +335,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 /* ---- Heróis (src/equipview.js): o herói de corpo inteiro, a ficha e o livro ---- */
 /* Text: body at --f2 (menu size), titles at --fd (dialog size); nothing smaller */
 #heroview { position: absolute; inset: 0; z-index: 20; display: none; background: var(--hv-bg, var(--bg)); padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);
-  grid-template-columns: minmax(0, 36fr) minmax(0, 28fr) minmax(0, 36fr); grid-template-rows: auto minmax(0, 1fr); font-size: var(--f2); line-height: 1.5; color: var(--text); }
+  grid-template-columns: minmax(0, 34fr) minmax(0, 32fr) minmax(0, 34fr); grid-template-rows: auto minmax(0, 1fr); font-size: var(--f2); line-height: 1.5; color: var(--text); }
 #heroview.open { display: grid; }
 #heroview p { margin: 0; }
 #heroview small { display: block; font-size: var(--f2); color: var(--dim); margin: calc(var(--u) * 2) 0 var(--u); }
@@ -342,7 +349,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-arrow { color: var(--gold) !important; padding: calc(var(--u) * 2) !important; }
 .hv-close { white-space: nowrap; padding: calc(var(--u) * 2) !important; } .hv-close:hover, .hv-arrow:hover { color: var(--gold2) !important; }
 .hv-modes { display: none; }
-.hv-col { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); display: flex; flex-direction: column; }
+.hv-col { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--rim) transparent; }
+/* more below: a fixed arrow at the foot of the column while it can still scroll (no gradient) */
+.hv-more { display: none; position: sticky; bottom: calc(var(--u) * -5); margin: 0 calc(var(--u) * -5) calc(var(--u) * -5); padding-bottom: var(--u); background: var(--win); text-align: center; color: var(--gold); text-shadow: var(--u) var(--u) 0 var(--ink); }
+.hv-col.more .hv-more { display: block; }
 .hv-col > * { flex-shrink: 0; } /* the column scrolls; only the stage and the book page give up height */
 .hv-ico { width: calc(var(--f2) * 2); height: calc(var(--f2) * 2); image-rendering: pixelated; display: block; flex: none; }
 .hv-box { position: relative; flex: none; display: grid; place-items: center; padding: var(--u); border: var(--bw) solid transparent; border-image: var(--frame-slot) 4 fill / var(--bw) round; }
@@ -366,10 +376,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-bar b { font-size: var(--fd); font-weight: normal; } #heroview .hv-bar b small { display: inline; margin: 0; }
 .hv-c2 .bar { height: calc(var(--u) * 5); }
 .hv-stats { display: grid; gap: calc(var(--u) * 2); margin-top: calc(var(--u) * 4); }
-.hv-stat { display: grid; grid-template-columns: auto 1fr auto 2.5em; grid-template-rows: auto auto; column-gap: calc(var(--u) * 3); align-items: center; }
+.hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 3.5em; grid-template-rows: auto auto; column-gap: calc(var(--u) * 4); align-items: center; }
 .hv-stat .hv-ico { grid-row: 1 / 3; }
 .hv-stat b { font-size: var(--fd); font-weight: normal; } .hv-stat em { color: #3c7a22; font-style: normal; }
-.hv-cmp { grid-column: 2 / 5; height: var(--u); background: var(--win2); } .hv-cmp i { display: block; height: 100%; background: var(--rim); }
+.hv-cmp { grid-column: 2 / 5; max-width: 100%; height: var(--u); background: var(--win2); } .hv-cmp i { display: block; height: 100%; background: var(--rim); }
 .hv-story { margin-top: calc(var(--u) * 4); display: grid; gap: calc(var(--u) * 2); }
 .hv-quote { color: var(--gold); }
 /* column 3: the book */
@@ -398,6 +408,13 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"][data-view="skills"] .hv-c3, #heroview[data-mode="tabs"][data-view="bag"] .hv-c3 { display: flex; }
 #heroview[data-mode="tabs"] .hv-arrow { display: none; }
 #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 2.5); height: calc(var(--f2) * 2.5); }
+/* phone on its side: the tabs move into the portrait bar (left side, empty without arrows), so the sheet gets the height */
+@media (orientation: landscape) and (max-height: 500px) {
+  #heroview[data-mode="tabs"] { grid-template-rows: auto minmax(0, 1fr); }
+  #heroview[data-mode="tabs"] .hv-top { grid-row: 1; }
+  #heroview[data-mode="tabs"] .hv-modes { grid-row: 1; grid-column: 1; justify-self: start; align-self: center; z-index: 1; margin-left: calc(var(--u) * 5); }
+  #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 1.8); height: calc(var(--f2) * 1.8); }
+}
 
 /* ---- Batalha: barra de comandos só com ícones, em cima do cartão do herói da vez ---- */
 #cmdbar { position: absolute; z-index: 4; display: none; gap: var(--u); padding: calc(var(--u) * 2); }
@@ -419,6 +436,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #game.in-battle #msgbox { min-height: 0; padding: calc(var(--u) * 3) calc(var(--u) * 6); }
 #game.in-battle #msg { text-align: center; }
 #game.in-battle #face { display: none !important; } /* battle uses the top for the turn queue and the plaque */
+/* Boss fight: the band and the Magia/Item lists sit just above the cards, on the empty floor, so the face stays in view */
+#game.in-battle.boss-fight #dialog { position: relative; top: auto; left: auto; translate: none; width: var(--boxw); }
 #hudbar > #info { pointer-events: none; }
 #game.bigmap #info { display: none; } /* the note never blocks taps on the scene */
 

@@ -92,7 +92,7 @@ const HERO_STORY = {
     lines: [
       { text: 'Chegou a Valmor sozinho, com a espada nas costas e a bolsa vazia. Diz que veio procurar trabalho.' },
       { text: 'A vila inteira sabe que ele volta por causa da Clara, a professora. Ninguém diz isso na cara dele.' },
-      { when: 'quest', text: 'Aceitou o pedido do ancião: descer à cripta da igreja velha e calar o sino.' },
+      { when: 'quest', text: 'Aceitou o pedido do ancião: descer à cripta da igreja velha e descobrir o que acorda os mortos.' },
       { when: 'bossDead', text: 'O sino de Valmor parou. Agora a estrada leva a Erukh.' },
     ],
     quotes: [{ text: 'Vim procurar trabalho. Só isso.' }, { when: 'bossDead', text: 'Trabalho não falta. Isso eu garanto.' }],
@@ -103,7 +103,7 @@ const HERO_STORY = {
       { text: 'Veio por duas coisas: o irmão e a fonte de luz de Valmor.' },
       { when: 'fonteLyra', text: 'Tocou a água da fonte e sentiu que ela lembra de quem passa.' },
     ],
-    quotes: [{ text: 'Aldo vê a professora. Aldo esquece como se anda.' }, { when: 'fonteLyra', text: 'A água lembra de quem passa. Dá para sentir.' }],
+    quotes: [{ text: 'Alguém tem que contar essa história direito.' }, { when: 'talk:claraLyra', text: 'Aldo vê a professora. Aldo esquece como se anda.' }, { when: 'fonteLyra', text: 'A água lembra de quem passa. Dá para sentir.' }],
   },
   teo: {
     lines: [
@@ -216,7 +216,7 @@ const JOURNAL = {
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },
     { show: () => G.seen.pistaTunel, text: 'No túnel da cripta, sangue seco e um pedaço de capa marrom, de viajante. Alguém desceu ali sem ser dos encapuzados.' },
     { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo cede, e "o homem do sumo sacerdote" não pode sair de Valmor. Quem é V.?' },
-    { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados adoram Morvath?' },
+    { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados servem a Morvath?' },
     { show: () => G.bossDead, text: 'O Sineiro, um morto da igreja velha, guardava a última porta. Era ele quem tocava o sino.' },
     { show: () => G.bossDead, text: 'O túmulo de Morvath estava arrombado e vazio. Sob os símbolos dos paladinos, quatro nichos vazios. Alguém levou o que estava lá.' },
     { show: () => G.bossDead && inParty('andilla'), get text() { return `${heroName('andilla')} não cavou as covas. Então quem cavou, e por quê?`; } },

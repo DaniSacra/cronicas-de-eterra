@@ -370,13 +370,13 @@ async function campMenu() {
   G.busy = true;
   for (;;) {
     const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length });
-    const v = await UI.choose(m.opts, { title: m.title, cancel: true, cols: 3 });
+    const v = await UI.choose(m.opts, { title: m.title, cancel: true, cols: 3, party: true });
     if (v === 'diary') await showDiary();
     if (v === 'world') await WorldMap.show();
     if (v === null) break;
     if (v === 'quit') {
       const ok = await UI.choose([{ label: 'Sim, sair', value: true }, { label: 'Não', value: false }],
-        { title: 'Voltar à tela inicial? O que não foi salvo se perde.', cancel: true, cols: 2, start: false });
+        { title: 'Voltar à tela inicial? O que não foi salvo se perde.', cancel: true, cols: 2, start: false, party: true });
       if (ok) { G.bigMap = false; G.held.clear(); return titleScreen(); }
       continue;
     }
@@ -388,16 +388,16 @@ async function campMenu() {
       const keys = Object.keys(KEY_ITEMS).filter(k => G.key[k]).map(k => ({ label: G.key.lida || !KEY_ITEMS[k].sealedName ? KEY_ITEMS[k].name : KEY_ITEMS[k].sealedName, hint: KEY_ITEMS[k].desc, value: 'key:' + k }));
       const opts = [...itemOptions(), ...keys];
       if (!opts.length) { await UI.say('A bolsa está vazia.'); continue; }
-      const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true });
+      const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true, party: true });
       if (it != null) await useBagItem(it);
     }
     if (v === 'magic') {
       const casters = G.party.filter(m => m.hp > 0 && knownSpells(m).some(s => SPELLS[s].field));
       if (!casters.length) { await UI.say('Ninguém pode usar magia agora.'); continue; }
-      const cm = casters.length === 1 ? casters[0] : await UI.choose(casters.map(m => ({ label: pdef(m).name, value: m })), { title: 'Quem vai conjurar?', cancel: true, cols: 3 });
+      const cm = casters.length === 1 ? casters[0] : await UI.choose(casters.map(m => ({ label: pdef(m).name, value: m })), { title: 'Quem vai conjurar?', cancel: true, cols: 3, party: true });
       if (cm == null) continue;
       const sp = await UI.choose(knownSpells(cm).filter(s => SPELLS[s].field).map(s => ({ label: SPELLS[s].name, hint: SPELLS[s].mp + 'PM', value: s, disabled: cm.mp < SPELLS[s].mp })),
-        { title: `Magias de ${pdef(cm).name} (PM ${cm.mp})`, cancel: true });
+        { title: `Magias de ${pdef(cm).name} (PM ${cm.mp})`, cancel: true, party: true });
       if (sp == null) continue;
       const t = SPELLS[sp].target === 'allAllies' ? 'all' : await pickAlly(SPELLS[sp].target, `${SPELLS[sp].name} em quem?`);
       if (t == null) continue;
@@ -526,7 +526,9 @@ async function titleScreen() {
   placeTitle();
   UI.showOverlay(`<div class="title title-logo"><h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p>` +
     `<p class="foot">${esc(GAME.credit)}</p></div>`, 'ov-title');
-  const v = await UI.choose(titleOptions(hasSave(), new URLSearchParams(location.search).has('dev')), { title: '', cols: 1 });
+  let v;
+  do v = await UI.choose(titleOptions(hasSave(), new URLSearchParams(location.search).has('dev')), { title: '', cols: 1 });
+  while (v === 'new' && !await replaceSaveOk(hasSave()));
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
   Sfx.init();
@@ -571,7 +573,9 @@ async function gameOver() {
   G.mode = 'gameover'; G.busy = true;
   Music.stop(); Sfx.gameover();
   UI.showOverlay(`<div class="title"><h1 class="red">${logoText('FIM DE JOGO')}</h1><p class="sub">A escuridão engoliu o grupo...</p></div>`, 'ov-dark');
-  const v = await UI.choose([{ label: 'Continuar do último save', value: 'load', disabled: !hasSave() }, { label: 'Novo Jogo', value: 'new' }], { title: '', cols: 1 });
+  let v;
+  do v = await UI.choose([{ label: 'Continuar do último save', value: 'load', disabled: !hasSave() }, { label: 'Novo Jogo', value: 'new' }], { title: '', cols: 1 });
+  while (v === 'new' && !await replaceSaveOk(hasSave()));
   UI.hideOverlay();
   if (v === 'load' && loadGame()) { G.busy = false; exploreHint(); }
   else await newGame();
@@ -611,7 +615,9 @@ async function ending() {
   UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-dark ov-end');
   saveGame();
   document.getElementById('game').classList.add('on-end');
-  const v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches ? 1 : 2 });
+  let v;
+  do v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches ? 1 : 2 });
+  while (v === 'new' && !await replaceSaveOk(hasSave()));
   document.getElementById('game').classList.remove('on-end');
   UI.hideOverlay();
   if (v === 'new') return newGame();
@@ -688,11 +694,12 @@ const gameEl = document.getElementById('game'), hudTop = document.getElementById
 function frame(now) {
   const dt = Math.min(50, now - last); last = now;
   Layout.check(); // zoom in small areas, normal scale everywhere else
-  // Faixa do grupo: na dungeon, na batalha e com o menu aberto (na vila a cena fica livre)
-  gameEl.classList.toggle('show-party', G.mode === 'battle' || (G.mode === 'explore' && !G.bigMap) || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu .opt')));
+  // Faixa do grupo: na dungeon, na batalha e nos menus da vila que mostram PV e PM (as escolhas de história deixam a cena livre)
+  gameEl.classList.toggle('show-party', G.mode === 'battle' || (G.mode === 'explore' && !G.bigMap) || G.mode === 'gameover' || (G.mode === 'town' && !!document.querySelector('#menu[data-party="1"] .opt')));
   wmBtn.hidden = !canWorldMap();
   HUD.begin();
   gameEl.classList.toggle('in-battle', G.mode === 'battle'); // phone layout: no d-pad in battle, windows sit lower
+  gameEl.classList.toggle('boss-fight', G.mode === 'battle' && !!B && B.boss); // the band sits low, under the boss's face
   gameEl.classList.toggle('in-town', G.mode === 'town');     // touch: arrows step instead of turning
   gameEl.classList.toggle('bigmap', G.mode === 'explore' && G.bigMap);
   if (G.mode === 'battle') {                                 // the battle message band sits right under the top HUD
