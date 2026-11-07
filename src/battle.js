@@ -282,7 +282,7 @@ async function bossAct(e) {
   // O aviso da Ana se paga: na segunda rodada, uma vez por save (fica no save mesmo se o grupo cair), ele chama alguém pelo nome
   if (S.whisper && B.round === 2 && !G.seen.sussurro) {
     const t = ['teo', 'lyra', 'andilla', 'aldo'].map(id => G.party.find(m => m.id === id)).find(m => m && m.hp > 0);
-    if (t) { G.seen.sussurro = 1; keepSeen('sussurro'); Sfx.dark(); await bsay(S.whisper(pdef(t).name)); }
+    if (t) { G.seen.sussurro = 1; keepSeen('sussurro'); Sfx.dark(); await bsay(S.whisper(pdef(t).name)); await bsay(t.id === 'teo' ? `${pdef(t).name} aperta o livro e não responde.` : 'Ninguém responde.'); }
   }
   if (!e.enraged && e.hp < e.maxhp * 0.5) {
     e.enraged = true;
@@ -382,8 +382,9 @@ async function startBattle(ids, isBoss, opts = {}) {
   }
   if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd
   G.mode = 'battle';
-  Music.play(isBoss ? 'boss' : 'battle');
-  if (isBoss) Sfx.bossEncounter(); else Sfx.encounter();
+  // the boss theme waits for the toll to fade; a night ambush has no fanfare
+  Music.play(isBoss ? 'boss' : 'battle', { delay: isBoss ? 1.5 : 0 });
+  if (isBoss) Sfx.bossEncounter(); else if (opts.grave) Sfx.encounterDark(); else Sfx.encounter();
   G.flashColor = '255,255,255';
   G.flash = { t0: performance.now(), dur: 600, strobe: true };
   B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600, veil };

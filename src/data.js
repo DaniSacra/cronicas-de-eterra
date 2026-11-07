@@ -181,6 +181,7 @@ function xpNext(lv) { return Math.floor(12 * Math.pow(lv, 1.9)); }
 // O título e o objetivo mudam com a etapa; as anotações se acumulam conforme o grupo descobre as coisas.
 const four = () => G.party.length === 4;
 const JOURNAL = {
+  // 'Quatro cantos' and 'reunir um grupo de quatro': only old saves reach them (the party is four since the tavern night)
   title: () => G.bossDead ? 'A caminho de Erukh' : G.seen.lapide ? 'O rei sob a cripta'
     : G.quest && four() ? 'O que acorda os mortos' : G.quest ? 'Quatro cantos'
     : G.intro ? 'A carta com o selo real' : G.seen.job ? 'As covas abertas' : 'Um pouso para o inverno',
@@ -196,6 +197,7 @@ const JOURNAL = {
     : 'achar pouso na Taverna Poney Saltitante.',
   notes: [
     { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
+    { show: () => inParty('lyra'), get text() { return `Lyra, irmã caçula de ${heroName('aldo')}, chegou na carroça do correio. Veio ver o irmão e a fonte de luz da cripta.`; } },
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
     { show: () => G.seen.estojo && !G.seen.andillaNome, text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
     { show: () => G.seen.estojo && G.seen.andillaNome, text: () => `Junto de uma cova cavada, um estojo de ganchos. Era da ${heroName('andilla')}.` },
@@ -209,7 +211,6 @@ const JOURNAL = {
     { show: () => G.quest, text: 'O mensageiro delira "o selo... o selo" e não diz o próprio nome.' },
     { show: () => G.quest, text: 'O sino era o da igreja velha, vazia há cinquenta anos. Sob ela, no fundo da cripta, dorme um rei. O ancião não quis dizer o nome.' },
     { show: () => G.quest, text: 'Os paladinos que fecharam a cripta eram quatro. O ancião quer quatro para descer.' },
-    { show: () => inParty('lyra'), get text() { return `Lyra, irmã caçula de ${heroName('aldo')}, chegou na carroça do correio. Veio ver o irmão e a fonte de luz da cripta.`; } },
     { show: () => G.seen.paladino, text: 'Na lápide da cova mais antiga, o símbolo de um paladino.' },
     { show: () => G.reached >= 1, text: 'A marca dos encapuzados está pintada na parede da cripta. Eles já estiveram aqui.' },
     { show: () => G.seen.lapide, text: 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.' },

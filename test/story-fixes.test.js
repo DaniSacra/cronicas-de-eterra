@@ -78,3 +78,11 @@ test('the turn queue calls the boss by its own name', () => {
   run(`drawOrder({ beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, fill() {} }, 0, true)`);
   assert.equal(run('q[0].label'), 'Si');
 });
+
+test('the morning after the fight: Tomé heard of the grey cloaks; before the night he only talks of fish', () => {
+  const { run } = story(['aldo']);
+  const tome = () => run.json("byStage(NPC_DEFS.find(d => d.id === 'tome').lines)")[0];
+  assert.equal(tome(), 'Os peixes sumiram do lago desde que o chão começou a tremer.');
+  run('G.intro = 1');
+  assert.equal(tome(), 'Ouvi que teve briga na Berta. Gente de capa cinza. Nem os peixes quiseram ficar para ver.');
+});

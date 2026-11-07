@@ -8,7 +8,7 @@ const ARRIVAL = { x: 1, y: 6, dir: 1 };         // Aldo entra pela estrada do oe
 
 const A = () => heroName('aldo'); // Lyra conta o irmão em terceira pessoa: sempre pelo nome do herói
 const line = (who, text, mood) => UI.say(`${who}${mood ? '~' + mood : ''}:\n${text}`); // mood: alegre | preocupado | bravo
-const joined = async name => { Sfx.levelup(); await UI.say(`${name} entrou para o grupo!`); };
+const joined = async name => { Sfx.join(); await UI.say(`${name} entrou para o grupo!`); };
 
 async function walkPath(a, path, ms = 360) {
   for (const [x, y] of path) {
@@ -116,7 +116,7 @@ const ANDILLA_DEF = { id: 'andilla', look: 'andilla', get name() { return G.seen
 
 // "Por que descer?": a Lyra pergunta ao irmão na porta da igreja velha e lembra a resposta na estrada (G.seen.porque)
 const PORQUE = {
-  mortos: { label: 'Pelos mortos de Valmor.', reply: a => `${a} diz que é pelos mortos. ${a} acredita nisso. Quase todo.`,
+  mortos: { label: 'Pelos mortos de Valmor.', reply: a => `${a} diz que é pelos mortos. E pela Clara, mas essa parte ${a} não diz.`,
     road: a => `${a} desceu pelos mortos. Eles dormem de novo. ${a} está orgulhoso e não vai dizer.` },
   carta: { label: 'Pela carta.', reply: a => `${a} diz que é pela carta. ${a} gosta de coisas que cabem na mão.`,
     road: a => `${a} desceu pela carta. Ela continua inteira. ${a} também.` },
@@ -160,6 +160,7 @@ async function lyraArrives(lyra = TOWN.npcs.find(n => n.def.id === 'lyra')) {
   for (let x = lyra.x; x !== P.x; x += Math.sign(P.x - x)) path.push([x + Math.sign(P.x - x), lyra.y]);  // anda até a frente do Aldo
   for (let y = lyra.y; y !== P.y - 1; y += Math.sign(P.y - 1 - y)) path.push([P.x, y + Math.sign(P.y - 1 - y)]);
   await UI.say('Numa mesa do canto, uma moça de capa roxa, com mais livros que bagagem, levanta num pulo.');
+  Sfx.exclaim();
   await line('Lyra', `${A().toUpperCase()}!`, 'alegre');
   await walkPath(lyra, path, 200);
   lyra.dir = 2; P.dir = 0;
@@ -346,6 +347,9 @@ async function introduceAndilla() {
   await line('Teo', 'Teo. Aprendiz por enquanto, do Templo um dia. Curo os feridos. E agora guardo uma carta que não é minha.');
   await line(nm, 'Eu já vi essas lâminas. Anteontem, no cemitério. Gente de capa cinza cavando cova.');
   if (lyra) { await line('Lyra', 'E o que você fazia num cemitério de noite?'); await line(nm, 'Coisas minhas.', 'alegre'); }
+  // the grey cloak keeps the false lead on the dice girl alive without changing the scene
+  await line('Bruno', 'Capa cinza, igual à deles.');
+  await line(nm, 'Capa cinza é a mais barata do sul. Metade desta taverna usa.');
   if (G.key.estojo) {
     await line('Aldo', 'Então isso aqui é seu.');
     await line(nm, 'Meus ganchos! Achei que tinham ficado para os mortos. Te devo uma, cavaleiro. Eu nunca devo duas.', 'alegre');
@@ -388,7 +392,7 @@ async function nightScene() {
   await line('Bruno', 'Ninguém tira três seis duas vezes seguidas.');
   await line(moca, 'Ninguém tira. Eu tiro.', 'alegre');
   await line('Caio', 'Ela me ganhou o soldo do mês. E eu ainda agradeci.');
-  if (lyra) await line('Lyra', `${A()} está tentando descobrir como ela faz. ${A()} não vai descobrir.`, 'alegre');
+  if (lyra) await line('Lyra', `Você nunca vai descobrir como ela faz, ${A()}.`, 'alegre');
   await line('Aldo', 'Ela está trapaceando.');
   await line(moca, 'Estou ganhando. Trapaça é o nome que quem perde dá.');
   await line('Teo', 'Eu vou... rezar um pouco.', 'preocupado');
@@ -408,7 +412,7 @@ async function nightScene() {
   G.key.carta = true;
   await UI.say('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.');
   Sfx.keyItem();
-  await UI.say('As botas dele estão cobertas de terra úmida. E tem cera de vela na manga.');
+  await UI.say('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.');
 
   // Os encapuzados. A moça dos dados não foge: entra na briga, e no grupo, antes de dizer o nome
   const hooded = [];
@@ -429,7 +433,7 @@ async function nightScene() {
   }
 
   const r = await startBattle(['encapuzado', 'encapuzado', 'encapuzado'], false, {
-    surprise: 'ambush',
+    surprise: 'ambush', grave: true,
     intro: 'Três encapuzados puxam lâminas curvas!',
     hints: ['Os inimigos agiram primeiro. No topo da tela está a ordem de quem age.', 'A moça dos dados age rápido: o Golpe Baixo dela atravessa a defesa.',
       'Teo cura os feridos com Magia, e Defender reduz o dano até a próxima vez do herói.'],
@@ -442,6 +446,7 @@ async function nightScene() {
   Music.stop(); // silêncio até o amanhecer
 
   // Depois da luta
+  Sfx.clue();
   await UI.say('O capuz do último encapuzado cai. No peito, bordado em vermelho, um olho cortado ao meio.');
   await line('Berta', 'Gente daqui não usa essa marca.');
   await UI.say('A velha Ana para de fiar. A moça dos dados também olha a marca. Por tempo demais.');

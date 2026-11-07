@@ -11,9 +11,15 @@ const Sfx = (() => {
         master = ac.createGain(); master.gain.value = muted ? 0 : VOL; master.connect(ac.destination);
       } catch (e) { ac = null; }
     }
-    if (ac && ac.state === 'suspended') ac.resume();
+    if (ac && ac.state === 'suspended' && !hidden()) ac.resume();
     Music.resume();
   }
+  // Aba em segundo plano: o relógio do áudio para junto, e a música volta de onde estava
+  const hidden = () => typeof document !== 'undefined' && document.hidden;
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {
+    if (!ac) return;
+    if (document.hidden) ac.suspend(); else ac.resume();
+  });
   function tone(f, dur, type = 'square', vol = 0.06, slideTo = null, delay = 0) {
     if (!ac) return;
     const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
@@ -43,13 +49,27 @@ const Sfx = (() => {
       if (master) master.gain.setTargetAtTime(muted ? 0 : VOL, ac.currentTime, 0.02);
       return muted;
     },
-    step() { noise(0.06, 0.1, 0, 300, 0.8); },
+    // Passo: neve, madeira (taverna), pedra (cripta) ou o som antigo
+    step(ground) {
+      if (ground === 'snow') noise(0.07, 0.12, 0, 2200, 0.6);
+      else if (ground === 'wood') { tone(150, 0.05, 'triangle', 0.05); noise(0.03, 0.06, 0, 700); }
+      else if (ground === 'stone') noise(0.05, 0.14, 0, 900, 1.2);
+      else noise(0.06, 0.1, 0, 300, 0.8);
+    },
     bump() { tone(110, 0.12, 'square', 0.06, 60); },
     alert() { tone(392, 0.06, 'square', 0.04); tone(523, 0.1, 'square', 0.04, null, 0.06); }, // um errante viu o grupo
-    cursor() { tone(880, 0.03, 'square', 0.035); },
+    cursor() { tone(880, 0.03, 'square', 0.045); },
     select() { tone(660, 0.05, 'square', 0.035); tone(990, 0.06, 'square', 0.035, null, 0.04); },
     cancel() { tone(440, 0.06, 'square', 0.035, 220); },
     encounter() { seq([523, 659, 784, 1046, 784, 1046, 1318], 'square', 0.08, 0.05, 0.05); },
+    // Emboscada de noite: sem fanfarra, uma volta curta que desce
+    encounterDark() { seq([330, 311, 330, 247], 'square', 0.09, 0.05, 0.07); },
+    // Pista: duas notas graves que quase se tocam e um brilho fraco. Nenhuma melodia, nenhum tema
+    clue() { tone(220, 0.7, 'triangle', 0.045); tone(233.1, 1.0, 'triangle', 0.035, null, 0.35); tone(659, 0.5, 'sine', 0.012, null, 0.35); },
+    // Alguém entra para o grupo: duas terças em triângulo, quentes
+    join() { tone(523, 0.3, 'triangle', 0.05); tone(659, 0.3, 'triangle', 0.04); tone(587, 0.5, 'triangle', 0.05, null, 0.18); tone(784, 0.5, 'triangle', 0.04, null, 0.18); },
+    // Grito de surpresa (a Lyra reconhecendo o irmão)
+    exclaim() { tone(784, 0.06, 'square', 0.04); tone(1046, 0.09, 'square', 0.04, null, 0.06); },
     slash() { noise(0.14, 0.14, 0, 2500, 0.7); },
     hit() { noise(0.08, 0.15, 0, 800, 1); tone(140, 0.1, 'square', 0.05, 60); },
     crit() { noise(0.15, 0.2, 0, 1200, 0.6); tone(300, 0.2, 'square', 0.06, 80); },
@@ -68,7 +88,6 @@ const Sfx = (() => {
     gameover() { seq([392, 370, 349, 330, 262], 'triangle', 0.45, 0.06, 0.3); },
     dark() { tone(80, 0.8, 'sawtooth', 0.08, 40); noise(0.8, 0.1, 0, 300, 0.5); },
     drain() { tone(700, 0.45, 'sine', 0.07, 150); },
-    // Sino da igreja velha: duas badaladas graves com parciais desafinados, decaindo devagar
     // Uma badalada só, ao longe: a madrugada e o último toque do sino quando o Sineiro cai
     bellFar() { tone(196, 3, 'sine', 0.05); tone(466, 2.2, 'sine', 0.02); },
     // Entrada do chefe: badalada grave e um baque
@@ -79,6 +98,7 @@ const Sfx = (() => {
     keyItem() { tone(294, 0.5, 'triangle', 0.045); tone(440, 0.7, 'triangle', 0.03, null, 0.12); },
     fall() { tone(330, 0.5, 'triangle', 0.05, 110); },
     coin() { tone(1318, 0.05, 'square', 0.035); tone(1760, 0.12, 'square', 0.035, null, 0.05); },
+    // Sino da igreja velha: duas badaladas graves com parciais desafinados, decaindo devagar
     bell() { for (const d of [0, 1.3]) { tone(196, 2.4, 'sine', 0.09, null, d); tone(466, 1.6, 'sine', 0.035, null, d); tone(590, 1.1, 'triangle', 0.02, null, d); } },
   };
 })();
@@ -259,6 +279,8 @@ const Music = (() => {
   const DUTY = { p50: 0.5, p25: 0.25, p12: 0.125 };
   let ac0 = null, waves = {}, nbuf = null, lfo = null, bus = null;
   let cur = null, want = null, timer = null, step = 0, nextT = 0;
+  // Trilhas de lugar retomam do passo onde a luta as interrompeu
+  const RESUME = new Set(['town', 'tavern', 'cemetery', 'explore']), saved = {};
   const midi = n => 440 * Math.pow(2, (n - 69) / 12);
 
   function setup(ac) {
@@ -328,24 +350,29 @@ const Music = (() => {
       nextT += sd; step++;
     }
   }
-  function start(name) {
+  function start(name, delay = 0) {
     const ac = Sfx.ctx; if (!ac || !Sfx.master) return;
     setup(ac);
     fadeOut(bus); bus = newBus(ac);
-    cur = name; step = 0; nextT = ac.currentTime + 0.08;
+    cur = name; step = saved[name] || 0; nextT = ac.currentTime + 0.08 + delay;
     timer = setInterval(tick, 50); tick();
   }
-  function halt() { if (timer) clearInterval(timer); timer = null; cur = null; }
+  function halt() {
+    if (cur && RESUME.has(cur)) saved[cur] = step % SONGS[cur].len;
+    if (timer) clearInterval(timer); timer = null; cur = null;
+  }
   function stop() { halt(); want = null; if (bus && Sfx.ctx) { fadeOut(bus); bus = null; } }
   return {
-    play(name) {
+    // opts.delay: segundos de silêncio antes da primeira nota (o chefe espera a badalada)
+    play(name, opts = {}) {
       if (!SONGS[name]) { console.warn('Música desconhecida:', name); return; }
       if (want === name && cur === name) return;
-      halt(); want = name; if (Sfx.ctx) start(name);
+      halt(); want = name; if (Sfx.ctx) start(name, opts.delay || 0);
     },
     stop,
     resume() { if (want && !cur && Sfx.ctx) start(want); },
     get current() { return cur; },
+    get step() { return step; },
     // para testes e para a documentação: duração do laço em segundos
     info() { return Object.fromEntries(Object.entries(SONGS).map(([k, s]) => [k, { steps: s.len, sec: +(s.len * 60 / s.bpm / s.spb).toFixed(1), chans: s.ch.map(c => c.len) }])); },
   };

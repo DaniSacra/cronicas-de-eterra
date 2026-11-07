@@ -85,7 +85,8 @@ const NPC_DEFS = [
     desceu: ['Leram as paredes? Minha avó dizia que os paladinos escreviam até na pedra do chão.'],
     won: ['Minha avó ficaria orgulhosa de vocês.', 'Mas eu não durmo tranquila. Paladino nenhum deixaria aquele túmulo vazio.'] } },
   { id: 'tome', name: 'Tomé, o pescador', x: 9, y: 11, dir: 3, wander: 0, hi: () => `${heroName('aldo')}! Veio pescar? Ah, não. Veio pelo... trabalho.`, lines: {
-    start: ['Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há uma fonte de luz que cura qualquer ferida e guarda a memória de quem passa.'],
+    arrive: ['Os peixes sumiram do lago desde que o chão começou a tremer.', 'Dizem que lá embaixo há uma fonte de luz que cura qualquer ferida e guarda a memória de quem passa.'],
+    start: ['Ouvi que teve briga na Berta. Gente de capa cinza. Nem os peixes quiseram ficar para ver.', 'Dizem que lá embaixo há uma fonte de luz que cura qualquer ferida e guarda a memória de quem passa.'],
     quest: ['Vão descer? Se a fonte cura mesmo, tragam um pouco para o meu joelho.'],
     desceu: ['Viram a fonte de luz? Cura mesmo qualquer ferida? Meu joelho quer saber.'],
     won: ['Os peixes voltaram! E eu achando que era a minha isca.'] } },
@@ -290,7 +291,7 @@ function spawnNpc(d) {
 }
 
 // cast: lista de moradores no lugar dos fixos da área (usado pelas cenas)
-function enterTown(pos, area = 'valmor', cast = null) {
+function enterTown(pos, area = 'valmor', cast = null, music = true) {
   G.mode = 'town';
   G.area = area;
   TOWN.A = AREAS[area];
@@ -304,7 +305,7 @@ function enterTown(pos, area = 'valmor', cast = null) {
   lookAround();
   G.queue.length = 0; G.held.clear();
   TOWN.moved = false;
-  Music.play(TOWN.A.music ? TOWN.A.music() : 'town');
+  if (music) Music.play(TOWN.A.music ? TOWN.A.music() : 'town');
 }
 
 // Saídas das áreas (porta da taverna, portão do cemitério...): pisar nelas troca de área
@@ -399,7 +400,7 @@ function tryTownMove(d) {
   lookAround();
   TOWN.moved = true;
   F.forEach(f => { f.dir = f.x !== f.fx ? (f.x > f.fx ? 1 : 3) : f.y !== f.fy ? (f.y > f.fy ? 2 : 0) : f.dir; });
-  if (++TOWN.step % 2) Sfx.step();
+  if (++TOWN.step % 2) Sfx.step(G.area === 'taverna' ? 'wood' : 'snow');
 }
 
 // Fala com quem está à frente, inclusive por cima do balcão
@@ -515,11 +516,14 @@ async function claraTalk(n) {
 // O próximo passo da história, dito do mesmo jeito por quem dá direção (Hugo, Nino, ancião)
 function nextStep() {
   if (!G.seen.job) return 'Procurando trabalho? A Berta, na taverna de telhado vermelho, lá embaixo, sempre precisa de braços.';
+  // only old saves reach this line: Lyra now joins in the tavern before the job
   if (!inParty('lyra')) return 'Sua irmã chegou na carroça do correio. Está na taverna, procurando você.';
   if (!inParty('teo')) return 'A Berta mandou olhar o cemitério? O portão fica ao lado da capela, no alto da vila, à esquerda.';
   if (!G.intro) return 'Voltem à taverna. A Berta vai querer saber o que vocês viram.';
+  // only old saves reach this line: the dice girl now joins on the tavern night
   if (!inParty('andilla')) return 'A moça dos dados ficou na taverna. Disse que devia uma a vocês.';
   if (!G.quest) return 'O ancião Bertoldo mora na casa de telhado verde, no alto da vila.';
+  // only old saves reach this line: the party is four before the elder since the tavern night
   if (G.party.length < 4) return 'O ancião quer quatro. Tem gente esperando para descer, lá na taverna.';
   return 'Vocês são quatro. Falem com o Hugo, na porta da igreja velha.';
 }
@@ -586,7 +590,8 @@ async function enterBuilding(b) {
   if (b.id === 'school') return school();
   const homes = {
     smith: ['Gaspar, o ferreiro', {
-      start: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'],
+      arrive: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'],
+      start: ['Lâmina curva, me contaram. Não é aço daqui. Quem forja assim mora longe.'],
       quest: ['Mostra essa espada. Hum. Lá embaixo, mire nas juntas. Osso quebra na junta.'],
       desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
       won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
@@ -622,6 +627,7 @@ async function elderTalk() {
   const nm = 'Ancião Bertoldo';
   if (G.bossDead) { await say(nm, ['Os mortos voltaram a dormir, e o sino se calou. Valmor deve isso a vocês.', 'Mas um túmulo arrombado e vazio... Alguém levou o rei lá de baixo, e nós nem vimos.', 'Levem a carta com o selo real a Erukh. A rainha Lara precisa saber.']); return; }
   if (!G.intro) { await say(nm, [`${heroName('aldo')}. De volta outra vez.`, nextStep()]); return; }
+  // only old saves reach this line: the party is four before the elder since the tavern night
   if (G.quest && G.party.length < 4) { await say(nm, [`Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada.`]); return; }
   if (G.quest && G.reached >= 1) { await say(nm, ['Voltaram. A cripta deixa vocês subirem, por enquanto.', 'Não parem antes do fundo. O que acorda os mortos ainda está lá embaixo.', 'Na cripta, procurem a fonte de luz. E a irmã Irene cuida dos feridos.']); return; }
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Na cripta, procurem a fonte de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
@@ -633,7 +639,7 @@ async function elderTalk() {
     'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',
     'Tudo aponta para o mesmo lugar. Debaixo da igreja velha, no fundo da cripta, dorme um rei, selado na guerra de Elun.',
     'Não digo o nome dele. Não aqui em cima.',
-    ...(G.party.length < 4 ? [
+    ...(G.party.length < 4 ? [ // only old saves reach this line: the party is four before the elder since the tavern night
       `Mas ${G.party.length === 3 ? 'três' : 'dois'} não descem lá. Os paladinos que fecharam a cripta eram quatro, um em cada canto do selo.`,
       `Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada. Aí o Hugo deixa passar.`,
     ] : [
@@ -681,7 +687,9 @@ async function chapel() {
 
 async function shop() {
   const nm = 'Dora, a mercadora';
-  const hello = G.seen.dora ? 'O que vai ser?' : `${heroName('aldo')}! O freguês que nunca tem moeda. O que vai ser?`, solo = G.party.length === 1;
+  const st = stage(), hello = st === 'won' ? 'Os heróis de Valmor! Ainda sem moeda, aposto.'
+    : st === 'quest' ? 'Para a cripta? Poção primeiro, coragem depois.'
+    : G.seen.dora ? 'O que vai ser?' : `${heroName('aldo')}! O freguês que nunca tem moeda. O que vai ser?`, solo = G.party.length === 1;
   G.seen.dora = 1;
   for (;;) {
     const v = await UI.choose([

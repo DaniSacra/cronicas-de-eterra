@@ -203,7 +203,7 @@ function updateExplore(dt) {
 
 async function onStep() {
   markExplored();
-  Sfx.step();
+  Sfx.step('stone');
   if (G.floor === 0 && G.x === map().start.x && G.y === map().start.y) {
     G.busy = true; G.held.clear(); G.queue.length = 0;
     const ok = await UI.choose([{ label: 'Subir', value: true }, { label: 'Ficar', value: false }],
@@ -334,7 +334,7 @@ async function descend() {
   cam.x = G.x + 0.5; cam.y = G.y + 0.5; cam.a = dirAngle(G.dir);
   await fadeTo(0, 700);
   const f = FLOORS[G.floor];
-  await UI.say(`${f.short} · ${f.name}` + (f.boss ? '\nUm sino toca, em algum lugar lá embaixo.' : ''));
+  await UI.say(`${f.short} · ${f.name}`);
   await floorClues(G.floor);
 }
 
@@ -349,7 +349,7 @@ const FLOOR_CLUES = [
 ];
 const FLOOR_TALKS = ['olho'];
 // The party talks (TALKS) and the tunnel clue live with the rest of the prologue story, in src/opening.js
-const clue = async lines => { for (const [who, t] of lines) await say2(who, t); };
+const clue = async lines => { Sfx.clue(); for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
   if (G.seen['andar' + f] || !FLOOR_CLUES[f]) return;
   G.seen['andar' + f] = 1;
@@ -581,8 +581,9 @@ async function gameOver() {
 async function ending() {
   G.bossDead = true; G.busy = true;
   G.flashColor = '255,255,255'; G.flash = { t0: performance.now(), dur: 1500 };
-  Music.stop(); Sfx.bellFar();
+  Music.stop();
   await say2('O Sineiro', '"Ele prometeu... que o rei traria os fiéis de volta..."');
+  Sfx.bellFar();
   await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
   if (inParty('lyra')) await say2('Lyra~alegre', G.party.some(m => m.id === 'aldo' && m.hp <= 0)
     ? `Levanta, ${heroName('aldo')}. A professora não gosta de remendo.` : 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
@@ -591,7 +592,7 @@ async function ending() {
   await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
   await partyTalk('tumulo', TALKS.tumulo);
   await fadeTo(1, 900);
-  enterTown(CRYPT_FRONT);
+  enterTown(CRYPT_FRONT, 'valmor', null, false); // no waltz between the silence and the ending
   Music.play('ending');
   G.busy = true;
   await fadeTo(0, 900);
