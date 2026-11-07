@@ -62,7 +62,7 @@ test('Gaspar speaks of the cleric only when Teo is in the party', async () => {
   for (const [ids, want, not] of [[['aldo'], 'Luz faz mais que espada', 'clérigo'], [['aldo', 'teo'], 'clérigo', 'Luz faz mais']]) {
     const { log, run } = story(ids);
     run(`enterTown({ x: 10, y: 12, dir: 0 }, 'valmor')`);
-    await run(`enterBuilding({ id: 'smith' })`);
+    await run(`homeTalk('smith')`); // the forge menu opens first; Conversar plays these lines
     assert.ok(log.some(t => t.includes(want)), want);
     assert.ok(!log.some(t => t.includes(not)), not);
   }
@@ -174,7 +174,7 @@ test('Defesa and Resistência show the share of damage the combat cuts', () => {
   assert.equal(run('Math.round(100 * (1 - guardCut(40)))') + '%', run('guardText(40)'));
 });
 
-test('combat: the bar opens on the last command, a single skill skips the list, the list shows what a spell does', async () => {
+test('combat: the bar opens on the last command, a single skill still opens the list, the list shows what a spell does', async () => {
   const starts = [], lists = [];
   let turn = 0;
   const { run } = battle(['aldo'], (opts, o, run) => {
@@ -189,7 +189,7 @@ test('combat: the bar opens on the last command, a single skill skips the list, 
   });
   await run(`startBattle(['boneco'], false, { surprise: 'normal' })`);
   assert.deepEqual(starts.slice(0, 3), ['atk', 'spell', 'atk'], 'each bar opens on the last command');
-  assert.ok(!lists.some(t => t && t.includes('Técnica')), 'Aldo has one skill: no list');
+  assert.ok(lists.some(t => t && t.includes('Técnica')), 'Aldo has one skill and still sees the list with its name');
   const src = fs.readFileSync(`${__dirname}/../src/battle.js`, 'utf8');
   assert.ok(src.includes('B.label = v ? SPELLS[v].desc : null'));
 });

@@ -367,6 +367,15 @@ const NIGHT_CAST = [
   { id: 'moca', look: 'andilla', name: 'Moça dos dados', x: 1, y: 6, dir: 1, wander: 0, lines: { start: ['...'] } },
 ];
 
+// From the tavern door (7, 9) up the free column to row 4, along row 4 and up to the tile right of Teo
+function messengerPath(teo) {
+  const tx = teo.x + 1, path = [];
+  for (let y = 8; y >= 4; y--) path.push([7, y]);
+  for (let x = 6; x >= tx; x--) path.push([x, 4]);
+  for (let y = 3; y >= teo.y; y--) path.push([tx, y]);
+  return path;
+}
+
 async function nightScene() {
   G.busy = true;
   await fadeTo(1, 300);
@@ -402,16 +411,17 @@ async function nightScene() {
   // O mensageiro
   Music.stop(); Sfx.dark();
   TOWN.dim = 0.35;
+  // he crosses the room straight to Teo, the one with the Temple's book, and stops at his side
   const tobias = addActor({ id: 'tobias', name: 'Mensageiro', x: 7, y: 9, dir: 0 });
-  await walkPath(tobias, [[7, 8], [7, 7], [7, 6], [7, 5], [7, 4], [8, 4]]);
-  tobias.dir = 0;
-  TOWN.p.dir = 1; TOWN.followers[0].dir = 2;
+  const teoAt = TOWN.followers[G.party.findIndex(m => m.id === 'teo') - 1] || TOWN.p;
+  await walkPath(tobias, messengerPath(teoAt));
+  tobias.dir = 3; teoAt.dir = 1; TOWN.p.dir = 1;
   await wait(250);
   await line('Mensageiro', 'Esta carta... tem de chegar à rainha. Ninguém mais pode ler.');
   await line('Mensageiro', 'Você é do Templo. Eu vejo pelo livro. Leve. Não deixe que eles...');
   tobias.lying = true; Sfx.fall(); shake(200);
   G.key.carta = true;
-  await UI.say('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.');
+  await UI.say('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real.');
   Sfx.keyItem();
   await UI.say('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.');
 
@@ -422,10 +432,10 @@ async function nightScene() {
     hooded.push(h);
     await walkPath(h, path, 300);
   }
-  await line('Encapuzado', 'A carta. E ninguém mais precisa sangrar esta noite.');
+  await line('Encapuzado', 'O homem caído vem com a gente. E ninguém mais precisa sangrar esta noite.');
   await UI.say('A moça dos dados vê as lâminas curvas e perde a cor por um instante.');
   await UI.say('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.');
-  await line(moca, 'Hoje eu não corro.');
+  await line(moca, 'Três contra a taverna inteira? Eu aposto na taverna.', 'alegre');
   TOWN.p.dir = 2;
   await line('Aldo', 'Acho que vocês erraram de taverna.', 'bravo');
   if (!inParty('andilla')) {
@@ -439,7 +449,7 @@ async function nightScene() {
     // two hints, one per hero turn: the first comes before anyone acts (the dice girl is almost always first)
     hints: ['Os inimigos agiram primeiro: a ordem de quem age está no topo. A moça dos dados é a mais rápida.',
       'Teo cura os feridos com Magia. Defender reduz o dano até a próxima vez do herói.'],
-    noRun: 'Não dá para fugir: o mensageiro está caído no balcão!',
+    noRun: 'Não dá para fugir: o mensageiro está caído no chão!',
   });
   if (r === 'lose') return gameOver();
   G.mode = 'town';
@@ -454,9 +464,9 @@ async function nightScene() {
   await UI.say('A velha Ana para de fiar. A moça dos dados também olha a marca. Por tempo demais.');
   await line('Aldo', 'Teo... o que diz a carta?');
   await line('Teo', 'É o selo real. Não cabe a mim rompê-lo.');
-  await line('Aldo', 'Quase mataram um homem por ela.', 'bravo');
+  await line('Aldo', 'Quase mataram um homem. E ele só pensava nela.', 'bravo');
   await line('Teo', 'Por isso mesmo. Quem abrir tem de ter o direito.');
-  if (lyra) await line('Lyra', 'Então ninguém abre. Mas eu quero muito saber quem a quer tanto assim.');
+  if (lyra) await line('Lyra', 'Então ninguém abre. Mas eu quero muito saber por que querem tanto esse homem.');
   await introduceAndilla();
   await line('Rui', 'As covas abertas... e agora isso. Na mesma semana.');
   await line('Berta', 'O ancião Bertoldo vai saber o que fazer. É a casa de telhado verde.');
@@ -494,6 +504,13 @@ const TALKS = {
   altar: [['teo', 'Riscaram o nome de Elun. Não basta abrir um túmulo; precisavam apagar a luz.', 'bravo'], ['aldo', '"O rei voltará." Então é por ele que eles esperam.']],
   igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
     ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
+  fonte: [['andilla', 'Uma fonte. No meio de uma cripta. Quem constrói uma fonte numa cripta?'],
+    ['lyra', 'Alguém que sabia que ia ter gente apanhando aqui embaixo.', 'alegre'],
+    ['aldo', 'E que deixou a água no meio do caminho. Nem antes, nem depois.'],
+    ['teo', 'Não questionem. Bebam.', 'alegre']],
+  buraco: [['teo', 'Esse símbolo não é de paladino. Nem do Templo.', 'preocupado'], ['andilla', 'Nem dos encapuzados. O olho deles é outro.'],
+    ['lyra', 'Eu li muito livro. Esse não estava em nenhum.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'],
+    ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
   sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
   tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
     ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo'],

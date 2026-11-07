@@ -10,6 +10,8 @@ const isInterior = t => t >= TILE.FLOOR && t <= TILE.DOOR;
 const TDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
 const CRYPT_FRONT = { x: 27, y: 18, dir: 2 };
 const SHOP = [['pocao', 15], ['eter', 30], ['pena', 60]];
+// Gaspar's forge: simple Valmor steel for each hero, weaker than what lies in the crypt (worth a few fights in the cemetery)
+const FORGE = [['espadaCurta', 60], ['gibao', 50], ['cajadoFreixo', 55], ['capaLa', 40], ['macaFerro', 45], ['habitoForrado', 40], ['adagaAfiada', 55], ['gibaoCouro', 45]];
 
 const BUILDINGS = [
   { id: 'chapel', x: 2, y: 3, w: 3, h: 3 },
@@ -81,9 +83,9 @@ const NPC_DEFS = [
     desceu: ['Desceram e voltaram! Viram quem abriu as covas?', 'Ninguém acreditou em mim. Agora a vila inteira só fala disso.'],
     won: ['Dormi a noite inteira pela primeira vez em semanas!', 'Mas aquelas covas cavadas com pá... Morto não usa pá.'] } },
   { id: 'marta', name: 'Dona Marta', x: 23, y: 8, dir: 2, wander: 1, hi: () => `O ${heroName('aldo')} de volta. A escola agradece. Digo, a vila agradece.`, lines: {
-    arrive: ['Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
-    start: ['Briga na Berta e sino de madrugada. Minha avó dizia que inverno assim não traz coisa boa.', 'Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
-    quest: ['Lá embaixo, leiam as paredes. Os antigos escreviam tudo.', 'Levem poções. Muitas poções. A Dora vende na loja de telhado dourado.'],
+    arrive: ['A cripta debaixo da igreja velha foi fechada pelos paladinos. Ninguém devia abrir aquilo.', 'Minha avó dizia isso, e a avó dela também.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
+    start: ['Briga na Berta e sino de madrugada. Minha avó dizia que inverno assim não traz coisa boa.', 'A cripta debaixo da igreja velha foi fechada pelos paladinos. Ninguém devia abrir aquilo.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
+    quest: ['Vão abrir o que os paladinos fecharam. Que seja para fechar de novo.', 'Lá embaixo, leiam as paredes. Os antigos escreviam tudo.', 'Levem poções. Muitas poções. A Dora vende na loja de telhado dourado.'],
     desceu: ['Leram as paredes? Minha avó dizia que os paladinos escreviam até na pedra do chão.'],
     won: ['Minha avó ficaria orgulhosa de vocês.', 'Mas eu não durmo tranquila. Paladino nenhum deixaria aquele túmulo vazio.'] } },
   { id: 'tome', name: 'Tomé, o pescador', x: 9, y: 11, dir: 3, wander: 0, hi: () => `${heroName('aldo')}! Veio pescar? Ah, não. Veio pelo... trabalho.`, lines: {
@@ -507,13 +509,30 @@ async function claraTalk(n) {
     [nm, 'Que bom.'],
     [null, 'Ela ajeita o xale e olha para as crianças.'],
     ['aldo', 'Você está... As crianças estão bem? O Nino cresceu.'],
-    [nm, `Estão bem. Com licença, ${leave}.`],
+    [nm, 'Estão bem. Se veio pelo trabalho, fala com a Berta. Ela sempre precisa de braços.'],
+    [nm, stage() === 'start' ? 'Eu também tenho o meu, com as crianças. A aula vai começar, preciso ir.' : 'Eu também tenho o meu, com as crianças. Preciso levá-las para casa.'],
     [null, 'Clara se afasta. Antes da esquina, olha para trás uma vez.'],
     [null, `${a} fica parado, coçando a nuca.`],
     ['teo', `Você ficou vermelho, ${a}.`],
     ['andilla', 'Vermelho de frio, claro.'],
   ]);
 }
+
+// Passing near Clara while Aldo is still alone, the first time: he stops, walks up to her and the scene plays
+function claraNear(x, y) {
+  const n = TOWN.npcs.find(a => a.def.id === 'clara');
+  if (!n || n.talking || !claraCalls(G.seen, G.party.length, { x, y }, n)) return null;
+  return async () => {
+    n.talking = true;
+    const P = TOWN.p, next = (ax, ay) => Math.abs(ax - n.x) + Math.abs(ay - n.y) === 1;
+    const path = gridPath(P, next, (ax, ay) => TOWN.walkable(ax, ay) && !npcAt(ax, ay), 200);
+    if (path) await walkPath(P, path, 200);
+    P.dir = n.x > P.x ? 1 : n.x < P.x ? 3 : n.y > P.y ? 2 : 0;
+    n.talking = false;
+    await talkTo(n);
+  };
+}
+AREAS.valmor.onStep = claraNear;
 
 // O próximo passo da história, dito do mesmo jeito por quem dá direção (Hugo, Nino, ancião)
 function nextStep() {
@@ -590,29 +609,62 @@ async function enterBuilding(b) {
   if (b.id === 'elder') return elderTalk();
   if (b.id === 'chapel') return chapel();
   if (b.id === 'shop') return shop();
+  if (b.id === 'smith') return forge();
   if (b.id === 'school') return school();
-  const homes = {
-    smith: ['Gaspar, o ferreiro', {
-      arrive: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', () => inParty('teo') ? 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'
-        : 'Contra mortos-vivos, aço comum não basta. Luz faz mais que espada.'],
-      start: ['Lâmina curva, me contaram. Não é aço daqui. Quem forja assim mora longe.'],
-      quest: ['Mostra essa espada. Hum. Lá embaixo, mire nas juntas. Osso quebra na junta.'],
-      desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
-      won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
-    sara: ['Sara', {
-      arrive: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
-      start: ['Ouvi o sino de madrugada. Fazia cinquenta anos que ele não tocava.', 'Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
-      quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
-      desceu: ['Vocês desceram onde o meu marido desceu. E voltaram falando. Obrigada por isso.'],
-      won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
-    joaquim: ['Seu Joaquim', {
-      arrive: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
-      start: ['Ouvi a gritaria na Berta. Na minha idade, a gente fecha a janela e espera o dia.', 'Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
-      quest: ['Na minha época, ninguém descia na igreja velha. Nem por moça.'],
-      desceu: ['Desceram, é? Na minha época, a gente voltava com um osso de lembrança.'],
-      won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.', 'Na minha época, túmulo vazio queria dizer encrenca. Ainda quer.'] }],
-  }[b.id];
-  if (homes) await say(homes[0], byStage(homes[1]));
+  await homeTalk(b.id);
+}
+
+// Who lives in each house and what they say at each stage
+const GASPAR = 'Gaspar, o ferreiro';
+const HOMES = {
+  smith: [GASPAR, {
+    arrive: [() => `${heroName('aldo')}! Essa espada ainda tem o fio que eu dei no verão?`, 'Forjo espadas há trinta anos, mas aço comum mal arranha um esqueleto.', () => inParty('teo') ? 'Contra mortos-vivos, confiem na Luz Sagrada do clérigo. Ou numa lâmina melhor, se acharem uma lá embaixo.'
+      : 'Contra mortos-vivos, aço comum não basta. Luz faz mais que espada.'],
+    start: ['Lâmina curva, me contaram. Não é aço daqui. Quem forja assim mora longe.'],
+    quest: ['Mostra essa espada. Hum. Lá embaixo, mire nas juntas. Osso quebra na junta.'],
+    desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
+    won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
+  sara: ['Sara', {
+    arrive: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
+    start: ['Ouvi o sino de madrugada. Fazia cinquenta anos que ele não tocava.', 'Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
+    quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
+    desceu: ['Vocês desceram onde o meu marido desceu. E voltaram falando. Obrigada por isso.'],
+    won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
+  joaquim: ['Seu Joaquim', {
+    arrive: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
+    start: ['Ouvi a gritaria na Berta. Na minha idade, a gente fecha a janela e espera o dia.', 'Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
+    quest: ['Na minha época, ninguém descia na igreja velha. Nem por moça.'],
+    desceu: ['Desceram, é? Na minha época, a gente voltava com um osso de lembrança.'],
+    won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.', 'Na minha época, túmulo vazio queria dizer encrenca. Ainda quer.'] }],
+};
+const homeTalk = id => HOMES[id] ? say(HOMES[id][0], byStage(HOMES[id][1])) : Promise.resolve();
+
+
+// What the forge sells now: the pieces of the heroes in the party, greyed out when the purse is short or the hero
+// already wears something as strong
+function forgeOptions(gold, owned) {
+  return FORGE.filter(([id]) => inParty(EQUIPS[id].who)).map(([id, price]) => {
+    const e = EQUIPS[id], best = bestGear(e.who, e.slot, owned, EQUIPS), has = best && gearPower(EQUIPS[best]) >= gearPower(e);
+    return { label: `${e.name} ${price}`, hint: has ? `${heroName(e.who)} · já tem` : `${heroName(e.who)} · ${bonusText(e.bonus, STAT_NAMES)}`, value: id, disabled: has || gold < price };
+  });
+}
+async function forge() {
+  for (;;) {
+    const v = await UI.choose([{ label: 'Comprar', value: 'buy' }, { label: 'Conversar', value: 'talk' }, { label: 'Sair', value: null }],
+      { title: `${GASPAR}:\nAço de Valmor. Não é o melhor do mundo, mas é o melhor da rua.`, cancel: true, cols: 3, party: true });
+    if (v === null) return;
+    if (v === 'talk') { await homeTalk('smith'); continue; }
+    if (!G.seen.forja) { G.seen.forja = 1; await say(GASPAR, ['Coisa simples, feita aqui. O aço bom mesmo ficou lá embaixo, com os mortos.']); }
+    for (;;) {
+      const id = await UI.choose([...forgeOptions(G.gold, HeroView.owned()), { label: 'Voltar', value: null }],
+        { title: `${GASPAR}:\nPara quem vai ser?  (${G.gold} moedas)`, cancel: true, cols: 2, party: true });
+      if (id == null) break;
+      const delta = equipDelta(id, HeroView.owned(), EQUIPS);
+      G.gold -= FORGE.find(([f]) => f === id)[1]; G.gear = [...(G.gear || []), id]; Sfx.coin();
+      await UI.say(wearGear(id, delta).replace('Encontraram', 'Compraram'));
+      saveGame(); // the coins and the gear go together
+    }
+  }
 }
 
 async function enterTavern() {
@@ -641,7 +693,7 @@ async function elderTalk() {
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
     'É o selo real. E vocês não abriram. Bom.',
-    'Se quase mataram um homem por ela, o que tem dentro é maior que Valmor.',
+    'Se quase mataram o homem que a trazia, o que tem dentro é maior que Valmor.',
     'O homem que a trouxe delira "o selo... o selo". As covas abrem sozinhas.',
     'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',
     'Tudo aponta para o mesmo lugar. Debaixo da igreja velha, no fundo da cripta, dorme um rei, selado na guerra de Elun.',
@@ -664,9 +716,9 @@ async function elderTalk() {
 // A escolinha: ninguém lá dentro, só a lousa e os desenhos das crianças
 const SCHOOL = {
   start: [() => 'A escolinha de Valmor. Na lousa, a letra caprichada da Clara: "Hoje, as estações do ano."',
-    () => `Num canto, um desenho de criança: um homem de espada e, embaixo, em letra torta: ${heroName('aldo').toUpperCase()}.`],
+    'Num canto, um desenho de criança: um homem de espada, maior que as casas. Embaixo, em letra torta: NINO.'],
   quest: ['As carteiras estão vazias. Com a igreja velha assim, as crianças ficam perto de casa.',
-    () => `O desenho de ${heroName('aldo')} continua no canto. Alguém desenhou um coração do lado e depois apagou.`],
+    'O desenho do Nino continua no canto. Alguém desenhou um coração do lado e depois apagou.'],
   won: ['Na lousa, alguém desenhou quatro heróis e um sino quebrado.', 'Embaixo, na letra da Clara: "Voltem."'],
 };
 const school = () => SCHOOL[G.bossDead ? 'won' : G.quest ? 'quest' : 'start'].reduce((p, t) => p.then(() => UI.say(typeof t === 'function' ? t() : t)), Promise.resolve());
@@ -679,7 +731,7 @@ async function chapel() {
     ], { title: `${nm}:\n${G.party.length > 1 ? 'Bem-vindos' : 'Bem-vindo'} à capela de Valmor.`, cancel: true, cols: 3, party: true });
     if (v === null) return;
     if (v === 'talk') await say(nm, byStage({
-      arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', inParty('teo') ? 'Teo, você voltou inteiro. Graças a Elun.' : 'O jovem Teo saiu cedo para o cemitério. Reza pelas covas há três noites.'],
+      arrive: [`${heroName('aldo')}. Que bom te ver de volta.`, 'A capela está sempre aberta.', ...(inParty('teo') ? ['Teo, você voltou inteiro. Graças a Elun.'] : ['O irmão Teo saiu para rezar no cemitério e ainda não voltou.', 'Já devia ter voltado. Se passarem por lá, olhem por ele.'])],
       start: ['O mensageiro dorme. Perdeu muito sangue, mas vai viver.', 'Fala dormindo. Repete sempre a mesma coisa: "o selo... o selo".', 'O ancião Bertoldo mora na casa de telhado verde.'],
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       desceu: ['Voltaram da cripta. Deixem-me ver esses ferimentos.', 'O mensageiro se mexeu quando vocês passaram pela porta. Como se soubesse onde vocês estiveram.'],

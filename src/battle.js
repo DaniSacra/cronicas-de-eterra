@@ -112,9 +112,9 @@ async function chooseCommand(m) {
       return { type: 'attack', target: t };
     }
     if (v === 'spell') {
-      // a single skill skips the list (the bar already showed "Golpe Forte · 4 PM"); the list opens on the last one used
-      if (one && m.mp < one.mp) { Sfx.bump(); await bsay(`PM insuficiente para ${one.name}.`); continue; }
-      const sp = one ? spells[0] : await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
+      // the list opens even for a single skill: the player reads its name and sees there is room for more;
+      // it opens on the last one used
+      const sp = await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
         { title: `${d.skillWord} ${midName(d.name, 'de')} (PM ${m.mp})`, cancel: true, cols: 2, start: mem.spell,
           onHover: v => { B.label = v ? SPELLS[v].desc : null; } }); // the plaque says what the spell does
       if (sp == null) continue;

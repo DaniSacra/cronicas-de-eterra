@@ -12,6 +12,7 @@ const HeroView = (() => {
     for (let f = 0; f < FLOORS.length; f++) for (const o of getMap(f).objects)
       if (o.type === 'chest' && EQUIPS[o.loot] && G.opened[`${f}:${o.x},${o.y}`]) ids.push(o.loot);
     const old = Object.keys(G.opened || {}).some(k => parseInt(k, 10) >= FLOORS.length);
+    ids.push(...(G.gear || [])); // bought at Gaspar's forge
     return old ? [...ids, ...gearFromBonus(G.party, ids, EQUIPS)] : ids;
   }
   const face = id => { const key = Portraits.keyFor(heroName(id)); return key ? Portraits.draw(key).toDataURL() : ''; };
@@ -211,5 +212,5 @@ const HeroView = (() => {
     else if (k === 'PageDown' || k === 'PageUp') page(k === 'PageDown' ? 1 : -1);
     else if (['Escape', 'x', 'Backspace'].includes(k)) close();
   }
-  return { show, close, key, isOpen: () => open };
+  return { show, close, key, isOpen: () => open, owned: ownedEquips };
 })();

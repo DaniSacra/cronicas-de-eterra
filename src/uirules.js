@@ -41,7 +41,7 @@ function campMenuOpts(s) {
 // Starting over replaces the save: with one, ask first, with No already selected
 async function replaceSaveOk(saved) {
   return !saved || UI.choose([{ label: 'Sim', value: true }, { label: 'Não', value: false }],
-    { title: 'Começar de novo? O jogo salvo será substituído.', cols: 2, start: false });
+    { title: 'Começar de novo? O jogo salvo será substituído.', cols: 1, start: false });
 }
 
 // Equipment screen: what one hero carries in each slot, from the ids of the equipment the party found
@@ -122,14 +122,15 @@ function camLift(pos, size, view, pad = 0) {
 // their slot (art pixels stay square, never blurry). Common enemies keep room for the HP bar under them.
 const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE_BACK = 0.08;
 // Common enemies stand on the ground of the painted backdrop (src/battlebg.js): the first, third... a row farther back
-// (BATTLE_BACK of the height, as far as the HUD allows), the others in front, like a group spread on a field
+// (BATTLE_BACK of the height, as far as the HUD allows), the others in front, like a group spread on a field.
+// A lone enemy stands in the front row: at the back it sits on the horizon, where the props are tiny, and looks pasted on
 function battleLayout(sizes, vw, vh, boss = false) {
   const floor = Math.round(vh * BATTLE_FLOOR), n = sizes.length, slot = Math.floor(vw / n);
   const base = boss ? floor : floor - 12, safe = Math.round(vh * (boss ? 0.17 : BATTLE_SAFE_TOP));
   // one scale for the whole group, so every pixel in the scene has the same size
   const scale = Math.max(1, Math.min(BATTLE_MAX_SCALE, ...sizes.map(({ w, h, float }) =>
     Math.min(Math.floor((boss ? vw - 8 : slot - 2) / w), Math.floor((base - (float ? 8 : 0) - safe) / h)))));
-  const back = boss ? 0 : Math.max(0, Math.min(Math.round(vh * BATTLE_BACK), ...sizes.map(({ h, float }) => base - (float ? 8 : 0) - safe - h * scale)));
+  const back = boss || sizes.length < 2 ? 0 : Math.max(0, Math.min(Math.round(vh * BATTLE_BACK), ...sizes.map(({ h, float }) => base - (float ? 8 : 0) - safe - h * scale)));
   return sizes.map(({ w, h, float }, i) => {
     const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (i - (n - 1) / 2) * slot);
     const W = w * scale, H = h * scale, left = x - Math.floor(W / 2), lift = float ? 8 : 0; // flyers hover over their shadow
@@ -140,9 +141,26 @@ function battleLayout(sizes, vw, vh, boss = false) {
 
 // ---------- Heroes screen (src/equipview.js) ----------
 // What each slot shows: the best equipment found for that hero, or the hero's starting gear (never an empty box)
+// One hero wears the strongest piece of each slot (bonus points added up); the rest stays in the bag
+const gearPower = e => Object.values(e.bonus).reduce((s, v) => s + v, 0);
+function bestGear(heroId, slot, ownedIds, equips) {
+  let best = null;
+  for (const id of ownedIds) { const e = equips[id]; if (e && e.who === heroId && e.slot === slot && (!best || gearPower(e) >= gearPower(equips[best]))) best = id; }
+  return best;
+}
+// What a new piece changes on its hero's bonus: nothing when the hero already wears something as strong in that slot,
+// otherwise the new piece's bonus minus the one it replaces (ownedIds: what the party had before)
+function equipDelta(id, ownedIds, equips) {
+  const e = equips[id], prev = bestGear(e.who, e.slot, ownedIds, equips), old = prev ? equips[prev].bonus : {};
+  if (prev && gearPower(equips[prev]) >= gearPower(e)) return {};
+  const d = {};
+  for (const k of new Set([...Object.keys(old), ...Object.keys(e.bonus)])) { const v = (e.bonus[k] || 0) - (old[k] || 0); if (v) d[k] = v; }
+  return d;
+}
+
 function slotGear(heroId, ownedIds, equips, start) {
   return heroGear(heroId, ownedIds, equips).map(s => {
-    const it = s.items.at(-1);
+    const it = s.items.find(i => i.id === bestGear(heroId, s.slot, ownedIds, equips));
     return it ? { slot: s.slot, label: s.label, name: it.name, icon: it.icon, bonus: it.bonus, id: it.id, start: false }
       : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
   });
@@ -193,7 +211,8 @@ const storyQuote = (quotes, flags) => storyLines(quotes, flags).at(-1) || '';
 function bagGroups({ inv, key, owned, items, equips, keyItems, read }) {
   return [
     { title: 'Consumíveis', cells: Object.keys(items).filter(k => inv[k] > 0).map(k => ({ id: k, kind: 'item', icon: k, name: items[k].name, n: inv[k], desc: items[k].desc })) },
-    { title: 'Equipamentos', cells: owned.filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0, desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, em uso` })) },
+    { title: 'Equipamentos', cells: owned.filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0,
+      desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, ${bestGear(equips[id].who, equips[id].slot, owned, equips) === id ? 'em uso' : 'guardada'}` })) },
     { title: 'Itens-chave', cells: Object.keys(keyItems).filter(k => key[k]).map(k => ({ id: k, kind: 'key', icon: k, n: 0, desc: keyItems[k].desc,
       name: read || !keyItems[k].sealedName ? keyItems[k].name : keyItems[k].sealedName })) },
   ].filter(g => g.cells.length);
@@ -231,8 +250,33 @@ const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join(
 const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudbar');
 
 // Title menu: the quick start straight into the crypt is a test shortcut, only with ?dev in the address
+// Clara calls Aldo over: the first time he passes within CLARA_CALL steps of her, while he still walks alone
+const CLARA_CALL = 5;
+const claraCalls = (seen, partySize, aldo, clara) => partySize === 1 && !seen['talk:clara'] && !seen['talk:claraLyra']
+  && Math.abs(aldo.x - clara.x) + Math.abs(aldo.y - clara.y) <= CLARA_CALL;
+
+// Shortest walk on a grid (breadth first): from `from` to a tile where goal(x, y) holds, through tiles where free(x, y)
+// holds; the list of steps, without the start ([] when already there, null when there is no way within `limit` tiles)
+function gridPath(from, goal, free, limit = 400) {
+  const key = (x, y) => x + ',' + y, prev = new Map([[key(from.x, from.y), null]]), queue = [[from.x, from.y]];
+  while (queue.length && prev.size <= limit) {
+    const [x, y] = queue.shift();
+    if (goal(x, y)) {
+      const path = [];
+      for (let k = key(x, y); prev.get(k); k = prev.get(k)) path.unshift(k.split(',').map(Number));
+      return path;
+    }
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (prev.has(k) || !free(nx, ny)) continue;
+      prev.set(k, key(x, y)); queue.push([nx, ny]);
+    }
+  }
+  return null;
+}
+
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

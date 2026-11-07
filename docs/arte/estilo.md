@@ -92,6 +92,8 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   anoitecer (`#1c2860`) com poças em três anéis de degrau, que tiram o véu e põem âmbar. Fumaça e neve caindo
   são desenhadas por quadro, em pixels inteiros. Lampiões ficam em `LAMPS` (`src/town.js`).
 - **Cripta:** azul e roxo, velas, cogumelos que brilham. Tocha quente perto do grupo, escuro com a distância.
+  No fundo, antes da luta com o Sineiro, a parede arrombada (`breach` em `src/sprites.js`): tijolo cinza, buraco
+  preto até o chão, entulho e o símbolo riscado em cima do buraco.
   Feito: pedra azulada com limo verde-água (`FLOORS[0].pal`), paredes com velas e com cogumelos emissivos
   (`src/textures.js`, variantes 6 e 7) e a cor da luz por distância em `torchTint` (`src/uirules.js`).
 - **Tela de título (amanhecer sobre Erukh):** céu em faixas da noite ao dourado com pontilhado Bayer só na
@@ -106,7 +108,10 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
 - **Fundos de batalha (pseudo 3D):** cada luta mostra o lugar visto pelos heróis: o fundo (céu, muro, parede) até o
   horizonte em 40% da altura e um chão em perspectiva com ponto de fuga no centro; lápides, barris e mesas diminuem com a
   distância. Cemitério à noite, taverna, cripta, sala do chefe e rua da vila. Os inimigos ficam de pé no chão, em duas
-  fileiras (o primeiro, o terceiro... mais ao fundo). Pintado na escala dos inimigos, em `src/battlebg.js`
+  fileiras (o primeiro, o terceiro... mais ao fundo); um inimigo sozinho fica na fileira da frente, nunca colado no horizonte,
+  onde os objetos são minúsculos e ele parece colado por cima. No cemitério, a lua e a capela ficam fora da faixa de
+  texto, há névoa pontilhada nas fileiras do fundo, covas abertas com monte de terra, e lápides grandes só nas bordas
+  entre os heróis e os inimigos. Pintado na escala dos inimigos, em `src/battlebg.js`
   (`battlePlace` escolhe o lugar; um andar novo da masmorra pode ter `battle: 'mina'` quando a cena existir).
 
 ## NPCs e heróis ganham vida

@@ -36,6 +36,15 @@ async function partyTalk(id, lines) {
   }
 }
 
+// A new piece of gear (chest or forge): the hero wears it when it beats what they have, and the bonus changes by delta
+function wearGear(id, delta) {
+  const eq = EQUIPS[id], m = G.party.find(p => p.id === eq.who), nm = pdef(m).name;
+  if (!Object.keys(delta).length) return `Encontraram: ${eq.name}!\n${nm} já usa algo melhor e guarda na bolsa.`;
+  for (const [k, v] of Object.entries(delta)) m.bonus[k] = (m.bonus[k] || 0) + v;
+  UI.updateParty(); UI.cardGlow(m);
+  return `Encontraram: ${eq.name}!\n${nm} equipa (${bonusText(eq.bonus, STAT_NAMES)}).`;
+}
+
 // Novo companheiro: chega no nível e XP do líder, com vida e magia cheias. A mensagem fica com quem chama.
 function recruit(id, actor = null) {
   const lead = G.party[0], m = newMember(PARTY_DEFS.find(d => d.id === id));

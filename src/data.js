@@ -76,6 +76,15 @@ const EQUIPS = {
   cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'spell', bonus: { mag: 6 } },
   espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 10 } },
   mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 13, mag: 5 } },
+  // Forja do Gaspar: aço simples de Valmor, mais fraco que o que está na cripta
+  espadaCurta:   { name: 'Espada Curta',     who: 'aldo',    slot: 'arma',     icon: 'atk',   bonus: { atk: 3 } },
+  gibao:         { name: 'Gibão Acolchoado', who: 'aldo',    slot: 'armadura', icon: 'def',   bonus: { def: 5 } },
+  cajadoFreixo:  { name: 'Cajado de Freixo', who: 'lyra',    slot: 'arma',     icon: 'spell', bonus: { mag: 2 } },
+  capaLa:        { name: 'Capa de Lã',       who: 'lyra',    slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
+  macaFerro:     { name: 'Maça de Ferro',    who: 'teo',     slot: 'arma',     icon: 'atk',   bonus: { atk: 2 } },
+  habitoForrado: { name: 'Hábito Forrado',   who: 'teo',     slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
+  adagaAfiada:   { name: 'Adaga Afiada',     who: 'andilla', slot: 'arma',     icon: 'atk',   bonus: { atk: 3 } },
+  gibaoCouro:    { name: 'Gibão de Couro',   who: 'andilla', slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
 };
 
 // Heroes screen: attribute names in full, the starting gear of each hero (shown until something better is found)
@@ -203,7 +212,7 @@ const JOURNAL = {
     { show: () => G.seen.estojo && G.seen.andillaNome, text: () => `Junto de uma cova cavada, um estojo de ganchos. Era da ${heroName('andilla')}.` },
     { show: () => inParty('teo'), text: 'Duas Ossadas se ergueram no cemitério. Teo, aprendiz que sonha servir no Templo, veio conosco.' },
     { show: () => G.intro, text: 'Um mensageiro ferido caiu na taverna com uma carta para a rainha.' },
-    { show: () => G.intro, text: 'Os encapuzados tentaram tomá-la. No peito, um olho cortado ao meio.' },
+    { show: () => G.intro, text: 'Os encapuzados vieram atrás dele. No peito, um olho cortado ao meio.' },
     { show: () => G.intro && inParty('andilla'), get text() { return `A moça dos dados se chama ${heroName('andilla')}. Ganha no dado e na faca. Não diz de onde vem.`; } },
     { show: () => G.intro && inParty('andilla'), get text() { return `${heroName('andilla')} viu gente de capa cinza cavando no cemitério. Não diz o que fazia lá.`; } },
     { show: () => G.intro, text: 'A carta tem o selo real. Teo não quer rompê-lo: quem abrir tem de ter o direito.' },
@@ -217,6 +226,7 @@ const JOURNAL = {
     { show: () => G.seen.pistaTunel, text: 'No túnel da cripta, sangue seco e um pedaço de capa marrom, de viajante. Alguém desceu ali sem ser dos encapuzados.' },
     { show: () => G.seen.bilhete, text: 'Um bilhete assinado "V.": o selo cede, e "o homem do sumo sacerdote" não pode sair de Valmor. Quem é V.?' },
     { show: () => G.seen.altar, text: 'No altar, escreveram "O rei voltará". Os encapuzados servem a Morvath?' },
+    { show: () => G.seen.buraco, text: 'No fundo da cripta, uma parede arrombada. Em cima do buraco, um símbolo que ninguém soube ler: um anel com um ponto no meio e uma linha que sobe.' },
     { show: () => G.bossDead, text: 'O Sineiro, um morto da igreja velha, guardava a última porta. Era ele quem tocava o sino.' },
     { show: () => G.bossDead, text: 'O túmulo de Morvath estava arrombado e vazio. Sob os símbolos dos paladinos, quatro nichos vazios. Alguém levou o que estava lá.' },
     { show: () => G.bossDead && inParty('andilla'), get text() { return `${heroName('andilla')} não cavou as covas. Então quem cavou, e por quê?`; } },

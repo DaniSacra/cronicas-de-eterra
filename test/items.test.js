@@ -24,3 +24,28 @@ test('an item that helps is spent and says how much', () => {
   assert.equal(run(`applyItem('pena', G.party[1])`), 'Lyra voltou à vida!');
   assert.deepEqual({ ...G.inv }, { pocao: 0, eter: 1, pena: 0 });
 });
+
+test('review 2026-11-07 (2): the forge sells weak gear; a hero wears the strongest piece of each slot and bonuses never stack', async () => {
+  const { bestGear, equipDelta, gearPower } = require('../src/uirules.js');
+  const { EQUIPS } = require('../src/data.js');
+  assert.deepEqual(equipDelta('espadaCurta', [], EQUIPS), { atk: 3 });
+  assert.deepEqual(equipDelta('espadaFerro', ['espadaCurta'], EQUIPS), { atk: 3 }, 'the crypt sword replaces the bought one: +6 in all');
+  assert.deepEqual(equipDelta('espadaCurta', ['espadaFerro'], EQUIPS), {}, 'a weaker piece changes nothing');
+  assert.equal(bestGear('aldo', 'arma', ['espadaFerro', 'espadaCurta'], EQUIPS), 'espadaFerro');
+  // every forge piece is weaker than the crypt piece of the same hero and slot
+  for (const [weak, strong] of [['espadaCurta', 'espadaFerro'], ['cajadoFreixo', 'cajadoRunico']]) assert.ok(gearPower(EQUIPS[weak]) < gearPower(EQUIPS[strong]));
+
+  const { G, log, run, picks } = story(['aldo', 'lyra'], { gold: 100, gear: [] });
+  run('globalThis.HeroView = { owned: () => [...G.gear] }');
+  const opts = run.json('forgeOptions(100, [])');
+  assert.ok(opts.every(o => ['aldo', 'lyra'].includes(run(`EQUIPS['${o.value}'].who`))), 'only gear for the heroes in the party');
+  assert.ok(opts.find(o => o.value === 'espadaCurta').hint.includes('ATQ +3'));
+  run(`enterTown({ x: 26, y: 6, dir: 0 }, 'valmor')`);
+  picks.push('buy', 'espadaCurta', null, null);
+  await run(`enterBuilding(BUILDINGS.find(b => b.id === 'smith'))`);
+  assert.equal(G.gold, 40);
+  assert.deepEqual([...G.gear], ['espadaCurta']);
+  assert.equal(G.party[0].bonus.atk, 3);
+  assert.ok(log.includes('Compraram: Espada Curta!\nAldo equipa (ATQ +3).'));
+  assert.ok(run.json('forgeOptions(100, G.gear)').find(o => o.value === 'espadaCurta').disabled, 'no second copy');
+});

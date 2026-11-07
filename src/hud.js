@@ -3,7 +3,7 @@
 // hides whatever was not set. DOM is only touched when a value changes.
 const HUD = (() => {
   const layer = document.getElementById('hud');     // covers the canvas exactly (sized in layout.js)
-  const bar = document.getElementById('hudbar');    // top-left row: place + coins, MUNDO
+  const bar = document.getElementById('hudbar');    // top-left row: place + coins (the MUNDO globe sits in the top right corner)
   const top = document.getElementById('hudtop');    // top-center column: boss bar, turn queue, notes
   const make = (parent, cls, html = '') => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; e.hidden = true; parent.appendChild(e); return e; };
 

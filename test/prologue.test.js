@@ -30,7 +30,7 @@ test('Lyra has her own entrance: she joins on the first tavern visit, goes to th
   log.length = 0;
   await run('elderTalk()');
   assert.ok(log.some(t => t.includes('Vocês já são quatro. Bom.')), 'the elder sees four');
-  assert.ok(log.includes('Ancião Bertoldo:\nSe quase mataram um homem por ela, o que tem dentro é maior que Valmor.'));
+  assert.ok(log.includes('Ancião Bertoldo:\nSe quase mataram o homem que a trazia, o que tem dentro é maior que Valmor.'));
 });
 
 test('the night: the dice girl plays, stays when the hooded men come, fights unnamed and says her name after the fight', async () => {
@@ -50,8 +50,8 @@ test('the night: the dice girl plays, stays when the hooded men come, fights unn
     const i = t => { const k = log.indexOf(t); assert.ok(k >= 0, t); return k; };
     i('Moça dos dados~alegre:\nNinguém tira. Eu tiro.');
     i('Lyra~alegre:\nVocê nunca vai descobrir como ela faz, Aldo.');
-    assert.ok(i('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.') > i('O mensageiro desmaia. Teo recebe um rolo fechado com o selo real.'));
-    assert.ok(i('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.') > i('Encapuzado:\nA carta. E ninguém mais precisa sangrar esta noite.'));
+    assert.ok(i('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.') > i('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real.'));
+    assert.ok(i('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.') > i('Encapuzado:\nO homem caído vem com a gente. E ninguém mais precisa sangrar esta noite.'));
     const name = i('Andilla:\nMe chamam de Andilla. Às vezes é verdade.');
     assert.ok(i('Andilla:\nCapa cinza é a mais barata do sul. Metade desta taverna usa.') > i('Bruno:\nCapa cinza, igual à deles.'), 'the grey cloak keeps the false lead');
     assert.ok(log.slice(0, name).every(t => !t.startsWith('Andilla')), 'no name before she says it');
@@ -127,7 +127,8 @@ test('Clara: one scene on the first day, another once Lyra is in the party', asy
   const clara = () => run(`talkTo(TOWN.npcs.find(n => n.def.id === 'clara'))`);
   await clara();
   assert.ok(log.includes('Clara, a professora:\nAldo. Voltou.'));
-  assert.ok(log.includes('Clara, a professora:\nEstão bem. Com licença, preciso levar as crianças para casa.'));
+  assert.ok(log.includes('Clara, a professora:\nEstão bem. Se veio pelo trabalho, fala com a Berta. Ela sempre precisa de braços.'));
+  assert.ok(log.includes('Clara, a professora:\nEu também tenho o meu, com as crianças. Preciso levá-las para casa.'));
   assert.ok(!log.some(t => t.startsWith('Lyra')));
   G.party.push(run(`newMember(PARTY_DEFS.find(d => d.id === 'lyra'))`));
   log.length = 0;
@@ -162,7 +163,7 @@ test('nobody calls Aldo "forasteiro" anymore', () => {
   for (const f of fs.readdirSync(`${__dirname}/../src`)) assert.doesNotMatch(fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8'), /forasteir/i, f);
 });
 
-test('the school stands by Clara and the children, and its board remembers Aldo', async () => {
+test('the school stands by Clara and the children, and Nino signs the drawing of Aldo', async () => {
   const { G, log, run } = story(['aldo'], { intro: 1 });
   const b = run.json(`BUILDINGS.find(b => b.id === 'school')`), near = id => {
     const n = run.json(`NPC_DEFS.find(n => n.id === '${id}')`);
@@ -171,7 +172,8 @@ test('the school stands by Clara and the children, and its board remembers Aldo'
   for (const id of ['clara', 'nino', 'lia']) assert.ok(near(id), `${id} is next to the school`);
   run(`enterTown({ x: 16, y: 11, dir: 0 }, 'valmor')`);
   await run(`enterBuilding(BUILDINGS.find(b => b.id === 'school'))`);
-  assert.ok(log.some(t => t.includes('em letra torta: ALDO.')));
+  assert.ok(log.some(t => t.includes('em letra torta: NINO.')));
+  assert.ok(!log.some(t => t.includes('ALDO')), 'Clara is discreet: no name of Aldo at the school');
   G.bossDead = true; log.length = 0;
   await run(`enterBuilding(BUILDINGS.find(b => b.id === 'school'))`);
   assert.equal(log.at(-1), 'Embaixo, na letra da Clara: "Voltem."');
@@ -200,4 +202,49 @@ test('the journal shows the lockpick case only once it was found, and names its 
   assert.ok(notes()[0].endsWith('De quem?'));
   run('G.seen.andillaNome = 1');
   assert.deepEqual(notes(), ['Junto de uma cova cavada, um estojo de ganchos. Era da Andilla.']);
+});
+
+test('review 2026-11-07 (2): Clara calls Aldo over once, while he walks alone and passes within five steps', async () => {
+  const { claraCalls, gridPath } = require('../src/uirules.js');
+  const clara = { x: 14, y: 12 };
+  assert.ok(claraCalls({}, 1, { x: 12, y: 9 }, clara), 'five steps away');
+  assert.ok(!claraCalls({}, 1, { x: 12, y: 8 }, clara), 'six steps away');
+  assert.ok(!claraCalls({}, 2, { x: 12, y: 12 }, clara), 'Lyra already with him');
+  assert.ok(!claraCalls({ 'talk:clara': 1 }, 1, { x: 12, y: 12 }, clara), 'only the first time');
+  const open = (x, y) => x >= 0 && y >= 0 && x < 5 && y < 5 && !(x === 2 && y < 4);
+  assert.deepEqual(gridPath({ x: 0, y: 0 }, (x, y) => x === 4 && y === 0, open).length, 12, 'around the wall');
+  assert.equal(gridPath({ x: 0, y: 0 }, (x, y) => x === 0 && y === 0, open).length, 0);
+  assert.equal(gridPath({ x: 0, y: 0 }, () => false, open), null);
+
+  const { G, log, run } = story(['aldo']);
+  run(`enterTown({ x: 12, y: 9, dir: 2 }, 'valmor'); walkPath = async (a, path) => { for (const [x, y] of path) { a.x = a.fx = x; a.y = a.fy = y; } };`);
+  const c = run.json(`(() => { const n = TOWN.npcs.find(n => n.def.id === 'clara'); n.x = 14; n.y = 12; return { x: n.x, y: n.y }; })()`);
+  await run('AREAS.valmor.onStep(12, 9)()');
+  assert.equal(run('Math.abs(TOWN.p.x - ' + c.x + ') + Math.abs(TOWN.p.y - ' + c.y + ')'), 1, 'Aldo walks up to her');
+  assert.ok(log.includes('Clara, a professora:\nAldo. Voltou.'));
+  assert.ok(G.seen['talk:clara']);
+  assert.equal(run('AREAS.valmor.onStep(TOWN.p.x, TOWN.p.y)'), null, 'once');
+});
+
+test('review 2026-11-07 (2): the messenger goes to Teo, the hooded men want him and not the letter', async () => {
+  const { run } = story(['aldo', 'lyra', 'teo']);
+  for (const teo of [{ x: 3, y: 4 }, { x: 4, y: 3 }]) {
+    const path = run.json(`messengerPath(${JSON.stringify(teo)})`), end = path.at(-1);
+    assert.deepEqual(end, [teo.x + 1, teo.y], 'he stops at the side of Teo');
+    assert.ok(path.every(([x, y]) => run(`TOWN.A = AREAS.taverna; TOWN.walkable(${x}, ${y})`)), 'on the floor all the way');
+  }
+  const src = fs.readFileSync(`${__dirname}/../src/opening.js`, 'utf8');
+  assert.doesNotMatch(src, /Hoje eu não corro/);
+  assert.doesNotMatch(src, /line\('Encapuzado', 'A carta/);
+});
+
+test('review 2026-11-07 (2): Irene says Teo went out to pray and is not back; Marta says the paladins closed the crypt', async () => {
+  const { log, run, picks } = story(['aldo']);
+  run(`enterTown({ x: 3, y: 6, dir: 0 }, 'valmor')`);
+  picks.push('talk', null);
+  await run(`enterBuilding(BUILDINGS.find(b => b.id === 'chapel'))`);
+  assert.ok(log.includes('Irmã Irene:\nO irmão Teo saiu para rezar no cemitério e ainda não voltou.'));
+  log.length = 0;
+  await run(`talkTo(TOWN.npcs.find(n => n.def.id === 'marta'))`);
+  assert.ok(log.some(t => t.includes('A cripta debaixo da igreja velha foi fechada pelos paladinos. Ninguém devia abrir aquilo.')));
 });

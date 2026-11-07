@@ -170,8 +170,9 @@ const UI = (() => {
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (menu) {
       const c = menu.cols;
-      if (k === 'ArrowDown' || k === 's') move(c);
-      else if (k === 'ArrowUp' || k === 'w') move(-c);
+      const row = menu.style === 'list' && menu.opts.length <= c; // a list in one row (Sim / Não): up and down walk it too
+      if (k === 'ArrowDown' || k === 's') move(row ? 1 : c);
+      else if (k === 'ArrowUp' || k === 'w') move(row ? -1 : -c);
       else if (k === 'ArrowLeft' || k === 'a') { if (c > 1) move(-1); }
       else if (k === 'ArrowRight' || k === 'd') { if (c > 1) move(1); }
       else if ((k === 'Enter' || k === ' ' || k === 'z') && !e.repeat) pick();

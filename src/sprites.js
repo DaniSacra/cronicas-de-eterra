@@ -244,6 +244,30 @@ const Sprites = (() => {
         c.fillStyle = '#140a04'; c.fillRect(14, 36, 36, 6);
       }
     },
+    // the far wall of the crypt broken through: grey bricks like the crypt walls, a ragged black hole down to the floor, rubble,
+    // and scratched in the stone over the hole a sign nobody in the party can read (a ring with a dot, a line rising from it)
+    breach(c) {
+      const P = { hi: '#a2a2ac', face: '#7a7a82', deep: '#55555e', mortar: '#26202e', hole: '#26202e', mark: '#e8eff8' };
+      const px = (x, y, col) => { c.fillStyle = col; c.fillRect(x, y, 1, 1); };
+      const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) >>> 0; h = ((h ^ (h >>> 13)) * 1274126177) >>> 0; return (h >>> 8) / 16777216; };
+      const inHole = (x, y) => { const r = 13 + (hash(Math.floor(x / 3), Math.floor(y / 3)) - 0.5) * 5, dy = y < 40 ? (y - 40) * 13 / 22 : 0; return Math.hypot(x - 32, dy) < r && y > 17; };
+      for (let y = 0; y < 62; y++) for (let x = 0; x < 64; x++) {
+        if (inHole(x, y)) { px(x, y, P.hole); continue; }
+        const row = Math.floor(y / 8), off = (row % 2) * 8, mortar = y % 8 === 7 || (x + off) % 16 === 15;
+        let col = mortar ? P.mortar : y % 8 === 0 || (x + off) % 16 === 0 ? P.hi : hash(Math.floor((x + off) / 16), row) < 0.25 ? P.deep : P.face;
+        // the rim of the hole: lit on the lower right (it faces the light), in shade on the upper left
+        if (!mortar && [[-2, -2], [2, 2]].some(([dx, dy]) => inHole(x + dx, y + dy))) col = inHole(x + 2, y + 2) ? P.deep : P.hi;
+        px(x, y, col);
+      }
+      // rubble on the floor, spilled to the front
+      for (const [x, y, w, h] of [[12, 57, 7, 5], [20, 59, 5, 3], [40, 58, 8, 4], [49, 60, 4, 2], [29, 60, 6, 2]]) {
+        c.fillStyle = P.face; c.fillRect(x, y, w, h); c.fillStyle = P.hi; c.fillRect(x, y, w, 1); c.fillRect(x, y, 1, h);
+        c.fillStyle = P.deep; c.fillRect(x + w - 1, y + 1, 1, h - 1);
+      }
+      // the sign: a ring with a dot in the middle and a line that rises from its top, scratched pale
+      for (let a = 0; a < 40; a++) { const t = a / 40 * Math.PI * 2; px(Math.round(32 + Math.cos(t) * 5), Math.round(11 + Math.sin(t) * 5), P.mark); }
+      px(32, 11, P.mark); for (let y = 1; y < 6; y++) px(32, y, P.mark);
+    },
     clue(c) { // no chão do túnel: rastro de sangue seco e um pedaço de capa marrom, de viajante
       for (const [x, y, rx] of [[14, 60, 5], [24, 58, 4], [33, 61, 6], [44, 58, 3]]) ell(c, x, y, rx, 1.6, '#4a1416');
       poly(c, [30, 52, 46, 49, 54, 56, 48, 62, 34, 63, 27, 58], '#7a4a26', '#3a200e', 1);
@@ -305,6 +329,7 @@ const Sprites = (() => {
       fountain: mk(c => draw.fountain(c)),
       boss: toTex(enemy('sineiro')),
       tomb: mk(c => draw.tomb(c)),
+      breach: mk(c => draw.breach(c)),
       clue: mk(c => draw.clue(c)),
     };
   }

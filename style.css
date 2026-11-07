@@ -136,7 +136,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .title .sub.end { display: flex; flex-direction: column; gap: .55em; max-width: min(92vw, calc(var(--f2) * 36)); text-align: center; letter-spacing: 0; }
 .title .sub.end p { font-size: var(--f2); line-height: 1.35; color: var(--text); text-shadow: none; }
 #overlay.ov-end { padding-bottom: 38vh; background: rgba(3, 3, 12, .45); } /* a light veil over the dawn */
-#game.on-end #party, #game.on-end #hudbar, #game.on-end #touch [data-k="m"] { display: none !important; } /* the end screen owns the whole view */
+#game.on-end #party, #game.on-end #hudbar, #game.on-end #wmBtn, #game.on-end #touch [data-k="m"] { display: none !important; } /* the end screen owns the whole view */
 @media (max-height: 500px) { #overlay.ov-end { padding: 8px 0 0; justify-content: flex-start; } #overlay.ov-end .emblem { display: none; } }
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
 @media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
@@ -220,11 +220,12 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (min-width: 1200px) and (min-height: 700px) { #menu.icons .opt { font-size: var(--f2); } }
 
 /* ---- Mapa de Eterra (mapa-múndi) ---- */
-#wmBtn { font-family: inherit; font-size: var(--f1); color: var(--text);
-  display: flex; align-items: center; gap: calc(var(--u) * 2); padding: var(--u) calc(var(--u) * 3); cursor: pointer;
+/* top right corner, the globe only: there when wanted, quiet the rest of the time */
+#wmBtn { position: absolute; z-index: 4; top: calc(var(--u) * 4); right: calc(var(--u) * 4); font-family: inherit; color: var(--text);
+  display: flex; align-items: center; padding: var(--u); cursor: pointer; opacity: .75;
 }
 #wmBtn[hidden] { display: none; }
-#wmBtn:hover { color: var(--gold); }
+#wmBtn:hover, #wmBtn:focus-visible { opacity: 1; }
 .wm-ico { width: calc(var(--f1) * 2); height: calc(var(--f1) * 2); image-rendering: pixelated; }
 #worldmap { position: absolute; inset: 0; z-index: 20; display: none; background: var(--bg);
   padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);

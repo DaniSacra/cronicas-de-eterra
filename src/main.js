@@ -12,7 +12,7 @@ let SPR = null;
 
 const G = {
   mode: 'title', floor: 0, x: 1, y: 1, dir: 1,
-  party: [], inv: {}, opened: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
+  party: [], inv: {}, opened: {}, gear: [], explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
   sinceFight: 0, anim: null, busy: false, queue: [], held: new Set(),
   bigMap: false, fade: 0, fadeAnim: null, flash: null, flashColor: '255,255,255', shakeUntil: 0,
 };
@@ -57,6 +57,7 @@ function worldSprites(now) {
     if (o.type === 'chest') { s.spr = G.opened[objKey(o)] ? SPR.chestOpen : SPR.chest; s.scale = 0.62; }
     if (o.type === 'fountain') { s.spr = SPR.fountain; s.scale = 0.8; s.emit = 0.85; }
     if (o.type === 'boss' && G.bossDead) { s.type = 'tomb'; s.spr = SPR.tomb; s.scale = 0.75; }
+    else if (o.type === 'boss' && !G.seen.buraco) { s.type = 'breach'; s.spr = SPR.breach; s.scale = 1; } // he is behind the broken wall
     else if (o.type === 'boss') { s.spr = SPR.boss; s.scale = 0.95; s.emit = 0.55; s.lift = 0.04 + Math.sin(now / 500) * 0.03; }
     return s;
   }).concat(map().clue ? [{ x: map().clue.x + 0.5, y: map().clue.y + 0.5, type: 'clue', spr: SPR.clue, scale: 0.5 }] : []);
@@ -258,19 +259,16 @@ async function interact(o) {
     const eq0 = EQUIPS[o.loot];
     if (eq0 && !inParty(eq0.who)) { await UI.say(`Um equipamento que só ${heroName(eq0.who)} saberia usar.`); return; }
     if (!G.seen.bau1 && inParty('andilla')) { G.seen.bau1 = 1; await say2(heroName('andilla'), 'Tranca velha. Dois ganchos e... pronto.'); }
+    const delta = EQUIPS[o.loot] ? equipDelta(o.loot, HeroView.owned(), EQUIPS) : null; // before the chest counts as opened
     G.opened[key] = true; Sfx.chest();
     if (ITEMS[o.loot]) {
       G.inv[o.loot] = (G.inv[o.loot] || 0) + 1;
       await UI.say(`Vocês abrem o baú...\nEncontraram: ${ITEMS[o.loot].name}!`);
     } else {
-      const eq = EQUIPS[o.loot];
-      const m = G.party.find(p => p.id === eq.who);
-      for (const [k, v] of Object.entries(eq.bonus)) m.bonus[k] = (m.bonus[k] || 0) + v;
-      UI.updateParty(); UI.cardGlow(m);
-      const b = Object.entries(eq.bonus).map(([k, v]) => `${STAT_NAMES[k]} +${v}`).join(', ');
-      await UI.say(`Vocês abrem o baú...\nEncontraram: ${eq.name}!\n${pdef(m).name} equipa (${b}).`);
+      await UI.say(`Vocês abrem o baú...\n${wearGear(o.loot, delta)}`);
     }
   } else if (o.type === 'fountain') {
+    await partyTalk('fonte', TALKS.fonte); // a fountain in a crypt: the party wonders, half in jest
     if (!G.seen.lapide) { G.seen.lapide = 1; await clue(FLOOR_CLUES[1]); await partyTalk('lapide', TALKS.lapide); }
     if (!G.seen.bilhete) {
       G.seen.bilhete = 1;
@@ -290,9 +288,18 @@ async function interact(o) {
   } else if (o.type === 'boss') {
     // kept in the save at once: after a loss to the boss, the clue and the talk are not read again
     if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); ['altar', 'talk:altar'].forEach(keepSeen); }
-    if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); ['sino', 'talk:sino'].forEach(keepSeen); }
-    const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
-      { title: 'Diante da última porta, um morto de batina segura um sino de bronze.\n' + bossWarning(G.party) + 'Enfrentar o Sineiro?', cancel: true });
+    // first time: a broken wall, a sign nobody can read in the stone, and the Sineiro steps out of the hole into the fight
+    const first = !G.seen.buraco;
+    if (first) {
+      await clue(BREACH);
+      await partyTalk('buraco', TALKS.buraco);
+      G.seen.buraco = 1; G.seen.sino = 1; ['buraco', 'talk:buraco', 'sino'].forEach(keepSeen);
+      Sfx.bell(); shake(300);
+      await UI.say('Um sino toca do outro lado do buraco. Perto. Devagar.');
+      await UI.say('Das trevas do buraco sai um morto de batina, com um sino de bronze na mão.');
+    } else if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); ['sino', 'talk:sino'].forEach(keepSeen); }
+    const ok = first || await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
+      { title: 'Diante do buraco na parede, o morto de batina segura o sino de bronze.\n' + bossWarning(G.party) + 'Enfrentar o Sineiro?', cancel: true });
     if (ok) await runBattle(['sineiro'], true, { hints: [
       'Só atacar não basta. Teo cura os feridos com Magia; não espere alguém cair.',
       'Lyra queima com Fogo, e a Luz Sagrada de Teo fere em dobro os mortos-vivos.',
@@ -345,10 +352,13 @@ const say2 = (who, t) => UI.say(who ? `${who}:\n${t}` : t);
 // [0] ao entrar na cripta (olho) · [1] na fonte (lápide) · [2] diante do altar
 const FLOOR_CLUES = [
   [[null, 'Na parede, ao pé da escada, pintado de vermelho: um olho cortado ao meio.']],
-  [[null, 'Uma lápide antiga, rachada ao meio. As letras ainda se leem:'], ['Lápide', '"Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou."']],
+  [[null, 'Na parede atrás da fonte, uma lápide antiga, rachada ao meio. As letras ainda se leem:'], ['Lápide', '"Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou."']],
   [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."']],
 ];
 const FLOOR_TALKS = ['olho'];
+// The far wall of the crypt, broken through; the sign around the hole is nobody's the party knows (not named yet)
+const BREACH = [[null, 'No fundo da sala, a parede foi arrombada. As pedras caíram para dentro, e do outro lado só há escuro.'],
+  [null, 'Em cima do buraco, alguém riscou um símbolo na pedra: um anel com um ponto no meio, e uma linha que sai dele e sobe.']];
 // The party talks (TALKS) and the tunnel clue live with the rest of the prologue story, in src/opening.js
 const clue = async lines => { Sfx.clue(); for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
@@ -415,7 +425,7 @@ function saveGame() {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 3, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
-      inv: G.inv, opened: G.opened, explored, bossDead: G.bossDead,
+      inv: G.inv, opened: G.opened, gear: G.gear || [], explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
     }));
@@ -434,7 +444,7 @@ function loadGame() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return false;
-    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.bossDead = s.bossDead;
+    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.gear = s.gear || []; G.bossDead = s.bossDead;
     G.gold = s.gold || 0; G.quest = s.quest ?? 1; // saves antigos já estavam na dungeon
     G.key = s.key || { carta: true }; G.intro = s.intro ?? 1;
     G.seen = s.seen || {};
@@ -539,7 +549,7 @@ async function titleScreen() {
 async function newGame() {
   G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no prólogo
   G.inv = { pocao: 2 };
-  G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
+  G.opened = {}; G.gear = []; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();
@@ -550,7 +560,7 @@ async function newGame() {
 async function quickDungeon() {
   G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
-  G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
+  G.opened = {}; G.gear = []; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
   G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1, andillaNome: 1 };
   G.macros = normalizeMacros(); G.lastRound = null;

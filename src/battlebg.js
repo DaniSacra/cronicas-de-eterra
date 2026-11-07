@@ -91,7 +91,7 @@ const BattleBG = (() => {
   function grave(K, x, base, s, cross) {
     const { rect, put } = K, S = BATTLE_BG_C.stone, gw = Math.max(3, Math.round(18 * s)), gh = Math.max(4, Math.round(22 * s));
     const x0 = x - (gw >> 1), top = base - gh;
-    rect(x0 - 1, base, gw + 3, Math.max(1, Math.round(2 * s)), BATTLE_BG_C.snow[0]);
+    rect(x0 - 1, base, gw + 3, Math.max(1, Math.round(2 * s)), BATTLE_BG_C.night[2]);
     if (cross && gw >= 6) {
       const bw = Math.max(2, Math.round(gw / 3)), bx = x - (bw >> 1), arm = Math.round(gh * 0.3);
       rect(bx, top, bw, gh, S[1]); rect(x0, top + arm, gw, bw, S[1]);
@@ -105,6 +105,18 @@ const BattleBG = (() => {
     }
     rect(x0 + Math.ceil(gw / 4), top, gw - 2 * Math.ceil(gw / 4), 1, BATTLE_BG_C.snow[4]);
     if (gw >= 7) { rect(x0 + 2, top + Math.round(gh * 0.35), gw - 4, 1, S[2]); rect(x0 + 2, top + Math.round(gh * 0.55), gw - 4, 1, S[2]); }
+  }
+  // an open grave seen from the front: a dark hole lying on the ground, its far lip lit, the dug dirt heaped on one side
+  function openGrave(K, x, base, s) {
+    const { rect, put } = K, D = BATTLE_BG_C.dirt, N = BATTLE_BG_C.snow, hw = Math.max(5, Math.round(22 * s)), hd = Math.max(3, Math.round(9 * s)), x0 = x - (hw >> 1);
+    for (let j = 0; j < hd; j++) { const cut = j === 0 || j === hd - 1 ? 1 : 0; rect(x0 + cut, base - hd + j, hw - 2 * cut, 1, j < 2 ? D[0] : BATTLE_BG_C.dark); }
+    rect(x0 + 1, base - hd - 1, hw - 2, 1, N[2]); // the snow on the far lip catches the moon
+    const mw = Math.max(4, Math.round(14 * s)), mh = Math.max(3, Math.round(8 * s)), mx = x0 + hw - 1;
+    for (let j = 0; j < mh; j++) {
+      const half = Math.max(1, Math.round((mw / 2) * Math.sqrt(1 - (j / mh) ** 2)));
+      for (let i = -half; i < half; i++) put(mx + (mw >> 1) + i, base - j, i < -half + 2 || j === mh - 1 ? D[1] : i > half - 3 ? D[0] : D[1] === D[0] ? D[0] : (i + j) % 5 ? D[0] : D[1]);
+    }
+    put(mx + (mw >> 1) - 1, base - mh, N[3]); put(mx + (mw >> 1) + 1, base - mh + 1, N[3]);
   }
   function barrel(K, x, base, s) {
     const { rect } = K, W = BATTLE_BG_C.wood, bw = Math.round(16 * s), bh = Math.round(20 * s), x0 = x - (bw >> 1), top = base - bh;
@@ -122,22 +134,23 @@ const BattleBG = (() => {
 
   // ---------- scenes ----------
   const SCENES = {
-    // night over the snowy graves: moon, stars, the chapel behind the wall, bare trees, a dirt path between the stones
+    // night over the snowy graves: the chapel and bare trees behind the wall, a moon, low mist on the far rows, open graves,
+    // and big stones close to the heroes at the sides; the enemies stand among the graves, never on the horizon
     cemiterio(K) {
-      const { w, h, hy, put, rect, vgrad, at, ground, band, r, hash } = K, C = BATTLE_BG_C, N = C.snow;
+      const { w, h, hy, gh, put, rect, vgrad, at, ground, band, r, hash, bay } = K, C = BATTLE_BG_C, N = C.snow, BIG = 2.4;
       vgrad(0, w, 0, hy, C.night, 1.4);
       for (let i = 0; i < Math.round(w * hy / 80); i++) put(r() * w, r() * hy * 0.7, C.stars[r() < 0.7 ? 0 : 1]);
-      const mx = Math.round(w * 0.16), my = Math.round(hy * 0.3), mr = Math.max(4, Math.round(h / 26));
-      for (let y = -mr; y <= mr; y++) for (let x = -mr; x <= mr; x++) if (x * x + y * y <= mr * mr) put(mx + x, my + y, x + y > mr * 0.7 ? C.moon[1] : C.moon[0]);
-      put(mx - 1, my + 1, C.moon[2]); put(mx + 2, my - 2, C.moon[2]); put(mx + 1, my + 3, C.moon[2]);
-      // the chapel on the right, dark against the sky, one warm window
-      const chx = Math.round(w * 0.7), chw = Math.round(w * 0.11), chh = Math.round(hy * 0.3), chb = hy - 5;
+      const mx = Math.round(w * 0.82), my = Math.round(hy * 0.5), mr = Math.max(4, Math.round(h / 26));
+      for (let y = -mr; y <= mr; y++) for (let x = -mr; x <= mr; x++) if (x * x + y * y <= mr * mr) put(mx + x, my + y, (x - 2) ** 2 + (y - 2) ** 2 > mr * mr ? C.moon[0] : x + y > mr ? C.moon[2] : C.moon[1]);
+      put(mx - 2, my - 1, C.moon[1]); put(mx - 1, my - 1, C.moon[1]); put(mx + 1, my + 2, C.moon[2]);
+      // the chapel on the left, dark against the sky, one warm window
+      const chx = Math.round(w * 0.2), chw = Math.round(w * 0.11), chh = Math.round(hy * 0.3), chb = hy - 5;
       rect(chx, chb - chh, chw, chh, C.night[1]);
       for (let i = 0; i < chw / 2 + 2; i++) { rect(chx - 2 + i, chb - chh - i * 0.6, chw + 4 - 2 * i, 1, C.night[0]); put(chx - 2 + i, chb - chh - i * 0.6, N[1]); }
-      const tx = chx + chw - Math.round(chw * 0.35), tw = Math.round(chw * 0.3), th = Math.round(chh * 1.1);
+      const tx = chx + Math.round(chw * 0.05), tw = Math.round(chw * 0.3), th = Math.round(chh * 1.1);
       rect(tx, chb - chh - th, tw, th, C.night[1]);
       for (let i = 0; i < tw / 2 + 1; i++) rect(tx - 1 + i, chb - chh - th - i * 1.4, tw + 2 - 2 * i, 2, C.night[0]);
-      rect(chx + 3, chb - chh + 4, 2, 4, C.house.win[1]); rect(tx + (tw >> 1), chb - chh - th + 3, 1, 3, C.house.win[0]);
+      rect(chx + chw - 5, chb - chh + 4, 2, 4, C.house.win[1]); rect(tx + (tw >> 1), chb - chh - th + 3, 1, 3, C.house.win[0]);
       // bare trees behind the wall
       for (let i = 0; i < Math.round(w / 40); i++) { const x = Math.round((i + r() * 0.6) * 40); if (x > chx - 8 && x < chx + chw + 8) continue; bareTree(K, x, hy - 4, Math.round(hy * (0.25 + r() * 0.2)), C.tree[0]); }
       // the low stone wall along the horizon, snow on top
@@ -146,23 +159,31 @@ const BattleBG = (() => {
         put(x, y, mortar ? C.night[2] : y === hy - 7 ? N[1] : N[0]);
       }
       for (let x = 0; x < w; x++) { put(x, hy - 8, N[4]); put(x, hy - 7, N[3]); if (hash(x, 3) < 0.25) put(x, hy - 6, N[3]); }
-      // ground: blue night snow, darker far away; a dirt path down the middle
-      ground(0.5, 0.6, false, (x, y, X, Z, k) => {
-        const half = 0.1 + 0.02 * Math.sin(Z * 1.3), ax = Math.abs(X);
-        if (ax < half) {
-          if (ax > half - 0.012 / k * 0.25) return N[1]; // snow edge along the path
-          return hash(Math.floor(X * 60), Math.floor(Z * 6)) < 0.12 ? N[2] : band(x, y, C.dirt, k * 1.6);
-        }
-        return hash(x * 7, y) < 0.02 * k ? N[4] : band(x, y, N, 0.2 + k * 2.4);
-      });
-      // gravestones in rows on both sides of the path, far ones first
-      const g = rng(11);
-      for (const Z of [9, 7, 5.4, 4.2, 3.3, 2.6, 2]) for (const side of [-1, 1]) for (const X of [0.12, 0.24, 0.37, 0.5, 0.64]) {
-        if (g() < 0.25) continue;
-        const p = at(side * (X + g() * 0.05), Z + g() * 0.2);
-        grave(K, p.x, p.y, p.s, g() < 0.25);
+      // ground: night snow, dark far away and a little lighter close by, with a few glints
+      ground(0.5, 0.6, false, (x, y, X, Z, k) => hash(x * 7, y) < 0.015 * k ? N[3] : band(x, y, N, 0.1 + k * 1.9));
+      // what stands on the ground, far first: big stones (BIG times the old size), crosses and open graves
+      const g = rng(11), xAt = (X, Z) => at(X, Z).x, props = [];
+      for (const Z of [8, 6.5, 5.2, 4.3, 3.6, 3, 2.5, 2, 1.6, 1.3]) for (let X = -1.1; X <= 1.1; X += 0.26) {
+        const x = X + (g() - 0.5) * 0.12, z = Z + g() * 0.25, sx = xAt(x, z), roll = g();
+        if (roll < 0.4) continue;
+        if (Z < 2.7 && sx > w * 0.14 && sx < w * 0.86) continue; // nothing between the heroes and the enemies but at the edges
+        props.push({ x, z, kind: Z > 2.4 && Z < 6.6 && roll > 0.88 ? 'open' : roll > 0.78 ? 'cross' : 'stone' });
       }
-      bareTree(K, Math.round(w * 0.03), Math.round(hy + K.gh * 0.7), Math.round(Math.min(h * 0.62, w * 0.35)), C.tree[1]);
+      const mist = () => { // low mist over the far rows: dithered, thin at the edges of the band
+        for (let y = hy - 4; y < hy + Math.round(gh * 0.16); y++) for (let x = 0; x < w; x++) {
+          const t = 1 - Math.abs(y - hy - 3) / 9, wave = 0.5 + 0.5 * Math.sin(x / 23 + y / 5);
+          if (t > 0 && bay(x, y) < t * (0.08 + 0.17 * wave)) put(x, y, N[2]);
+        }
+      };
+      let misted = false;
+      for (const p of props) {
+        if (!misted && p.z < 4.6) { mist(); misted = true; }
+        const q = at(p.x, p.z);
+        if (p.kind === 'open') openGrave(K, q.x, q.y, q.s * BIG);
+        else grave(K, q.x, q.y, q.s * BIG, p.kind === 'cross');
+      }
+      if (!misted) mist();
+      bareTree(K, Math.round(w * 0.015), Math.round(hy + gh * 0.75), Math.round(Math.min(h * 0.62, w * 0.35)), C.tree[1]);
     },
 
     // inside the Poney Saltitante: plank wall, the fireplace, a window on the snow, shelves of mugs, barrels and a table
