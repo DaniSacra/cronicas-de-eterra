@@ -250,6 +250,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-pt.aqui .wm-lbl, .wm-pt.sel .wm-lbl { display: block; }
 .wm-pt.aqui:not(.sel) .wm-lbl { opacity: .8; }
 .wm-pt.sel { z-index: 2; }
+.wm-dot { position: absolute; z-index: 3; translate: -50% -50%; width: calc(var(--u) * 6); height: calc(var(--u) * 6); background: var(--hp); box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--gold); pointer-events: none; }
+#worldmap.trip .wm-close, #worldmap.trip .wm-list { visibility: hidden; }
+.wm-cap { color: var(--gold); }
 .wm-pt.sel .wm-lbl { color: var(--hi); }
 .wm-pt.sel i { outline: var(--u) solid var(--gold); outline-offset: var(--u); }
 .wm-k { font-size: var(--f1); letter-spacing: .3em; color: var(--light); opacity: .9; white-space: nowrap; }

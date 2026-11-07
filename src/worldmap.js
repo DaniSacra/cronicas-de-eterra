@@ -28,6 +28,24 @@ const WORLD_POIS = [
         : G.seen.altar ? 'No altar, escreveram "O rei voltará".'
         : G.seen.lapide ? 'Uma lápide diz o nome do rei: Morvath. Ele traiu a luz.'
         : 'O ancião quer um grupo de quatro para descer.') },
+  // Capítulo 1 · Parte 1 · A Estrada do Sul (docs/mundo/historias/capitulo1-parte1.md)
+  { id: 'vau', nome: 'Vau do Corvo', reino: 'Imladrin', tipo: 'Povoado', x: 205, y: 520, show: () => G.chapter >= 1, visto: () => G.seen['c1:vau'],
+    text: () => 'Povoado na beira de um rio raso, ao norte de Valmor. Tem uma estalagem e o haras do Gervásio.\n' +
+      (G.seen['c1:cavalos'] ? 'O Gervásio emprestou os quatro cavalos até Arcaval.'
+        : G.seen['c1:gervasio'] ? 'Uma caravana de capa cinza levou os cavalos de tração e pagou com ouro de rei morto.'
+        : 'No Vau do Corvo alugam cavalos. A pé, Erukh fica a um mês.') },
+  { id: 'acampamento', nome: 'Beira da Floresta Púrpura', reino: 'Imladrin', tipo: 'Acampamento', x: 235, y: 430, show: () => G.seen['c1:acampou'], visto: () => G.seen['c1:acampou'],
+    text: () => 'Dois dias a cavalo ao norte do Vau. O grupo acampou ali uma noite, e uma matilha veio junto com a madrugada.' },
+  { id: 'arcaval', nome: 'Arcaval', reino: 'Imladrin', tipo: 'Cidade', x: 225, y: 360, show: () => G.seen['c1:gervasio'] || G.seen['c1:arcaval'], visto: () => G.seen['c1:arcaval'],
+    text: () => 'Cidade de mineiros, de fuligem na neve, com uma estação de trem para o norte.\n' +
+      (G.seen['c1:rocalva'] ? 'O túnel da ferrovia caiu. O grupo atravessou a montanha pela Mina Velha.'
+        : G.seen['c1:chave'] ? 'O túnel da ferrovia caiu. A Mina Velha atravessa a montanha até Rocalva.'
+        : G.seen['c1:arcaval'] ? 'O trem para o norte está parado. O túnel da ferrovia caiu.' : 'O Gervásio busca os cavalos lá.') },
+  { id: 'rocalva', nome: 'Rocalva', reino: 'Imladrin', tipo: 'Cidade', x: 220, y: 300, show: () => G.seen['c1:chave'] || G.seen['c1:rocalva'], visto: () => G.seen['c1:rocalva'],
+    text: () => 'Casas de pedra, trilhos e uma estação velha com uma torre de relógio.\n' +
+      (G.seen['c1:fim'] ? 'O relógio voltou a andar. O trem da semana segue para Erukh.'
+        : G.seen['c1:rocalva'] ? 'Toda noite, um apito de trem no ramal velho, morto há trinta anos.'
+        : 'Do outro lado da montanha. Os antigos levavam minério até lá pela Mina Velha.') },
   { id: 'templo', nome: 'Grande Templo de Hyarmeth', reino: 'Hyarmeth', tipo: 'Templo', x: 425, y: 480, show: () => true, visto: () => false,
     text: () => 'O templo mais conhecido de Hyarmeth, do outro lado do mar. Famílias deixam ali os filhos para serem treinados como guerreiros de Yah.' +
       '' },
@@ -176,7 +194,8 @@ const WorldMap = (() => {
 
   // ---------- Janela ----------
   let root, mapBox, cell, info, list, open = false, sel = null, done = null, items = [];
-  const here = () => G.mode === 'explore' ? 'cripta' : G.area === 'cemiterio' ? 'cemiterio' : 'valmor';
+  // where the party stands: a floor or an area may name its place on the map (poi); the rest is Valmor
+  const here = () => G.mode === 'explore' ? (FLOORS[G.floor].poi || 'cripta') : G.area === 'cemiterio' ? 'cemiterio' : (AREAS[G.area] && AREAS[G.area].poi) || 'valmor';
 
   function build() {
     root = document.createElement('div');
@@ -185,7 +204,7 @@ const WorldMap = (() => {
       <div class="wm-cell"><div class="wm-map"></div></div><div class="wm-info win"><div class="wm-detail"></div><div class="wm-list"></div></div>`;
     document.getElementById('screen').appendChild(root);
     mapBox = root.querySelector('.wm-map'); cell = root.querySelector('.wm-cell'); info = root.querySelector('.wm-detail'); list = root.querySelector('.wm-list');
-    root.querySelector('.wm-close').onclick = ev => { ev.stopPropagation(); close(); };
+    root.querySelector('.wm-close').onclick = ev => { ev.stopPropagation(); if (!tripKey) close(); };
     root.addEventListener('click', ev => ev.stopPropagation()); // não avança o texto do jogo por baixo
     new ResizeObserver(fit).observe(cell);
     // Modo do autor: só existe no computador do Daniel (docs/ fica fora do GitHub). No site público dá 404 e nada muda.
@@ -204,6 +223,7 @@ const WorldMap = (() => {
   function render() {
     if (!mapCanvas) mapCanvas = paint();
     mapBox.replaceChildren(mapCanvas);
+    if (tripDot) mapBox.appendChild(tripDot); // the author mode loads late and paints the map again mid trip
     items = [];
     const A = window.WORLD_AUTOR, extra = {};
     root.classList.toggle('autor', !!A);
@@ -288,10 +308,47 @@ const WorldMap = (() => {
     open = false; root.classList.remove('open'); Sfx.cancel();
     const d = done; done = null; d && d();
   }
+  // A trip: the map opens by itself and a marker walks the road from place to place, the names lighting up as it
+  // passes. No control on the way; Enter, Esc or a click only hurry it. Resolves when the map closes.
+  const TRIP_MS = 1400;
+  function travel(route, caption = '') {
+    if (!root) build();
+    open = true; root.classList.add('open', 'trip');
+    render(); fit();
+    const pts = route.map(id => items.find(o => o.id === id)).filter(Boolean);
+    const dot = tripDot = document.createElement('b'); dot.className = 'wm-dot'; mapBox.appendChild(dot);
+    const put = (x, y) => { dot.style.left = x / 10 + '%'; dot.style.top = y / 7 + '%'; };
+    let hurry = false;
+    root.onpointerdown = () => { hurry = true; };
+    tripKey = () => { hurry = true; };
+    const step = (a, b) => new Promise(res => {
+      const t0 = performance.now();
+      const tick = now => {
+        const k = hurry ? 1 : Math.min(1, (now - t0) / TRIP_MS);
+        put(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k);
+        if (k < 1 && open) requestAnimationFrame(tick); else res();
+      };
+      requestAnimationFrame(tick);
+    });
+    return (async () => {
+      put(pts[0].x, pts[0].y); select(pts[0], false);
+      if (caption) info.insertAdjacentHTML('afterbegin', `<p class="wm-cap">${esc(caption)}</p>`);
+      for (let i = 1; i < pts.length; i++) {
+        await step(pts[i - 1], pts[i]);
+        Sfx.cursor(); select(pts[i], false);
+        if (caption) info.insertAdjacentHTML('afterbegin', `<p class="wm-cap">${esc(caption)}</p>`);
+      }
+      await new Promise(res => setTimeout(res, hurry ? 300 : 1200));
+      tripKey = null; tripDot = null; root.onpointerdown = null; dot.remove();
+      root.classList.remove('trip'); open = false; root.classList.remove('open');
+    })();
+  }
+  let tripKey = null, tripDot = null;
   function key(k) {
+    if (tripKey) return tripKey(k);
     const dirs = { ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0] };
     if (dirs[k]) move(...dirs[k]);
     else if (['Escape', 'u', 'm', 'Tab', 'Backspace', 'Enter', ' '].includes(k)) close();
   }
-  return { show, close, key, isOpen: () => open };
+  return { show, close, key, travel, isOpen: () => open };
 })();

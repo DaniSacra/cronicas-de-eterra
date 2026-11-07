@@ -16,8 +16,8 @@ const HeroView = (() => {
   function ownedEquips() {
     const ids = [];
     for (let f = 0; f < FLOORS.length; f++) for (const o of getMap(f).objects)
-      if (o.type === 'chest' && EQUIPS[o.loot] && G.opened[`${f}:${o.x},${o.y}`]) ids.push(o.loot);
-    const old = Object.keys(G.opened || {}).some(k => parseInt(k, 10) >= FLOORS.length);
+      if (o.type === 'chest' && EQUIPS[o.loot] && G.opened[`${floorKey(f)}:${o.x},${o.y}`]) ids.push(o.loot);
+    const old = Object.keys(G.opened || {}).some(oldCryptKey);
     ids.push(...(G.gear || [])); // bought at Gaspar's forge
     return old ? [...ids, ...gearFromBonus(G.party, ids, EQUIPS)] : ids;
   }

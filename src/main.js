@@ -12,7 +12,7 @@ let SPR = null;
 
 const G = {
   mode: 'title', floor: 0, x: 1, y: 1, dir: 1,
-  party: [], inv: {}, opened: {}, gear: [], equip: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
+  chapter: 0, part: 0, party: [], inv: {}, opened: {}, gear: [], equip: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
   sinceFight: 0, anim: null, busy: false, queue: [], held: new Set(),
   bigMap: false, fade: 0, fadeAnim: null, flash: null, flashColor: '255,255,255', shakeUntil: 0,
 };
@@ -20,14 +20,15 @@ const cam = { x: 1.5, y: 1.5, a: 0 };
 
 const map = () => getMap(G.floor);
 const cellAt = (x, y) => { const m = map(); return (x < 0 || y < 0 || x >= m.size || y >= m.size) ? 1 : m.grid[y * m.size + x]; };
-const objKey = o => `${G.floor}:${o.x},${o.y}`;
+const objKey = o => `${floorKey(G.floor)}:${o.x},${o.y}`;
 // Depois do chefe, o lugar dele mostra o túmulo arrombado (continua sólido e dá para examinar)
 const objAt = (x, y) => map().objects.find(o => o.x === x && o.y === y);
 
 function exploredArr() {
   const m = map();
-  if (!G.explored[G.floor]) G.explored[G.floor] = new Uint8Array(m.size * m.size);
-  return G.explored[G.floor];
+  const k = floorKey(G.floor);
+  if (!G.explored[k] || G.explored[k].length !== m.size * m.size) G.explored[k] = new Uint8Array(m.size * m.size);
+  return G.explored[k];
 }
 function markExplored() {
   const m = map(), ex = exploredArr(), N = m.size;
@@ -415,7 +416,7 @@ function saveGame() {
   try {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 3, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
+      v: 3, floor: G.floor, floorId: floorKey(G.floor), chapter: G.chapter, part: G.part, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
       inv: G.inv, opened: G.opened, gear: G.gear || [], equip: G.equip || {}, explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
@@ -443,7 +444,9 @@ function loadGame() {
     G.reached = s.reached ?? (s.place === 'town' ? Object.keys(s.explored || {}).length : s.floor + 1);
     G.explored = unpackExplored(s.explored);
     // saves da versão de 3 andares: quem estava no B2/B3 volta ao começo da cripta
-    if (s.floor >= FLOORS.length) loadFloor(0); else loadFloor(s.floor, { x: s.x, y: s.y, dir: s.dir });
+    G.chapter = s.chapter || 0; G.part = s.part || 0; // saves from the prologue have neither
+    const fi = savedFloor(s);
+    if (fi === s.floor || floorKey(fi) === s.floorId) loadFloor(fi, { x: s.x, y: s.y, dir: s.dir }); else loadFloor(fi);
     // saves da versão 1 (Aldo, Lyra e Teo): a ladina entra no grupo
     if (!s.v && !inParty('andilla')) {
       recruit('andilla');
@@ -540,6 +543,7 @@ async function titleScreen() {
 async function newGame() {
   G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no prólogo
   G.inv = { pocao: 2 };
+  G.chapter = 0; G.part = 0;
   G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
@@ -551,6 +555,7 @@ async function newGame() {
 async function quickDungeon() {
   G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
+  G.chapter = 0; G.part = 0;
   G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
   G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1, andillaNome: 1 };
@@ -611,17 +616,23 @@ async function ending() {
   await UI.say('Na manhã seguinte, na estrada do oeste.');
   await partyTalk('estrada', TALKS.estrada);
   saveGame(); // still in Valmor: the save keeps the place
-  G.mode = 'ending'; // the frame draws the dawn over Erukh behind the end screen, the image of the start
-  UI.showOverlay(`<div class="title">${emblemImg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-end');
+  await endScreen('FIM DO PRÓLOGO', ['O sino de Valmor se calou.', 'Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...',
+    'Obrigado por jogar!', 'Capítulo 1 · A Estrada para Erukh. A estrada do oeste de Valmor leva até lá.'], 'Passear por Valmor');
+}
+
+// The end screen of a part (or of the prologue): the dawn over Erukh behind it, then stay and walk, or play again
+async function endScreen(title, lines, stayLabel) {
+  G.mode = 'ending';
+  UI.showOverlay(`<div class="title">${emblemImg()}<h1>${logoText(title)}</h1><div class="sub end">${lines.map(t => `<p>${esc(t)}</p>`).join('')}</div></div>`, 'ov-end');
   document.getElementById('game').classList.add('on-end');
   let v;
-  do v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches || innerHeight <= 500 ? 1 : 2 });
+  do v = await UI.choose([{ label: stayLabel, value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches || innerHeight <= 500 ? 1 : 2 });
   while (v === 'new' && !await replaceSaveOk(hasSave()));
   document.getElementById('game').classList.remove('on-end');
   UI.hideOverlay();
   G.mode = 'town';
   if (v === 'new') return newGame();
-  Music.play('town');
+  Music.play(TOWN.A.music ? TOWN.A.music() : 'town');
   G.busy = false; exploreHint();
 }
 
@@ -654,7 +665,7 @@ function drawCells(c, ox, oy, cs, x0, y0, x1, y1, now) {
   if (G.floor === 0) { c.fillStyle = '#5cff7a'; c.fillRect(ox + m.start.x * cs, oy + m.start.y * cs, cs, cs); }
   for (const o of m.objects) {
     if (!ex[o.y * N + o.x] || (o.type === 'boss' && G.bossDead)) continue;
-    c.fillStyle = o.type === 'chest' ? (G.opened[`${G.floor}:${o.x},${o.y}`] ? '#7a6030' : '#ffd23f') : o.type === 'fountain' ? '#60e0ff' : '#ff3050';
+    c.fillStyle = o.type === 'chest' ? (G.opened[objKey(o)] ? '#7a6030' : '#ffd23f') : o.type === 'fountain' ? '#60e0ff' : '#ff3050';
     c.fillRect(ox + o.x * cs + 1, oy + o.y * cs + 1, Math.max(1, cs - 2), Math.max(1, cs - 2));
   }
   // jogador

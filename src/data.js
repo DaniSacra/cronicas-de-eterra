@@ -20,6 +20,16 @@ const FLOORS = [
     enemies: ['rato', 'morcego', 'gosma'], maxGroup: 3,
   },
 ];
+// The crypt floors keep their old numeric keys ("0:x,y" in G.opened); every floor after them has an id ("mina1:x,y").
+// Saves from the 3-floor version opened chests on crypt floors 1 and 2, which no longer exist.
+const CRYPT_FLOORS = 1;
+const floorKey = i => (FLOORS[i] && FLOORS[i].id) || String(i);
+// Which floor a save stands on: by id when it has one; old saves past the crypt's floors start the crypt over
+function savedFloor(s) {
+  if (s.floorId) { const i = FLOORS.findIndex(f => f.id === s.floorId); if (i >= 0) return i; }
+  return s.floor > 0 && s.floor < CRYPT_FLOORS ? s.floor : 0;
+}
+const oldCryptKey = k => /^\d+:/.test(k) && parseInt(k, 10) >= CRYPT_FLOORS;
 
 const PARTY_DEFS = [
   {
@@ -257,4 +267,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { BATTLE_LINES, ENEMIES, FLOORS, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
+if (typeof module !== 'undefined') module.exports = { BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
