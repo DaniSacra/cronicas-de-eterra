@@ -103,6 +103,12 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
   (qualquer tecla pula). Feito em `src/titlebg.js`; `titleLayout` dá os retângulos e o teste garante que logo e
   menu nunca cobrem Erukh nem os irmãos. Em pé, o horizonte sobe para pouco além do meio e a ruína vai junto.
 
+- **Fundos de batalha (pseudo 3D):** cada luta mostra o lugar visto pelos heróis: o fundo (céu, muro, parede) até o
+  horizonte em 40% da altura e um chão em perspectiva com ponto de fuga no centro; lápides, barris e mesas diminuem com a
+  distância. Cemitério à noite, taverna, cripta, sala do chefe e rua da vila. Os inimigos ficam de pé no chão, em duas
+  fileiras (o primeiro, o terceiro... mais ao fundo). Pintado na escala dos inimigos, em `src/battlebg.js`
+  (`battlePlace` escolhe o lugar; um andar novo da masmorra pode ter `battle: 'mina'` quando a cena existir).
+
 ## NPCs e heróis ganham vida
 
 - **NPCs:** chibi com cerca de 2,5 cabeças de altura, como hoje. Silhueta por profissão: reconhecível só pela
