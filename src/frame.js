@@ -90,6 +90,10 @@ const ICON_ART = {
     '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krppppppppsk..', '..krpppggpppsk..', '..krpppggpppsk..',
     '..krpggggggpsk..', '..krpggggggpsk..', '..krpppggpppsk..', '...krppggppsk...', '...krppggppsk...', '....krppppsk....',
     '.....krppsk.....', '......kssk......', '.......kk.......', '................'],
+  res: [ // the Defesa shield with a frost-blue star instead of the gold cross: Resistência (magic)
+    '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krppppppppsk..', '..krpppPPpppsk..', '..krppPttPppsk..',
+    '..krpPttttPpsk..', '..krpPttttPpsk..', '..krppPttPppsk..', '...krppPPppsk...', '...krppppppsk...', '....krppppsk....',
+    '.....krppsk.....', '......kssk......', '.......kk.......', '................'],
   run: [ // boot with speed lines
     '................', '................', '........kkkk....', '.......knnnnk...', '.......knbbnk...', 'kkk....knnnnk...',
     '.......knnnnk...', '.kkkk..knnnnk...', '......knnnnnk...', '..kk.knnnnnnnk..', '.....knnnnnnnnk.', '....knnnnnnnnnnk',

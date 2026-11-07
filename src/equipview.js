@@ -86,7 +86,7 @@ const HeroView = (() => {
   // ---------- Column 2: thick bars, attributes against the party, the story ----------
   function sheetCol(m) {
     const totals = G.party.map(p => ({ total: Object.fromEntries(STAT_KEYS.map(k => [k, stat(p, k)])), bonus: p.bonus }));
-    const statIcon = { atk: 'atk', def: 'def', mag: 'spell', agi: 'run' };
+    const statIcon = { atk: 'atk', def: 'def', mag: 'spell', res: 'res', agi: 'run' };
     const st = storyLines(HERO_STORY[m.id].lines, flags()), q = storyQuote(HERO_STORY[m.id].quotes, flags());
     const bar = (lbl, v, max, cls) => `<div class="hv-bar"><span>${lbl}</span><b>${v}<small>/${max}</small></b></div>
       <div class="bar ${cls}"><i style="width:${max ? 100 * v / max : 0}%"></i></div>`;

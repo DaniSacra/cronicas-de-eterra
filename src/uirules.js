@@ -149,7 +149,7 @@ const FX_ICON = { fire: 'fogo', ice: 'spell', bolt: 'raio' };
 const spellIcon = sp => FX_ICON[sp.fx] || KIND_ICON[sp.kind] || 'spell';
 
 // Attributes: one row each, with the equipment bonus and a bar against the best of the party (0..1)
-const STAT_KEYS = ['atk', 'def', 'mag', 'agi'];
+const STAT_KEYS = ['atk', 'def', 'mag', 'res', 'agi'];
 function statRows(values, i) {
   return STAT_KEYS.map(k => {
     const best = Math.max(1, ...values.map(v => v.total[k]));

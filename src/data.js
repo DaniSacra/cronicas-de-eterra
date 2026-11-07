@@ -24,27 +24,27 @@ const FLOORS = [
 const PARTY_DEFS = [
   {
     id: 'aldo', name: 'Aldo', cls: 'Guerreiro', color: '#e0a040',
-    base: { hp: 48, mp: 8, atk: 13, def: 9, mag: 3, agi: 7 },
-    grow: { hp: 10, mp: 1, atk: 3, def: 2, mag: 0.5, agi: 1 },
+    base: { hp: 48, mp: 8, atk: 13, def: 22.5, res: 4, mag: 3, agi: 7 },
+    grow: { hp: 10, mp: 1, atk: 3, def: 5, res: 1, mag: 0.5, agi: 1 },
     spells: [[1, 'golpe'], [5, 'furia']], skillWord: 'Técnica',
   },
   {
     id: 'lyra', name: 'Lyra', cls: 'Maga', color: '#d070e0',
-    base: { hp: 30, mp: 20, atk: 6, def: 4, mag: 12, agi: 10 },
-    grow: { hp: 5, mp: 4, atk: 1, def: 1, mag: 3, agi: 1.2 },
+    base: { hp: 30, mp: 20, atk: 6, def: 10, res: 12, mag: 12, agi: 10 },
+    grow: { hp: 5, mp: 4, atk: 1, def: 2.5, res: 3, mag: 3, agi: 1.2 },
     spells: [[1, 'fogo'], [3, 'gelo'], [6, 'raio']], skillWord: 'Magia',
   },
   {
     id: 'teo', name: 'Teo', cls: 'Clérigo', color: '#60d0a0',
-    base: { hp: 36, mp: 16, atk: 9, def: 6, mag: 9, agi: 6 },
-    grow: { hp: 7, mp: 3, atk: 2, def: 1.5, mag: 2, agi: 1 },
+    base: { hp: 36, mp: 16, atk: 9, def: 15, res: 10, mag: 9, agi: 6 },
+    grow: { hp: 7, mp: 3, atk: 2, def: 3.75, res: 3, mag: 2, agi: 1 },
     spells: [[1, 'cura'], [2, 'luz'], [4, 'reviver'], [6, 'curaTotal']], skillWord: 'Magia',
   },
   {
     // até dizer o nome na noite da taverna (G.seen.andillaAnon), ela é a moça dos dados também no cartão e na batalha
     id: 'andilla', get name() { return typeof G !== 'undefined' && G.seen && G.seen.andillaAnon ? 'Moça dos dados' : 'Andilla'; }, cls: 'Ladina', color: '#e05a5a',
-    base: { hp: 34, mp: 10, atk: 11, def: 5, mag: 4, agi: 14 },
-    grow: { hp: 6, mp: 2, atk: 2.5, def: 1.2, mag: 0.5, agi: 1.6 },
+    base: { hp: 34, mp: 10, atk: 11, def: 12.5, res: 6, mag: 4, agi: 14 },
+    grow: { hp: 6, mp: 2, atk: 2.5, def: 3, res: 2, mag: 0.5, agi: 1.6 },
     spells: [[1, 'golpeBaixo'], [4, 'leque']], skillWord: 'Truque',
   },
 ];
@@ -72,14 +72,14 @@ const ITEMS = {
 
 const EQUIPS = {
   espadaFerro:  { name: 'Espada de Ferro', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 6 } },
-  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', slot: 'armadura', icon: 'def',   bonus: { def: 6 } },
+  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', slot: 'armadura', icon: 'def',   bonus: { def: 15 } },
   cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'spell', bonus: { mag: 6 } },
   espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 10 } },
-  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 5, mag: 5 } },
+  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 13, mag: 5 } },
 };
 
 // Heroes screen: attribute names in full, the starting gear of each hero (shown until something better is found)
-const STAT_FULL = { atk: 'Ataque', def: 'Defesa', mag: 'Magia', agi: 'Agilidade' };
+const STAT_FULL = { atk: 'Ataque', def: 'Defesa', mag: 'Magia', res: 'Resistência', agi: 'Agilidade' };
 const START_GEAR = {
   aldo:    { arma: { name: 'Espada de viagem', icon: 'atk' },  armadura: { name: 'Túnica de couro', icon: 'def' } },
   lyra:    { arma: { name: 'Cajado de estudo', icon: 'spell' }, armadura: { name: 'Vestido de viagem', icon: 'def' } },
@@ -123,36 +123,36 @@ const HERO_STORY = {
   },
 };
 
-const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', agi: 'AGI', hp: 'PV', mp: 'PM' };
+const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', res: 'RES', agi: 'AGI', hp: 'PV', mp: 'PM' };
 
 const ENEMIES = {
-  rato:      { name: 'Rato Gigante',    hp: 52,  atk: 21, def: 2,  agi: 8,  xp: 8,  sprite: 'rat', drop: ['pocao', 0.08] },
-  morcego:   { name: 'Morcego Vampiro', hp: 38,  atk: 20, def: 1,  agi: 14, xp: 7,  sprite: 'bat', float: true,
+  rato:      { name: 'Rato Gigante',    hp: 52,  atk: 21, def: 4, res: 1,  agi: 8,  xp: 8,  sprite: 'rat', drop: ['pocao', 0.08] },
+  morcego:   { name: 'Morcego Vampiro', hp: 38,  atk: 20, def: 2, res: 1,  agi: 14, xp: 7,  sprite: 'bat', float: true,
                skill: { name: 'Mordida Vampira', chance: 0.3, kind: 'drain', power: 1.0 } },
-  gosma:     { name: 'Gosma Verde',     hp: 64,  atk: 20, def: 5,  agi: 5,  xp: 9,  sprite: 'slime', drop: ['eter', 0.06] },
-  esqueleto: { name: 'Esqueleto',       hp: 56,  atk: 20, def: 7,  agi: 8,  xp: 16, sprite: 'skeleton', undead: true,
+  gosma:     { name: 'Gosma Verde',     hp: 64,  atk: 20, def: 9, res: 4,  agi: 5,  xp: 9,  sprite: 'slime', drop: ['eter', 0.06] },
+  esqueleto: { name: 'Esqueleto',       hp: 56,  atk: 20, def: 13, res: 5,  agi: 8,  xp: 16, sprite: 'skeleton', undead: true,
                recolor: { '#a8323e': '#3a78c8', '#e86a7a': '#8ac0f0', '#3a78c8': '#a8323e', '#2c3c80': '#7a1a24', '#1c2860': '#4a0c14' }, drop: ['pocao', 0.1] },
-  aranha:    { name: 'Aranha Tumular',  hp: 48,  atk: 19, def: 5,  agi: 14, xp: 15, sprite: 'spider',
+  aranha:    { name: 'Aranha Tumular',  hp: 48,  atk: 19, def: 9, res: 4,  agi: 14, xp: 15, sprite: 'spider',
                skill: { name: 'Ferroada', chance: 0.25, kind: 'phys', power: 1.5 } },
-  goblin:    { name: 'Goblin Lanceiro', hp: 62,  atk: 21, def: 8,  agi: 9,  xp: 18, sprite: 'goblin',
+  goblin:    { name: 'Goblin Lanceiro', hp: 62,  atk: 21, def: 14, res: 6,  agi: 9,  xp: 18, sprite: 'goblin',
                pal: { base: '#6aa040', light: '#9ad06a', dark: '#2e5418', eye: '#ffe040' }, drop: ['pocao', 0.15] },
-  cavaleiro: { name: 'Cavaleiro Negro', hp: 85,  atk: 27, def: 15, agi: 8,  xp: 40, sprite: 'knight',
+  cavaleiro: { name: 'Cavaleiro Negro', hp: 85,  atk: 27, def: 27, res: 11, agi: 8,  xp: 40, sprite: 'knight',
                pal: { base: '#3a3a4a', light: '#80809a', dark: '#141418', eye: '#ff2020' },
                skill: { name: 'Corte Brutal', chance: 0.2, kind: 'phys', power: 1.6 }, drop: ['pena', 0.08] },
-  espectro:  { name: 'Espectro',        hp: 62,  atk: 22, def: 9,  agi: 15, xp: 36, sprite: 'ghost', undead: true, float: true,
+  espectro:  { name: 'Espectro',        hp: 62,  atk: 22, def: 16, res: 6,  agi: 15, xp: 36, sprite: 'ghost', undead: true, float: true,
                pal: { base: '#7fb0d0', light: '#d8f0ff', dark: '#2a4a6a', eye: '#80ffff' },
                skill: { name: 'Toque Gélido', chance: 0.35, kind: 'mag', power: 30 }, drop: ['eter', 0.15] },
-  golem:     { name: 'Golem de Pedra',  hp: 130, atk: 30, def: 22, agi: 4,  xp: 48, sprite: 'golem',
+  golem:     { name: 'Golem de Pedra',  hp: 130, atk: 30, def: 40, res: 15, agi: 4,  xp: 48, sprite: 'golem',
                pal: { base: '#7a7266', light: '#aaa296', dark: '#3c3830', eye: '#ffa020' }, drop: ['pocao', 0.2] },
   // Cemitério de Valmor: mais fracos que os da cripta, para Aldo e Lyra aprenderem
-  ratoCova:    { name: 'Rato de Cova', hp: 24, atk: 11, def: 1, agi: 6,  xp: 4, sprite: 'rat',
+  ratoCova:    { name: 'Rato de Cova', hp: 24, atk: 11, def: 2, res: 1, agi: 6,  xp: 4, sprite: 'rat',
                recolor: { '#b07c58': '#a2a2ac', '#9a6232': '#7a7a82', '#6a3a1a': '#55555e', '#4a2610': '#26262e' } }, // rato cinza do cemitério
-  morcegoCova: { name: 'Morcego',      hp: 16, atk: 10, def: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
+  morcegoCova: { name: 'Morcego',      hp: 16, atk: 10, def: 0, res: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
                recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
-  ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 3, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
-  encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 3, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
+  ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 5, res: 2, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
+  encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 5, res: 2, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
   // Chefe do prólogo (prologo.md)
-  sineiro:   { name: 'O Sineiro', hp: 650, atk: 24, def: 14, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
+  sineiro:   { name: 'O Sineiro', hp: 650, atk: 24, def: 25, res: 10, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
                say: {
                  intro: 'O Sineiro ergue o sino de bronze.\n"O último toque foi há cinquenta anos. Ninguém mais desce."',
                  enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',

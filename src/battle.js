@@ -53,7 +53,6 @@ function hurtMember(m, dmg, quiet = false) {
   return dmg;
 }
 
-function physDmg(atk, def, power = 1) { return Math.max(1, Math.round(atk * power * rnd(0.88, 1.12) - def * 0.5)); }
 
 // ---------- Escolha de comandos ----------
 // Target choice has no window: an arrow over the enemy (or the hero card) and the name on the top plaque
@@ -232,7 +231,7 @@ async function partyAct(c) {
       let dmg;
       if (sp.kind === 'phys') dmg = physDmg(stat(a, 'atk'), sp.pierce ? 0 : t.def, sp.power);
       else {
-        dmg = Math.max(1, Math.round((stat(a, 'mag') * sp.power + sp.base) * rnd(0.9, 1.1) - t.def * 0.2));
+        dmg = magDmg((stat(a, 'mag') * sp.power + sp.base) * rnd(0.9, 1.1), t.res);
         if (sp.kind === 'holy' && t.undead) dmg *= 2;
       }
       Sfx.hit();
@@ -266,7 +265,7 @@ async function enemyAct(e) {
       if (d > 0) { const h = Math.min(e.maxhp - e.hp, d); e.hp += h; Sfx.drain(); addNum(e.x, e.top + 10, '+' + h, '#7dff9a'); await wait(300); }
     } else if (sk.kind === 'mag') {
       e.atkT = performance.now(); Sfx.ice(); await wait(250);
-      hurtMember(t, Math.max(1, Math.round(sk.power * rnd(0.9, 1.1) - stat(t, 'def') * 0.25)));
+      hurtMember(t, magDmg(sk.power * rnd(0.9, 1.1), stat(t, 'res')));
       await wait(350);
     }
   } else {
@@ -299,14 +298,14 @@ async function bossAct(e) {
     await bsay(S.aoe);
     Sfx.bell(); shake(300); addFx('dark', VW / 2, VH / 2, 900); G.flashColor = '200,150,60'; G.flash = { t0: performance.now(), dur: 400 };
     await wait(500);
-    aliveParty().forEach((t, i) => hurtMember(t, Math.max(1, Math.round(e.chama * rnd(0.85, 1.15) - stat(t, 'def') * 0.25)), i > 0));
+    aliveParty().forEach((t, i) => hurtMember(t, magDmg(e.chama * rnd(0.85, 1.15), stat(t, 'res')), i > 0));
     await wait(500);
     for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); }
   } else {
     const t = pick(aliveParty());
     await bsay(S.drain(pdef(t).name));
     e.atkT = performance.now(); Sfx.drain(); await wait(300);
-    const d = hurtMember(t, Math.max(1, Math.round(e.dreno * rnd(0.9, 1.1) - stat(t, 'def') * 0.3)));
+    const d = hurtMember(t, magDmg(e.dreno * rnd(0.9, 1.1), stat(t, 'res')));
     const h = Math.min(e.maxhp - e.hp, d); e.hp += h;
     addNum(e.x, e.top + 20, '+' + h, '#7dff9a');
     await wait(400);

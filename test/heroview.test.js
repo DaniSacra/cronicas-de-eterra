@@ -51,8 +51,9 @@ test('slots show the best equipment found, or the starting gear by name, never a
 });
 
 test('attributes with equipment bonus and a bar against the best of the party', () => {
-  const rows = R.statRows([{ total: { atk: 20, def: 10, mag: 4, agi: 7 }, bonus: { atk: 6 } }, { total: { atk: 10, def: 5, mag: 16, agi: 10 }, bonus: {} }], 1);
-  assert.deepEqual(rows.map(r => r.key), ['atk', 'def', 'mag', 'agi']);
+  const rows = R.statRows([{ total: { atk: 20, def: 10, mag: 4, res: 5, agi: 7 }, bonus: { atk: 6 } }, { total: { atk: 10, def: 5, mag: 16, res: 15, agi: 10 }, bonus: {} }], 1);
+  assert.deepEqual(rows.map(r => r.key), ['atk', 'def', 'mag', 'res', 'agi']);
+  assert.equal(rows[3].frac, 1, 'Resistência has its own row');
   assert.equal(rows[0].frac, 0.5);
   assert.equal(rows[2].frac, 1);
   assert.equal(R.statRows([{ total: { atk: 20, def: 10, mag: 4, agi: 7 }, bonus: { atk: 6 } }], 0)[0].bonus, 6);

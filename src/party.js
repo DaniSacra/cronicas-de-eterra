@@ -7,6 +7,14 @@ const maxMp = m => stat(m, 'mp');
 const knownSpells = m => pdef(m).spells.filter(([lv]) => m.lv >= lv).map(s => s[1]);
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+// Damage (combat design, Phase 1): Defesa cuts physical damage and Resistência cuts magic damage, both as a
+// percentage capped at 75. v is the random spread, passed in by the tests.
+const GUARD_CAP = 75;
+const guardCut = pct => 1 - Math.min(GUARD_CAP, Math.max(0, pct || 0)) / 100;
+const physDmg = (atk, def, power = 1, v = rnd(0.88, 1.12)) => Math.max(1, Math.round(atk * power * v * guardCut(def)));
+const magDmg = (raw, res) => Math.max(1, Math.round(raw * guardCut(res)));
+// Saves before v3 kept Defesa as points: the equipment bonus becomes a percentage (x2.5, like the heroes' Defesa)
+const migrateBonus = (bonus, v) => (v || 0) >= 3 || !bonus.def ? bonus : { ...bonus, def: Math.round(bonus.def * 2.5) };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const aliveParty = () => G.party.filter(m => m.hp > 0);
 

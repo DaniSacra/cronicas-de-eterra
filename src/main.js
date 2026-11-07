@@ -413,7 +413,7 @@ function saveGame() {
   try {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 2, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
+      v: 3, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
       inv: G.inv, opened: G.opened, explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
@@ -433,7 +433,7 @@ function loadGame() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return false;
-    G.party = s.party; G.inv = s.inv; G.opened = s.opened; G.bossDead = s.bossDead;
+    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.bossDead = s.bossDead;
     G.gold = s.gold || 0; G.quest = s.quest ?? 1; // saves antigos já estavam na dungeon
     G.key = s.key || { carta: true }; G.intro = s.intro ?? 1;
     G.seen = s.seen || {};
