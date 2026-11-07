@@ -52,7 +52,7 @@ function resolveMacro(entry, ctx) {
   if (entry.type === 'attack') return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: null };
   if (entry.type === 'spell') {
     const sp = ctx.spells[entry.spell];
-    if (!sp || actor.mp < sp.mp) return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: `PM insuficiente. ${name} ataca.` };
+    if (!sp || actor.mp < sp.mp) return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: sp ? `PM insuficiente. ${name} ataca.` : `${name} ainda não aprendeu isso. ${name} ataca.` };
     const target = allyTarget(sp.target, false);
     if (!target) return defend(sp.target === 'deadAlly' ? `Ninguém caído. ${name} se defende.` : null);
     return { cmd: { type: 'spell', spell: entry.spell, target }, warn: null };

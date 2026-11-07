@@ -166,7 +166,7 @@ async function heroCommand(m, opts) {
     const saved = B.macro && B.macro.entries[m.id];
     if (saved) {
       const { cmd, warn } = resolveMacro(saved, { actor: m, name: pdef(m).name, party: G.party, enemies: B.enemies, inv: G.inv,
-        spells: SPELLS, items: ITEMS, maxHp, maxMp, useless: itemUseless });
+        spells: Object.fromEntries(knownSpells(m).map(id => [id, SPELLS[id]])), items: ITEMS, maxHp, maxMp, useless: itemUseless });
       if (warn) await bsay(warn);
       return { cmd, entry: saved };
     }
@@ -237,7 +237,7 @@ async function partyAct(c) {
     for (const t of targets) {
       if (t.hp <= 0) continue;
       let dmg;
-      if (sp.kind === 'phys') dmg = physDmg(stat(a, 'atk'), sp.pierce ? 0 : t.def, sp.power);
+      if (sp.kind === 'phys') dmg = Math.round(physDmg(stat(a, 'atk'), sp.pierce ? 0 : t.def, sp.power) * (sp.bone && t.undead ? sp.bone : 1));
       else {
         dmg = magDmg((stat(a, 'mag') * sp.power + sp.base) * rnd(0.9, 1.1), t.res);
         if (sp.kind === 'holy' && t.undead) dmg *= 2;
@@ -246,6 +246,7 @@ async function partyAct(c) {
       await hitEnemy(t, dmg, sp.kind === 'phys' ? '#fff' : '#9fe0ff');
     }
     if (sp.kind === 'holy' && targets.some(t => t.undead)) await bsay('A luz queima os mortos-vivos!');
+    if (sp.bone && targets.some(t => t.undead)) await bsay('Osso quebra na junta!');
   }
 }
 

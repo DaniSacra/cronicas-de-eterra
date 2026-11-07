@@ -33,7 +33,7 @@ test('every skill of every hero has a description, a target text and an icon tha
 
 test('skills book: known by level, the rest still to come with their level', () => {
   const lyra = D.PARTY_DEFS.find(d => d.id === 'lyra');
-  assert.deepEqual(R.spellBook(lyra.spells, 3), [{ id: 'fogo', lv: 1, known: true }, { id: 'gelo', lv: 3, known: true }, { id: 'raio', lv: 6, known: false }]);
+  assert.deepEqual(R.spellBook(lyra.spells, 3), [{ id: 'fogo', lv: 1, known: true }, { id: 'gelo', lv: 3, known: true }, { id: 'raio', lv: 5, known: false }]);
   assert.equal(R.spellBook(lyra.spells, 1).filter(s => s.known).length, 1);
 });
 

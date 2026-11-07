@@ -250,7 +250,8 @@ async function teoScene() {
   const r = await startBattle(['ossada', 'ossada'], false, {
     surprise: 'normal', // Aldo shouted "Abaixe-se!": nobody is caught off guard
     intro: 'Duas Ossadas se erguem atrás do clérigo!', noRun: 'As Ossadas cercam a cova. Não dá para fugir!',
-    hints: G.seen.dica_teo ? [] : ['Teo cura com Magia. Contra mortos-vivos, a Luz Sagrada fere em dobro.'],
+    hints: G.seen.dica_teo ? [] : [G.party.some(m => m.id === 'teo' && knownSpells(m).includes('luz')) ? 'Teo cura com Magia. Contra mortos-vivos, a Luz Sagrada fere em dobro.'
+      : 'Teo cura com Magia. No nível 3, ele aprende a Luz Sagrada, que fere os mortos-vivos.'],
   });
   G.seen.dica_teo = 1;
   if (r === 'lose') return gameOver();

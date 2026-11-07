@@ -38,3 +38,11 @@ test('old saves: the Defesa bonus of the equipment becomes a percentage once', (
   assert.deepEqual(run.json('migrateBonus({ def: 15 }, 3)'), { def: 15 }, 'v3 saves are already converted');
   assert.deepEqual(run.json('migrateBonus({ atk: 6 }, 2)'), { atk: 6 });
 });
+
+test('every hero learns on odd levels; Quebra-Junta hits the undead harder', async () => {
+  const { PARTY_DEFS, SPELLS } = require('../src/data.js');
+  for (const d of PARTY_DEFS) for (const [lv] of d.spells) assert.equal(lv % 2, 1, `${d.id} learns on level ${lv}`);
+  assert.deepEqual(PARTY_DEFS.find(d => d.id === 'aldo').spells.map(s => s[1]), ['golpe', 'quebraJunta', 'furia']);
+  assert.ok(SPELLS.quebraJunta.power * SPELLS.quebraJunta.bone > SPELLS.golpe.power, 'better than Golpe Forte against the dead');
+  assert.ok(SPELLS.quebraJunta.power < SPELLS.golpe.power, 'worse against the living');
+});

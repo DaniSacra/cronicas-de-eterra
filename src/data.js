@@ -26,31 +26,33 @@ const PARTY_DEFS = [
     id: 'aldo', name: 'Aldo', cls: 'Guerreiro', color: '#e0a040',
     base: { hp: 48, mp: 8, atk: 13, def: 22.5, res: 4, mag: 3, agi: 7 },
     grow: { hp: 10, mp: 1, atk: 3, def: 5, res: 1, mag: 0.5, agi: 1 },
-    spells: [[1, 'golpe'], [5, 'furia']], skillWord: 'Técnica',
+    spells: [[1, 'golpe'], [3, 'quebraJunta'], [5, 'furia']], skillWord: 'Técnica',
   },
   {
     id: 'lyra', name: 'Lyra', cls: 'Maga', color: '#d070e0',
     base: { hp: 30, mp: 20, atk: 6, def: 10, res: 12, mag: 12, agi: 10 },
     grow: { hp: 5, mp: 4, atk: 1, def: 2.5, res: 3, mag: 3, agi: 1.2 },
-    spells: [[1, 'fogo'], [3, 'gelo'], [6, 'raio']], skillWord: 'Magia',
+    spells: [[1, 'fogo'], [3, 'gelo'], [5, 'raio']], skillWord: 'Magia',
   },
   {
     id: 'teo', name: 'Teo', cls: 'Clérigo', color: '#60d0a0',
     base: { hp: 36, mp: 16, atk: 9, def: 15, res: 10, mag: 9, agi: 6 },
     grow: { hp: 7, mp: 3, atk: 2, def: 3.75, res: 3, mag: 2, agi: 1 },
-    spells: [[1, 'cura'], [2, 'luz'], [4, 'reviver'], [6, 'curaTotal']], skillWord: 'Magia',
+    spells: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [7, 'curaTotal']], skillWord: 'Magia',
   },
   {
     // até dizer o nome na noite da taverna (G.seen.andillaAnon), ela é a moça dos dados também no cartão e na batalha
     id: 'andilla', get name() { return typeof G !== 'undefined' && G.seen && G.seen.andillaAnon ? 'Moça dos dados' : 'Andilla'; }, cls: 'Ladina', color: '#e05a5a',
     base: { hp: 34, mp: 10, atk: 11, def: 12.5, res: 6, mag: 4, agi: 14 },
     grow: { hp: 6, mp: 2, atk: 2.5, def: 3, res: 2, mag: 0.5, agi: 1.6 },
-    spells: [[1, 'golpeBaixo'], [4, 'leque']], skillWord: 'Truque',
+    spells: [[1, 'golpeBaixo'], [3, 'leque']], skillWord: 'Truque',
   },
 ];
 
+// Every hero learns something new on the odd levels (1, 3, 5, 7)
 const SPELLS = {
   golpe:     { name: 'Golpe Forte', mp: 4,  target: 'enemy',      kind: 'phys',   power: 1.8, fx: 'slash', desc: 'Um golpe com toda a força.' },
+  quebraJunta: { name: 'Quebra-Junta', mp: 5, target: 'enemy', kind: 'phys', power: 1.4, bone: 1.5, fx: 'slash', desc: 'Mira nas juntas. Osso quebra: mais forte contra mortos-vivos.' },
   furia:     { name: 'Fúria',       mp: 8,  target: 'allEnemies', kind: 'phys',   power: 1.15, fx: 'slash', desc: 'Gira a espada contra todos.' },
   fogo:      { name: 'Fogo',        mp: 4,  target: 'enemy',      kind: 'mag',    power: 2.2, base: 8,  fx: 'fire', desc: 'Uma chama que queima um inimigo.' },
   gelo:      { name: 'Gelo',        mp: 8,  target: 'allEnemies', kind: 'mag',    power: 1.4, base: 6,  fx: 'ice', desc: 'Geada sobre todos os inimigos.' },

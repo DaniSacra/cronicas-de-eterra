@@ -302,7 +302,7 @@ async function interact(o) {
       { title: 'Diante do buraco na parede, o morto de batina segura o sino de bronze.\n' + bossWarning(G.party) + 'Enfrentar o Sineiro?', cancel: true });
     if (ok) await runBattle(['sineiro'], true, { hints: [
       'Só atacar não basta. Teo cura os feridos com Magia; não espere alguém cair.',
-      'Lyra queima com Fogo, e a Luz Sagrada de Teo fere em dobro os mortos-vivos.',
+      bossUndeadHint(),
       G.party.some(m => m.id === 'teo' && knownSpells(m).includes('reviver')) ? 'Se alguém cair, o Reviver de Teo ou a Pena Vital traz de volta. Poções estão em Item.' : 'Se alguém cair, a Pena Vital traz de volta. Poções estão em Item.',
     ] });
   }
@@ -344,6 +344,13 @@ async function descend() {
   const f = FLOORS[G.floor];
   await UI.say(`${f.short} · ${f.name}`);
   await floorClues(G.floor);
+}
+
+// The boss is undead: the hint names only the skills against the dead that the party already knows
+function bossUndeadHint() {
+  const knows = (id, sp) => G.party.some(m => m.id === id && knownSpells(m).includes(sp));
+  const extra = [knows('teo', 'luz') && 'a Luz Sagrada de Teo fere em dobro', knows('aldo', 'quebraJunta') && 'a Quebra-Junta de Aldo quebra osso'].filter(Boolean);
+  return 'Lyra queima com Fogo. O Sineiro é um morto-vivo' + (extra.length ? ': ' + extra.join(', e ') + '.' : '.');
 }
 
 // Pistas da história ao chegar a cada andar (aparecem uma vez só)
