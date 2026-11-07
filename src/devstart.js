@@ -1,0 +1,71 @@
+// ===== Modo dev (?dev no endereço): começar em qualquer ponto da história =====
+// Cada ponto monta um save plausível para aquele momento (nível, itens, flags) e leva o grupo até lá.
+// Ao fazer uma parte nova, acrescente os pontos dela no fim de DEV_STARTS.
+
+const DEV_HEROES = ['aldo', 'lyra', 'teo', 'andilla'];
+const DEV_CRYPT_GEAR = ['espadaFerro', 'cotaMalha', 'cajadoRunico', 'mantoSagrado'];
+// Everything the prologue sets on the way to the end (the talks already heard included)
+const DEV_PROLOGUE = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, covaU: 1, covaO: 1, covas: 1, hugo4: 1,
+  andillaNome: 1, porque: 'mortos', andar0: 1, lapide: 1, bilhete: 1, pistaTunel: 1, altar: 1, buraco: 1, sino: 1, fonteLyra: 1 };
+
+// A fresh party of four at a level, with the crypt's gear worn when asked
+function devParty(lv, gear = []) {
+  G.party = DEV_HEROES.map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = lv; m.xp = 0; return m; });
+  G.gear = [...gear]; G.equip = {};
+  for (const g of gear) { const m = G.party.find(p => p.id === EQUIPS[g].who); for (const [k, v] of Object.entries(EQUIPS[g].bonus)) m.bonus[k] = (m.bonus[k] || 0) + v; }
+  for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
+}
+function devState(o) {
+  devParty(o.lv, o.gear);
+  Object.assign(G, { chapter: 0, part: 0, inv: { pocao: 4, eter: 2, pena: 1 }, opened: {}, explored: {}, bossDead: false, gold: 80,
+    quest: 1, key: { carta: true }, intro: 1, reached: 1, macros: normalizeMacros(), lastRound: null }, o.G || {});
+  G.seen = { ...DEV_PROLOGUE, ...(o.seen || {}) };
+  for (const [k, v] of Object.entries(o.c1 || {})) G.seen['c1:' + k] = v;
+  loadFloor(0);
+  UI.buildParty();
+}
+const C1_BASE = { G: { chapter: 1, part: 1, bossDead: true, key: { carta: true, bilhete: true } }, gear: DEV_CRYPT_GEAR };
+const devTown = async (pos, area) => { enterTown(pos, area); G.busy = false; townHint(); };
+
+const DEV_STARTS = [
+  { label: 'Prólogo · início', hint: 'Aldo chega sozinho', go: () => newGame() },
+  { label: 'Prólogo · cripta', hint: 'nível 3, grupo de 4', go: () => quickDungeon() },
+  { label: 'Prólogo · diante do Sineiro', hint: 'nível 4, equipados', async go() {
+    devState({ lv: 4, gear: DEV_CRYPT_GEAR, seen: { buraco: 0, sino: 0, altar: 0 } });
+    const m = getMap(0), boss = m.objects.find(o => o.type === 'boss');
+    const [dx, dy] = DIRS.find(([x, y]) => cellAt(boss.x + x, boss.y + y) !== 1);
+    G.mode = 'explore'; G.town = CRYPT_FRONT;
+    loadFloor(0, { x: boss.x + dx, y: boss.y + dy, dir: DIRS.findIndex(([x, y]) => x === -dx && y === -dy) });
+    cam.x = G.x + 0.5; cam.y = G.y + 0.5; cam.a = dirAngle(G.dir);
+    Music.play('explore'); G.busy = false; exploreHint();
+  } },
+  { label: 'Capítulo 1 · partida de Valmor', hint: 'nível 4, Prólogo terminado', go() {
+    devState({ lv: 4, gear: DEV_CRYPT_GEAR, G: { bossDead: true } });
+    return devTown({ x: 1, y: 6, dir: 3 }, 'valmor');
+  } },
+  { label: 'Capítulo 1 · Estrada do Sul', hint: 'nível 4', go() {
+    devState({ lv: 4, ...C1_BASE, G: { ...C1_BASE.G, inv: { pocao: 4, eter: 2, pena: 1, pao: 4 } } });
+    return devTown(ESTRADA_START, 'estrada');
+  } },
+  { label: 'Capítulo 1 · Vau do Corvo', hint: 'nível 5', go() {
+    devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1 } });
+    return devTown({ x: 11, y: 18, dir: 0 }, 'vau');
+  } },
+  { label: 'Capítulo 1 · Pasto do Vau', hint: 'nível 5, depois do Gervásio', go() {
+    devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1, vau: 1, estojo: 1, gervasio: 1 } });
+    return devTown({ x: 1, y: 8, dir: 1 }, 'pasto');
+  } },
+  { label: 'Capítulo 1 · Acampamento', hint: 'nível 5, a noite da matilha', go() {
+    devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1, vau: 1, estojo: 1, gervasio: 1, pasto: 1, cavalo1: 1, cavalo2: 1, cavalo3: 1, cavalo4: 1, cavalos: 1 } });
+    G.busy = true;
+    return campScene();
+  } },
+];
+
+// The dev menu: one start per line; Esc goes back to the title
+async function devStart() {
+  const i = await UI.choose(DEV_STARTS.map((s, value) => ({ label: s.label, hint: s.hint, value })), { title: 'Modo dev · começar em', cols: 1, cancel: true });
+  if (i == null) return titleScreen();
+  G.busy = true; G.fade = 0;
+  await DEV_STARTS[i].go();
+}

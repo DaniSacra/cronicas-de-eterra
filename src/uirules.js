@@ -332,7 +332,7 @@ function gridPath(from, goal, free, limit = 400) {
 }
 
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
-  ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
+  ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
 if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

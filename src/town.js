@@ -861,7 +861,14 @@ function drawTown(now) {
   c.fillStyle = 'rgba(200,235,255,.55)';
   for (let y = Math.floor(camY / TS); y <= Math.floor((camY + VH) / TS); y++) for (let x = Math.floor(camX / TS); x <= Math.floor((camX + VW) / TS); x++) {
     const t = TOWN.tileAt(x, y);
-    if (t === TILE.HEARTH || t === TILE.FIRE) {
+    if (t === TILE.FIRE) { // campfire: a tall flame, high in its tile so whoever sits south of it does not hide it
+      const X = x * TS - camX, Y = y * TS - camY, f = Math.sin(now / 90 + x) * 1.5;
+      c.fillStyle = '#c83a10'; c.fillRect(X + 4, Y + 1 - f, 8, 11 + f);
+      c.fillStyle = '#ff9a20'; c.fillRect(X + 5, Y + 3 - f, 6, 9 + f);
+      c.fillStyle = '#ffe070'; c.fillRect(X + 7, Y + 6 - f / 2, 2, 5);
+      continue;
+    }
+    if (t === TILE.HEARTH) {
       // Fogo da lareira
       const X = x * TS - camX, Y = y * TS - camY, f = Math.sin(now / 90 + x) * 1.5;
       c.fillStyle = '#c83a10'; c.fillRect(X + 3, Y + 10 - f, 10, 6 + f);

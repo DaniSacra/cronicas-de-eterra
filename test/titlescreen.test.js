@@ -57,8 +57,8 @@ test('the camera descent ends on the final frame and any input skips it', () => 
   assert.ok(s.done(10));
 });
 
-test('"Direto à cripta" only with ?dev in the address', () => {
+test('the dev start menu only with ?dev in the address', () => {
   assert.deepEqual(titleOptions(true, false).map(o => o.value), ['new', 'load']);
-  assert.deepEqual(titleOptions(false, true).map(o => o.value), ['new', 'load', 'dungeon']);
+  assert.deepEqual(titleOptions(false, true).map(o => o.value), ['new', 'load', 'dev']);
   assert.equal(titleOptions(false, false)[1].disabled, true);
 });

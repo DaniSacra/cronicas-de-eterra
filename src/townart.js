@@ -645,8 +645,8 @@ const TownArt = (() => {
     const spot = valmor && SPOTS[`${x},${y}`];
     if (lampAt(A, x, y)) return drawLamp(c, X, Y);
     if (t === TILE.FIRE) {   // campfire: a ring of stones and charred logs; the flame is animated over it, the light pools from here
-      for (const [sx, sy] of [[2, 9], [5, 12], [10, 12], [13, 9], [7, 6]]) { R(c, X + sx, Y + sy, 3, 2, '#26202e'); R(c, X + sx, Y + sy, 2, 1, '#7a7a82'); }
-      R(c, X + 4, Y + 11, 8, 2, '#4e2c14'); R(c, X + 5, Y + 11, 6, 1, '#6a3a1a');
+      for (const [sx, sy] of [[1, 8], [3, 12], [11, 12], [13, 8], [7, 13]]) { R(c, X + sx, Y + sy, 3, 2, '#26202e'); R(c, X + sx, Y + sy, 2, 1, '#7a7a82'); }
+      R(c, X + 3, Y + 10, 10, 2, '#4e2c14'); R(c, X + 4, Y + 10, 8, 1, '#6a3a1a');
       LIGHTS.push({ x: X + 8, y: Y + 10, r: 56 });
       return;
     }

@@ -529,7 +529,7 @@ async function titleScreen() {
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
   Sfx.init();
-  if (v === 'dungeon') return quickDungeon();
+  if (v === 'dev') return devStart(); // src/devstart.js
   if (v === 'load' && loadGame()) {
     await UI.say(G.mode === 'town' ? `Jogo carregado. ${TOWN.A.name}.` : `Jogo carregado. ${FLOORS[G.floor].short} · ${FLOORS[G.floor].name}`, { auto: 1600 });
     if (G.seen.migrou === 0) { G.seen.migrou = 1; Sfx.join(); await UI.say(`Uma ladina de capa cinza, ${heroName('andilla')}, juntou-se ao grupo.`); saveGame(); }
