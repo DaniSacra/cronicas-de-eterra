@@ -209,12 +209,14 @@ async function partyAct(c) {
     const t = retarget(c.target); if (!t) return;
     await bsay(`${an} ataca ${midName(ename(t))}!`);
     addFx('slash', t.x, t.cy, 300); Sfx.slash(); await wait(180);
-    if (Math.random() < 0.05) { Sfx.miss(); addNum(t.x, t.top + 10, 'ERROU', '#aaa'); await bsay('Errou!'); return; }
-    const crit = Math.random() < 0.08;
-    const dmg = physDmg(stat(a, 'atk'), t.def, crit ? 1.7 : 1);
+    const roll = rollHit(critChance(a.id), t.agi), crit = roll === 'crit';
+    if (roll === 'miss') { Sfx.miss(); addNum(t.x, t.top + 10, 'ERROU', '#aaa'); await bsay('Errou!'); return; }
+    if (roll === 'dodge') { Sfx.miss(); addNum(t.x, t.top + 10, 'ESQUIVA', '#aaa'); await bsay(`${ename(t)} se esquiva!`); return; }
+    const dmg = physDmg(stat(a, 'atk'), t.def, crit ? HIT.critMul : 1);
     if (crit) { Sfx.crit(); shake(150); } else Sfx.hit();
     await hitEnemy(t, dmg, crit ? '#ffd23f' : '#fff');
     if (crit && t.hp > 0) await bsay('Golpe crítico!');
+    if (crit) await heroLine('crit', a);
     return;
   }
   if (c.type === 'item') {
@@ -253,13 +255,30 @@ async function partyAct(c) {
 async function enemyAttack(e, t, power = 1) {
   e.atkT = performance.now();
   await wait(200);
-  if (Math.random() < 0.04 + stat(t, 'agi') * 0.003) { Sfx.miss(); await bsay(`${pdef(t).name} se esquiva!`); return 0; }
-  const d = hurtMember(t, physDmg(e.atk, stat(t, 'def'), power));
+  const roll = rollHit(e.boss ? 0 : HIT.crit, stat(t, 'agi'));
+  if (roll === 'miss') { Sfx.miss(); UI.cardFloat(t, 'ERROU', '#aaa'); await bsay(`${ename(e)} erra!`); return 0; }
+  if (roll === 'dodge') { Sfx.miss(); UI.cardFloat(t, 'ESQUIVA', '#aaa'); await bsay(`${pdef(t).name} se esquiva!`); return 0; }
+  if (roll === 'crit') { Sfx.crit(); shake(300); }
+  const d = hurtMember(t, physDmg(e.atk, stat(t, 'def'), power * (roll === 'crit' ? HIT.critMul : 1)));
   await wait(350);
+  if (roll === 'crit') await bsay('Golpe crítico!');
   return d;
 }
 
-async function checkFallen(t) { if (t.hp <= 0) { Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); } }
+async function checkFallen(t) {
+  if (t.hp <= 0) { Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); await fallLine(t); }
+  else if (t.hp < maxHp(t) * 0.3) await heroLine('low', t);
+}
+// A short line from a hero (data.js BATTLE_LINES): each kind at most once per fight, and not every time
+async function heroLine(kind, m, ...args) {
+  const said = (B.lines = B.lines || {});
+  const pool = BATTLE_LINES[kind] && BATTLE_LINES[kind][m.id];
+  if (!pool || said[kind] || m.hp <= 0 || Math.random() >= 0.6) return;
+  said[kind] = 1;
+  const l = pool[Math.floor(Math.random() * pool.length)];
+  await bsay(`${pdef(m).name}: "${typeof l === 'function' ? l(...args) : l}"`);
+}
+const fallLine = t => { const id = fallReactor(t.id, aliveParty().map(m => m.id)), m = id && G.party.find(p => p.id === id); return m ? heroLine('fall', m, t.id, pdef(t).name) : null; };
 
 async function enemyAct(e) {
   const targets = aliveParty(); if (!targets.length) return;
@@ -309,7 +328,7 @@ async function bossAct(e) {
     await wait(500);
     aliveParty().forEach((t, i) => hurtMember(t, magDmg(e.chama * rnd(0.85, 1.15), stat(t, 'res')), i > 0));
     await wait(500);
-    for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); }
+    for (const t of G.party) if (t.hp <= 0 && !t._fallenMsg) { t._fallenMsg = true; Sfx.fall(); await bsay(`${pdef(t).name} caiu!`); await fallLine(t); }
   } else {
     const t = pick(aliveParty());
     await bsay(S.drain(pdef(t).name));
@@ -441,6 +460,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   if (result === 'win') {
     await wait(300);
     Music.stop(); if (!isBoss) Sfx.victory(); // o chefe cai com a última badalada (ending)
+    if (!isBoss) { const up = aliveParty(); if (up.length) await heroLine('win', up[Math.floor(Math.random() * up.length)]); }
     const xp = B.enemies.reduce((s, e) => s + e.xp, 0);
     if (!isBoss) {
       const gold = Math.round(xp * rnd(1.3, 1.7));

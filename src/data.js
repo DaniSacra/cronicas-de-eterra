@@ -134,6 +134,19 @@ const HERO_STORY = {
   },
 };
 
+// Battle lines: short, at most one of each kind per fight (src/battle.js, heroLine). fall gets the fallen hero's id and name.
+const BATTLE_LINES = {
+  crit: { aldo: ['Na junta.', 'Fica no chão.'], lyra: ['Viu? Eu também sei bater.'], teo: ['Desculpa. Foi sem querer. Quase.'], andilla: ['Seis no dado.', 'Eu sempre ganho.'] },
+  low: { aldo: ['Ainda estou de pé.'], lyra: ['Isso doeu. Vou anotar quem foi.'], teo: ['Eu cuido dos outros. Quem cuida de mim?'], andilla: ['Hora de jogar com cuidado.'] },
+  fall: {
+    aldo: [(id, n) => (id === 'lyra' ? `${n}! Fica atrás de mim!` : `Aguenta, ${n}! Eu cubro.`)],
+    lyra: [(id, n) => (id === 'aldo' ? 'Levanta, maninho!' : id === 'teo' ? `${n}! Quem vai curar a gente agora?` : `${n}! Teo, aqui!`)],
+    teo: [(id, n) => `Calma, ${n}. Eu estou indo.`],
+    andilla: [() => 'Isso não estava na aposta.'],
+  },
+  win: { aldo: ['Próximo.'], lyra: ['Mais uma para o livro.'], teo: ['Que descansem em paz.'], andilla: ['Fácil. Quase.'] },
+};
+
 const STAT_NAMES = { atk: 'ATQ', def: 'DEF', mag: 'MAG', res: 'RES', agi: 'AGI', hp: 'PV', mp: 'PM' };
 
 const ENEMIES = {
@@ -243,4 +256,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { ENEMIES, FLOORS, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
+if (typeof module !== 'undefined') module.exports = { BATTLE_LINES, ENEMIES, FLOORS, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };

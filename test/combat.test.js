@@ -46,3 +46,28 @@ test('every hero learns on odd levels; Quebra-Junta hits the undead harder', asy
   assert.ok(SPELLS.quebraJunta.power * SPELLS.quebraJunta.bone > SPELLS.golpe.power, 'better than Golpe Forte against the dead');
   assert.ok(SPELLS.quebraJunta.power < SPELLS.golpe.power, 'worse against the living');
 });
+
+test('Phase 2 cut: Andilla crits more, both sides miss, dodge and crit, the boss never crits', () => {
+  const { HIT, critChance, dodgeChance, rollHit, fallReactor } = require('../src/uirules.js');
+  assert.equal(critChance('andilla'), 0.25);
+  assert.equal(critChance('aldo'), HIT.crit);
+  assert.equal(dodgeChance(1000), HIT.dodgeCap);
+  const seq = vals => { let i = 0; return () => vals[i++]; };
+  assert.equal(rollHit(0.08, 10, seq([0.01])), 'miss');
+  assert.equal(rollHit(0.08, 10, seq([0.5, 0.05])), 'dodge', '4% + 10 x 0.3% = 7%');
+  assert.equal(rollHit(0.25, 10, seq([0.5, 0.5, 0.2])), 'crit');
+  assert.equal(rollHit(0, 10, seq([0.5, 0.5, 0])), 'hit', 'no crit at 0');
+  assert.equal(fallReactor('aldo', ['teo', 'lyra']), 'lyra', 'the sister speaks first');
+  assert.equal(fallReactor('andilla', ['lyra']), 'lyra');
+  assert.equal(fallReactor('teo', []), null);
+  const src = require('node:fs').readFileSync(`${__dirname}/../src/battle.js`, 'utf8');
+  assert.match(src, /rollHit\(e\.boss \? 0 : HIT\.crit/);
+});
+
+test('battle lines: short, in Portuguese without em dash, at most one of each kind per fight', () => {
+  const { BATTLE_LINES } = require('../src/data.js');
+  for (const [kind, by] of Object.entries(BATTLE_LINES)) for (const id of ['aldo', 'lyra', 'teo', 'andilla']) {
+    assert.ok(by[id] && by[id].length, `${kind} ${id}`);
+    for (const l of by[id]) { const t = typeof l === 'function' ? l('aldo', 'Aldo') : l; assert.ok(t.length <= 40 && !t.includes('—'), t); }
+  }
+});

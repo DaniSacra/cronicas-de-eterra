@@ -250,6 +250,22 @@ const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join(
 const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudbar');
 
 // Title menu: the quick start straight into the crypt is a test shortcut, only with ?dev in the address
+// ---------- Hit rolls (combat Phase 2, the cut Daniel kept: Andilla's crit, the same luck on both sides) ----------
+// Every physical attack, from either side: a flat miss, then the target dodges by Agility, then a critical hit.
+// Andilla crits more (Olho de Ladra); the boss never crits, so a single blow of his cannot take a hero in one go.
+const HIT = { miss: 0.05, crit: 0.08, critMul: 1.7, dodgeBase: 0.04, dodgePerAgi: 0.003, dodgeCap: 0.25 };
+const CRIT_BY_HERO = { andilla: 0.25 };
+const critChance = heroId => CRIT_BY_HERO[heroId] ?? HIT.crit;
+const dodgeChance = agi => Math.min(HIT.dodgeCap, HIT.dodgeBase + agi * HIT.dodgePerAgi);
+function rollHit(critP, targetAgi, rand = Math.random) {
+  if (rand() < HIT.miss) return 'miss';
+  if (rand() < dodgeChance(targetAgi)) return 'dodge';
+  return rand() < critP ? 'crit' : 'hit';
+}
+// Who speaks when a hero falls: the sibling first, then the cleric, then whoever still stands
+const FALL_REACTS = { aldo: ['lyra', 'teo', 'andilla'], lyra: ['aldo', 'teo', 'andilla'], teo: ['lyra', 'aldo', 'andilla'], andilla: ['teo', 'aldo', 'lyra'] };
+const fallReactor = (fallenId, standingIds) => (FALL_REACTS[fallenId] || []).find(id => standingIds.includes(id)) || null;
+
 // Clara calls Aldo over: the first time he passes within CLARA_CALL steps of her, while he still walks alone
 const CLARA_CALL = 5;
 const claraCalls = (seen, partySize, aldo, clara) => partySize === 1 && !seen['talk:clara'] && !seen['talk:claraLyra']
@@ -278,5 +294,5 @@ function gridPath(from, goal, free, limit = 400) {
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
