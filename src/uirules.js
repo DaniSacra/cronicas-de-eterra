@@ -120,17 +120,21 @@ function camLift(pos, size, view, pad = 0) {
 
 // Battle: enemies stand on a floor line just above the command bar, at the biggest whole scale that fits
 // their slot (art pixels stay square, never blurry). Common enemies keep room for the HP bar under them.
-const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26;
+const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE_BACK = 0.08;
+// Common enemies stand on the ground of the painted backdrop (src/battlebg.js): the first, third... a row farther back
+// (BATTLE_BACK of the height, as far as the HUD allows), the others in front, like a group spread on a field
 function battleLayout(sizes, vw, vh, boss = false) {
   const floor = Math.round(vh * BATTLE_FLOOR), n = sizes.length, slot = Math.floor(vw / n);
   const base = boss ? floor : floor - 12, safe = Math.round(vh * (boss ? 0.17 : BATTLE_SAFE_TOP));
   // one scale for the whole group, so every pixel in the scene has the same size
   const scale = Math.max(1, Math.min(BATTLE_MAX_SCALE, ...sizes.map(({ w, h, float }) =>
     Math.min(Math.floor((boss ? vw - 8 : slot - 2) / w), Math.floor((base - (float ? 8 : 0) - safe) / h)))));
+  const back = boss ? 0 : Math.max(0, Math.min(Math.round(vh * BATTLE_BACK), ...sizes.map(({ h, float }) => base - (float ? 8 : 0) - safe - h * scale)));
   return sizes.map(({ w, h, float }, i) => {
     const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (i - (n - 1) / 2) * slot);
     const W = w * scale, H = h * scale, left = x - Math.floor(W / 2), lift = float ? 8 : 0; // flyers hover over their shadow
-    return { x, base, scale, w: W, h: H, left, top: base - H - lift };
+    const b = base - (i % 2 === 0 ? back : 0);
+    return { x, base: b, scale, w: W, h: H, left, top: b - H - lift };
   });
 }
 
@@ -142,15 +146,6 @@ function slotGear(heroId, ownedIds, equips, start) {
     return it ? { slot: s.slot, label: s.label, name: it.name, icon: it.icon, bonus: it.bonus, id: it.id, start: false }
       : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
   });
-}
-// Crypt battle background: the direction with the longest open corridor (up to 9 cells; 1 is wall), the current one on ties,
-// so the fight never stares at a wall of huge bricks
-function bestFacing(grid, N, x, y, dir) {
-  const D = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-  const run = d => { let k = 0; for (; k < 9; k++) { const cx = x + D[d][0] * (k + 1), cy = y + D[d][1] * (k + 1); if (cx < 0 || cy < 0 || cx >= N || cy >= N || grid[cy * N + cx] === 1) break; } return k; };
-  let best = dir;
-  for (let d = 0; d < 4; d++) if (run(d) > run(best)) best = d;
-  return best;
 }
 // Saves from the 3-floor version: gear found on floors that no longer exist is read back from the bonus it left on
 // each hero, the biggest pieces first (Espada de Prata before Espada de Ferro)
@@ -239,5 +234,5 @@ const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudb
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { bestFacing, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

@@ -41,11 +41,10 @@ function battle(ids, choose, extra = {}) {
   let run;
   const el = id => ({ id, addEventListener() {}, getBoundingClientRect: () => ({}) });
   const s = loadStory(G, {
-    files: ['macro', 'battle'], choose: (opts, o) => choose(opts, o, run),
+    files: ['macro', 'battlebg', 'battle'], choose: (opts, o) => choose(opts, o, run),
     ctx: { VW: 320, VH: 200, view: el('view'), performance: { now: () => 0 }, HUD: { queue() {}, label() {}, boss() {} },
-      document: { createElement: () => ({ getContext: () => ({ drawImage() {}, putImageData() {} }) }), getElementById: el },
-      Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true },
-      renderView() {}, drawTown() {}, worldSprites: () => [], vimg: {}, cam: {}, map: () => ({ grid: [], size: 0 }), dirAngle: () => 0 },
+      document: { createElement: () => ({ getContext: () => ({ drawImage() {}, putImageData() {}, createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }) }) }), getElementById: el },
+      Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true } },
   });
   run = s.run;
   run('Math.random = () => 0.5');

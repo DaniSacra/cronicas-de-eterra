@@ -755,20 +755,19 @@ function dialogRows() {
   return Math.max(0, Math.min(VH * 0.6, (v.bottom - b.top + extra) * VH / v.height));
 }
 
-// bare: só o lugar, sem gente nem setinha (fundo da batalha)
-function drawTown(now, bare = false) {
+function drawTown(now) {
   const c = vctx;
   const A = TOWN.A, lp = actorPos(TOWN.p);
   // with the dialog open, the camera moves only if the box would cover the party (eased, 200 ms)
-  const padB = bare ? 0 : (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
+  const padB = (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
   const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
   c.save(); c.translate(-camX, -camY); c.fillStyle = A.edge; c.fillRect(camX, camY, VW, VH);
-  // além do mapa: o mesmo escuro opaco da névoa (sem emenda no celular em pé); no fundo da batalha, a borda à meia-luz
-  if (A.vision) { c.fillStyle = bare ? `rgba(${A.dimCol || '0,0,0'},.9)` : `rgb(${SIGHT_DARK})`; c.fillRect(camX, camY, VW, VH); }
+  // além do mapa: o mesmo escuro opaco da névoa (sem emenda no celular em pé)
+  if (A.vision) { c.fillStyle = `rgb(${SIGHT_DARK})`; c.fillRect(camX, camY, VW, VH); }
   c.restore();
   c.drawImage(A.layer, -camX, -camY);
 
@@ -791,7 +790,7 @@ function drawTown(now, bare = false) {
   }
 
   // Personagens, de trás para a frente
-  const list = bare ? [] : [
+  const list = [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
     ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
@@ -812,22 +811,22 @@ function drawTown(now, bare = false) {
     c.save(); c.translate(x + 8, y + spr.height - 7); c.rotate(-Math.PI / 2); c.drawImage(spr, -8, -spr.height / 2); c.restore();
   }
   TownArt.weather(c, A, now, camX, camY, VW, VH); // fumaça, anoitecer com poças de luz, neve caindo
-  if (A.vision && !bare) drawSight(c, A, lp, camX, camY); // fundo da batalha: o lugar inteiro, sem a névoa
+  if (A.vision) drawSight(c, A, lp, camX, camY);
   // Setinha amarela sobre o próximo lugar da história, balançando
-  const goal = !bare && goalSpot();
+  const goal = goalSpot();
   if (goal) {
     const gx = goal.x * TS - camX + TS / 2, gy = goal.y * TS - camY - 7 - (Math.floor(now / 250) % 2) * 2;
     c.fillStyle = '#1a1000'; c.beginPath(); c.moveTo(gx - 5, gy - 1); c.lineTo(gx + 5, gy - 1); c.lineTo(gx, gy + 6); c.closePath(); c.fill();
     c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(gx - 3.5, gy); c.lineTo(gx + 3.5, gy); c.lineTo(gx, gy + 4.5); c.closePath(); c.fill();
   }
-  if (TOWN.dim > 0 && !bare) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
   if (A.vision) { // a luz quente do lampião em volta do grupo
     const gx = lp.x - camX + TS / 2, gy = lp.y - camY + TS / 2, R = A.vision.radius * TS, gr = c.createRadialGradient(gx, gy, 0, gx, gy, R);
     gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');
     c.globalCompositeOperation = 'lighter'; c.fillStyle = gr; c.fillRect(gx - R, gy - R, R * 2, R * 2); c.globalCompositeOperation = 'source-over';
   }
-  // Névoa baixa (cemitério): faixas claras deslizando devagar; o fundo da batalha fica sem elas
-  if (A.fog && !bare) {
+  // Névoa baixa (cemitério): faixas claras deslizando devagar
+  if (A.fog) {
     // faixas com borda macia em cima e embaixo; cada faixa é mais densa no meio e some nas pontas
     for (let i = 0; i < 3; i++) {
       const y = Math.round(VH * (0.22 + i * 0.28)), h = 40, w = VW * 0.9;

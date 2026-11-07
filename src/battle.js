@@ -371,26 +371,15 @@ async function tryRun(m, isBoss) {
   return false;
 }
 
-// Véu sobre o fundo da batalha, na cor do lugar
-const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 'rgba(21,30,78,.5)'
-  : G.area === 'taverna' ? 'rgba(58,20,10,.5)' : G.area === 'cemiterio' ? 'rgba(21,30,78,.35)' : 'rgba(21,30,78,.55)'; // no cemitério, véu leve: o morcego não some no fundo
-
 // ---------- Fluxo principal ----------
 // opts: surprise (força o resultado), intro (texto de entrada), hints (dicas do tutorial), noRun (texto ao tentar fugir)
 async function startBattle(ids, isBoss, opts = {}) {
-  // Fundo: a vila ou a taverna como estão na tela; na dungeon, a imagem do raycaster
+  // Backdrop: the place of the fight painted in pseudo 3D (src/battlebg.js), at the enemies' pixel size
   if (G.mode === 'town') Layout.normal(); // a batalha usa a escala de sempre, mesmo vinda de uma área com zoom
+  const enemies = makeEnemies(ids);
+  const place = battlePlace({ mode: G.mode, area: G.area, boss: isBoss, floor: G.mode === 'explore' && FLOORS[G.floor] ? FLOORS[G.floor].battle : null });
   bgCanvas.width = VW; bgCanvas.height = VH;
-  const veil = battleVeil(isBoss);
-  if (G.mode === 'town') { drawTown(performance.now(), true); bgCanvas.getContext('2d').drawImage(view, 0, 0); } // só o lugar, sem os moradores
-  else {
-    if (isBoss) renderView(cam, map(), worldSprites(performance.now()).filter(o => o.type !== 'boss'), performance.now());
-    else { // common fights face the longest corridor (G.dir stays as it is)
-      const m = map(), a = dirAngle(bestFacing(m.grid, m.size, G.x, G.y, G.dir));
-      if (a !== cam.a) renderView({ x: G.x + 0.5, y: G.y + 0.5, a }, m, worldSprites(performance.now()), performance.now());
-    }
-    bgCanvas.getContext('2d').putImageData(vimg, 0, 0);
-  }
+  bgCanvas.getContext('2d').drawImage(BattleBG.paint(place, VW, VH, enemies[0].scale), 0, 0);
   if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd
   G.mode = 'battle';
   // the boss theme waits for the toll to fade; a night ambush has no fanfare
@@ -398,7 +387,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   if (isBoss) Sfx.bossEncounter(); else if (opts.grave) Sfx.encounterDark(); else Sfx.encounter();
   G.flashColor = '255,255,255';
   G.flash = { t0: performance.now(), dur: 600, strobe: true };
-  B = { enemies: makeEnemies(ids), fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600, veil };
+  B = { enemies, place, fx: [], nums: [], hover: null, boss: isBoss, intro: performance.now() + 600 };
   await wait(650);
   const names = B.enemies.map(ename);
   await UI.say(isBoss ? B.enemies.find(e => e.boss).say.intro
@@ -485,11 +474,9 @@ function groundShadow(c, x, y, rx, alpha) {
 function drawBattle(now) {
   const c = vctx;
   c.drawImage(bgCanvas, 0, 0, VW, VH);
-  c.fillStyle = B.veil;
-  c.fillRect(0, 0, VW, VH);
   const appear = Math.min(1, Math.max(0, 1 - (B.intro - now) / 600));
 
-  for (const e of B.enemies) {
+  for (const e of [...B.enemies].sort((a, b) => a.base - b.base)) { // the back row first, so the front one stands over it
     if (e.dieT && now - e.dieT > 700) continue;
     let alpha = appear;
     if (e.dieT) alpha = Math.max(0, 1 - (now - e.dieT) / 700);

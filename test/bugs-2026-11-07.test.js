@@ -174,16 +174,6 @@ test('Defesa and Resistência show the share of damage the combat cuts', () => {
   assert.equal(run('Math.round(100 * (1 - guardCut(40)))') + '%', run('guardText(40)'));
 });
 
-test('a crypt fight faces the longest corridor, the current way on ties', () => {
-  const R = require('../src/uirules.js');
-  // 5x5: open row y=2 to the east from (1,2), a wall north and south, one open cell west
-  const N = 5, g = Array(N * N).fill(1);
-  for (const [x, y] of [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]]) g[y * N + x] = 0;
-  assert.equal(R.bestFacing(g, N, 1, 2, 0), 1, 'facing a wall north: turn east, three cells open');
-  assert.equal(R.bestFacing(g, N, 2, 2, 1), 1, 'tie east/west keeps the current way');
-  assert.equal(R.bestFacing(g, N, 2, 2, 3), 3);
-});
-
 test('combat: the bar opens on the last command, a single skill skips the list, the list shows what a spell does', async () => {
   const starts = [], lists = [];
   let turn = 0;
@@ -233,4 +223,32 @@ test('the dungeon shortcut keeps the prologue order and knows Andilla by name', 
   const body = src.slice(src.indexOf('async function quickDungeon'));
   assert.ok(body.includes("['aldo', 'lyra', 'teo', 'andilla']"));
   assert.match(body.slice(0, body.indexOf('loadFloor')), /andillaNome: 1/);
+});
+
+test('battle backdrops: each place has its scene, every color is in the palette', () => {
+  const { BATTLE_BG_C, BATTLE_PLACES, battlePlace } = require('../src/battlebg.js');
+  const { inPalette } = require('../src/palette.js');
+  const all = JSON.stringify(BATTLE_BG_C).match(/#[0-9a-f]{6}/gi);
+  for (const c of all) assert.ok(inPalette(c), c);
+  assert.equal(battlePlace({ mode: 'explore', boss: true }), 'altar');
+  assert.equal(battlePlace({ mode: 'explore', floor: undefined }), 'cripta');
+  assert.equal(battlePlace({ mode: 'town', area: 'cemiterio' }), 'cemiterio');
+  assert.equal(battlePlace({ mode: 'town', area: 'taverna' }), 'taverna');
+  assert.equal(battlePlace({ mode: 'town', area: 'valmor' }), 'vila');
+  assert.ok(BATTLE_PLACES.includes('cripta'));
+  const src = fs.readFileSync(`${__dirname}/../src/battlebg.js`, 'utf8');
+  for (const p of BATTLE_PLACES.filter(p => p !== 'cripta' && p !== 'altar')) assert.match(src, new RegExp(`\\n    ${p}\\(K\\) \\{`), p);
+});
+
+test('battle: enemies stand in two rows on the ground, the back one drawn first', async () => {
+  const { battleLayout } = require('../src/uirules.js');
+  const L = battleLayout([{ w: 40, h: 40 }, { w: 40, h: 40 }, { w: 40, h: 40 }], 320, 180);
+  assert.ok(L[0].base < L[1].base && L[2].base === L[0].base, 'first and third farther back');
+  const [boss] = battleLayout([{ w: 96, h: 96 }], 320, 180, true);
+  assert.equal(boss.base, Math.round(180 * 0.685), 'the boss stays where he was');
+  let painted = null;
+  const { run } = battle(['aldo'], (opts, o, run) => { if (barHero(o)) { painted = run('B.place'); run('B.enemies.forEach(e => { e.hp = 0; })'); return 'def'; } return opts.find(x => !x.disabled).value; },
+    { mode: 'town', area: 'taverna' });
+  await run(`startBattle(['boneco'], false, { surprise: 'normal' })`);
+  assert.equal(painted, 'taverna');
 });
