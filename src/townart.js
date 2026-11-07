@@ -51,6 +51,7 @@ const TownArt = (() => {
 
   const tileAt = (A, x, y) => (x >= 0 && y >= 0 && x < A.W && y < A.H) ? A.g[y * A.W + x] : null;
   const pathLike = t => t === TILE.PATH || t === TILE.GATE || t === TILE.DOOR;
+  const wet = t => t === TILE.WATER || t === TILE.FORD; // a ford is the same river, shallow enough to wade
 
   // Distância (px) até a borda do tile que encosta num vizinho diferente (fora do mapa conta como igual)
   function edgeDist(A, x, y, lx, ly, same) {
@@ -98,19 +99,19 @@ const TownArt = (() => {
   const dirtAt = (gx, gy) => { const r = hash(gx, gy, 4); return r < 0.1 ? DIRT[1] : r > 0.92 ? DIRT[2] : DIRT[0]; };
 
   function groundPixel(A, t, x, y, gx, gy, lx, ly, valmor) {
-    if (t === TILE.WATER && snow) {
+    if (wet(t) && snow && !A.river) {
       // lago congelando: gelo claro nas bordas, água funda e escura no meio
-      const d = edgeDist(A, x, y, lx, ly, u => u === TILE.WATER), rim = 3 + noise(gx / 5, gy / 5, 23) * 5;
+      const d = edgeDist(A, x, y, lx, ly, wet), rim = 3 + noise(gx / 5, gy / 5, 23) * 5;
       if (d < 1) return ICE[3];
       if (d < rim) { const k = noise(gx / 2.5, gy / 2.5, 24); return hash(gx, gy, 25) < 0.025 ? ICE[4] : k > 0.62 ? ICE[0] : k < 0.3 ? ICE[2] : ICE[1]; }
       if (d < rim + 1) return ICE[3];
       const w = noise(gx / 7, gy / 2.5, 22);
       return w > 0.7 ? DEEP[1] : w < 0.3 ? DEEP[2] : DEEP[0];
     }
-    if (t === TILE.WATER) {
+    if (wet(t)) {
       const north = tileAt(A, x, y - 1);
-      if (north !== null && north !== TILE.WATER) { if (ly === 0) return BANK[0]; if (ly < 3) return BANK[ly]; if (ly === 3) return WATER[4]; }
-      const d = edgeDist(A, x, y, lx, ly, u => u === TILE.WATER);
+      if (north !== null && !wet(north)) { if (ly === 0) return BANK[0]; if (ly < 3) return BANK[ly]; if (ly === 3) return WATER[4]; }
+      const d = edgeDist(A, x, y, lx, ly, wet);
       if (d < 1) return WATER[4];
       if (d < 2 + (noise(gx / 3, gy / 3, 21) > 0.55 ? 1 : 0)) return WATER[3];
       if (d < 4) return WATER[2];
@@ -138,7 +139,7 @@ const TownArt = (() => {
       if (cb.gap < 2.3) return cb.dy > 0.3 ? ST_DARK : cb.dy < -0.3 ? ST_LIGHT : STONES[Math.floor(cb.id * 4)];
       return STONES[Math.floor(cb.id * 4)];
     }
-    if ((lx === 15 && tileAt(A, x + 1, y) === TILE.WATER) || (lx === 0 && tileAt(A, x - 1, y) === TILE.WATER) || (ly === 0 && tileAt(A, x, y - 1) === TILE.WATER)) return snow ? W_EDGE : SHORE;
+    if ((lx === 15 && wet(tileAt(A, x + 1, y))) || (lx === 0 && wet(tileAt(A, x - 1, y))) || (ly === 0 && wet(tileAt(A, x, y - 1)))) return snow ? W_EDGE : SHORE;
     return grassAt(gx, gy);
   }
 
@@ -324,6 +325,10 @@ const TownArt = (() => {
     for (const [a, b] of [[2, 0], [0, 2], [4, 2]]) R(c, x + a, y + b, 1, 1, '#86d460');
   }
   function groundDetail(c, A, t, x, y, valmor) {
+    if (t === TILE.FORD) {   // flat stones just under the water mark the shallow crossing
+      for (const [sx, sy] of [[2, 3], [9, 2], [5, 9], [11, 10]]) { R(c, x * TS + sx, y * TS + sy + 1, 4, 2, '#1c2860'); R(c, x * TS + sx, y * TS + sy, 4, 2, '#7a7a82'); R(c, x * TS + sx, y * TS + sy, 2, 1, '#a2a2ac'); }
+      return;
+    }
     const X = x * TS, Y = y * TS;
     if (t === TILE.WATER && !snow && hash(x, y, 30) < 0.3 && [[0, -1], [1, 0], [0, 1], [-1, 0]].every(([a, b]) => tileAt(A, x + a, y + b) === TILE.WATER)) {
       const px = X + 3 + Math.floor(hash(x, y, 31) * 6), py = Y + 4 + Math.floor(hash(x, y, 32) * 6);
@@ -462,6 +467,7 @@ const TownArt = (() => {
   const ICONS = {
     mug: { rows: ['.www..', 'wWWWw.', 'oyyyoo', 'oyYyo.o', 'oyYyoo', 'oyyyo.', '.ooo..'], pal: { w: '#ffffff', W: '#e8e8e0', o: '#4a2a10', y: '#f0b030', Y: '#ffe070' } },
     potion: { rows: ['..oo...', '..oo...', '.oRRo..', 'oRhRRo.', 'oRRRro.', '.oooo..'], pal: { o: '#2a1010', R: '#e03a40', r: '#901820', h: '#ffb0b0' } },
+    shoe: { rows: ['o....o', 'Io..oI', 'Io..oI', 'Io..oI', 'IIooII', '.IIII.'], pal: { o: '#26202e', I: '#b0bcc4' } },
     book: { rows: ['.RRRRR.', 'RrYYYRw', 'RrRRRRw', 'RrYYRRw', 'RrRRRRw', '.qqqqqq'], pal: { R: '#a8323e', r: '#7a1a24', Y: '#f0d860', w: '#ffffff', q: '#4a0c14' } },
     anvil: { rows: ['ooooooo', 'oIIIIIo', '.oIiio.', '..oio..', '.ooooo.'], pal: { o: '#1a1a22', I: '#a0a8b8', i: '#5a6070' } },
   };
@@ -475,6 +481,9 @@ const TownArt = (() => {
     sara:    { roof: 'teal', wallH: 18, beams: true, chimneys: [0.25], shutter: '#2a7a8a', flowers: true },
     school:  { roof: 'blue', wallH: 18, beams: true, chimneys: [0.82], shutter: '#c8a040', sign: 'book', signCol: -1 },
     joaquim: { roof: 'brown', wallH: 18, beams: true, chimneys: [0.75], shutter: '#7a8a3a' },
+    // Capítulo 1: the inn of the ford and Gervásio's stable
+    inn:     { roof: 'teal', wallH: 22, beams: true, chimneys: [0.8], dormers: [0.35], glow: true, sign: 'mug', signCol: -1 },
+    stable:  { roof: 'red', wallH: 18, beams: true, shutter: '#7a4620', sign: 'shoe', signCol: 1 },
   };
 
   function houseShadow(c, b) {
@@ -485,7 +494,7 @@ const TownArt = (() => {
 
   function drawHouse(c, b) {
     if (b.id === 'crypt') return drawRuin(c, b);
-    const s = HOUSES[b.id] || HOUSES.joaquim, pal = ROOFS[s.roof];
+    const s = HOUSES[b.style || b.id] || HOUSES.joaquim, pal = ROOFS[s.roof];
     const X = b.x * TS, Y = b.y * TS, W = b.w * TS, H = b.h * TS, dx = (b.door.x - b.x) * TS + X;
     const bot = Y + H - s.wallH, wy1 = Y + H, base = 6;
     // Paredes
@@ -617,6 +626,7 @@ const TownArt = (() => {
 
   function treeKind(A, x, y) {
     const r = hash(x, y, 20);
+    if (A.trees) return A.trees;   // the southern road and the pasture: only pines
     if (BORDER(A, x, y)) return r < 0.3 ? 'pine' : 'round';
     return r < 0.3 ? 'fruit' : r < 0.55 ? 'pine' : 'round';
   }
@@ -631,9 +641,15 @@ const TownArt = (() => {
   }
   function drawObject(c, A, t, x, y, valmor) {
     const X = x * TS, Y = y * TS;
-    if (t >= TILE.GATE) return drawGraveTile(c, t, X, Y, x, y, (px, py, col) => R(c, px, py, 1, 1, col), () => 0.5);
+    if (t >= TILE.GATE && t <= TILE.DEADTREE) return drawGraveTile(c, t, X, Y, x, y, (px, py, col) => R(c, px, py, 1, 1, col), () => 0.5);
     const spot = valmor && SPOTS[`${x},${y}`];
     if (lampAt(A, x, y)) return drawLamp(c, X, Y);
+    if (t === TILE.FIRE) {   // campfire: a ring of stones and charred logs; the flame is animated over it, the light pools from here
+      for (const [sx, sy] of [[2, 9], [5, 12], [10, 12], [13, 9], [7, 6]]) { R(c, X + sx, Y + sy, 3, 2, '#26202e'); R(c, X + sx, Y + sy, 2, 1, '#7a7a82'); }
+      R(c, X + 4, Y + 11, 8, 2, '#4e2c14'); R(c, X + 5, Y + 11, 6, 1, '#6a3a1a');
+      LIGHTS.push({ x: X + 8, y: Y + 10, r: 56 });
+      return;
+    }
     if (spot === 'well') return pix(c, X, Y - 4, WELL_ROWS, wpal(WELL, { R: SNOW.lt }));
     if (spot === 'crates') return drawCrates(c, X, Y);
     if (spot === 'barrels') return drawBarrels(c, X, Y);

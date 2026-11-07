@@ -397,7 +397,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   // Backdrop: the place of the fight painted in pseudo 3D (src/battlebg.js), at the enemies' pixel size
   if (G.mode === 'town') Layout.normal(); // a batalha usa a escala de sempre, mesmo vinda de uma área com zoom
   const enemies = makeEnemies(ids);
-  const place = battlePlace({ mode: G.mode, area: G.area, boss: isBoss, floor: G.mode === 'explore' && FLOORS[G.floor] ? FLOORS[G.floor].battle : null });
+  const place = battlePlace({ mode: G.mode, area: (typeof AREAS !== 'undefined' && AREAS[G.area] && AREAS[G.area].battle) || G.area, boss: isBoss, floor: G.mode === 'explore' && FLOORS[G.floor] ? FLOORS[G.floor].battle : null });
   bgCanvas.width = VW; bgCanvas.height = VH;
   bgCanvas.getContext('2d').drawImage(BattleBG.paint(place, VW, VH, enemies[0].scale), 0, 0);
   if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd

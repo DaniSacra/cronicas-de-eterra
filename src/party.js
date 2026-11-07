@@ -78,8 +78,8 @@ function revive(m, frac) { m.hp = Math.max(1, Math.floor(maxHp(m) * frac)); UI.c
 // An item that would do nothing stays in the bag, with the reason (null when it works)
 function itemUseless(id, target) {
   const name = target && target.id && pdef(target).name;
-  if ((id === 'pocao' || id === 'eter') && target.hp <= 0) return `${name} caiu. ${id === 'pocao' ? 'A poção' : 'O éter'} não tem efeito.`;
-  if (id === 'pocao' && target.hp >= maxHp(target)) return `${name} já está com os PV cheios.`;
+  if ((id === 'pocao' || id === 'eter' || id === 'pao') && target.hp <= 0) return `${name} caiu. ${id === 'pocao' ? 'A poção' : id === 'pao' ? 'O pão' : 'O éter'} não tem efeito.`;
+  if ((id === 'pocao' || id === 'pao') && target.hp >= maxHp(target)) return `${name} já está com os PV cheios.`;
   if (id === 'eter' && target.mp >= maxMp(target)) return `${name} já está com os PM cheios.`;
   if (id === 'pena' && target.hp > 0) return `${name} não precisa disso.`;
   if (id === 'elixir' && G.party.every(m => m.hp >= maxHp(m) && m.mp >= maxMp(m))) return 'O grupo já está inteiro. O Elixir fica guardado.';
@@ -95,6 +95,7 @@ function applyItem(id, target) {
   let msg = '';
   switch (id) {
     case 'pocao': msg = `${pdef(target).name} recupera ${healHp(target, 50)} PV.`; Sfx.heal(); break;
+    case 'pao': msg = `${pdef(target).name} come o pão da Berta e recupera ${healHp(target, 30)} PV.`; Sfx.heal(); break;
     case 'eter': msg = `${pdef(target).name} recupera ${healMp(target, 20)} PM.`; Sfx.heal(); break;
     case 'pena': revive(target, 0.5); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
     case 'elixir':

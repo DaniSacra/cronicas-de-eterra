@@ -40,13 +40,15 @@ test('sister Irene greets Teo when he is in the party', async () => {
   assert.ok(!log.some(t => t.includes('saiu cedo para o cemitério')));
 });
 
-test('after the victory the west road no longer says the village is in danger', async () => {
-  const { log, run } = story(['aldo', 'lyra'], { bossDead: true });
-  run(`enterTown({ x: 0, y: 12, dir: 3 }, 'valmor')`);
+test('after the victory the west road asks to leave for Erukh; saying no stays in Valmor', async () => {
+  const { G, log, run, picks } = story(['aldo', 'lyra'], { bossDead: true });
+  run(`enterTown({ x: 0, y: 6, dir: 3 }, 'valmor')`);
+  picks.push(false);
   run('tryTownMove(3)');
   await new Promise(r => setTimeout(r, 0));
-  assert.ok(log.some(t => t.includes('próximo capítulo')));
   assert.ok(!log.some(t => t.includes('corre perigo')));
+  assert.strictEqual(G.area, 'valmor');
+  assert.strictEqual(G.chapter, undefined);
 });
 
 test('level ups: everyone who reached the same level shares one box, each new spell has its own', () => {

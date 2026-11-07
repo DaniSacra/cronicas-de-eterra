@@ -4,8 +4,9 @@ const TS = 16, TOWN_W = 32, TOWN_H = 22;
 const TILE = { GRASS: 0, PATH: 1, WATER: 2, TREE: 3, CLIFF: 4, BUSH: 5, FLOWER: 6,
   FLOOR: 7, WALL: 8, COUNTER: 9, TABLE: 10, HEARTH: 11, BARREL: 12, DOOR: 13,
   // cemitério
-  GATE: 14, MURO: 15, TOMB: 16, GRAVE_O: 17, GRAVE_U: 18, GRAVE_OLD: 19, DEADTREE: 20 };
-const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE]);
+  GATE: 14, MURO: 15, TOMB: 16, GRAVE_O: 17, GRAVE_U: 18, GRAVE_OLD: 19, DEADTREE: 20,
+  FORD: 21, FIRE: 22 }; // capítulo 1: the shallow crossing of the Vau do Corvo, the campfire
+const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE, TILE.FORD]);
 const isInterior = t => t >= TILE.FLOOR && t <= TILE.DOOR;
 const TDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
 const CRYPT_FRONT = { x: 27, y: 18, dir: 2 };
@@ -263,21 +264,44 @@ function catSprite(dir, frame, fur = '#e09038', stripe = '#b06a20') {
   return (PSPR[k] = cv);
 }
 
+// A horse seen from the side, walking (the four horses of the Vau do Corvo); coat: [body, mane]
+function horseSprite(dir, frame, coat) {
+  const k = `horse|${dir}|${frame}|${coat}`;
+  if (PSPR[k]) return PSPR[k];
+  const [fur, mane] = coat, cv = document.createElement('canvas'); cv.width = 16; cv.height = 18;
+  const c = cv.getContext('2d'), r = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  r(2, 16, 12, 2, 'rgba(0,0,0,.3)');
+  r(1, 6, 12, 1, '#26202e'); r(1, 7, 12, 5, fur); r(1, 11, 12, 1, '#26202e');      // body
+  r(11, 2, 3, 6, fur); r(12, 1, 3, 2, fur); r(14, 2, 2, 2, fur);                  // neck and head, facing right
+  r(10, 2, 2, 5, mane); r(0, 7, 2, 4, mane);                                      // mane and tail
+  r(14, 2, 1, 1, '#26202e');                                                      // eye
+  const legs = frame ? [[2, 12], [4, 12], [9, 12], [11, 12]] : [[1, 12], [5, 12], [8, 12], [12, 12]];
+  for (const [x, y] of legs) { r(x, y, 1, 4, fur); r(x, y + 3, 1, 1, '#26202e'); }
+  if (dir === 3) {
+    const f = document.createElement('canvas'); f.width = 16; f.height = 18;
+    const fc = f.getContext('2d'); fc.translate(16, 0); fc.scale(-1, 1); fc.drawImage(cv, 0, 0);
+    return (PSPR[k] = f);
+  }
+  return (PSPR[k] = cv);
+}
+
 // Dois morcegos lado a lado, batendo as asas (inimigo visível no cemitério)
-function batsSprite(now) {
-  const up = Math.floor(now / 300) % 2, k = `bats|${up}`;
+function batsSprite(now, col = '#4a3a5a') {
+  const up = Math.floor(now / 300) % 2, k = `bats|${up}|${col}`;
   if (PSPR[k]) return PSPR[k];
   const cv = document.createElement('canvas'); cv.width = 16; cv.height = 18;
   const c = cv.getContext('2d'), r = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
   for (const [ox, oy] of [[1, 4], [9, 8]]) {
-    r(ox + 1, oy + 2, 4, 3, '#4a3a5a');
-    if (up) { r(ox - 1, oy, 2, 2, '#4a3a5a'); r(ox + 5, oy, 2, 2, '#4a3a5a'); }
-    else { r(ox - 1, oy + 4, 2, 2, '#4a3a5a'); r(ox + 5, oy + 4, 2, 2, '#4a3a5a'); }
+    r(ox + 1, oy + 2, 4, 3, col);
+    if (up) { r(ox - 1, oy, 2, 2, col); r(ox + 5, oy, 2, 2, col); }
+    else { r(ox - 1, oy + 4, 2, 2, col); r(ox + 5, oy + 4, 2, 2, col); }
     r(ox + 2, oy + 3, 1, 1, '#ffdd33'); r(ox + 4, oy + 3, 1, 1, '#ffdd33');
   }
   return (PSPR[k] = cv);
 }
 function foeSprite(n, now) {
+  if (n.def.foe === 'wolf') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 300) % 2, '#a2a2ac', '#55555e'); // a grey wolf of the road
+  if (n.def.foe === 'crow') return batsSprite(now, '#26202e');
   if (n.def.foe === 'rat') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 400) % 2, '#7a6a5a', '#4a3a2e');
   if (n.def.foe === 'bats') return batsSprite(now);
   return personSprite('ossada', n.dir, 0);
@@ -389,7 +413,8 @@ function tryTownMove(d) {
   const P = TOWN.p;
   P.dir = d;
   const [dx, dy] = TDIRS[d], nx = P.x + dx, ny = P.y + dy;
-  if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada vai para o oeste e depois sobe para o norte, até Erukh.\n' + (G.bossDead ? 'A viagem começa no próximo capítulo.' : 'Vocês não podem partir enquanto a vila corre perigo.'))); return; }
+  if (nx < 0 && G.area === 'valmor' && G.bossDead) { townBusy(departValmor); return; } // capítulo 1 (src/chapter1.js)
+  if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada vai para o oeste e depois sobe para o norte, até Erukh.\nVocês não podem partir enquanto a vila corre perigo.')); return; }
   const ex = (TOWN.A.exits || []).find(e => e.x === nx && e.y === ny);
   if (ex) { townBusy(() => goArea(ex)); return; }
   const foe = roamerAt(nx, ny);
@@ -405,7 +430,7 @@ function tryTownMove(d) {
   lookAround();
   TOWN.moved = true;
   F.forEach(f => { f.dir = f.x !== f.fx ? (f.x > f.fx ? 1 : 3) : f.y !== f.fy ? (f.y > f.fy ? 2 : 0) : f.dir; });
-  if (++TOWN.step % 2) Sfx.step(G.area === 'taverna' ? 'wood' : 'snow');
+  if (++TOWN.step % 2) Sfx.step(TOWN.A.cozy ? 'wood' : 'snow');
 }
 
 // Fala com quem está à frente, inclusive por cima do balcão
@@ -435,6 +460,7 @@ function updateTown(dt) {
     if (fn) { townBusy(fn); return; }
   }
   updateRoamers(dt);
+  if (TOWN.A.update) TOWN.A.update(dt); // an area's own life (the horses of the pasture)
   if (P.t >= 1 && !G.busy && !UI.busy()) {
     const r = TOWN.roamers.find(r => r.t >= 1 && !(r.calm > 0) && touchingParty(r));
     if (r) { townBusy(() => roamerFight(r)); return; }
@@ -552,7 +578,10 @@ function nextStep() {
 
 // Próximo lugar da história, para a setinha amarela na vila, na taverna e no cemitério
 function goalSpot() {
-  if (G.bossDead || G.busy) return null;
+  if (G.busy) return null;
+  if (TOWN.A.goal) return TOWN.A.goal();
+  if (G.area === 'valmor' && G.bossDead && !G.chapter) return { x: 0, y: 6 }; // the west road, to Erukh
+  if (G.bossDead) return null;
   const door = id => BUILDINGS.find(b => b.id === id).door;
   const npc = id => { const n = TOWN.npcs.find(a => a.def.id === id); return n && { x: n.x, y: n.y }; };
   const a = G.area, four = G.party.length >= 4;
@@ -597,6 +626,7 @@ async function guardTalk(n) {
 
 async function enterBuilding(b) {
   Sfx.select();
+  if (TOWN.A.enterBuilding) return TOWN.A.enterBuilding(b); // the towns of chapter 1 have their own doors
   if (b.id === 'crypt') {
     if (!G.quest || G.party.length < 4 || !G.seen.hugo4) { await guardTalk(null); return; }
     await partyTalk('igreja', TALKS.igreja);
@@ -739,6 +769,7 @@ async function chapel() {
       quest: ['O mensageiro ainda não acordou. Continua repetindo "o selo... o selo".', 'Perguntei o nome dele. Não disse. Rezo por ele de hora em hora.', 'A Luz Sagrada de Teo queima os mortos-vivos com o dobro da força.', 'E se alguém cair lá embaixo, tragam-no aqui: eu cuido dele.'],
       desceu: ['Voltaram da cripta. Deixem-me ver esses ferimentos.', 'O mensageiro se mexeu quando vocês passaram pela porta. Como se soubesse onde vocês estiveram.'],
       won: ['O mensageiro já se levanta sozinho. E o sino da igreja velha se calou.', 'Esta noite, enfim, eu durmo.'] }));
+    if (v === 'talk' && G.bossDead) await say('Tobias', ['Em Erukh, ninguém antes da rainha.', 'Que a luz de Elun vá com vocês.']); // he rests at the chapel
     if (v === 'pray') {
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
       UI.updateParty(); Sfx.holy();
@@ -830,7 +861,7 @@ function drawTown(now) {
   c.fillStyle = 'rgba(200,235,255,.55)';
   for (let y = Math.floor(camY / TS); y <= Math.floor((camY + VH) / TS); y++) for (let x = Math.floor(camX / TS); x <= Math.floor((camX + VW) / TS); x++) {
     const t = TOWN.tileAt(x, y);
-    if (t === TILE.HEARTH) {
+    if (t === TILE.HEARTH || t === TILE.FIRE) {
       // Fogo da lareira
       const X = x * TS - camX, Y = y * TS - camY, f = Math.sin(now / 90 + x) * 1.5;
       c.fillStyle = '#c83a10'; c.fillRect(X + 3, Y + 10 - f, 10, 6 + f);
@@ -848,7 +879,7 @@ function drawTown(now) {
   const list = [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
-    ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
+    ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : n.def.horse ? horseSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0, n.def.horse) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
     ...TOWN.roamers.filter(r => visibleAt(r.x, r.y)).map(r => ({ a: r, foe: true, spr: () => foeSprite(r, now) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });

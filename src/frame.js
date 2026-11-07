@@ -172,6 +172,14 @@ const ICON_ART = {
   pocao: recolor(POTION, { L: 'h', D: 'D' }),   // red potion
   eter: recolor(POTION, { L: 'p', D: 'B' }),    // blue ether
   elixir: recolor(POTION, { L: 'g', D: 'o' }),  // golden elixir
+  pao: [ // Berta's loaf: crust lit from the top left, scored on top
+    '................', '................', '................', '.....aaaaaa.....', '...aaNNjjjjaa...', '..aNNjjNjjjjMa..',
+    '.aNjjjjjNjjjMMa.', '.ajjNjjjjjNjMMa.', 'aNjjjjNjjjjjMMua', 'ajjjjjjjjjjMMMua', 'aMjjjjjjjjMMMuua', '.aMMMMMMMMMMuua.',
+    '..auuuuuuuuuua..', '...aaaaaaaaaa...', '................', '................'],
+  bilhete: [ // Clara's note: folded paper closed with a drop of red wax
+    '................', '................', '................', '..aaaaaaaaaaaa..', '..acccccccccLa..', '..acLLLLLLLLea..',
+    '..acccccccccLa..', '..accccUUcccLa..', '..acccUUUVccLa..', '..accccUVcccea..', '..acccccccccea..', '..aLLLLLLLLeea..',
+    '..aaaaaaaaaaaa..', '................', '................', '................'],
   pena: [ // phoenix-white feather, gold quill
     '............kk..', '..........kkttk.', '.........ktttPk.', '........kttttPk.', '.......kttttPk..', '......kttttPk...',
     '.....kttttPk....', '....kttttPk.....', '...ktPttPk......', '...kPttPk.......', '..kgkkk.........', '.kgk............',
