@@ -193,12 +193,12 @@ const ENEMIES = {
                recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
   ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 5, res: 2, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
   // Capítulo 1 · Parte 1: a Estrada do Sul e o Pasto do Vau (nível 4 a 5)
-  loboGeada: { name: 'Lobo da Geada', hp: 54, atk: 19, def: 6, res: 2, agi: 12, xp: 11, sprite: 'wolf', drop: ['pocao', 0.1],
+  loboGeada: { name: 'Lobo da Geada', hp: 80, atk: 25, def: 6, res: 2, agi: 12, xp: 11, sprite: 'wolf', drop: ['pocao', 0.1],
                skill: { name: 'Mordida', chance: 0.25, kind: 'phys', power: 1.4 } },
-  loboVelho: { name: 'Lobo Velho',    hp: 120, atk: 23, def: 8, res: 3, agi: 11, xp: 30, sprite: 'wolf', drop: ['eter', 0.5],
+  loboVelho: { name: 'Lobo Velho',    hp: 170, atk: 30, def: 8, res: 3, agi: 11, xp: 30, sprite: 'wolf', drop: ['eter', 0.5],
                recolor: { '#e8eff8': '#a2a2ac', '#cbd8ec': '#7a7a82', '#a4b8da': '#55555e', '#7488b8': '#26262e' }, // the grey leader of the pack
                skill: { name: 'Mordida Funda', chance: 0.3, kind: 'phys', power: 1.6 } },
-  corvo:     { name: 'Corvo',         hp: 30, atk: 16, def: 2, res: 1, agi: 16, xp: 6, sprite: 'bat', float: true,
+  corvo:     { name: 'Corvo',         hp: 42, atk: 21, def: 2, res: 1, agi: 16, xp: 6, sprite: 'bat', float: true,
                recolor: { '#a84ad8': '#55555e', '#72308e': '#26262e', '#40145a': '#26202e', '#3a1448': '#26202e' } }, // a black crow until it has its own art
   encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 5, res: 2, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
   // Chefe do prólogo (prologo.md)
