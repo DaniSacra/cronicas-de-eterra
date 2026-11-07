@@ -238,6 +238,7 @@ const UI = (() => {
       }
       card.classList.toggle('dead', m.hp <= 0);
       card.classList.toggle('defending', !!m.defending && G.mode === 'battle');
+      card.classList.toggle('elo', !!m.eloReady && G.mode === 'battle');
       card.classList.toggle('low', m.hp > 0 && m.hp < mh * 0.3);
       if (activeId !== undefined) card.classList.toggle('active', m.id === activeId);
       const img = card.querySelector('.pf'), mood = cardMood(m.hp, mh, card.classList.contains('active') && G.mode === 'battle');

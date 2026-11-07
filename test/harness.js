@@ -16,7 +16,7 @@ function loadStory(G, o = {}) {
     ...o.ctx,
   };
   vm.createContext(ctx);
-  for (const f of ['palette', 'data', 'map', 'uirules', 'party', 'vision', ...(o.files || ['town', 'opening', 'chapter1'])])
+  for (const f of ['palette', 'data', 'map', 'uirules', 'party', 'elos', 'vision', ...(o.files || ['town', 'opening', 'chapter1'])])
     vm.runInContext(fs.readFileSync(`${__dirname}/../src/${f}.js`, 'utf8'), ctx, { filename: f });
   const run = code => vm.runInContext(code, ctx);
   // values from the vm realm have other prototypes: compare them as plain JSON

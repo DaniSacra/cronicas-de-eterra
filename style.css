@@ -89,6 +89,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .card .nm.long span { letter-spacing: -.125em; } /* the blank column of each glyph: "Andilla" fits, letters stay whole */
 .card .nm .dfn { display: none; flex: none; width: 16px; height: 16px; image-rendering: pixelated; align-self: center; }
 .card.defending .nm .dfn { display: block; }
+/* A hero who prepared a known Elo (src/elos.js): a small pulsing tag on the card until the round ends or it fires */
+.card.elo::after { content: "Elo"; position: absolute; top: calc(var(--u) * -2); right: calc(var(--u) * 3); padding: 0 calc(var(--u) * 2); background: var(--ink); color: #ffd23f; font-size: var(--f1); line-height: 1.5; z-index: 2; animation: eloPulse 1s steps(2) infinite; }
+@keyframes eloPulse { 50% { color: #e0a030; } }
 .card .cls { font-size: var(--f1); color: var(--dim); margin-top: calc(var(--u) * 2); }
 .card.dead { filter: grayscale(1) brightness(.6); }
 .card.low .hp i { animation: blink .5s steps(1) infinite; }

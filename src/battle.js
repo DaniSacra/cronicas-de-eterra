@@ -50,6 +50,7 @@ function hurtMember(m, dmg, quiet = false) {
   m.hp = Math.max(0, m.hp - dmg);
   UI.cardFloat(m, '-' + dmg, 'dmg'); UI.cardHit(m); shake(); if (!quiet) Sfx.hurt();
   if (m.hp > 0) energize(m, ENERGY.hurt[m.id] || 0, 500); // Aldo takes the blow and comes back angrier
+  else if (B && B.elo) { dropElo(B.elo, m.id); markElo(); } // a fallen hero loses the Elo he prepared
   UI.updateParty();
   return dmg;
 }
@@ -242,7 +243,12 @@ async function partyAct(c) {
     pay(a, sp); UI.updateParty();
     const targets = sp.kind === 'heal' || sp.kind === 'revive' ? [] : sp.target === 'allEnemies' ? aliveEnemies() : [retarget(c.target)].filter(Boolean);
     await bsay(spellLine(an, sp.name, sp.target === 'enemy' && targets[0] ? ename(targets[0]) : ''));
-    if (sp.kind === 'heal' || sp.kind === 'revive') { await bsay(castSupport(a, c.spell, c.target)); return; }
+    if (sp.kind === 'heal' || sp.kind === 'revive') {
+      const out = {};
+      await bsay(castSupport(a, c.spell, c.target, out));
+      return eloAfter({ actorId: a.id, spellId: c.spell, targets: null, dealt: {}, healed: out.healed || 0, healTarget: sp.target === 'ally' ? c.target : null });
+    }
+    const dealt = {};
     if (sp.fx && Sfx[sp.fx]) Sfx[sp.fx](); else Sfx.slash();
     if (sp.fx === 'bolt') { G.flashColor = '255,255,200'; G.flash = { t0: performance.now(), dur: 180 }; }
     targets.forEach(t => addFx(sp.fx, t.x, t.cy, sp.fx === 'slash' ? 300 : 650));
@@ -256,10 +262,44 @@ async function partyAct(c) {
         if (sp.kind === 'holy' && t.undead) dmg *= 2;
       }
       Sfx.hit();
+      dealt[t.i] = Math.min(t.hp, dmg);
       await hitEnemy(t, dmg, sp.kind === 'phys' ? '#fff' : '#9fe0ff');
     }
     if (sp.kind === 'holy' && targets.some(t => t.undead)) await bsay('A luz queima os mortos-vivos!');
     if (sp.bone && targets.some(t => t.undead)) await bsay('Osso quebra na junta!');
+    await eloAfter({ actorId: a.id, spellId: c.spell, targets: targets.map(t => String(t.i)), dealt, healed: 0, healTarget: null });
+  }
+}
+
+// ---------- Elos (src/elos.js, table ELOS in src/data.js) ----------
+const enemyUp = k => !!(B.enemies[k] && B.enemies[k].hp > 0);
+// The card of a hero who prepared a known Elo glows until the round ends or the Elo fires
+function markElo() {
+  const ready = B && B.elo ? eloReady(B.elo, ELOS, G.seen.elos) : [];
+  G.party.forEach(m => { m.eloReady = ready.includes(m.id); });
+  UI.updateParty();
+}
+async function eloAfter(act) {
+  if (!B.elo) return;
+  const done = linkElo(B.elo, ELOS, act, enemyUp);
+  markElo();
+  if (!done) return;
+  const elo = ELOS[done.id];
+  for (const id of elo.heroes) { const m = G.party.find(p => p.id === id); if (m) UI.cardFloat(m, 'ELO', '#ffd23f'); }
+  G.seen.elos = G.seen.elos || {};
+  if (!G.seen.elos[done.id]) {
+    G.seen.elos[done.id] = true;
+    for (const [who, t] of eloScene(elo, heroName)) await UI.say(who ? `${heroName(who)}:\n${t}` : t);
+  }
+  await bsay(`Elo! ${elo.name}!`);
+  const bonus = eloBonus(elo, done, enemyUp);
+  if (Sfx[elo.fx]) Sfx[elo.fx]();
+  for (const h of bonus.hits) { const t = B.enemies[h.target]; addFx('slash', t.x, t.cy, 300); addFx(elo.fx, t.x, t.cy, 650); }
+  await wait(250);
+  for (const h of bonus.hits) if (enemyUp(h.target)) await hitEnemy(B.enemies[h.target], h.dmg, '#ffb040');
+  if (bonus.heals && bonus.heals.amount > 0) {
+    for (const m of aliveParty()) if (m !== bonus.heals.except && m.hp < maxHp(m)) healHp(m, bonus.heals.amount);
+    UI.updateParty(); await bsay('A bênção chega ao resto do grupo.');
   }
 }
 
@@ -440,6 +480,7 @@ async function startBattle(ids, isBoss, opts = {}) {
     B.order = buildOrder(round === 0 ? { only: sur.free, bonus: sur.bonus } : {});
     B.round = round + (sur.free === 'enemy' ? 0 : 1); B.roundT = performance.now(); // after an ambush the enemies' free round is 0: the party's first is Rodada 1
     B.macro = null; B.thisRound = {};   // a tactic lasts one round
+    B.elo = elosOpen(G, isBoss) ? eloRound() : null; markElo(); // an Elo lives inside one round
     if (macroTipDue(G.seen, B.round, isBoss)) await macroTip();
     for (B.turn = 0; B.turn < B.order.length; B.turn++) {
       const c = B.order[B.turn];
@@ -468,7 +509,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   }
   B.order = null; B.macro = null;
 
-  G.party.forEach(m => { m.defending = false; m.en = 0; delete m._fallenMsg; }); // Energia ends with the fight, however it ends
+  G.party.forEach(m => { m.defending = false; m.en = 0; m.eloReady = false; delete m._fallenMsg; }); // Energia ends with the fight, however it ends
   if (result === 'win') {
     await wait(300);
     Music.stop(); if (!isBoss) Sfx.victory(); // o chefe cai com a última badalada (ending)

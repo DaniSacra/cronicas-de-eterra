@@ -82,6 +82,29 @@ const SPELLS = {
   leque:      { name: 'Leque de Facas', en: 20, target: 'allEnemies', kind: 'phys',   power: 0.71, fx: 'slash', desc: 'Facas para todos os inimigos.' },
 };
 
+// Elos (combat design, Phase 3a; rules in src/elos.js): two heroes use the right skills in the same round on the same
+// enemy. heroes[0] and heroes[1] are {a} and {b} in the scene; parts: the skills each hero may use for it.
+// kind strike: an extra blow of dmg x (both damages) on the target, armor ignored.
+// kind blessing: an extra blow of dmg x (area damage) on each enemy hit, and heal x (the heal) on the other allies.
+const ELOS = {
+  espadaFogo: {
+    name: 'Espada de Fogo', heroes: ['aldo', 'lyra'], kind: 'strike', dmg: 0.25, fx: 'fire',
+    parts: { aldo: ['golpe', 'quebraJunta', 'furia'], lyra: ['fogo'] },
+    asks: 'Uma técnica de Aldo e o Fogo de Lyra no mesmo inimigo, na mesma rodada.',
+    does: 'Um golpe de fogo a mais, que ignora a armadura.',
+    hint: 'Dois irmãos, uma lâmina e uma chama.',
+    scene: [[null, '{b} estende a mão e a chama corre pela lâmina de {a}.'], ['aldo', 'Lyra! A espada está pegando fogo!'], ['lyra', 'Então bate antes que apague!']],
+  },
+  lequeBencao: {
+    name: 'Leque Abençoado', heroes: ['andilla', 'teo'], kind: 'blessing', dmg: 0.25, heal: 0.6, fx: 'holy',
+    parts: { andilla: ['leque'], teo: ['cura'] },
+    asks: 'A Cura de Teo e o Leque de Facas de Andilla na mesma rodada.',
+    does: 'As facas cortam de novo e a cura chega ao resto do grupo.',
+    hint: 'Facas rápidas e uma bênção na mesma rodada.',
+    scene: [[null, '{b} ergue as mãos e a bênção sobe junto com as facas de {a}.'], ['andilla', 'Isso foi... quente?'], ['teo', 'Foi a luz de Eterra. Atire de novo.']],
+  },
+};
+
 const ITEMS = {
   pocao:  { name: 'Poção',      desc: 'Recupera 50 PV',             target: 'ally' },
   eter:   { name: 'Éter',       desc: 'Recupera 20 PM',             target: 'ally' },
@@ -287,4 +310,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { ENERGY, MAX_LEVEL, BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
+if (typeof module !== 'undefined') module.exports = { ENERGY, MAX_LEVEL, ELOS, BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };

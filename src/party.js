@@ -136,8 +136,8 @@ function applyItem(id, target) {
   return msg;
 }
 
-// Magias de suporte (usadas em batalha e fora dela)
-function castSupport(caster, spellId, target) {
+// Magias de suporte (usadas em batalha e fora dela); out.healed gets what a single heal really cured (for the Elos)
+function castSupport(caster, spellId, target, out = {}) {
   const sp = SPELLS[spellId];
   const c = pdef(caster).name;
   if (sp.kind === 'heal') {
@@ -148,7 +148,7 @@ function castSupport(caster, spellId, target) {
       UI.updateParty(); return 'O grupo é envolvido por uma luz cálida.';
     }
     if (target.hp <= 0) { UI.updateParty(); return `${pdef(target).name} está caído...`; }
-    const got = healHp(target, amount()); UI.updateParty();
+    const got = out.healed = healHp(target, amount()); UI.updateParty();
     return `${pdef(target).name} recupera ${got} PV.`;
   }
   if (sp.kind === 'revive') {
