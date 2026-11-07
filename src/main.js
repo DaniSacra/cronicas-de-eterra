@@ -274,8 +274,8 @@ async function interact(o) {
     if (!G.seen.lapide) { G.seen.lapide = 1; await clue(FLOOR_CLUES[1]); await partyTalk('lapide', TALKS.lapide); }
     if (!G.seen.bilhete) {
       G.seen.bilhete = 1;
-      await say2(null, 'Junto à fonte, um capuz cinza rasgado. Dentro dele, um bilhete.');
-      await say2('Bilhete', '"O selo cede. Mais três noites. O homem do sumo sacerdote não pode sair de Valmor. V."');
+      await clue([[null, 'Junto à fonte, um capuz cinza rasgado. Dentro dele, um bilhete.'],
+        ['Bilhete', '"O selo cede. Mais três noites. O homem do sumo sacerdote não pode sair de Valmor. V."']]);
       await partyTalk('bilhete', TALKS.bilhete);
     }
     Sfx.holy();
@@ -288,8 +288,9 @@ async function interact(o) {
   } else if (o.type === 'boss' && G.bossDead) {
     await UI.say('O túmulo do rei, arrombado e vazio. Sob os quatro símbolos dos paladinos, os nichos continuam vazios.');
   } else if (o.type === 'boss') {
-    if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); }
-    if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); }
+    // kept in the save at once: after a loss to the boss, the clue and the talk are not read again
+    if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); ['altar', 'talk:altar'].forEach(keepSeen); }
+    if (!G.seen.sino) { G.seen.sino = 1; Sfx.bell(); await UI.say('Um sino toca, aqui embaixo. Perto. Devagar.'); await partyTalk('sino', TALKS.sino); ['sino', 'talk:sino'].forEach(keepSeen); }
     const ok = await UI.choose([{ label: 'Enfrentar', value: true }, { label: 'Recuar', value: false }],
       { title: 'Diante da última porta, um morto de batina segura um sino de bronze.\n' + bossWarning(G.party) + 'Enfrentar o Sineiro?', cancel: true });
     if (ok) await runBattle(['sineiro'], true, { hints: [
@@ -491,16 +492,8 @@ async function showDiary() {
 }
 
 // ---------- Telas ----------
-// Emblema do título: a Estrela de Eterra (desenho original, 15×15)
-const EMBLEM = ['.......a.......', '.......a.......', '......cac......', '...a..cbc..a...', '....a.cbc.a....', '.....acbca.....',
-  '..ccccbgbcccc..', 'aaabbbgwgbbbaaa', '..ccccbgbcccc..', '.....acbca.....', '....a.cbc.a....', '...a..cbc..a...',
-  '......cac......', '.......a.......', '.......a.......'];
-const EMBLEM_COL = { a: '#ffd96a', b: '#fff6d8', c: '#b4601a', g: '#8fe0ff', w: '#ffffff' };
-function emblemSvg() {
-  let r = '';
-  EMBLEM.forEach((row, y) => [...row].forEach((ch, x) => { if (EMBLEM_COL[ch]) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${EMBLEM_COL[ch]}"/>`; }));
-  return `<svg class="emblem" viewBox="0 0 15 15" shape-rendering="crispEdges">${r}</svg>`;
-}
+// Emblema do fim: a estrela de Elun do título (src/titlebg.js), na paleta mestre
+const emblemImg = () => `<img class="emblem" src="${GridSprite.render(TITLE_STAR, 0).toDataURL()}" alt="">`;
 
 // A fonte pixel achata as maiúsculas acentuadas (Ô parece Ø, Í vira í); nos títulos o acento é desenhado por cima da letra
 const ACCENTS = { 'Â': 'A^', 'Ê': 'E^', 'Ô': 'O^', 'Á': 'A´', 'É': 'E´', 'Í': 'I´', 'Ó': 'O´', 'Ú': 'U´', 'Ã': 'A~', 'Õ': 'O~' };
@@ -535,7 +528,7 @@ async function titleScreen() {
   if (v === 'dungeon') return quickDungeon();
   if (v === 'load' && loadGame()) {
     await UI.say(G.mode === 'town' ? `Jogo carregado. ${TOWN.A.name}.` : `Jogo carregado. ${FLOORS[G.floor].short} · ${FLOORS[G.floor].name}`, { auto: 1600 });
-    if (G.seen.migrou === 0) { G.seen.migrou = 1; Sfx.levelup(); await UI.say(`Uma ladina de capa cinza, ${heroName('andilla')}, juntou-se ao grupo.`); saveGame(); }
+    if (G.seen.migrou === 0) { G.seen.migrou = 1; Sfx.join(); await UI.say(`Uma ladina de capa cinza, ${heroName('andilla')}, juntou-se ao grupo.`); saveGame(); }
     G.busy = false; exploreHint();
   } else {
     if (v === 'load') await UI.say('Não foi possível carregar o save.\nComeçando um novo jogo.');
@@ -555,11 +548,11 @@ async function newGame() {
 
 // Atalho do título: grupo como depois da abertura (nível 3, carta, missão do ancião) direto na cripta
 async function quickDungeon() {
-  G.party = ['aldo', 'teo', 'lyra', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
+  G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
   G.opened = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
-  G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1 };
+  G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1, andillaNome: 1 };
   G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();
@@ -589,8 +582,10 @@ async function ending() {
   await say2('O Sineiro', '"Ele prometeu... que o rei traria os fiéis de volta..."');
   Sfx.bellFar();
   await UI.say('O Sineiro desaba. O sino rola pelas pedras, toca uma última vez e se cala.');
-  if (inParty('lyra')) await say2('Lyra~alegre', G.party.some(m => m.id === 'aldo' && m.hp <= 0)
-    ? `Levanta, ${heroName('aldo')}. A professora não gosta de remendo.` : 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
+  if (inParty('lyra')) {
+    const down = G.party.some(m => m.id === 'aldo' && m.hp <= 0); // worried when her brother is down, smiling when he stands
+    await say2(down ? 'Lyra~preocupado' : 'Lyra~alegre', down ? `Levanta, ${heroName('aldo')}. A professora não gosta de remendo.` : 'Você está inteiro? Ótimo. A professora não gosta de remendo.');
+  }
   await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
   await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
   await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
@@ -612,14 +607,16 @@ async function ending() {
   await UI.say('Naquela noite, os mortos de Valmor não se levantam. E o sino da igreja velha não toca.');
   await UI.say('Na manhã seguinte, na estrada do oeste.');
   await partyTalk('estrada', TALKS.estrada);
-  UI.showOverlay(`<div class="title">${emblemSvg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-dark ov-end');
-  saveGame();
+  saveGame(); // still in Valmor: the save keeps the place
+  G.mode = 'ending'; // the frame draws the dawn over Erukh behind the end screen, the image of the start
+  UI.showOverlay(`<div class="title">${emblemImg()}<h1>${logoText('FIM DO PRÓLOGO')}</h1><div class="sub end"><p>O sino de Valmor se calou.</p><p>Mas alguém levou o que estava naquele túmulo. A carta com o selo real segue para Erukh...</p><p>Obrigado por jogar!</p><p>Capítulo 1 · A Estrada para Erukh. Em breve.</p></div></div>`, 'ov-end');
   document.getElementById('game').classList.add('on-end');
   let v;
-  do v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches ? 1 : 2 });
+  do v = await UI.choose([{ label: 'Passear por Valmor', value: 'stay' }, { label: 'Jogar novamente', value: 'new' }], { title: '', cols: matchMedia('(orientation: portrait)').matches || innerHeight <= 500 ? 1 : 2 });
   while (v === 'new' && !await replaceSaveOk(hasSave()));
   document.getElementById('game').classList.remove('on-end');
   UI.hideOverlay();
+  G.mode = 'town';
   if (v === 'new') return newGame();
   Music.play('town');
   G.busy = false; exploreHint();
@@ -708,8 +705,8 @@ function frame(now) {
   }
   const F = FLOORS[G.floor];
   HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
-  if (G.mode === 'title') {
-    TitleBG.draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js)
+  if (G.mode === 'title' || G.mode === 'ending') {
+    TitleBG.draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js), no título e no fim do prólogo
   } else if (G.mode === 'town') {
     updateTown(dt);
     drawTown(now);

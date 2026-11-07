@@ -57,7 +57,7 @@ test('attributes with equipment bonus and a bar against the best of the party', 
   assert.equal(rows[0].frac, 0.5);
   assert.equal(rows[2].frac, 1);
   assert.equal(R.statRows([{ total: { atk: 20, def: 10, mag: 4, agi: 7 }, bonus: { atk: 6 } }], 0)[0].bonus, 6);
-  assert.equal(R.xpLeftText(30, 2, 42), 'Faltam 12 XP para o nível 3');
+  assert.equal(R.xpLeftText(30, 2, 42), 'Faltam 12 XP para o nível\u00a03');
 });
 
 test('the story grows with flags and never shows a spoiler or an em dash', () => {

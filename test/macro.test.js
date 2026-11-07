@@ -124,7 +124,7 @@ const start = run => run(`startBattle(['boneco'], false, { surprise: 'normal' })
 
 // Round 1 by hand; round 2: Lyra records Tática 1 (G) and plays it (1); round 3: Tática 1 again, stopped with Esc
 test('record the last round, replay it for everyone left in the round, and stop it with Esc', async () => {
-  const hand = { lyra: ['spell', 'fogo'], aldo: ['atk'], teo: ['def'] };
+  const hand = { lyra: ['spell'] /* one spell at level 1: no list */, aldo: ['atk'], teo: ['def'] };
   const p = player(hand, { 2: { lyra: [['macroSave', 0], ['macro1']] }, 3: { lyra: [['macro1']] } }, 4);
   const { G, log, run, ctx } = battle(['aldo', 'lyra', 'teo'], p.choose);
   const logTick = ctx.tick;

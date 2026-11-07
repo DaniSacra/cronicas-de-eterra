@@ -67,7 +67,7 @@ async function arrivalScene() {
 const TAVERN_NPCS = [
   { id: 'berta', name: 'Berta, a taverneira', x: 10, y: 2, dir: 2, wander: 0, lines: {
     start: ['O ancião Bertoldo mora na casa de telhado verde, ao norte. Vão!'],
-    quest: ['Encapuzados em Valmor... e a moça dos dados com uma faca. Esta semana eu já vi de tudo.', 'Lá embaixo não tem sopa. Comprem poções com a Dora.'],
+    quest: [() => `Encapuzados em Valmor... e a ${heroName('andilla')} com uma faca. Esta semana eu já vi de tudo.`, 'Lá embaixo não tem sopa. Comprem poções com a Dora.'],
     desceu: ['Desceram e voltaram! A sopa está quente. Contem tudo, mas comam primeiro.'],
     won: ['Eu disse que a sopa era de vocês. Sentem, heróis.', 'Agora me digam: se o túmulo estava vazio, quem é que anda por aí com um rei nas costas?'] } },
   { id: 'ana', name: 'Ana, a fiandeira', x: 4, y: 1, dir: 2, wander: 0, lines: {
@@ -99,7 +99,7 @@ async function bertaJob() {
   await line('Berta', `Olha quem a geada trouxe. ${A()}, de novo.`);
   await line('Aldo', 'Vim pelo trabalho.');
   await line('Berta', 'Claro que veio. A escola continua no mesmo lugar, se o trabalho mudar de ideia.');
-  await line('Berta', 'Quarto e sopa, dez moedas. Ou um favor, que eu conheço essa bolsa vazia.');
+  await line('Berta', 'Quarto e sopa, trinta moedas. Ou um favor, que eu conheço essa bolsa vazia.');
   await line('Rui', 'As covas do cemitério amanheceram abertas de novo. Vazias. Como se alguém tivesse saído de dentro.');
   if (inParty('lyra')) await line('Lyra', `Covas abertas por dentro? ${A()}, isso não é trabalho. É capítulo de livro.`, 'preocupado');
   await line('Berta', 'Para com isso, Rui.');
@@ -301,7 +301,7 @@ Object.assign(AREAS.cemiterio, {
     const foe = TOWN.npcs.find(n => n.def.foe && Math.abs(n.x - x) + Math.abs(n.y - y) === 1);
     if (foe) return () => cemFight(foe);
     if (x === 6 && y === 4 && !G.seen.estojo) return async () => {
-      G.seen.estojo = 1; G.key.estojo = !inParty('andilla'); Sfx.chest();
+      G.seen.estojo = 1; G.key.estojo = !inParty('andilla'); Sfx.keyItem(); // a clue, not a treasure
       await UI.say('Junto de uma cova cavada, um estojo de couro cheio de ganchinhos de metal.');
       await line('Aldo', 'Ferramenta de quem abre o que não é seu.');
       if (inParty('andilla')) await line(heroName('andilla'), 'Meus ganchos! Eu disse que eram meus.', 'alegre');
@@ -393,7 +393,7 @@ async function nightScene() {
   await line('Bruno', 'Ninguém tira três seis duas vezes seguidas.');
   await line(moca, 'Ninguém tira. Eu tiro.', 'alegre');
   await line('Caio', 'Ela me ganhou o soldo do mês. E eu ainda agradeci.');
-  if (lyra) await line('Lyra', `Você nunca vai descobrir como ela faz, ${A()}.`, 'alegre');
+  if (lyra) { await UI.say(`${A()} não tira os olhos dos dados.`); await line('Lyra', `Você nunca vai descobrir como ela faz, ${A()}.`, 'alegre'); }
   await line('Aldo', 'Ela está trapaceando.');
   await line(moca, 'Estou ganhando. Trapaça é o nome que quem perde dá.');
   await line('Teo', 'Eu vou... rezar um pouco.', 'preocupado');
@@ -501,7 +501,7 @@ const TALKS = {
   estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
     ['lyra', porqueRoad], // a resposta da porta da igreja (G.seen.porque); saves sem resposta pulam a fala
     ['aldo', 'Se alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou.'],
-    ['lyra', () => `${heroName('aldo')} diz que vai por Valmor. ${heroName('aldo')} quer dizer: por uma certa professora.`, 'alegre'],
+    ['lyra', 'Você diz que vai por Valmor. Eu ouço: por uma certa professora.', 'alegre'],
     ['aldo', () => `${heroName('lyra')}.`, 'bravo'],
     ['teo', 'A carta vai até a rainha. Até lá, ninguém toca nela.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],
     ['andilla', 'E é a cidade mais rica do oeste. Eu vou junto. Pela carta, claro.', 'alegre']],

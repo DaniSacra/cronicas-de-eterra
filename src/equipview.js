@@ -95,7 +95,7 @@ const HeroView = (() => {
       <div class="bar ${cls}"><i style="width:${max ? 100 * v / max : 0}%"></i></div>`;
     return bar('PV', m.hp, maxHp(m), '') + bar('PM', m.mp, maxMp(m), 'mp') +
       `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}</span>
-        <b>${r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em><div class="hv-cmp"><i style="width:${Math.round(100 * r.frac)}%"></i></div></div>`).join('')}</div>
+        <b>${r.key === 'def' || r.key === 'res' ? guardText(r.value) : r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em><div class="hv-cmp"><i style="width:${Math.round(100 * r.frac)}%"></i></div></div>`).join('')}</div>
       <div class="hv-story"><small>História</small>${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div><div class="hv-more">▼</div>`;
   }
 

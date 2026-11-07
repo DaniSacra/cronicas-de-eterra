@@ -133,11 +133,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--text); letter-spacing: 2px; }
 .title p { margin: 0; font-size: 16px; color: var(--light); text-shadow: 3px 3px 0 var(--ink); }
 .title p.small { font-size: 8px; color: var(--dim); }
-.title .sub.end { display: flex; flex-direction: column; gap: .55em; max-width: min(92vw, calc(var(--f2) * 30)); text-align: center; letter-spacing: 0; }
+.title .sub.end { display: flex; flex-direction: column; gap: .55em; max-width: min(92vw, calc(var(--f2) * 36)); text-align: center; letter-spacing: 0; }
 .title .sub.end p { font-size: var(--f2); line-height: 1.35; color: var(--text); text-shadow: none; }
-#overlay.ov-end { padding-bottom: 38vh; }
-#game.on-end #party, #game.on-end #hudbar { display: none !important; } /* the end screen owns the whole view */
-@media (max-width: 500px) { .title .sub.end p { font-size: var(--f1); } } /* phone: the end text fits above the menu */
+#overlay.ov-end { padding-bottom: 38vh; background: rgba(3, 3, 12, .45); } /* a light veil over the dawn */
+#game.on-end #party, #game.on-end #hudbar, #game.on-end #touch [data-k="m"] { display: none !important; } /* the end screen owns the whole view */
 @media (max-height: 500px) { #overlay.ov-end { padding: 8px 0 0; justify-content: flex-start; } #overlay.ov-end .emblem { display: none; } }
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
 @media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
@@ -451,7 +450,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   .card .nm span:first-child { font-size: var(--f1); } /* names fit the narrower cards, as in portrait */
   #game:not(.in-battle) .card .pfw { display: none; } /* walking: no faces, so "58/58" and the PM fit on one line */
   .card .num { white-space: nowrap; }
-  #touch .pad2 .small { font-size: 6.67px; } /* MAPA: 20 real pixels at 3x */
+  #touch .pad2 .small { font-size: 5.34px; letter-spacing: 0; } /* MAPA: 16 real pixels at 3x, sharp */
 }
 @media (pointer: coarse) { #game.in-battle #touch [data-k="m"] { display: none; } } /* no map in battle */
 #bottom > #info { align-self: flex-start; margin-bottom: calc(var(--u) * 2); } /* low note (fog areas): left, above the party */

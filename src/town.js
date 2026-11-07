@@ -30,7 +30,7 @@ BUILDINGS.forEach(b => { b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h -
 const LOOKS = {
   aldo:  { skin: '#f0c090', hair: '#7a4220', body: '#d08a30', legs: '#5a3a20', hairStyle: 'spiky', eye: '#3a6ad0', belt: '#5a3418', tool: 'sword', cape: '#2c3c80' }, // capa azul da paleta: de costas ele não vira um bloco vermelho como a Andilla
   lyra:  { skin: '#f4cca0', hair: '#f0d860', body: '#a050c0', legs: '#5a2a70', robe: true, long: true, hairStyle: 'long', hat: 'circlet', gem: '#40c0ff', tool: 'staff', orb: '#9ae8ff', eye: '#9a50d0', trim: '#f0c040', blush: 1 },
-  teo:   { skin: '#e8b888', hair: '#3a2a1a', body: '#e8f0e8', legs: '#4a8a6a', robe: true, hairStyle: 'messy', eye: '#3a9a5a', trim: '#4a8a6a', belt: '#4a8a6a', tool: 'satchel' },
+  teo:   { skin: '#e8b888', hair: '#3a2a1a', body: '#e8f0e8', legs: '#4a8a6a', robe: true, hairStyle: 'messy', eye: '#3a9a5a', trim: '#4a8a6a', belt: '#4a8a6a', tool: 'book', book: '#2c3c80' },
   andilla: { skin: '#e8c0a0', hair: '#1a1418', body: '#7a7a82', legs: '#4a3424', mark: '#9a1a24', hairStyle: 'bob', eye: '#a02030', cape: '#5a5a64', tool: 'dagger', belt: '#3a2a20' }, // capa cinza como a dos encapuzados; lenço escuro no peito
   guard: { skin: '#e0b080', hair: '#6a6a6a', body: '#7a8494', legs: '#3a3a4a', hat: 'helmet', hatCol: '#a0a8b8', plume: '#c03030', outfit: 'armor', beard: 'mustache', tool: 'spear' },
   lia:   { skin: '#f4cca0', hair: '#c05a28', body: '#e05a6a', legs: '#7a2a3a', robe: true, long: true, kid: 1, hairStyle: 'braids', tie: '#f8f0f0', blush: 1, eye: '#4a8a3a', apron: '#f8ece8' },
@@ -44,7 +44,7 @@ const LOOKS = {
   soldier: { skin: '#e0b080', hair: '#888', body: '#6a7484', legs: '#3a3a4a', hat: 'helmet', hatCol: '#a0a8b8', outfit: 'armor', tool: 'spear' },
   bruno: { skin: '#e0b080', hair: '#5a3a1a', body: '#6a7484', legs: '#3a3a4a', hairStyle: 'bald', beard: 'mustache', outfit: 'vest', shirt: '#d8d0c0', tool: 'mug', belt: '#3a2a20' },
   caio:  { skin: '#d8a878', hair: '#2a1a10', body: '#5a6a8a', legs: '#3a3a4a', hairStyle: 'short', mark: '#c8a040', belt: '#3a2a20', tool: 'sword', eye: '#3a2a1a' },
-  tobias: { skin: '#e0b080', hair: '#5a3a1a', body: '#e8eef8', legs: '#3a5aa8', hairStyle: 'short', hat: 'bandage', tool: 'satchel', belt: '#5a3a20', bag: '#a06a30' },
+  tobias: { skin: '#e0b080', hair: '#5a3a1a', body: '#e8eef8', legs: '#3a5aa8', hairStyle: 'short', hat: 'bandage', tool: 'satchel', belt: '#5a3a20', bag: '#a06a30', cape: '#8a5418' },
   ossada: { skin: '#e8e2d0', hair: '#e8e2d0', body: '#cfc8b4', legs: '#bfb8a4', mark: '#2a2420', hairStyle: 'bald', sockets: 1 },
   hooded: { skin: '#2a2228', hair: '#6a6a72', body: '#7a7a82', legs: '#3a3a42', hat: 'hood', hatCol: '#6a6a72', robe: true, mark: '#e02030', glow: '#ff3040', hairStyle: 'none' },
 };
@@ -64,7 +64,8 @@ const byStage = o => { for (const k of STAGE_FALLBACK[stage()]) if (o[k]) return
 
 const NPC_DEFS = [
   { id: 'guard', name: 'Guarda Hugo', x: 27, y: 18, dir: 2, wander: 0, hi: () => `${heroName('aldo')}! De volta para o inverno, é?`, lines: {
-    start: ['A igreja velha está fechada por ordem do ancião.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
+    arrive: ['A igreja velha está fechada por ordem do ancião.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
+    start: ['Ouvi a briga na Berta daqui. Não saí da porta. Ordem do ancião.', 'A igreja velha está fechada por ordem do ancião.', 'Ninguém desce desde que o marido da Sara voltou de lá sem dizer uma palavra.', () => nextStep()],
     quest: ['Que a luz os guie lá embaixo. Voltem vivos.'],
     desceu: ['Vocês subiram inteiros. Primeira vez que alguém sobe dessa escada falando.', () => `O que tem lá embaixo, ${heroName('aldo')}? Não, não me conta. Eu ainda tenho que ficar aqui de guarda.`],
     won: ['O sino parou. Primeira noite em semanas que eu fico de guarda sem tremer.', 'Mas se o túmulo estava vazio, quem é que eu fiquei guardando esse tempo todo?'] } },
@@ -80,7 +81,8 @@ const NPC_DEFS = [
     desceu: ['Desceram e voltaram! Viram quem abriu as covas?', 'Ninguém acreditou em mim. Agora a vila inteira só fala disso.'],
     won: ['Dormi a noite inteira pela primeira vez em semanas!', 'Mas aquelas covas cavadas com pá... Morto não usa pá.'] } },
   { id: 'marta', name: 'Dona Marta', x: 23, y: 8, dir: 2, wander: 1, hi: () => `O ${heroName('aldo')} de volta. A escola agradece. Digo, a vila agradece.`, lines: {
-    start: ['Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
+    arrive: ['Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
+    start: ['Briga na Berta e sino de madrugada. Minha avó dizia que inverno assim não traz coisa boa.', 'Minha avó dizia que foram paladinos que fecharam a cripta. E que ela nunca mais devia abrir.', 'Se os mortos estão acordando... alguém está batendo do outro lado.'],
     quest: ['Lá embaixo, leiam as paredes. Os antigos escreviam tudo.', 'Levem poções. Muitas poções. A Dora vende na loja de telhado dourado.'],
     desceu: ['Leram as paredes? Minha avó dizia que os paladinos escreviam até na pedra do chão.'],
     won: ['Minha avó ficaria orgulhosa de vocês.', 'Mas eu não durmo tranquila. Paladino nenhum deixaria aquele túmulo vazio.'] } },
@@ -99,7 +101,7 @@ const NPC_DEFS = [
   // A professora de Valmor: a razão de Aldo voltar (nome provisório, prologo.md)
   { id: 'clara', name: 'Clara, a professora', x: 14, y: 12, dir: 0, wander: 1, onTalk: claraTalk, lines: {
     arrive: [() => `Boa tarde, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
-    start: [() => `Bom dia, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
+    start: [() => `Bom dia, ${heroName('aldo')}.`, () => `O Nino não dormiu. Ouviu o sino de madrugada e quer saber se foi você, ${heroName('aldo')}.`, 'O Nino passou a semana olhando para a estrada.'],
     quest: ['Vão descer na igreja velha?', 'Voltem. Todos.'],
     desceu: ['Voltaram. Todos. Que bom.', 'O Nino contou para a vila inteira. Eu fingi que não ouvi.'],
     won: ['O Nino agora quer ser guerreiro. Obrigada por isso. Acho.', 'Erukh fica longe. A sopa da Berta, nem tanto.'] } },
@@ -565,6 +567,7 @@ async function guardTalk(n) {
   if (!G.seen.hugo4) {
     G.seen.hugo4 = 1;
     await say(nm, greet(NPC_DEFS[0], ['Quatro. Assim o ancião aceita. Que a luz os guie lá embaixo.']));
+    saveGame(); // the way down is open: closing the browser now keeps it
     const guard = n || TOWN.npcs.find(a => a.def.id === 'guard');
     if (guard) { const h = guardHome(); guard.home = h; moveActor(guard, h.x, h.y, 400); guard.dir = 3; }
     return;
@@ -597,12 +600,14 @@ async function enterBuilding(b) {
       desceu: ['Deixa eu ver esse fio depois de lá embaixo.', 'Hum. Aguentou. Eu faço espada boa.'],
       won: ['Vou forjar uma placa com o nome de vocês. Em ferro, que dura mais!'] }],
     sara: ['Sara', {
-      start: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
+      arrive: ['Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
+      start: ['Ouvi o sino de madrugada. Fazia cinquenta anos que ele não tocava.', 'Meu marido desceu na igreja velha para ver de onde vinham os barulhos.', 'Voltou pálido e não disse uma palavra desde então.'],
       quest: ['Se forem descer, cuidado com os morcegos: eles bebem o sangue para se curar.'],
       desceu: ['Vocês desceram onde o meu marido desceu. E voltaram falando. Obrigada por isso.'],
       won: ['Meu marido voltou a sorrir. Obrigada, de coração.'] }],
     joaquim: ['Seu Joaquim', {
-      start: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
+      arrive: ['Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
+      start: ['Ouvi a gritaria na Berta. Na minha idade, a gente fecha a janela e espera o dia.', 'Na minha época, rapaz voltava para a vila por causa de moça e dizia que era pelo trabalho. Igualzinho você.', 'Na minha época, a gente enfrentava rato gigante com uma vassoura!', 'Os ratos lá embaixo são fáceis. O que vem depois, não.'],
       quest: ['Na minha época, ninguém descia na igreja velha. Nem por moça.'],
       desceu: ['Desceram, é? Na minha época, a gente voltava com um osso de lembrança.'],
       won: ['Hunf. Na minha época, isso levava dois dias. Bom trabalho, meninos.', 'Na minha época, túmulo vazio queria dizer encrenca. Ainda quer.'] }],
@@ -646,13 +651,14 @@ async function elderTalk() {
       `Achem mais ${G.party.length === 3 ? 'um' : 'dois'}. A taverna anda cheia de gente de estrada. Aí o Hugo deixa passar.`,
     ] : [
       'Vocês já são quatro. Bom. Os paladinos que fecharam a cripta também eram quatro, um em cada canto do selo.',
-      'Mostrem isso ao Hugo e ele deixa passar.',
+      'Digam ao Hugo que eu mandei, e ele deixa passar.',
     ]),
   ]);
   G.quest = 1;
   G.inv.pocao = (G.inv.pocao || 0) + 2;
   Sfx.chest();
   await UI.say('O ancião entrega 2 Poções ao grupo.\nNova missão: ' + (G.party.length < 4 ? 'reunir um grupo de quatro e descer à cripta.' : 'descer à cripta.'));
+  saveGame(); // the mission and the potions survive a closed browser
 }
 
 // A escolinha: ninguém lá dentro, só a lousa e os desenhos das crianças

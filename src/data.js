@@ -107,7 +107,7 @@ const HERO_STORY = {
   },
   teo: {
     lines: [
-      { text: 'Aprendiz que ainda está aprendendo as coisas, com o sonho de servir no Templo. Veio ajudar a irmã Irene no inverno.' },
+      { text: 'Aprendiz, ainda aprendendo as coisas, com o sonho de servir no Templo. Veio ajudar a irmã Irene no inverno.' },
       { when: 'teoWin', text: 'O grupo o achou no cemitério, cercado de mortos que não ficavam quietos.' },
       { when: 'carta', text: 'Guarda uma carta com o selo real e não vai rompê-lo. Só a rainha pode.' },
     ],
@@ -147,7 +147,7 @@ const ENEMIES = {
   // Cemitério de Valmor: mais fracos que os da cripta, para Aldo e Lyra aprenderem
   ratoCova:    { name: 'Rato de Cova', hp: 24, atk: 11, def: 2, res: 1, agi: 6,  xp: 4, sprite: 'rat',
                recolor: { '#b07c58': '#a2a2ac', '#9a6232': '#7a7a82', '#6a3a1a': '#55555e', '#4a2610': '#26262e' } }, // rato cinza do cemitério
-  morcegoCova: { name: 'Morcego',      hp: 16, atk: 10, def: 0, res: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
+  morcegoCova: { name: 'Morcego',      hp: 16, atk: 9, def: 0, res: 0, agi: 12, xp: 3, sprite: 'bat', float: true,
                recolor: { '#a84ad8': '#7a7a82', '#72308e': '#55555e', '#40145a': '#26262e', '#3a1448': '#26202e' } }, // morcego cinzento do cemitério
   ossada:      { name: 'Ossada',       hp: 44, atk: 13, def: 5, res: 2, agi: 5,  xp: 6, sprite: 'skeleton', undead: true, drop: ['pocao', 0.2] },
   encapuzado: { name: 'Encapuzado', hp: 44, atk: 17, def: 5, res: 2, agi: 6, xp: 10, sprite: 'hooded', drop: ['pocao', 0.25] },
@@ -196,8 +196,8 @@ const JOURNAL = {
     : G.seen.job ? 'investigar as covas abertas no cemitério, atrás da capela.'
     : 'achar pouso na Taverna Poney Saltitante.',
   notes: [
-    { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
     { show: () => inParty('lyra'), get text() { return `Lyra, irmã caçula de ${heroName('aldo')}, chegou na carroça do correio. Veio ver o irmão e a fonte de luz da cripta.`; } },
+    { show: () => G.seen.job, text: 'A Berta troca o quarto por um favor: ver as covas abertas do cemitério.' },
     { show: () => G.seen.covas, text: 'Algumas covas foram cavadas de fora, com pá. Outras foram abertas por dentro.' },
     { show: () => G.seen.estojo && !G.seen.andillaNome, text: 'Junto de uma cova cavada, um estojo de ganchos de ladrão. De quem?' },
     { show: () => G.seen.estojo && G.seen.andillaNome, text: () => `Junto de uma cova cavada, um estojo de ganchos. Era da ${heroName('andilla')}.` },

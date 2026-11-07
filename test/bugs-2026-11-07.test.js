@@ -133,3 +133,104 @@ test('old 3-floor saves: the gear is read back from the bonus it left', () => {
   assert.deepEqual(R.gearFromBonus(aldo({ atk: 6 }), ['espadaFerro'], E), [], 'nothing left over');
   assert.deepEqual(R.gearFromBonus([{ id: 'teo', bonus: { def: 13, mag: 5 } }, { id: 'lyra', bonus: {} }], [], E), ['mantoSagrado']);
 });
+
+// ---------- Quick wins 16-32 ----------
+test('the game saves after the elder mission and after Hugo opens the way', async () => {
+  const { G, run } = story(['aldo', 'lyra', 'teo', 'andilla'], { intro: 1, seen: { job: 1 } });
+  run('globalThis.saves = 0; saveGame = () => { saves++; return true; }');
+  await run('elderTalk()');
+  assert.equal(run('saves'), 1);
+  G.quest = 1;
+  run(`enterTown({ x: 10, y: 12, dir: 0 }, 'valmor')`);
+  await run('guardTalk()');
+  assert.equal(run('saves'), 2);
+});
+
+test('the morning after the fight, villagers talk about the night; the afternoon lines stay for the arrival', () => {
+  const { run } = story(['aldo']);
+  const hugo = run.json(`NPC_DEFS.find(d => d.id === 'guard').lines.start.filter(l => typeof l === 'string')`);
+  assert.equal(hugo[0], 'Ouvi a briga na Berta daqui. Não saí da porta. Ordem do ancião.');
+  assert.equal(run(`NPC_DEFS.find(d => d.id === 'guard').lines.arrive[0]`), 'A igreja velha está fechada por ordem do ancião.');
+  assert.match(run(`NPC_DEFS.find(d => d.id === 'marta').lines.start[0]`), /^Briga na Berta e sino de madrugada/);
+  assert.match(run(`NPC_DEFS.find(d => d.id === 'clara').lines.start[1]()`), /O Nino não dormiu/);
+});
+
+test('the cemetery bat hits for 9', () => {
+  const { run } = story(['aldo']);
+  assert.equal(run('ENEMIES.morcegoCova.atk'), 9);
+});
+
+test('the journal: Lyra arrives before Berta asks', () => {
+  const { run } = story(['aldo', 'lyra'], { seen: { job: 1 } });
+  const notes = run.json(`JOURNAL.notes.filter(n => n.show()).map(n => typeof n.text === 'function' ? n.text() : n.text)`);
+  assert.ok(notes[0].startsWith('Lyra') && notes[1].startsWith('A Berta'));
+});
+
+test('Defesa and Resistência show the share of damage the combat cuts', () => {
+  const { run } = story(['aldo']);
+  assert.equal(run('guardText(22)'), '22%');
+  assert.equal(run('guardText(90)'), '75%', 'the cap');
+  assert.equal(run('guardText(0)'), '0%');
+  assert.equal(run('Math.round(100 * (1 - guardCut(40)))') + '%', run('guardText(40)'));
+});
+
+test('a crypt fight faces the longest corridor, the current way on ties', () => {
+  const R = require('../src/uirules.js');
+  // 5x5: open row y=2 to the east from (1,2), a wall north and south, one open cell west
+  const N = 5, g = Array(N * N).fill(1);
+  for (const [x, y] of [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]]) g[y * N + x] = 0;
+  assert.equal(R.bestFacing(g, N, 1, 2, 0), 1, 'facing a wall north: turn east, three cells open');
+  assert.equal(R.bestFacing(g, N, 2, 2, 1), 1, 'tie east/west keeps the current way');
+  assert.equal(R.bestFacing(g, N, 2, 2, 3), 3);
+});
+
+test('combat: the bar opens on the last command, a single skill skips the list, the list shows what a spell does', async () => {
+  const starts = [], lists = [];
+  let turn = 0;
+  const { run } = battle(['aldo'], (opts, o, run) => {
+    if (barHero(o)) {
+      starts.push(o.start); turn++;
+      if (turn === 3) { run('B.enemies.forEach(e => { e.hp = 0; })'); return 'def'; }
+      if (turn === 1) { run('globalThis.hoverSpell = o => o.onHover(null, o)'); return 'spell'; }
+      return 'atk';
+    }
+    if (o.style !== 'pointer') lists.push(o.title);
+    return opts.find(x => !x.disabled).value;
+  });
+  await run(`startBattle(['boneco'], false, { surprise: 'normal' })`);
+  assert.deepEqual(starts.slice(0, 3), ['atk', 'spell', 'atk'], 'each bar opens on the last command');
+  assert.ok(!lists.some(t => t && t.includes('Técnica')), 'Aldo has one skill: no list');
+  const src = fs.readFileSync(`${__dirname}/../src/battle.js`, 'utf8');
+  assert.ok(src.includes('B.label = v ? SPELLS[v].desc : null'));
+});
+
+test('after an ambush the enemies free round does not count: the party plays round 1', async () => {
+  const rounds = [];
+  const { run } = battle(['aldo'], (opts, o, run) => {
+    if (!barHero(o)) return opts.find(x => !x.disabled).value;
+    rounds.push(run('B.round'));
+    run('B.enemies.forEach(e => { e.hp = 0; })'); return 'def';
+  });
+  await run(`startBattle(['boneco'], false, { surprise: 'ambush' })`);
+  assert.deepEqual(rounds, [1]);
+});
+
+test('Tobias wears a brown cape and Teo carries a book, both in the palette', () => {
+  const { run } = story(['aldo']);
+  const { inPalette } = require('../src/palette.js');
+  assert.ok(inPalette(run('LOOKS.tobias.cape')));
+  assert.equal(run('LOOKS.teo.tool'), 'book');
+  assert.ok(inPalette(run('LOOKS.teo.book')));
+});
+
+test('Berta asks thirty coins, more than the starting purse', () => {
+  const src = fs.readFileSync(`${__dirname}/../src/opening.js`, 'utf8');
+  assert.ok(src.includes('Quarto e sopa, trinta moedas.'));
+});
+
+test('the dungeon shortcut keeps the prologue order and knows Andilla by name', () => {
+  const src = fs.readFileSync(`${__dirname}/../src/main.js`, 'utf8');
+  const body = src.slice(src.indexOf('async function quickDungeon'));
+  assert.ok(body.includes("['aldo', 'lyra', 'teo', 'andilla']"));
+  assert.match(body.slice(0, body.indexOf('loadFloor')), /andillaNome: 1/);
+});

@@ -53,11 +53,11 @@ const Sfx = (() => {
     step(ground) {
       if (ground === 'snow') noise(0.07, 0.12, 0, 2200, 0.6);
       else if (ground === 'wood') { tone(150, 0.05, 'triangle', 0.05); noise(0.03, 0.06, 0, 700); }
-      else if (ground === 'stone') noise(0.05, 0.14, 0, 900, 1.2);
+      else if (ground === 'stone') { noise(0.05, 0.2, 0, 800, 0.9); tone(95, 0.05, 'triangle', 0.045); } // the crypt is where you walk most: a heel on stone
       else noise(0.06, 0.1, 0, 300, 0.8);
     },
     bump() { tone(110, 0.12, 'square', 0.06, 60); },
-    alert() { tone(392, 0.06, 'square', 0.04); tone(523, 0.1, 'square', 0.04, null, 0.06); }, // um errante viu o grupo
+    alert() { tone(392, 0.06, 'square', 0.055); tone(523, 0.1, 'square', 0.055, null, 0.06); }, // um errante viu o grupo
     cursor() { tone(880, 0.03, 'square', 0.045); },
     select() { tone(660, 0.05, 'square', 0.035); tone(990, 0.06, 'square', 0.035, null, 0.04); },
     cancel() { tone(440, 0.06, 'square', 0.035, 220); },
@@ -69,7 +69,7 @@ const Sfx = (() => {
     // Alguém entra para o grupo: duas terças em triângulo, quentes
     join() { tone(523, 0.3, 'triangle', 0.05); tone(659, 0.3, 'triangle', 0.04); tone(587, 0.5, 'triangle', 0.05, null, 0.18); tone(784, 0.5, 'triangle', 0.04, null, 0.18); },
     // Grito de surpresa (a Lyra reconhecendo o irmão)
-    exclaim() { tone(784, 0.06, 'square', 0.04); tone(1046, 0.09, 'square', 0.04, null, 0.06); },
+    exclaim() { tone(784, 0.06, 'square', 0.055); tone(1046, 0.09, 'square', 0.055, null, 0.06); },
     slash() { noise(0.14, 0.14, 0, 2500, 0.7); },
     hit() { noise(0.08, 0.15, 0, 800, 1); tone(140, 0.1, 'square', 0.05, 60); },
     crit() { noise(0.15, 0.2, 0, 1200, 0.6); tone(300, 0.2, 'square', 0.06, 80); },
@@ -280,7 +280,8 @@ const Music = (() => {
   let ac0 = null, waves = {}, nbuf = null, lfo = null, bus = null;
   let cur = null, want = null, timer = null, step = 0, nextT = 0;
   // Trilhas de lugar retomam do passo onde a luta as interrompeu
-  const RESUME = new Set(['town', 'tavern', 'cemetery', 'explore']), saved = {};
+  // place songs resume at the start of the bar they were in (a long bass note is never cut in half); steps per bar
+  const RESUME = { town: 12, tavern: 6, cemetery: 16, explore: 16 }, saved = {};
   const midi = n => 440 * Math.pow(2, (n - 69) / 12);
 
   function setup(ac) {
@@ -358,7 +359,7 @@ const Music = (() => {
     timer = setInterval(tick, 50); tick();
   }
   function halt() {
-    if (cur && RESUME.has(cur)) saved[cur] = step % SONGS[cur].len;
+    if (cur && RESUME[cur]) { const p = step % SONGS[cur].len; saved[cur] = p - p % RESUME[cur]; }
     if (timer) clearInterval(timer); timer = null; cur = null;
   }
   // stop is a scene cut: the next song starts from its first note (only a battle keeps the place of the song it cut)

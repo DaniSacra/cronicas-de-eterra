@@ -128,7 +128,7 @@ test('the road talk: Aldo, the answer from the church door if there is one, then
       'Aldo:\nFui contratado para olhar umas covas. E agora vou para a capital.',
       ...(porque ? ['Lyra:\nAldo desceu pelo ouro. Voltou sem nenhum. Aldo está feliz mesmo assim.'] : []),
       'Aldo:\nSe alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou.',
-      'Lyra~alegre:\nAldo diz que vai por Valmor. Aldo quer dizer: por uma certa professora.',
+      'Lyra~alegre:\nVocê diz que vai por Valmor. Eu ouço: por uma certa professora.',
       'Aldo~bravo:\nLyra.',
       'Teo:\nA carta vai até a rainha. Até lá, ninguém toca nela.',
       'Lyra:\nDizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.',

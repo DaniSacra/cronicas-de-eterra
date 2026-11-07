@@ -28,6 +28,9 @@ test('light pools: whole-pixel rings, smaller inside, warmer inside; the center 
     });
     assert.ok(left > 0.15 && left < 0.25, `center keeps ${left} of the dusk`);
     rings.forEach((g, i) => { if (i) assert.ok(g.warm > rings[i - 1].warm, 'warmer towards the lamp'); });
+    assert.equal(rings[0].warm, 0, 'outdoors the outer ring only lifts the dusk');
+    const cozy = TownArt.lightRings(r, true);
+    assert.ok(cozy.every((g, i) => g.warm <= rings[Math.min(2, i + 1)].warm || i === 2) && cozy[2].warm < rings[2].warm, 'indoors the amber is softer');
   }
 });
 

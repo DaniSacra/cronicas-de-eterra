@@ -15,7 +15,7 @@ function loadAudio() {
     createGain: () => node({ gain: param() }),
     createOscillator: () => { made.osc++; return node({ type: '', frequency: param(), detune: param(), start() {}, stop() {}, setPeriodicWave() {} }); },
     createBiquadFilter: () => node({ type: '', frequency: param(), Q: param() }),
-    createBufferSource: () => node({ buffer: null, start() {}, stop() {} }),
+    createBufferSource: () => { made.noise = (made.noise || 0) + 1; return node({ buffer: null, start() {}, stop() {} }); },
     createBuffer: (ch, n) => ({ getChannelData: () => new Float32Array(n) }),
     createPeriodicWave: () => ({}),
   };
@@ -49,10 +49,12 @@ test('every song plays a whole loop and every channel of a song has the same len
 
 test('every sound effect runs, the ground steps included', () => {
   const { Sfx, made } = loadAudio();
-  for (const k of ['clue', 'encounterDark', 'join', 'exclaim', 'bell', 'bellFar', 'bossEncounter', 'cursor']) {
-    const before = made.osc; Sfx[k](); assert.ok(made.osc > before, k);
+  const NOT_SOUNDS = ['init', 'ctx', 'master', 'muted', 'toggleMute', 'step'];
+  for (const k of Object.keys(Sfx).filter(k => !NOT_SOUNDS.includes(k) && typeof Sfx[k] === 'function')) {
+    const before = made.osc + (made.noise || 0); Sfx[k](); assert.ok(made.osc + (made.noise || 0) > before, k);
   }
   for (const g of ['snow', 'wood', 'stone', undefined]) Sfx.step(g);
+  const before = made.osc; Sfx.step('stone'); assert.ok(made.osc > before, 'the stone step has a heel tone, not just noise');
 });
 
 test('place songs resume where a battle cut them; battle songs start over', () => {
@@ -63,7 +65,7 @@ test('place songs resume where a battle cut them; battle songs start over', () =
   // the first tick already schedules the next 0.2 s, so a fresh start sits a few steps in
   Music.play('battle'); assert.ok(Music.step < 5, 'the battle starts over');
   advance(3);
-  Music.play('cemetery'); assert.ok(Music.step >= at && Music.step < at + 5, 'the cemetery picks up where it was');
+  Music.play('cemetery'); assert.ok(Music.step >= at - 16 && Music.step < at + 5, 'the cemetery picks up at the start of its bar');
   Music.play('battle'); assert.ok(Music.step < 5, 'battles always start over');
 });
 
@@ -93,5 +95,16 @@ test('a scene cut (stop) forgets the place; the song starts over', () => {
   Music.play('tavern'); assert.ok(Music.step < 5, 'from the top after a stop');
   advance(5); const at = Music.step;
   Music.play('battle'); advance(2); Music.play('tavern');
-  assert.ok(Music.step >= at, 'a battle still keeps the place');
+  assert.ok(Music.step >= at - 6, 'a battle still keeps the place (the start of the bar)');
+});
+
+test('the place is kept at the start of a bar', () => {
+  const { Music, advance } = loadAudio();
+  for (const [song, bar] of [['cemetery', 16], ['town', 12], ['tavern', 6]]) {
+    Music.play(song); advance(4.3);
+    Music.play('battle'); advance(1);
+    Music.play(song);
+    assert.ok(Music.step % bar < 5, `${song} resumes at a bar start (step ${Music.step})`);
+    Music.stop();
+  }
 });

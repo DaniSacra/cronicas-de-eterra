@@ -44,7 +44,8 @@ const TownArt = (() => {
   const LEAF_W = ['#14402a', '#2a5440', '#3a9a6a', '#4ad08a', '#90e0b0'];
   const PINE_W = ['#103630', '#15433c', '#205e54', '#3a9a6a', '#7ac09a'];
   let snow = false;            // ligado por layer(A) enquanto desenha uma área de inverno
-  let LIGHTS = [], SMOKE = []; // poças de luz e chaminés encontradas no desenho (camada de luz e fumaça)
+  let LIGHTS = [], SMOKE = [], EMIT = []; // poças de luz, chaminés e o que emite luz (redesenhado por cima da poça)
+  const emit = (x, y, rows, pal) => EMIT.push({ x, y, rows, pal });
   const wpal = (pal, swap) => snow ? Object.assign({}, pal, swap) : pal;   // o mesmo enfeite com neve em cima
   const shade = a => snow ? `rgba(44,60,128,${a})` : `rgba(14,36,14,${a})`;
 
@@ -288,7 +289,8 @@ const TownArt = (() => {
     '..ooIoo..', '..oiIIo..', '.ooooooo.',
   ];
   function drawLamp(c, X, Y) {
-    pix(c, X + 3, Y - 6, LAMP_ROWS, { o: '#26202e', I: '#55555e', i: '#7a7a82', S: snow ? SNOW.lt : '#55555e', y: '#e8b840', Y: '#f0d860', W: '#fff6c0' });
+    const pal = { o: '#26202e', I: '#55555e', i: '#7a7a82', S: snow ? SNOW.lt : '#55555e', y: '#e8b840', Y: '#f0d860', W: '#fff6c0' };
+    pix(c, X + 3, Y - 6, LAMP_ROWS, pal); emit(X + 3, Y - 6, LAMP_ROWS.slice(0, 10), pal); // the head shines over its own pool
     LIGHTS.push({ x: X + 8, y: Y + 6, r: 30 });
   }
   // Inverno: capim seco furando a neve e pedrinhas com neve em cima
@@ -409,9 +411,9 @@ const TownArt = (() => {
     const glow = o.glow || snow;   // no inverno toda casa tem gente dentro, perto do fogo
     if (glow) LIGHTS.push({ x: x + 4, y: y + 12, r: 13 });
     const glass = glow ? ['#fff0a0', '#f0b040', '#d07820'] : ['#a8d8f8', '#4a74b8', '#2c4a88'];
-    pix(c, x, y, [
-      'ooooooooo', 'oFFFFFFFo', 'oFgbFbbFo', 'oFbbFbBFo', 'oFFFFFFFo', 'oFbbFbBFo', 'oFbBFBBFo', 'oFFFFFFFo', 'ooooooooo',
-    ], { o: OUT, F: '#a46c34', g: glass[0], b: glass[1], B: glass[2] });
+    const rows = ['ooooooooo', 'oFFFFFFFo', 'oFgbFbbFo', 'oFbbFbBFo', 'oFFFFFFFo', 'oFbbFbBFo', 'oFbBFBBFo', 'oFFFFFFFo', 'ooooooooo'];
+    const wpal = { o: OUT, F: '#a46c34', g: glass[0], b: glass[1], B: glass[2] };
+    pix(c, x, y, rows, wpal); if (glow) emit(x, y, rows, wpal);
     if (o.shutter) { R(c, x - 2, y, 2, 9, OUT); R(c, x + 9, y, 2, 9, OUT); R(c, x - 2, y + 1, 1, 7, o.shutter); R(c, x + 10, y + 1, 1, 7, o.shutter); R(c, x - 1, y + 1, 1, 7, shadeHex(o.shutter, 0.7)); R(c, x + 9, y + 1, 1, 7, shadeHex(o.shutter, 0.7)); }
     if (o.flowers && snow) { R(c, x - 1, y + 8, 11, 3, OUT); R(c, x, y + 9, 9, 1, '#a0602c'); R(c, x, y + 8, 9, 1, SNOW.lt); }
     else if (snow) R(c, x + 1, y + 8, 7, 1, SNOW.lt);
@@ -536,7 +538,8 @@ const TownArt = (() => {
   }
   function lantern(c, x, y) {
     R(c, x, y, 4, 1, '#3c3c48'); R(c, x + 3, y, 1, 3, '#3c3c48');
-    pix(c, x + 1, y + 3, ['.oo.', 'oyYo', 'oYyo', '.oo.'], { o: '#2a2a34', y: '#ffd040', Y: '#fff4b0' });
+    const lrows = ['.oo.', 'oyYo', 'oYyo', '.oo.'], lpal = { o: '#2a2a34', y: '#ffd040', Y: '#fff4b0' };
+    pix(c, x + 1, y + 3, lrows, lpal); emit(x + 1, y + 3, lrows, lpal);
     LIGHTS.push({ x: x + 2, y: y + 10, r: 22 });
   }
   function stainedGlass(c, x, y) {
@@ -712,7 +715,7 @@ const TownArt = (() => {
     R(c, X + 4, Y - 16, W - 8, 16, o); stones(c, X + 5, X + W - 5, Y - 15, Y, [o, d, m, l], 3);          // chaminé na parede
     R(c, X, Y - 1, W, 17, o); stones(c, X + 1, X + W - 1, Y, Y + 15, [o, d, m, l], 4);
     R(c, X - 1, Y - 2, W + 2, 3, IN.out); R(c, X, Y - 2, W, 2, IN.front); R(c, X, Y - 2, W, 1, IN.topHi);  // consolo de madeira
-    pix(c, X + 6, Y - 7, CANDLE, CANDLE_PAL); pix(c, X + W - 9, Y - 7, CANDLE, CANDLE_PAL);
+    for (const cx of [X + 6, X + W - 9]) { pix(c, cx, Y - 7, CANDLE, CANDLE_PAL); emit(cx, Y - 7, CANDLE, CANDLE_PAL); }
     R(c, X + 5, Y + 4, W - 10, 12, o); R(c, X + 6, Y + 5, W - 12, 11, IN.deep);                           // boca do fogo
     R(c, X + 6, Y + 5, W - 12, 1, h);
     R(c, X - 2, Y + 15, W + 4, 2, d); R(c, X - 2, Y + 15, W + 4, 1, l);                                   // pedra do chão
@@ -731,7 +734,7 @@ const TownArt = (() => {
       R(c, X, Y + 15, TS, 1, IN.out);
     }
     if (hash(x, y, 127) < 0.55) pix(c, X + 3 + Math.floor(hash(x, y, 128) * 8), (up ? Y + 4 : Y + 1), MUG, MUG_PAL);
-    if (!dn && !lf) { pix(c, X + 9, Y - 2, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 10, y: Y + 6, r: 22 }); }   // lamparina na ponta do balcão
+    if (!dn && !lf) { pix(c, X + 9, Y - 2, CANDLE, CANDLE_PAL); emit(X + 9, Y - 2, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 10, y: Y + 6, r: 22 }); }   // lamparina na ponta do balcão
   }
   function tableAt(c, x, y) {   // mesa comprida de dois tiles, com velas, canecas e pão
     const X = x * TS + 1, Y = y * TS, W = 30;
@@ -742,7 +745,7 @@ const TownArt = (() => {
     for (let i = X + 6; i < X + W - 2; i += 8) R(c, i, Y + 4, 1, 5, IN.front);   // tábuas do tampo
     pix(c, X + 3, Y, MUG, MUG_PAL); pix(c, X + 22, Y + 1, MUG, MUG_PAL);
     pix(c, X + 9, Y + 4, ['.ooo.', 'oBbbo', '.ooo.'], { o: IN.out, B: '#d8a478', b: '#9a6232' });   // pão
-    pix(c, X + 15, Y - 1, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 16, y: Y + 8, r: 20 });
+    pix(c, X + 15, Y - 1, CANDLE, CANDLE_PAL); emit(X + 15, Y - 1, CANDLE, CANDLE_PAL); LIGHTS.push({ x: X + 16, y: Y + 8, r: 20 });
   }
   function rug(c, x0, y0, x1, y1) {
     R(c, x0, y0, x1 - x0, y1 - y0, IN.rugGold); R(c, x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4, IN.rug);
@@ -791,7 +794,7 @@ const TownArt = (() => {
   function layer(A) {
     const W = A.W * TS, H = A.H * TS, cv = canvas(W, H), c = cv.getContext('2d');
     const valmor = A === AREAS.valmor;
-    snow = !!A.winter; LIGHTS = []; SMOKE = [];
+    snow = !!A.winter; LIGHTS = []; SMOKE = []; EMIT = [];
     const img = c.createImageData(W, H), data = img.data;
     for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) {
       const t = A.g[y * A.W + x];
@@ -812,13 +815,14 @@ const TownArt = (() => {
       for (const b of A.buildings) if (b.y + b.h - 1 === y) drawHouse(c, b);
     }
     if (A.outside === TILE.TREE) A.edgeTile = forestTile();
-    A.lights = LIGHTS; A.smoke = SMOKE; snow = false;
+    A.lights = LIGHTS; A.smoke = SMOKE; A.emit = EMIT; snow = false;
     return cv;
   }
 
   // ---------- Luz e clima (por quadro, por cima dos personagens) ----------
   // Poças de luz em degraus: cada anel tira um pouco do anoitecer e põe um pouco de âmbar. Sem degradê suave.
-  const lightRings = r => [{ r, cut: 0.25, warm: 0.14 }, { r: Math.round(r * 0.68), cut: 0.4, warm: 0.22 }, { r: Math.round(r * 0.38), cut: 0.55, warm: 0.32 }]; // poça dourada, não holofote creme
+  // the outer ring only lifts the dusk (amber there turns the snow grey); indoors the amber is softer, so the tables stay readable
+  const lightRings = (r, cozy = false) => [{ r, cut: 0.25, warm: cozy ? 0.08 : 0 }, { r: Math.round(r * 0.68), cut: 0.4, warm: cozy ? 0.14 : 0.22 }, { r: Math.round(r * 0.38), cut: 0.55, warm: cozy ? 0.2 : 0.32 }]; // poça dourada, não holofote creme
   const DUSK = 'rgba(28,40,96,.48)';   // noite #1c2860
   function disc(c, cx, cy, r) {
     const ry = Math.round(r * 0.7);    // achatada: chão em 3/4
@@ -830,7 +834,13 @@ const TownArt = (() => {
     c.globalCompositeOperation = 'destination-out';
     for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(0,0,0,${g.cut})`; disc(c, l.x, l.y, g.r); }
     c.globalCompositeOperation = 'source-over';
-    for (const l of A.lights) for (const g of lightRings(l.r)) { c.fillStyle = `rgba(232,184,64,${g.warm})`; disc(c, l.x, l.y, g.r); }
+    const cozy = veil !== DUSK;
+    for (const l of A.lights) for (const g of lightRings(l.r, cozy)) if (g.warm) { c.fillStyle = `rgba(232,184,64,${g.warm})`; disc(c, l.x, l.y, g.r); }
+    // what gives the light is drawn again on top, with a bright core: the source stays brighter than its pool
+    for (const e of A.emit || []) {
+      pix(c, e.x, e.y, e.rows, e.pal);
+      c.fillStyle = '#fff6c0'; c.fillRect(e.x + (e.rows[0].length >> 1), e.y + (e.rows.length >> 1), 1, 1);
+    }
     return cv;
   }
 

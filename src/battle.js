@@ -36,7 +36,7 @@ function shake(ms = 250) { G.shakeUntil = performance.now() + ms; }
 async function hitEnemy(e, dmg, color = '#fff') {
   e.hp = Math.max(0, e.hp - dmg);
   e.hitT = performance.now();
-  addNum(e.x, e.boss ? e.cy : e.top + 22, dmg, color); // no chefe, o número nasce no meio do sprite; nos outros sobe até logo abaixo da barra de PV
+  addNum(e.x, e.boss ? e.cy : e.top + 28, dmg, color); // no chefe, o número nasce no meio do sprite; nos outros para em top+12, longe da barra de PV
   if (e.hp <= 0) {
     await wait(260);
     e.dieT = performance.now(); Sfx.die();
@@ -81,10 +81,12 @@ view.addEventListener('click', ev => { const e = enemyAt(ev); if (e && UI.pickVa
 async function chooseCommand(m) {
   const d = pdef(m);
   UI.updateParty(m.id);
-  let last = B.tipStart || 'atk';   // right after the tip, the bar opens on Tática
+  // each hero's bar opens on the last command of this fight (right after the tip, on Tática)
+  const mem = (B.mem = B.mem || {})[m.id] = B.mem[m.id] || {};
+  let last = B.tipStart || mem.cmd || 'atk';
   B.tipStart = null;
   for (;;) {
-    const spells = knownSpells(m);
+    const spells = knownSpells(m), one = spells.length === 1 && SPELLS[spells[0]];
     let v = last = await UI.choose([
       { label: 'Atacar', value: 'atk', icon: 'atk' },
       { label: d.skillWord, value: 'spell', disabled: !spells.length, icon: 'spell' },
@@ -93,7 +95,8 @@ async function chooseCommand(m) {
       { label: 'Fugir', value: 'run', icon: 'run' },
       { label: 'Tática', value: 'macro', icon: 'tatica' },
     ], { style: 'bar', anchor: document.getElementById('card-' + m.id), start: last, cols: 6, keys: MACRO_KEYS,
-      onHover: (v, op) => { B.label = op ? op.label : null; } });
+      onHover: (v, op) => { B.label = !op ? null : op.value === 'spell' && one ? `${one.name} · ${one.mp} PM` : op.label; } });
+    if (['atk', 'spell', 'item', 'def'].includes(v)) mem.cmd = v;
     if (v === 'macro') v = await macroMenu();
     if (v == null) continue;
     if (v === 'macroSave') { await recordMacro(); continue; }
@@ -109,9 +112,13 @@ async function chooseCommand(m) {
       return { type: 'attack', target: t };
     }
     if (v === 'spell') {
-      const sp = await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
-        { title: `${d.skillWord} ${midName(d.name, 'de')} (PM ${m.mp})`, cancel: true, cols: 2 });
+      // a single skill skips the list (the bar already showed "Golpe Forte · 4 PM"); the list opens on the last one used
+      if (one && m.mp < one.mp) { Sfx.bump(); await bsay(`PM insuficiente para ${one.name}.`); continue; }
+      const sp = one ? spells[0] : await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
+        { title: `${d.skillWord} ${midName(d.name, 'de')} (PM ${m.mp})`, cancel: true, cols: 2, start: mem.spell,
+          onHover: v => { B.label = v ? SPELLS[v].desc : null; } }); // the plaque says what the spell does
       if (sp == null) continue;
+      mem.spell = sp;
       const t = await chooseTarget(SPELLS[sp].target, `${SPELLS[sp].name} em quem?`);
       if (t == null) continue;
       return { type: 'spell', spell: sp, target: t };
@@ -365,7 +372,7 @@ async function tryRun(m, isBoss) {
 }
 
 // Véu sobre o fundo da batalha, na cor do lugar
-const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 'rgba(0,0,0,.5)'
+const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 'rgba(21,30,78,.5)'
   : G.area === 'taverna' ? 'rgba(58,20,10,.5)' : G.area === 'cemiterio' ? 'rgba(21,30,78,.35)' : 'rgba(21,30,78,.55)'; // no cemitério, véu leve: o morcego não some no fundo
 
 // ---------- Fluxo principal ----------
@@ -378,6 +385,10 @@ async function startBattle(ids, isBoss, opts = {}) {
   if (G.mode === 'town') { drawTown(performance.now(), true); bgCanvas.getContext('2d').drawImage(view, 0, 0); } // só o lugar, sem os moradores
   else {
     if (isBoss) renderView(cam, map(), worldSprites(performance.now()).filter(o => o.type !== 'boss'), performance.now());
+    else { // common fights face the longest corridor (G.dir stays as it is)
+      const m = map(), a = dirAngle(bestFacing(m.grid, m.size, G.x, G.y, G.dir));
+      if (a !== cam.a) renderView({ x: G.x + 0.5, y: G.y + 0.5, a }, m, worldSprites(performance.now()), performance.now());
+    }
     bgCanvas.getContext('2d').putImageData(vimg, 0, 0);
   }
   if (G.mode === 'explore') G.seen.lutasCripta = (G.seen.lutasCripta || 0) + 1;   // the Tática tip waits for the 3rd
@@ -406,7 +417,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   let result = null, round = 0;
   while (!result) {
     B.order = buildOrder(round === 0 ? { only: sur.free, bonus: sur.bonus } : {});
-    B.round = round + 1; B.roundT = performance.now();
+    B.round = round + (sur.free === 'enemy' ? 0 : 1); B.roundT = performance.now(); // after an ambush the enemies' free round is 0: the party's first is Rodada 1
     B.macro = null; B.thisRound = {};   // a tactic lasts one round
     if (macroTipDue(G.seen, B.round, isBoss)) await macroTip();
     for (B.turn = 0; B.turn < B.order.length; B.turn++) {
@@ -529,7 +540,7 @@ function drawBattle(now) {
   c.font = '8px "Press Start 2P", monospace'; c.textAlign = 'center';
   B.nums = B.nums.filter(n => {
     const k = (now - n.t0) / 1000; if (k > 1) return false;
-    const y = n.y - 18 * Math.min(1, k * 2.5) + (k < 0.4 ? 0 : 0);
+    const y = n.y - 16 * Math.min(1, k * 2.5);
     c.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
     c.lineWidth = 3; c.strokeStyle = '#000'; c.strokeText(n.text, n.x, y);
     c.fillStyle = n.color; c.fillText(n.text, n.x, y);

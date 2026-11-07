@@ -90,9 +90,9 @@ const ICON_ART = {
     '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krppppppppsk..', '..krpppggpppsk..', '..krpppggpppsk..',
     '..krpggggggpsk..', '..krpggggggpsk..', '..krpppggpppsk..', '...krppggppsk...', '...krppggppsk...', '....krppppsk....',
     '.....krppsk.....', '......kssk......', '.......kk.......', '................'],
-  res: [ // the Defesa shield with a frost-blue star instead of the gold cross: Resistência (magic)
-    '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krppppppppsk..', '..krpppPPpppsk..', '..krppPttPppsk..',
-    '..krpPttttPpsk..', '..krpPttttPpsk..', '..krppPttPppsk..', '...krppPPppsk...', '...krppppppsk...', '....krppppsk....',
+  res: [ // the Defesa shield with the four-point star of Magia instead of the gold cross: Resistência (magic)
+    '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krpppPPpppsk..', '..krpppttpppsk..', '..krPpPttPpPsk..',
+    '..krpPttttPpsk..', '..krPttttttPsk..', '..krpPttttPpsk..', '...krPpttpPsk...', '...krppPPppsk...', '....krppppsk....',
     '.....krppsk.....', '......kssk......', '.......kk.......', '................'],
   run: [ // boot with speed lines
     '................', '................', '........kkkk....', '.......knnnnk...', '.......knbbnk...', 'kkk....knnnnk...',

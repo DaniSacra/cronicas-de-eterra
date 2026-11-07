@@ -42,7 +42,7 @@ test('the camera room for the dialog box holds through a scene and lets go when 
 });
 
 test('control hints keep each key with its action, and in fog areas the note sits low', () => {
-  assert.equal(R.keepPairs('Setas andar · Esc menu'), 'Setas andar · Esc menu');
+  assert.equal(R.keepPairs('Setas andar · Esc menu'), 'Setas\u00a0andar\u00a0· Esc\u00a0menu', 'pairs never split; the dot goes down with the pair before it');
   assert.equal(R.hintHome('town', true), 'bottom');
   assert.equal(R.hintHome('town', false), 'hudbar');
   assert.equal(R.hintHome('explore', false), 'hudbar');

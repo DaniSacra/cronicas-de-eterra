@@ -24,7 +24,7 @@ function loadStory(G, o = {}) {
   return { log, picks, run, ctx };
 }
 const newG = (ids, extra = {}) => ({
-  mode: 'town', area: 'valmor', busy: false, queue: [], held: new Set(), key: {}, inv: {}, explored: {}, gold: 40, seen: {}, ...extra, party: ids,
+  mode: 'town', area: 'valmor', x: 0, y: 0, dir: 0, busy: false, queue: [], held: new Set(), key: {}, inv: {}, explored: {}, gold: 40, seen: {}, ...extra, party: ids,
 });
 // party ids become members once party.js (newMember) is loaded
 function story(ids, extra) {
@@ -45,7 +45,7 @@ function battle(ids, choose, extra = {}) {
     ctx: { VW: 320, VH: 200, view: el('view'), performance: { now: () => 0 }, HUD: { queue() {}, label() {}, boss() {} },
       document: { createElement: () => ({ getContext: () => ({ drawImage() {}, putImageData() {} }) }), getElementById: el },
       Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true },
-      renderView() {}, drawTown() {}, worldSprites: () => [], vimg: {}, cam: {} },
+      renderView() {}, drawTown() {}, worldSprites: () => [], vimg: {}, cam: {}, map: () => ({ grid: [], size: 0 }), dirAngle: () => 0 },
   });
   run = s.run;
   run('Math.random = () => 0.5');

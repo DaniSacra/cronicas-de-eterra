@@ -143,6 +143,15 @@ function slotGear(heroId, ownedIds, equips, start) {
       : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
   });
 }
+// Crypt battle background: the direction with the longest open corridor (up to 9 cells; 1 is wall), the current one on ties,
+// so the fight never stares at a wall of huge bricks
+function bestFacing(grid, N, x, y, dir) {
+  const D = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  const run = d => { let k = 0; for (; k < 9; k++) { const cx = x + D[d][0] * (k + 1), cy = y + D[d][1] * (k + 1); if (cx < 0 || cy < 0 || cx >= N || cy >= N || grid[cy * N + cx] === 1) break; } return k; };
+  let best = dir;
+  for (let d = 0; d < 4; d++) if (run(d) > run(best)) best = d;
+  return best;
+}
 // Saves from the 3-floor version: gear found on floors that no longer exist is read back from the bonus it left on
 // each hero, the biggest pieces first (Espada de Prata before Espada de Ferro)
 function gearFromBonus(party, ownedIds, equips) {
@@ -178,7 +187,7 @@ function statRows(values, i) {
   });
 }
 // "Faltam 12 XP para o nível 3"
-const xpLeftText = (xp, lv, next) => `Faltam ${Math.max(0, next - xp)} XP para o nível ${lv + 1}`;
+const xpLeftText = (xp, lv, next) => `Faltam ${Math.max(0, next - xp)} XP para o nível\u00a0${lv + 1}`; // "nível 4" never splits
 
 // A hero's story grows with the game: each line has a flag (or none) and shows once the flag is set
 const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when]).map(l => l.text);
@@ -222,7 +231,7 @@ const spellLine = (who, spell, target) => `${who} usa ${spell}${target ? ' ' + m
 const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length < 4 ? 'O sino pesa. Talvez seja melhor voltar mais forte.\n' : '');
 
 // Control hints: each "key action" pair never breaks across lines ("Esc menu" stays together)
-const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join(' · ');
+const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join('\u00a0· '); // the dot goes down with the pair before it
 // The note's place: low, above the party strip, in areas with fog of sight; at the top everywhere else
 const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudbar');
 
@@ -230,5 +239,5 @@ const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudb
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { bestFacing, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
