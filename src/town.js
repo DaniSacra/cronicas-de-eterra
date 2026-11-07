@@ -191,7 +191,7 @@ AREAS.taverna.music = () => 'tavern'; // giga da Poney Saltitante
 AREAS.taverna.cozy = 'rgba(40,20,14,.38)'; // penumbra quente; a lareira, as velas e a lamparina abrem poças de luz
 
 const TOWN = {
-  A: AREAS.valmor, p: null, followers: [], npcs: [], roamers: [], step: 0, dim: 0,
+  A: AREAS.valmor, p: null, followers: [], npcs: [], step: 0, dim: 0,
   inside(x, y) { return x >= 0 && y >= 0 && x < this.A.W && y < this.A.H; },
   tileAt(x, y) { return this.inside(x, y) ? this.A.g[y * this.A.W + x] : this.A.outside; },
   buildingAt(x, y) { const i = this.inside(x, y) ? this.A.bld[y * this.A.W + x] : -1; return i >= 0 ? this.A.buildings[i] : null; },
@@ -300,8 +300,6 @@ function batsSprite(now, col = '#4a3a5a') {
   return (PSPR[k] = cv);
 }
 function foeSprite(n, now) {
-  if (n.def.foe === 'wolf') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 300) % 2, '#a2a2ac', '#55555e'); // a grey wolf of the road
-  if (n.def.foe === 'crow') return batsSprite(now, '#26202e');
   if (n.def.foe === 'rat') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 400) % 2, '#7a6a5a', '#4a3a2e');
   if (n.def.foe === 'bats') return batsSprite(now);
   return personSprite('ossada', n.dir, 0);
@@ -330,7 +328,6 @@ function enterTown(pos, area = 'valmor', cast = null, music = true) {
   TOWN.p = newActor(pos.x, pos.y, pos.dir);
   TOWN.followers = G.party.slice(1).map(() => newActor(pos.x, pos.y, pos.dir));
   TOWN.npcs = (cast || areaNpcs(area)).map(spawnNpc);
-  spawnRoamers(); // renascem a cada entrada na área
   lookAround();
   G.queue.length = 0; G.held.clear();
   TOWN.moved = false;
@@ -356,38 +353,24 @@ const areaSeen = () => seenTiles(G.explored, areaKey(G.area), TOWN.A.W * TOWN.A.
 function lookAround() { const V = TOWN.A.vision; if (V) markSight(areaSeen(), TOWN.A.W, TOWN.A.H, TOWN.p.x, TOWN.p.y, V.radius); }
 const visibleAt = (x, y) => !TOWN.A.vision || inSight(x, y, TOWN.p.x, TOWN.p.y, TOWN.A.vision.radius);
 
-// ---------- Errantes (áreas com roamers: () => [{ foe, ids, speed, x, y }]) ----------
-// Andam perto de onde nasceram, vêm atrás do grupo quando o veem e lutam ao encostar nele
-const roamerAt = (x, y) => TOWN.roamers.find(r => r.x === x && r.y === y);
-const roamFree = (x, y) => TOWN.walkable(x, y) && !npcAt(x, y) && !roamerAt(x, y) && !partyAt(x, y) && !(TOWN.A.reserved && TOWN.A.reserved(x, y));
-function spawnRoamers() {
-  TOWN.roamers = (TOWN.A.roamers ? TOWN.A.roamers() : []).map(d => ({ ...newActor(d.x, d.y, 2), def: d, home: { x: d.x, y: d.y }, range: d.range || 2, wait: rnd(600, 1800), calm: 0 }));
-}
-// The roamer saw the party: true only on the step it starts to chase (the alert sounds once, again after it loses them)
-const spotted = (r, chase) => { const now = chase && !r.seen; r.seen = chase; return now; };
-const touchingParty = r => [TOWN.p, ...TOWN.followers].some(a => Math.abs(a.x - r.x) + Math.abs(a.y - r.y) === 1);
-function updateRoamers(dt) {
-  const radius = TOWN.A.vision ? TOWN.A.vision.radius : 6;
-  for (const r of TOWN.roamers) {
-    if (r.calm > 0) r.calm -= dt;
-    if (r.t < 1 || (r.wait -= dt) > 0) continue;
-    const { to, chase } = roamerStep(r, TOWN.p, radius, roamFree);
-    r.wait = chase ? (to ? 0 : 300) : rnd(900, 2400);
-    if (spotted(r, chase)) Sfx.alert();
-    if (!to || !roamFree(to.x, to.y)) continue; // o próximo passo é o próprio grupo: o encontro começa a luta
-    r.dir = to.x > r.x ? 1 : to.x < r.x ? 3 : to.y > r.y ? 2 : 0;
-    moveActor(r, to.x, to.y, r.def.speed);
-  }
+// ---------- Encontros (áreas com encounters: () => [{ ids, intro }]) ----------
+// Como na cripta: ninguém aparece no mapa e a luta vem com os passos (encounterChance, src/uirules.js). Uma área
+// sem grupos (ou num tile reservado: lutas fixas, cenas, portão) não tem encontro.
+function wildStep(x, y) {
+  const groups = TOWN.A.encounters ? TOWN.A.encounters() : [];
+  if (!groups.length || (TOWN.A.reserved && TOWN.A.reserved(x, y))) return null;
+  G.sinceFight++;
+  if (Math.random() >= encounterChance(G.sinceFight)) return null;
+  G.sinceFight = 0;
+  return pick(groups);
 }
 // Volta da batalha para a área (luz e música do lugar)
 function backToArea() { G.mode = 'town'; TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0; Music.play(TOWN.A.music ? TOWN.A.music() : 'town'); }
-async function roamerFight(r) {
-  const res = await startBattle(r.def.ids, false, { intro: r.def.intro });
+async function wildFight(g) {
+  const res = await startBattle(g.ids, false, { intro: g.intro });
   if (res === 'lose') return gameOver();
   backToArea();
-  if (res === 'win') { TOWN.roamers = TOWN.roamers.filter(o => o !== r); return; }
-  const s = retreatSpot(r, TOWN.p, roamFree); // fugiram: ele recua e volta a andar
-  Object.assign(r, { x: s.x, y: s.y, fx: s.x, fy: s.y, t: 1, calm: 3000, wait: 600 });
+  if (TOWN.A.afterFight) await TOWN.A.afterFight(res); // the pasture: the noise scares the horses close by
 }
 
 function townDir(k) {
@@ -417,8 +400,6 @@ function tryTownMove(d) {
   if (nx < 0 && G.area === 'valmor') { townBusy(() => UI.say(G.party.length === 1 ? `A estrada volta para o oeste. ${heroName('aldo')} acabou de chegar.` : 'A estrada vai para o oeste e depois sobe para o norte, até Erukh.\nVocês não podem partir enquanto a vila corre perigo.')); return; }
   const ex = (TOWN.A.exits || []).find(e => e.x === nx && e.y === ny);
   if (ex) { townBusy(() => goArea(ex)); return; }
-  const foe = roamerAt(nx, ny);
-  if (foe) { townBusy(() => roamerFight(foe)); return; }
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny && d === 0) { townBusy(() => enterBuilding(b)); return; }
   // Moradores só conversam com Espaço (townAction); andar contra eles só esbarra
@@ -452,19 +433,16 @@ function townAction(openMenu = true) {
 
 function updateTown(dt) {
   const P = TOWN.p;
-  for (const a of [P, ...TOWN.followers, ...TOWN.npcs, ...TOWN.roamers]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
+  for (const a of [P, ...TOWN.followers, ...TOWN.npcs]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
   // Gatilhos ao pisar (lutas e achados do cemitério, cena do Teo...)
   if (P.t >= 1 && TOWN.moved && !G.busy && !UI.busy()) {
     TOWN.moved = false;
     const fn = TOWN.A.onStep && TOWN.A.onStep(P.x, P.y);
     if (fn) { townBusy(fn); return; }
+    const g = wildStep(P.x, P.y);
+    if (g) { townBusy(() => wildFight(g)); return; }
   }
-  updateRoamers(dt);
   if (TOWN.A.update) TOWN.A.update(dt); // an area's own life (the horses of the pasture)
-  if (P.t >= 1 && !G.busy && !UI.busy()) {
-    const r = TOWN.roamers.find(r => r.t >= 1 && !(r.calm > 0) && touchingParty(r));
-    if (r) { townBusy(() => roamerFight(r)); return; }
-  }
   if (P.t >= 1 && !G.busy && !UI.busy()) {
     let d = null;
     while (G.queue.length && d === null) d = townDir(G.queue.shift());
@@ -887,7 +865,6 @@ function drawTown(now) {
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
     ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : n.def.horse ? horseSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0, n.def.horse) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
-    ...TOWN.roamers.filter(r => visibleAt(r.x, r.y)).map(r => ({ a: r, foe: true, spr: () => foeSprite(r, now) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));

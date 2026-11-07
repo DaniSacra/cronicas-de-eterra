@@ -188,9 +188,9 @@ test('no player text uses an em dash', () => {
 
 test('after the end the cemetery is calm, and its music is always its own', () => {
   const { run } = story(['aldo']);
-  assert.equal(run('cemRoamerCount({ cem1: 1, teoWin: 1 }, false)'), 3);
-  assert.equal(run('cemRoamerCount({ cem1: 1, teoWin: 1 }, true)'), 0);
-  assert.equal(run('cemRoamerCount({}, false)'), 0);
+  assert.equal(run('cemEncounters({ cem1: 1, teoWin: 1 }, false).length'), 2);
+  assert.equal(run('cemEncounters({ cem1: 1, teoWin: 1 }, true).length'), 0);
+  assert.equal(run('cemEncounters({}, false).length'), 0);
   assert.equal(run("G.seen.cem3 = G.seen.teoWin = 1, AREAS.cemiterio.music()"), 'cemetery');
 });
 

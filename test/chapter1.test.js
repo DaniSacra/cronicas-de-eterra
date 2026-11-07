@@ -78,17 +78,16 @@ test('Gervásio: the gold of a dead king, four horses, then the road north opens
   assert.strictEqual(G.seen['c1:cavalos'], 1);
 });
 
-test('the pasture: a wolf within 4 tiles scares a horse off; with none around the horse is caught', async () => {
+test('the pasture: a fight scares the horses within 4 tiles; walking up to a horse catches it', async () => {
   const { G, log, run } = story(['aldo'], after());
   run(`enterTown({ x: 3, y: 3, dir: 1 }, 'pasto')`);
-  run(`TOWN.roamers = []`);
-  const h = () => run(`TOWN.npcs.find(n => n.def.n === 1)`);
-  assert.ok(h());
-  run(`TOWN.roamers = [{ x: 7, y: 3 }]`);
-  await run(`catchHorse(TOWN.npcs.find(n => n.def.n === 1))`);
-  assert.ok(log.includes('Um uivo. O cavalo dispara pela névoa.'));
-  assert.ok(!G.seen['c1:cavalo1']);
-  run(`TOWN.roamers = []`);
+  assert.ok(run('TOWN.A.encounters().length') > 0, 'the pasture has wolves, unseen');
+  const h = n => run.json(`(h => h && { x: h.x, y: h.y })(TOWN.npcs.find(n => n.def.n === ${n}))`);
+  const far = h(4);
+  await run('TOWN.A.afterFight()');
+  assert.ok(log.includes('Com o barulho da luta, um cavalo dispara pela névoa.'));
+  assert.notDeepEqual(h(1), { x: 4, y: 3 }, 'the close horse ran');
+  assert.deepEqual(h(4), far, 'the far one did not');
   await run(`catchHorse(TOWN.npcs.find(n => n.def.n === 1))`);
   assert.strictEqual(G.seen['c1:cavalo1'], 1);
   assert.ok(log.at(-1).endsWith('Cavalos: 1 de 4.'));

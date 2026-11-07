@@ -231,8 +231,7 @@ async function onStep() {
     return;
   }
   G.sinceFight++;
-  const chance = G.sinceFight < 5 ? 0 : Math.min(0.22, 0.05 + (G.sinceFight - 5) * 0.012);
-  if (Math.random() < chance) {
+  if (Math.random() < encounterChance(G.sinceFight)) {
     G.sinceFight = 0; G.busy = true; G.held.clear(); G.queue.length = 0;
     const f = FLOORS[G.floor];
     let n = 1 + Math.floor(Math.random() * f.maxGroup);

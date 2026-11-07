@@ -339,8 +339,12 @@ function gridPath(from, goal, free, limit = 400) {
   return null;
 }
 
+// Random encounters, the same in the crypt and in the open areas: none in the first 5 steps after a fight, then a
+// chance that grows a little with every step, up to 22%
+const encounterChance = since => (since < 5 ? 0 : Math.min(0.22, 0.05 + (since - 5) * 0.012));
+
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

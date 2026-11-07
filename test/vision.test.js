@@ -23,67 +23,50 @@ test('seen tiles of an area live in G.explored next to the crypt floors and surv
   assert.ok(V.seenTiles(old, 'area:cemiterio', 16 * 12).every(v => v === 0), 'an old save has the whole cemetery dark');
 });
 
-test('a roamer wanders near home while it cannot see the party, and comes around obstacles once it does', () => {
-  const wall = new Set(['3,1', '3,2', '3,3']);
-  const free = (x, y) => x >= 0 && y >= 0 && x < 10 && y < 6 && !wall.has(x + ',' + y);
-  const r = { x: 1, y: 2, home: { x: 1, y: 2 }, range: 1 };
-  for (let i = 0; i < 200; i++) {
-    const { to, chase } = V.roamerStep(r, { x: 9, y: 5 }, 3, free);
-    assert.equal(chase, false);
-    if (to) { assert.ok(Math.abs(to.x - 1) <= 1 && Math.abs(to.y - 2) <= 1, 'stays near home'); assert.ok(free(to.x, to.y)); }
-  }
-  const { to, chase } = V.roamerStep(r, { x: 4, y: 2 }, 3, free);
-  assert.equal(chase, true);
-  assert.ok(free(to.x, to.y));
-  assert.equal(V.pathStep({ x: 2, y: 2 }, { x: 4, y: 2 }, free).y !== 2, true, 'goes around the wall, not through it');
-  assert.equal(V.roamerStep({ ...r, calm: 500 }, { x: 2, y: 2 }, 3, free).chase, false, 'calm after a flight: it does not chase');
-});
-
-test('cemetery roamers: none before the first fixed fight, two after it, three after Teo; the vision lamp lights the entrance', async () => {
-  const count = seen => {
+test('the cemetery has random fights, never visible ones: none before the first fixed fight, none after the end', async () => {
+  const groups = seen => {
     const { run } = story(['aldo', 'lyra'], { seen: { job: 1, ...seen } });
     run(`enterTown({ x: 8, y: 10, dir: 0 }, 'cemiterio')`);
-    return run('TOWN.roamers.length');
+    return run('TOWN.A.encounters().length');
   };
-  assert.equal(count({}), 0);
-  assert.equal(count({ cem1: 1 }), 2);
-  assert.equal(count({ cem1: 1, cem2: 1, cem3: 1, teoWin: 1 }), 3);
+  assert.equal(groups({}), 0);
+  assert.equal(groups({ cem1: 1 }), 2);
+  assert.equal(groups({ cem1: 1, cem2: 1, cem3: 1, teoWin: 1 }), 2);
   const { G, log, run } = story(['aldo', 'lyra'], { seen: { job: 1 } });
   run(`enterTown({ x: 8, y: 10, dir: 0 }, 'cemiterio')`);
   assert.equal(run('tileSight(areaSeen(), 16, 8, 7, 8, 10, 4)'), 2, 'lit around the party');
   assert.equal(G.explored['area:cemiterio'][1 * 16 + 1], 0, 'the far corner is still dark');
   await run('TOWN.A.onEnter()');
   assert.ok(log.indexOf('Aldo acende o lampião. A névoa engole tudo além da luz.') === log.findIndex(t => t.includes('covas abertas por toda parte')) + 1);
-  run(`TOWN.p.x = 4; TOWN.p.y = 8`);
-  await run(`cemFight(TOWN.npcs.find(n => n.def.id === 'rato'))`);
-  assert.equal(run('TOWN.roamers.length'), 2, 'they show up right after the first fight');
-  assert.ok(run('TOWN.roamers.every(r => (r.x - 4) ** 2 + (r.y - 8) ** 2 > 25)'), 'away from the party');
+  assert.equal(run('typeof TOWN.roamers'), 'undefined', 'no enemy walks on the map');
 });
 
-test('a roamer never steps on a fixed fight, the Teo spot, the gate or the entrance', () => {
-  const { run } = story(['aldo', 'lyra'], { seen: { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1 } });
+test('random fights in the open areas follow the crypt rule: none in the first steps, never on a reserved tile', () => {
+  const { G, run } = story(['aldo', 'lyra'], { seen: { job: 1, cem1: 1 } });
   run(`enterTown({ x: 8, y: 10, dir: 0 }, 'cemiterio')`);
-  run(`TOWN.roamers.push(...[[9, 2], [12, 2], [4, 8], [8, 9]].map(([x, y]) => ({ ...newActor(x, y, 2), def: CEM_ROAMERS[0], home: { x, y }, range: 3, wait: 0, calm: 0 })))`);
-  for (let i = 0; i < 3000; i++) {
-    if (i % 500 === 0) run(`TOWN.p.x = ${[8, 10, 6, 12, 4, 9][i / 500]}; TOWN.p.y = ${[10, 2, 8, 4, 6, 8][i / 500]}`);
-    run(`for (const r of TOWN.roamers) { const { to } = roamerStep(r, TOWN.p, 4, roamFree); if (to && roamFree(to.x, to.y)) { r.x = to.x; r.y = to.y; } }`);
-    assert.ok(run('TOWN.roamers.every(r => !CEM_RESERVED.has(r.x + "," + r.y))'), 'step ' + i);
-  }
-  assert.ok(run('CEM_ROAM_SPOTS.every(([x, y]) => !CEM_RESERVED.has(x + "," + y) && TOWN.walkable(x, y))'));
+  run('Math.random = () => 0');
+  G.sinceFight = 0;
+  for (let i = 0; i < 4; i++) assert.equal(run('wildStep(4, 6)'), null, 'step ' + i);
+  assert.ok(run('wildStep(4, 6)'), 'the fifth step can bring a fight');
+  assert.equal(G.sinceFight, 0);
+  G.sinceFight = 30;
+  assert.equal(run('wildStep(5, 8)'), null, 'a fixed fight spot');
+  assert.equal(run('wildStep(7, 2)'), null, 'the Teo spot');
+  assert.equal(run('wildStep(8, 10)'), null, 'the entrance');
+  run(`enterTown({ x: 20, y: 18, dir: 0 }, 'valmor')`);
+  assert.equal(run('wildStep(20, 18)'), null, 'no fights in the village');
+  assert.ok(run('CEM_ENCOUNTERS.every(d => d.intro && d.ids.length)'));
 });
 
-test('beating a roamer removes it; fleeing sends it back a few tiles, calm for a while', async () => {
-  const { run } = story(['aldo', 'lyra'], { seen: { job: 1, cem1: 1 } });
-  run(`enterTown({ x: 8, y: 10, dir: 0 }, 'cemiterio')`);
-  run(`const r = TOWN.roamers[0]; Object.assign(r, { x: 6, y: 10, fx: 6, fy: 10 }); globalThis.r0 = r`);
-  run(`startBattle = async () => 'fled'`);
-  await run('roamerFight(r0)');
-  assert.equal(run('TOWN.roamers.includes(r0)'), true);
-  assert.ok(run('r0.calm') > 0);
-  assert.ok(run('Math.abs(r0.x - TOWN.p.x) + Math.abs(r0.y - TOWN.p.y)') > 2, 'it backed off');
-  run(`startBattle = async () => 'win'`);
-  await run('roamerFight(r0)');
-  assert.equal(run('TOWN.roamers.includes(r0)'), false);
+test('walking the open area brings the fight with the steps, and the party goes on after it', async () => {
+  const { G, run } = story(['aldo', 'lyra'], { seen: { job: 1, cem1: 1 } });
+  run(`enterTown({ x: 4, y: 6, dir: 0 }, 'cemiterio')`);
+  run(`globalThis.fought = []; startBattle = async (ids, boss, o) => { fought.push(o.intro); return 'win'; }`);
+  run('Math.random = () => 0');
+  G.sinceFight = 10;
+  await run('wildFight(wildStep(4, 6))');
+  assert.deepEqual(run.json('fought'), ['Um rato sai da névoa!']);
+  assert.equal(G.mode, 'town');
 });
 
 test('the tunnel clue lies on the only way from the stairs to the fountain and the last door', () => {

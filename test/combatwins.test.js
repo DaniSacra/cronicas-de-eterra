@@ -20,12 +20,6 @@ test('before the Sineiro, a weak party (average level under 4) is warned; a stro
   assert.equal(R.bossWarning([{ lv: 4 }, { lv: 4 }, { lv: 5 }, { lv: 3 }]), '');
 });
 
-test('a roamer gives the alert once when it starts chasing, and again only after it lost the party', () => {
-  const { run } = story(['aldo', 'lyra'], { seen: { job: 1, cem1: 1 } });
-  assert.deepEqual(JSON.parse(run(`(() => { const r = {}; return JSON.stringify([spotted(r, false), spotted(r, true), spotted(r, true), spotted(r, false), spotted(r, true)]); })()`)), [false, true, false, false, true]);
-  assert.ok(run('CEM_ROAMERS.every(d => d.intro && !d.intro.includes("—"))'), 'each roamer kind has its own line');
-});
-
 test('the Teo fight has no forced advantage', () => {
   const src = require('node:fs').readFileSync(`${__dirname}/../src/opening.js`, 'utf8');
   const fight = src.slice(src.indexOf('Duas Ossadas se erguem') - 200, src.indexOf('Duas Ossadas se erguem'));

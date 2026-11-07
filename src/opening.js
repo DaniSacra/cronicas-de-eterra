@@ -219,19 +219,16 @@ async function cemFight(n) {
   backToArea();
   if (r === 'win') {
     G.seen[f.flag] = 1; TOWN.npcs = TOWN.npcs.filter(a => a !== n);
-    if (f.flag === 'cem1') spawnRoamers(); // depois da primeira luta, a névoa começa a se mexer
   }
 }
 
-// Errantes do cemitério: nenhum antes da primeira luta fixa, dois depois dela e três depois do Teo, para treinar.
-// Nascem longe do grupo e nunca pisam nas lutas fixas, no ponto da cena do Teo, no portão nem na entrada.
-const cemRoamerCount = (seen, bossDead = false) => bossDead || !seen.cem1 ? 0 : seen.teoWin ? 3 : 2; // calmo depois do fim do prólogo
-const CEM_ROAM_SPOTS = [[4, 6], [2, 10], [13, 10], [11, 4], [1, 10]];
+// Encontros do cemitério, invisíveis como na cripta: nenhum antes da primeira luta fixa (o tutorial vem antes) e
+// nenhum depois do fim do prólogo (o cemitério fica calmo). Nunca nas lutas fixas, no ponto do Teo, no portão nem na
+// entrada.
 const CEM_RESERVED = new Set([...Object.values(CEM_FIGHTS).map(f => f.x + ',' + f.y), '10,2', '7,2', '8,10', '8,11']);
-const CEM_ROAMERS = [{ foe: 'rat', ids: ['ratoCova'], speed: 520, intro: 'Um rato sai da névoa!' },
-  { foe: 'bats', ids: ['morcegoCova', 'morcegoCova'], speed: 380, intro: 'Dois morcegos mergulham da névoa!' }];
-const cemRoamers = () => CEM_ROAM_SPOTS.filter(([x, y]) => (x - TOWN.p.x) ** 2 + (y - TOWN.p.y) ** 2 > 25)
-  .slice(0, cemRoamerCount(G.seen, G.bossDead)).map(([x, y], i) => ({ ...CEM_ROAMERS[i % 2], x, y }));
+const CEM_ENCOUNTERS = [{ ids: ['ratoCova'], intro: 'Um rato sai da névoa!' },
+  { ids: ['morcegoCova', 'morcegoCova'], intro: 'Dois morcegos mergulham da névoa!' }];
+const cemEncounters = (seen, bossDead = false) => (bossDead || !seen.cem1 ? [] : CEM_ENCOUNTERS);
 
 const TEO_DEF = { id: 'teo', name: 'Teo', x: 7, y: 2, dir: 0, wander: 0,
   onTalk: () => line('Teo', '...que os que dormem fiquem em paz.') };
@@ -279,7 +276,7 @@ function graveSeen(kind) {
 
 AREAS.cemiterio = makeArea('Cemitério de Valmor', 'CEMITERIO', 16, 12, buildCemeteryMap(), [], TILE.DEADTREE);
 Object.assign(AREAS.cemiterio, {
-  fog: true, winter: true, dimCol: '10,24,56', vision: { radius: 4 }, roamers: cemRoamers, reserved: (x, y) => CEM_RESERVED.has(x + ',' + y),
+  fog: true, winter: true, dimCol: '10,24,56', vision: { radius: 4 }, encounters: () => cemEncounters(G.seen, G.bossDead), reserved: (x, y) => CEM_RESERVED.has(x + ',' + y),
   dim: () => (G.seen.cem3 && G.seen.teoWin) ? 0.1 : 0.3,
   music: () => 'cemetery',
   cast: () => [

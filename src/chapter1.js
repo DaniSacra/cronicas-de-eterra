@@ -125,20 +125,20 @@ async function silhouetteScene(s) {
   TOWN.npcs = TOWN.npcs.filter(n => n !== sil);
   await play(s.lines.slice(1));
 }
-const ESTRADA_ROAM = [[4, 9, 'wolf'], [12, 15, 'wolf'], [3, 21, 'wolf'], [11, 3, 'crow'], [12, 23, 'crow']];
+// Random encounters on the road and in the pasture (nothing shows on the map, as in the crypt)
 const ROAD_FOES = {
-  wolf: { foe: 'wolf', ids: ['loboGeada'], speed: 300, intro: 'Um Lobo da Geada salta dos pinheiros!' },
-  wolf2: { foe: 'wolf', ids: ['loboGeada', 'loboGeada'], speed: 300, intro: 'Dois Lobos da Geada cercam o grupo!' },
-  crow: { foe: 'crow', ids: ['corvo', 'corvo'], speed: 360, intro: 'Corvos mergulham do escuro!' },
+  wolf: { ids: ['loboGeada'], intro: 'Um Lobo da Geada salta dos pinheiros!' },
+  wolf2: { ids: ['loboGeada', 'loboGeada'], intro: 'Dois Lobos da Geada cercam o grupo!' },
+  crow: { ids: ['corvo', 'corvo'], intro: 'Corvos mergulham do escuro!' },
 };
-// Roamers born far from the party (never on top of it when the area loads)
-const farRoamers = (spots, p, kinds = ROAD_FOES) => spots.filter(([x, y]) => (x - p.x) ** 2 + (y - p.y) ** 2 > 25).map(([x, y, k]) => ({ ...kinds[k], x, y }));
+const ESTRADA_ENCOUNTERS = [ROAD_FOES.wolf, ROAD_FOES.wolf, ROAD_FOES.wolf2, ROAD_FOES.crow];
+const PASTO_ENCOUNTERS = [ROAD_FOES.wolf, ROAD_FOES.wolf, ROAD_FOES.wolf2];
 
 AREAS.estrada = makeArea('Estrada do Sul', 'ESTRADA', 16, 30, planGrid(ESTRADA_PLAN), [], TILE.TREE);
 Object.assign(AREAS.estrada, {
   poi: 'valmor', winter: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'cemiterio',
   music: () => 'cemetery',
-  roamers: () => farRoamers(ESTRADA_ROAM, TOWN.p),
+  encounters: () => ESTRADA_ENCOUNTERS,
   cast: () => [{ id: 'viajante', name: 'Viajante', x: 8, y: 14, dir: 3, wander: 0, lines: { start: [
     'No Vau do Corvo alugam cavalos. A pé, Erukh fica a um mês.', 'E não andem depois que escurece. Os lobos estão com fome este ano.'] } }],
   exits: [{ x: 7, y: 0, to: 'vau', pos: { x: 11, y: 18, dir: 0 } },
@@ -314,10 +314,9 @@ const PASTO_PLAN = [
   'TTTTTTTTTTTTTTTTTTTT',
 ];
 const HORSE_SPOTS = [[4, 3, ['#9a6232', '#26202e']], [15, 3, ['#e8eff8', '#a2a2ac']], [4, 12, ['#26262e', '#55555e']], [16, 12, ['#b07c58', '#f4cca0']]];
-const PASTO_ROAM = [[10, 7, 'wolf'], [9, 2, 'wolf'], [11, 12, 'wolf2']];
 const FLEE_NEAR = 4;
-// A wolf this close scares a horse away (Manhattan distance)
-const wolfNear = (h, wolves, d = FLEE_NEAR) => wolves.find(w => Math.abs(w.x - h.x) + Math.abs(w.y - h.y) <= d) || null;
+// The horses this close to a fight (Manhattan distance) bolt with the noise
+const horsesNear = (p, npcs, d = FLEE_NEAR) => npcs.filter(n => n.def.horse && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= d);
 // One step away from the threat: the free neighbor farthest from it (stays put when cornered)
 function fleeStep(h, from, free) {
   let best = null, bd = Math.hypot(h.x - from.x, h.y - from.y);
@@ -327,7 +326,7 @@ function fleeStep(h, from, free) {
   }
   return best;
 }
-const horseFree = (x, y) => TOWN.walkable(x, y) && x > 0 && !npcAt(x, y) && !roamerAt(x, y) && !partyAt(x, y);
+const horseFree = (x, y) => TOWN.walkable(x, y) && x > 0 && !npcAt(x, y) && !partyAt(x, y);
 async function horseRun(h, from, steps = 3) {
   h.fleeing = true;
   for (let i = 0; i < steps; i++) {
@@ -340,8 +339,6 @@ async function horseRun(h, from, steps = 3) {
   h.fleeing = false;
 }
 async function catchHorse(h) {
-  const w = wolfNear(h, TOWN.roamers);
-  if (w) { Sfx.alert(); await UI.say('Um uivo. O cavalo dispara pela névoa.'); await horseRun(h, TOWN.p); return; }
   c1set('cavalo' + h.def.n);
   TOWN.npcs = TOWN.npcs.filter(n => n !== h);
   Sfx.join();
@@ -354,7 +351,7 @@ AREAS.pasto = makeArea('Pasto do Vau', 'PASTO', 20, 16, planGrid(PASTO_PLAN), []
 Object.assign(AREAS.pasto, {
   poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'cemiterio',
   music: () => 'cemetery',
-  roamers: () => farRoamers(PASTO_ROAM, TOWN.p),
+  encounters: () => PASTO_ENCOUNTERS,
   cast: () => HORSE_SPOTS.map(([x, y, coat], i) => ({ id: 'cavalo' + (i + 1), n: i + 1, name: 'Cavalo', horse: coat, x, y, dir: 3, wander: 0, onTalk: catchHorse }))
     .filter(d => !c1('cavalo' + d.n)),
   exits: [{ x: 0, y: 8, to: 'vau', pos: { x: 22, y: 10, dir: 3 } }],
@@ -368,14 +365,13 @@ Object.assign(AREAS.pasto, {
     c1set('pasto'); G.busy = true;
     await UI.say('O pasto do Vau, coberto de névoa. Em algum lugar, cavalos relincham. Em outro, lobos.');
   },
-  // A horse with a wolf close by runs; the party catches one by walking up to it with no wolf around
-  update() {
-    if (G.busy || UI.busy()) return;
-    for (const h of TOWN.npcs) {
-      if (!h.def.horse || h.fleeing || h.t < 1) continue;
-      const w = wolfNear(h, TOWN.roamers);
-      if (w) horseRun(h, w, 1);
-    }
+  // A fight scares the horses close by: they run off through the fog and the party has to find them again
+  async afterFight() {
+    const near = horsesNear(TOWN.p, TOWN.npcs);
+    if (!near.length) return;
+    Sfx.alert();
+    await UI.say(near.length > 1 ? 'Com o barulho da luta, os cavalos disparam pela névoa.' : 'Com o barulho da luta, um cavalo dispara pela névoa.');
+    await Promise.all(near.map(h => horseRun(h, TOWN.p)));
   },
   onStep(x, y) {
     const h = TOWN.npcs.find(n => n.def.horse && !n.fleeing && Math.abs(n.x - x) + Math.abs(n.y - y) === 1);
