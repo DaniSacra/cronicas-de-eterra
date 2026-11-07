@@ -96,6 +96,10 @@ function viewFit(bw, bh, o = {}) {
 // dialog box at the bottom), so it may go past the bottom edge while the box is open; small areas stay centered.
 // Room the camera keeps for the dialog box. Within a scene (busy) it never shrinks: lines with or without a face, one
 // line or three, and the short gaps between them would make the scene dance up and down. Free again, it lets go.
+// Height (CSS px) the face window adds above the dialog box: face + its frame (6u) + margin (u) + gap (2u); 0 when shown
+const faceRoom = (shown, face, u) => (shown ? 0 : face + u * 9);
+// Height (CSS px) missing for the text box to hold `lines` lines (line height lh, padding and border pad)
+const boxRoom = (h, lh, pad, lines = 5) => Math.max(0, Math.ceil(lh * lines + pad - h));
 function dialogPad(hold, rows, busy) { return rows > 0 ? Math.max(hold, rows) : busy ? hold : 0; }
 function camAxis(pos, size, view, pad = 0) {
   const v = view - pad;
@@ -191,5 +195,5 @@ const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudb
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { boxRoom, faceRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

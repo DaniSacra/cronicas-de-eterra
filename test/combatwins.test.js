@@ -53,3 +53,13 @@ test("Aldo's cape is the palette's night blue, not Andilla's red", () => {
   assert.equal(run('LOOKS.aldo.cape'), '#2c3c80');
   assert.ok(require('../src/palette.js').inPalette(run('LOOKS.aldo.cape')));
 });
+
+test('the camera keeps the room of the speaker face from the first line, so a face never pushes the scene up', () => {
+  assert.equal(R.faceRoom(false, 128, 3), 155);
+  assert.equal(R.faceRoom(true, 128, 3), 0, 'the face is already in the measured box');
+});
+
+test('the camera keeps the room of a five-line box, so a long line never pushes the scene up', () => {
+  assert.equal(R.boxRoom(100, 28, 40), 80);
+  assert.equal(R.boxRoom(200, 28, 40), 0, 'a box already taller keeps its own height');
+});

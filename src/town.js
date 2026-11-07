@@ -727,7 +727,12 @@ function dialogRows() {
   if (!d || !d.classList.contains('open')) return 0;
   const v = view.getBoundingClientRect(), b = d.getBoundingClientRect();
   if (b.top < v.top + v.height / 2) return 0; // a box at the top covers nothing below
-  return Math.max(0, Math.min(VH * 0.6, (v.bottom - b.top) * VH / v.height));
+  // the room of the speaker's face is kept even for narration, so a face showing up never pushes the scene up
+  // and so is the room of a five-line box, so a long line does not either
+  const cs = getComputedStyle(document.documentElement), mb = document.getElementById('msgbox'), ms = getComputedStyle(mb);
+  const extra = faceRoom(d.classList.contains('has-face'), parseFloat(cs.getPropertyValue('--face')), parseFloat(cs.getPropertyValue('--u')))
+    + boxRoom(mb.offsetHeight, parseFloat(ms.lineHeight), parseFloat(ms.paddingTop) + parseFloat(ms.paddingBottom) + parseFloat(ms.borderTopWidth) + parseFloat(ms.borderBottomWidth));
+  return Math.max(0, Math.min(VH * 0.6, (v.bottom - b.top + extra) * VH / v.height));
 }
 
 // bare: só o lugar, sem gente nem setinha (fundo da batalha)
