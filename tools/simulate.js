@@ -1,57 +1,94 @@
 // ===== Combat simulator: the real formulas of the game, simple fixed hero actions =====
-// npm run sim [-- fights]  ·  compares the linear Defesa/Resistência of Phase 1 (percent, capped at 75) with the
-// diminishing curve of Phase 1b (src/party.js, cutPct). Hero and enemy numbers come from src/data.js as they are.
+// npm run sim [-- fights]  ·  compares Phase 1b (Aldo and Andilla with PM and the old skills table) with Phase 2a
+// (Energia and the new table). Hero and enemy numbers come from src/data.js; Phase 1b is the same data with the old
+// values of PHASE_1B put back.
 //
-// Long run (curve, Aldo with no gear): his Defesa cuts about 44% at level 10, 54% at level 20 and 60% at level 30,
-// and it never stops growing. With the linear model he hit the 75% cap at level 12 and stopped there.
+// Phase 2a, final values (src/data.js), calibrated with this script (power first, then gain):
+//   ENERGY = { max: 100, start: 10, attack: 15, defend: 10, hurt: { aldo: 8 }, crit: { andilla: 10 } }  (gain unchanged)
+//   Golpe Forte 20 / 1.4 · Quebra-Junta 40 / 1.35 (x1.5 on bone; proposed 2.0) · Fúria 80 / 0.95 each (proposed 1.8)
+//   Leque de Facas 20 / 0.71 each (proposed 0.75) · Golpe Baixo 20 / 1.3, ignores Defesa
+//   With the proposed powers the steady pace was Quebra-Junta 1.66x, Fúria 1.86x and Leque against 3 1.50x, all over
+//   1.45x. Raising Aldo's gain when hit (8 to 12) does not change any fight of the table, so the gain stays.
 //
-// Hero actions, no items: Aldo uses Quebra-Junta against the undead, Fúria against 3 or more and Golpe Forte otherwise;
-// Lyra Gelo against 2 or more, Raio against a target with more than 60 PV and Fogo otherwise; Teo heals whoever is under
-// half PV and uses Luz Sagrada against the undead; Andilla Leque de Facas against 2 or more and Golpe Baixo otherwise.
-// Without PM, or before learning the skill, a hero attacks. Enemies act as in src/battle.js (skills, the boss pattern).
+// Hero actions, no items, nobody defends:
+//   Aldo (2a): Fúria against 3 or more with 80, Quebra-Junta against the undead with 40, Golpe Forte with 20, else attack.
+//   Andilla (2a): Leque against 2 or more with 20, Golpe Baixo with 20 on a target over 15 PV, else attack.
+//   Aldo (1b): Quebra-Junta against the undead, Fúria against 3 or more, Golpe Forte; Andilla (1b): Leque, Golpe Baixo.
+//   Lyra: Gelo against 2 or more, Raio against a target over 60 PV, Fogo. Teo heals whoever is under half PV and uses
+//   Luz Sagrada against the undead. Without PM or Energia, or before learning the skill, a hero attacks.
+// Enemies act as in src/battle.js (skills, the boss pattern).
 const fs = require('node:fs');
 const vm = require('node:vm');
 const SRC = `${__dirname}/../src/`;
 
-function load(model) {
+// What Phase 1b had for the combat heroes (restored in memory for the comparison)
+const PHASE_1B = {
+  defs: { aldo: { mp: [8, 1], spells: [[1, 'golpe'], [3, 'quebraJunta'], [5, 'furia']] }, andilla: { mp: [10, 2], spells: [[1, 'golpeBaixo'], [3, 'leque']] },
+    teo: { spells: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [7, 'curaTotal']] } },
+  spells: { golpe: { mp: 4, power: 1.8 }, quebraJunta: { mp: 5, power: 1.4 }, furia: { mp: 8, power: 1.15 }, golpeBaixo: { mp: 3, power: 1.4 }, leque: { mp: 6, power: 0.8 } },
+};
+
+function load(model = '2a') {
   const G = { party: [], inv: {}, seen: {} };
   const ctx = { console, G, UI: new Proxy({}, { get: () => () => {} }), Sfx: new Proxy({}, { get: () => () => {} }) };
   vm.createContext(ctx);
-  for (const f of ['palette', 'data', 'uirules', 'party']) {
-    let code = fs.readFileSync(SRC + f + '.js', 'utf8');
-    if (f === 'party' && model === 'linear') code = code.replace(/const cutPct = .*\n/, 'const cutPct = points => Math.min(75, Math.max(0, points || 0));\n');
-    vm.runInContext(code, ctx, { filename: f });
+  for (const f of ['palette', 'data', 'uirules', 'party']) vm.runInContext(fs.readFileSync(SRC + f + '.js', 'utf8'), ctx, { filename: f });
+  const K = vm.runInContext(`({ G, ENEMIES, SPELLS, EQUIPS, PARTY_DEFS, HIT, ENERGY, stat, maxHp, maxMp, knownSpells, physDmg, magDmg, rollHit,
+    critChance, newMember, pdef, rnd, canPay, pay, gainEnergy, attackEnergy, usesEnergy })`, ctx);
+  if (model === '1b') {
+    for (const [id, o] of Object.entries(PHASE_1B.defs)) {
+      const d = K.PARTY_DEFS.find(p => p.id === id);
+      if (o.mp) { d.base.mp = o.mp[0]; d.grow.mp = o.mp[1]; delete d.energy; }
+      d.spells = o.spells;
+    }
+    for (const [id, o] of Object.entries(PHASE_1B.spells)) { delete K.SPELLS[id].en; Object.assign(K.SPELLS[id], o); }
   }
-  return vm.runInContext('({ G, ENEMIES, SPELLS, EQUIPS, PARTY_DEFS, HIT, stat, maxHp, maxMp, knownSpells, physDmg, magDmg, rollHit, critChance, newMember, pdef, rnd })', ctx);
+  K.model = model;
+  return K;
 }
 
-function fight(K, heroes, foes) {
-  const { stat, maxHp, maxMp, SPELLS, ENEMIES, HIT, rnd } = K;
-  const P = heroes, E = foes.map(id => ({ ...ENEMIES[id], id, maxhp: ENEMIES[id].hp }));
+// only: { heroId: spellId | 'none' } makes that hero use just that skill whenever it can pay (or never use any).
+// endless: a number of rounds against foes that never fall; heroes lose no PV but still gain Energia from the hits,
+// and only the heroes in `only` act (the steady pace of a technique, free of how fast a fight ends)
+function fight(K, heroes, foes, only = {}, endless = 0) {
+  const { stat, maxHp, SPELLS, ENEMIES, HIT, ENERGY, rnd } = K;
+  const P = heroes, E = foes.map(id => ({ ...ENEMIES[id], id, maxhp: ENEMIES[id].hp, ...(endless ? { hp: 1e9 } : {}) }));
   const live = a => a.filter(x => x.hp > 0);
-  const knows = (m, s) => K.knownSpells(m).includes(s) && m.mp >= SPELLS[s].mp;
+  const knows = (m, s) => K.knownSpells(m).includes(s) && K.canPay(m, SPELLS[s]);
   const weakest = () => live(E).sort((a, b) => a.hp - b.hp)[0];
-  const hurt = (m, d) => { m.hp = Math.max(0, m.hp - d); return d; };
+  const stats = Object.fromEntries(P.map(m => [m.id, { dmg: 0, turns: 0, techs: 0 }]));
+  const hurt = (m, d) => {
+    if (!endless) m.hp = Math.max(0, m.hp - d);
+    if (m.hp > 0 && d > 0) K.gainEnergy(m, ENERGY.hurt[m.id] || 0);
+    return d;
+  };
+  const strike = (m, e, d) => { const got = Math.min(e.hp, d); e.hp -= got; stats[m.id].dmg += got; };
+  for (const m of P) m.en = K.usesEnergy(m) ? ENERGY.start : 0;
   function cast(m, s, t) {
-    const sp = SPELLS[s]; m.mp -= sp.mp;
+    const sp = SPELLS[s]; K.pay(m, sp);
+    if (sp.kind === 'phys') stats[m.id].techs++;
     if (sp.kind === 'heal') { t.hp = Math.min(maxHp(t), t.hp + Math.round((stat(m, 'mag') * sp.power + sp.base) * rnd(0.9, 1.1))); return; }
     for (const e of sp.target === 'allEnemies' ? live(E) : [t]) {
       let d;
       if (sp.kind === 'phys') d = Math.round(K.physDmg(stat(m, 'atk'), sp.pierce ? 0 : e.def, sp.power) * (sp.bone && e.undead ? sp.bone : 1));
       else { d = K.magDmg((stat(m, 'mag') * sp.power + sp.base) * rnd(0.9, 1.1), e.res); if (sp.kind === 'holy' && e.undead) d *= 2; }
-      e.hp = Math.max(0, e.hp - d);
+      strike(m, e, d);
     }
   }
   function attack(m, t) {
     const r = K.rollHit(K.critChance(m.id), t.agi);
+    K.gainEnergy(m, K.attackEnergy(m.id, r));
     if (r === 'miss' || r === 'dodge') return;
-    t.hp = Math.max(0, t.hp - K.physDmg(stat(m, 'atk'), t.def, r === 'crit' ? HIT.critMul : 1));
+    strike(m, t, K.physDmg(stat(m, 'atk'), t.def, r === 'crit' ? HIT.critMul : 1));
   }
   function heroAct(m) {
-    const en = live(E), t = weakest(), many = en.length;
+    const en = live(E), t = weakest(), many = en.length, o = only[m.id];
+    if (o) return o !== 'none' && knows(m, o) ? cast(m, o, t) : attack(m, t);
     if (m.id === 'aldo') {
-      if (t.undead && knows(m, 'quebraJunta')) return cast(m, 'quebraJunta', t);
+      if (K.model === '1b' && t.undead && knows(m, 'quebraJunta')) return cast(m, 'quebraJunta', t);
       if (many >= 3 && knows(m, 'furia')) return cast(m, 'furia');
+      const dead = en.find(e => e.undead);
+      if (K.model === '2a' && dead && knows(m, 'quebraJunta')) return cast(m, 'quebraJunta', dead);
       if (knows(m, 'golpe')) return cast(m, 'golpe', t);
     }
     if (m.id === 'lyra') {
@@ -68,7 +105,8 @@ function fight(K, heroes, foes) {
     }
     if (m.id === 'andilla') {
       if (many >= 2 && knows(m, 'leque')) return cast(m, 'leque');
-      if (knows(m, 'golpeBaixo')) return cast(m, 'golpeBaixo', t);
+      const big = K.model === '2a' ? en.filter(e => e.hp > 15).sort((a, b) => a.hp - b.hp)[0] : t;
+      if (big && knows(m, 'golpeBaixo')) return cast(m, 'golpeBaixo', big);
     }
     attack(m, t);
   }
@@ -94,30 +132,45 @@ function fight(K, heroes, foes) {
     } else enemyHit(e, t);
   }
   let rounds = 0;
-  while (live(P).length && live(E).length && rounds < 60) {
+  while (live(P).length && live(E).length && rounds < (endless || 60)) {
     rounds++;
     const order = [...live(P).map(m => ({ m, hero: true, s: stat(m, 'agi') * rnd(0.85, 1.15) })), ...live(E).map(m => ({ m, s: m.agi * rnd(0.85, 1.15) }))].sort((a, b) => b.s - a.s);
     for (const o of order) {
       if (o.m.hp <= 0 || !live(P).length || !live(E).length) continue;
-      if (o.hero) heroAct(o.m); else enemyAct(o.m);
+      if (o.hero) { if (!endless || only[o.m.id]) { stats[o.m.id].turns++; heroAct(o.m); } } else enemyAct(o.m);
     }
   }
   const max = P.reduce((s, m) => s + maxHp(m), 0), left = P.reduce((s, m) => s + m.hp, 0);
-  return { win: !live(E).length, lost: 1 - left / max, rounds };
+  return { win: !live(E).length, lost: 1 - left / max, rounds, stats };
 }
 
 const GEAR = ['espadaFerro', 'cotaMalha', 'cajadoRunico'];
+const ALL = ['aldo', 'lyra', 'teo', 'andilla'];
 const LINES = [
   ['2 morcegos (nível 1)', ['aldo', 'lyra'], 1, [], ['morcegoCova', 'morcegoCova']],
   ['2 ossadas com Teo (nível 2)', ['aldo', 'lyra', 'teo'], 2, [], ['ossada', 'ossada']],
-  ['3 gosmas (nível 3)', ['aldo', 'lyra', 'teo', 'andilla'], 3, [], ['gosma', 'gosma', 'gosma']],
-  ['rato, morcego e gosma (nível 3)', ['aldo', 'lyra', 'teo', 'andilla'], 3, [], ['rato', 'morcego', 'gosma']],
-  ['3 esqueletos (nível 4)', ['aldo', 'lyra', 'teo', 'andilla'], 4, [], ['esqueleto', 'esqueleto', 'esqueleto']],
-  ['Sineiro nível 3 sem equipamento', ['aldo', 'lyra', 'teo', 'andilla'], 3, [], ['sineiro']],
-  ['Sineiro nível 4 equipado', ['aldo', 'lyra', 'teo', 'andilla'], 4, GEAR, ['sineiro']],
-  ['Sineiro nível 5 equipado', ['aldo', 'lyra', 'teo', 'andilla'], 5, GEAR, ['sineiro']],
-  ['Sineiro nível 8 equipado', ['aldo', 'lyra', 'teo', 'andilla'], 8, GEAR, ['sineiro']],
+  ['3 gosmas (nível 3)', ALL, 3, [], ['gosma', 'gosma', 'gosma']],
+  ['rato, morcego e gosma (nível 3)', ALL, 3, [], ['rato', 'morcego', 'gosma']],
+  ['3 esqueletos (nível 4)', ALL, 4, [], ['esqueleto', 'esqueleto', 'esqueleto']],
+  ['Sineiro nível 3 sem equipamento', ALL, 3, [], ['sineiro']],
+  ['Sineiro nível 4 equipado', ALL, 4, GEAR, ['sineiro'], 0.10],
+  ['Sineiro nível 5 equipado', ALL, 5, GEAR, ['sineiro']],
+  ['Sineiro nível 8 equipado', ALL, 8, GEAR, ['sineiro']],
+  ['3 esqueletos (nível 12)', ALL, 12, GEAR, ['esqueleto', 'esqueleto', 'esqueleto']],
+  ['3 cavaleiros (nível 18)', ALL, 18, GEAR, ['cavaleiro', 'cavaleiro', 'cavaleiro']],
 ];
+// One line per cost tier: the hero uses only that skill whenever it can pay, against attacking only, with the whole
+// party at that level and the foes the skill is meant for (they hit back, so Aldo also fills up by taking blows)
+const TIERS = [
+  ['Aldo', 'golpe', 20, 4, ['loboGeada', 'loboGeada']],
+  ['Aldo', 'quebraJunta', 40, 12, ['esqueleto', 'esqueleto']],
+  ['Aldo', 'furia', 80, 18, ['cavaleiro', 'cavaleiro', 'cavaleiro']],
+  ['Andilla', 'leque', 20, 4, ['gosma', 'gosma']],
+  ['Andilla', 'leque', 20, 4, ['gosma', 'gosma', 'gosma']],
+  ['Andilla', 'golpeBaixo', 20, 8, ['cavaleiro']],
+];
+const PACE = 30; // rounds of the steady measure; SHORT is a fight of the usual length, for comparison
+const SHORT = 4;
 
 function team(K, ids, lv, gear) {
   return ids.map(id => {
@@ -129,32 +182,65 @@ function team(K, ids, lv, gear) {
   });
 }
 
-function run(n) {
-  const models = { linear: load('linear'), curva: load('curve') }, rows = [];
-  for (const [name, ids, lv, gear, foes] of LINES) {
-    const row = { name };
-    for (const [k, K] of Object.entries(models)) {
-      let w = 0, lost = 0, rounds = 0;
-      for (let i = 0; i < n; i++) { const r = fight(K, team(K, ids, lv, gear), foes); w += r.win; lost += r.lost; rounds += r.rounds; }
-      row[k] = { win: w / n, lost: lost / n, rounds: rounds / n };
-    }
-    rows.push(row);
+// n fights of one line: averages, plus damage per turn and turns between techniques of each hero
+function many(K, line, n, only, endless = 0, foes = line[4]) {
+  const [, ids, lv, gear] = line;
+  let w = 0, lost = 0, rounds = 0;
+  const hs = {};
+  for (let i = 0; i < n; i++) {
+    const r = fight(K, team(K, ids, lv, gear), foes, only, endless);
+    w += r.win; lost += r.lost; rounds += r.rounds;
+    for (const [id, s] of Object.entries(r.stats)) { const h = hs[id] = hs[id] || { dmg: 0, turns: 0, techs: 0 }; h.dmg += s.dmg; h.turns += s.turns; h.techs += s.techs; }
   }
-  return rows;
+  const per = Object.fromEntries(Object.entries(hs).map(([id, h]) => [id, { dpt: h.dmg / h.turns, gap: h.techs ? h.turns / h.techs : null }]));
+  return { win: w / n, lost: lost / n, rounds: rounds / n, per };
+}
+
+function run(n) {
+  const models = { '1b': load('1b'), '2a': load('2a') };
+  return LINES.map(line => {
+    const row = { name: line[0], drop: line[5] || 0.03 };
+    for (const [k, K] of Object.entries(models)) row[k] = many(K, line, n);
+    const K = models['2a'];
+    row.plain = many(K, line, n, { aldo: 'none', andilla: 'none' });
+    return row;
+  });
+}
+
+function tiers(n, K = load('2a')) {
+  return TIERS.map(([hero, sp, cost, lv, foes]) => {
+    const id = hero.toLowerCase(), line = ['', ALL, lv, lv >= 4 ? GEAR : [], foes];
+    const pace = rounds => many(K, line, n, { [id]: sp }, rounds, foes).per[id].dpt / many(K, line, n, { [id]: 'none' }, rounds, foes).per[id].dpt;
+    const used = many(K, line, n, { [id]: sp }, PACE, foes).per[id];
+    return { hero, name: K.SPELLS[sp].name, cost, lv, foes: `${foes.length} ${K.ENEMIES[foes[0]].name.toLowerCase()}`, ratio: pace(PACE), short: pace(SHORT), gap: used.gap };
+  });
 }
 
 if (require.main === module) {
-  const n = +process.argv[2] || 20000, pct = v => (v * 100).toFixed(1) + '%';
+  const n = +process.argv[2] || 20000, pct = v => (v * 100).toFixed(1) + '%', f1 = v => v == null ? '-' : v.toFixed(1), gap = v => v == null ? '-' : v > 20 ? 'raro' : v.toFixed(1);
+  const rows = run(n);
   console.log(`${n} lutas por linha · vitória / PV perdido / rodadas\n`);
-  console.log('| Luta | Linear (Fase 1) | Curva (Fase 1b) | Dentro do critério |');
+  console.log('| Luta | Fase 1b | Fase 2a | Dentro do critério |');
   console.log('| --- | --- | --- | --- |');
-  for (const r of run(n)) {
-    const a = r.linear, b = r.curva;
-    const ok = Math.abs(a.win - b.win) <= 0.03 && Math.abs(a.lost - b.lost) <= 0.05 && Math.abs(a.rounds - b.rounds) <= a.rounds * 0.1;
+  for (const r of rows) {
+    const a = r['1b'], b = r['2a'];
+    const ok = a.win - b.win <= r.drop && b.win - a.win <= 0.03 && Math.abs(a.lost - b.lost) <= 0.05;
     console.log(`| ${r.name} | ${pct(a.win)} / ${pct(a.lost)} / ${a.rounds.toFixed(1)} | ${pct(b.win)} / ${pct(b.lost)} / ${b.rounds.toFixed(1)} | ${ok ? 'sim' : 'NÃO'} |`);
   }
-  const K = load('curve'), aldo = lv => { const m = K.newMember(K.PARTY_DEFS[0]); m.lv = lv; return Math.round(80 * K.stat(m, 'def') / (K.stat(m, 'def') + 55)); };
-  console.log(`\nAldo sem equipamento, redução da Defesa: nível 10 ${aldo(10)}%, nível 20 ${aldo(20)}%, nível 30 ${aldo(30)}%`);
+  console.log('\nDano por turno na Fase 2a, com técnicas / só atacando, e turnos entre técnicas\n');
+  console.log('| Luta | Aldo | Andilla |');
+  console.log('| --- | --- | --- |');
+  for (const r of rows) {
+    const cell = id => r['2a'].per[id] ? `${f1(r['2a'].per[id].dpt)} / ${f1(r.plain.per[id].dpt)} · ${gap(r['2a'].per[id].gap)}` : '-';
+    console.log(`| ${r.name} | ${cell('aldo')} | ${cell('andilla')} |`);
+  }
+  console.log(`\nCada faixa de custo: dano por turno usando só essa técnica sempre que pode, dividido pelo de só atacar (alvo: 1,15x a 1,45x).`);
+  console.log(`Ritmo: ${PACE} rodadas contra alvos que não caem; luta curta: as primeiras ${SHORT} rodadas, para comparar.\n`);
+  console.log('| Herói | Técnica | Custo | Nível | Alvos | Ritmo | Luta curta | Turnos entre usos |');
+  console.log('| --- | --- | --- | --- | --- | --- | --- | --- |');
+  for (const t of tiers(Math.max(200, n / 20))) console.log(`| ${t.hero} | ${t.name} | ${t.cost} | ${t.lv} | ${t.foes} | ${t.ratio.toFixed(2)}x${t.ratio >= 1.15 && t.ratio <= 1.45 ? '' : ' (fora)'} | ${t.short.toFixed(2)}x | ${gap(t.gap)} |`);
+  let xp = 0; for (let lv = 1; lv < 30; lv++) xp += Math.floor(12 * Math.pow(lv, 1.9));
+  console.log(`\nXP total do nível 1 ao 30: ${xp}`);
 }
 
-module.exports = { load, fight, run, LINES };
+module.exports = { load, fight, run, tiers, LINES, TIERS };
