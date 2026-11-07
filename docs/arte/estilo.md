@@ -124,8 +124,13 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
 - **Heróis de corpo inteiro (tela de Heróis):** 48x64, de frente, mesmo cabelo, olhos e roupa do retrato, contorno da
   própria cor, dois quadros parado (respira; capa e cabelo ao vento) e uma pose de caído (ajoelhado, nos cinzas da
   paleta). A arma está sempre na mão; o equipamento achado muda o sprite por troca de cores (`GEAR_LOOK`), nunca
-  por grade nova. Gerados por `docs/arte/gerador/herobody.cjs` → `src/herobody.js`. Ficam num palco de 96x78 com
-  vitral na família do herói (`HERO_FACE_BG`) e pedestal de pedra, em escala inteira.
+  por grade nova; a arma escolhida na tela de Heróis é a que aparece na mão. Gerados por
+  `docs/arte/gerador/herobody.cjs` → `src/herobody.js`. Ficam num palco de 64x72 (vitral e pedestal de pedra) sobre
+  faixas de cor da família do herói (`HERO_FACE_BG`) que enchem a coluna, na maior escala inteira que couber.
+- **Ícones de equipamento:** 16x16 em grade, só cores da paleta mestre, contorno `#26202e`, luz do alto à esquerda.
+  Um por tipo (`GEAR_ICONS` em `src/frame.js`): espada, maça, cajado, adaga, túnica, hábito, manto, cota de malha e
+  couro. Cada item de `EQUIPS` e `START_GEAR` aponta para o seu (`icon`); um item novo usa um tipo existente ou ganha
+  um tipo novo, nunca um ícone genérico. O estado apagado mantém o contorno.
 
 ## Feito até agora
 
@@ -139,6 +144,14 @@ Estações e "depois da vitória" saem por troca de paleta, não por desenho nov
 - Tela de Heróis nova (v65): herói de corpo inteiro no vitral com Arma e Armadura ao lado, ficha com barras grossas,
   atributos comparados ao grupo e a história que cresce com o jogo, e o livro com habilidades (as futuras em "???")
   e a bolsa. Ícones novos: `raio` e `luz`. Texto nunca menor que o dos menus; no celular, três abas.
+- Menu, Heróis, Livro e Bolsa novos (v86). O menu é uma coluna estreita de pergaminho à direita, ícone de 16 em
+  escala inteira ao lado de cada palavra, três grupos separados por um fio (aventura, informação, sistema), sem
+  Voltar e sem moedas; a cena e os cartões continuam à vista. Heróis em duas colunas: o palco (nome na cor do herói,
+  XP, vitral sem moldura, os dois espaços de equipamento embaixo) e a ficha (barras, atributos, até três frases de
+  história e a fala). Livro aberto com uma fita por herói na cor de identidade. Bolsa com três abas e células
+  grandes; o retrato pequeno de quem usa cada equipamento fica no canto, com halo dourado em quem está usando.
+  Ícones novos do menu: `livro`, `heroi`, `diario`, `mapa`, `salvar`, `sair`. No celular em pé: Palco e Ficha em
+  abas, o Livro uma página por vez, a Bolsa em uma coluna; deitado, as abas sobem para a barra do alto.
 
 ## Ordem de produção
 
