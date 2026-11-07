@@ -27,15 +27,16 @@ function healthWord(hp, maxhp) {
   return k > 0.7 ? 'ileso' : k > 0.4 ? 'ferido' : k > 0.15 ? 'muito ferido' : 'quase caindo';
 }
 
-// Camp menu: coins in the title, Mapa only in the crypt, Itens greyed out while the bag is empty
+// Camp menu: a column of icons in three groups (adventure, information, system), split by a rule (sep).
+// Mapa only in the crypt, Bolsa greyed out while the bag is empty; no coins (the corner shows them) and no Voltar (Esc)
 function campMenuOpts(s) {
-  const opts = [
-    { label: 'Itens', value: 'item', disabled: s.bagCount === 0 }, { label: 'Magia', value: 'magic' }, { label: 'Heróis', value: 'status' },
-    { label: 'Táticas', value: 'macros' }, { label: 'Diário', value: 'diary' }, { label: 'Mundo', value: 'world' }, { label: 'Salvar', value: 'save' },
+  const groups = [
+    [{ label: 'Bolsa', value: 'bag', icon: 'item', disabled: s.bagCount === 0 }, { label: 'Livro', value: 'book', icon: 'livro' },
+      { label: 'Heróis', value: 'status', icon: 'heroi' }, { label: 'Táticas', value: 'macros', icon: 'tatica' }],
+    [{ label: 'Diário', value: 'diary', icon: 'diario' }, { label: 'Mundo', value: 'world', icon: 'mundo' }, ...(s.inTown ? [] : [{ label: 'Mapa', value: 'map', icon: 'mapa' }])],
+    [{ label: 'Salvar', value: 'save', icon: 'salvar' }, { label: 'Sair', value: 'quit', icon: 'sair' }],
   ];
-  if (!s.inTown) opts.push({ label: 'Mapa', value: 'map' });
-  opts.push({ label: 'Sair', value: 'quit' }, { label: 'Voltar', value: null });
-  return { title: `Menu · ${s.gold} moedas`, opts };
+  return { opts: groups.flatMap((g, i) => g.map((o, j) => (i && !j ? { ...o, sep: true } : o))) };
 }
 
 // Starting over replaces the save: with one, ask first, with No already selected

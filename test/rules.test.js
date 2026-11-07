@@ -33,17 +33,20 @@ test('enemy health words follow the HP fraction', () => {
   assert.equal(R.healthWord(1, 10), 'quase caindo');
 });
 
-test('camp menu: coins in the title, Mapa hidden in town, Itens off with an empty bag', () => {
+test('camp menu: a column of icons in three groups; Livro and Bolsa replace Magia and Itens; Mapa only in the crypt; no Voltar, no coins', () => {
   const labels = m => m.opts.map(o => o.label);
   const town = R.campMenuOpts({ gold: 20, inTown: true, bagCount: 0 });
-  assert.equal(town.title, 'Menu · 20 moedas');
-  assert.ok(!labels(town).includes('Mapa'));
-  assert.equal(town.opts.find(o => o.value === 'item').disabled, true);
+  assert.deepEqual(labels(town), ['Bolsa', 'Livro', 'Heróis', 'Táticas', 'Diário', 'Mundo', 'Salvar', 'Sair']);
+  assert.ok(!labels(town).some(l => ['Magia', 'Itens', 'Voltar'].includes(l)));
+  assert.equal(town.title, undefined, 'the coins are in the corner already');
+  assert.equal(town.opts.find(o => o.value === 'bag').disabled, true, 'empty bag in grey');
+  assert.deepEqual(town.opts.filter(o => o.sep).map(o => o.label), ['Diário', 'Salvar'], 'a rule above each group');
+  assert.ok(town.opts.every(o => o.icon));
   const crypt = R.campMenuOpts({ gold: 40, inTown: false, bagCount: 2 });
-  assert.ok(labels(crypt).includes('Mapa'));
-  assert.equal(crypt.opts.find(o => o.value === 'item').disabled, false);
-  assert.equal(crypt.opts.at(-1).value, null, 'Voltar stays last');
-  assert.equal(crypt.opts.at(-2).value, 'quit', 'Sair right before Voltar');
+  assert.deepEqual(labels(crypt).slice(4, 7), ['Diário', 'Mundo', 'Mapa']);
+  assert.equal(crypt.opts.find(o => o.value === 'bag').disabled, false);
+  const F = require('../src/frame.js');
+  for (const o of crypt.opts) assert.ok(F.ICON_ART[o.icon], o.icon);
 });
 
 test('equipment screen: gear grouped by hero and slot', () => {

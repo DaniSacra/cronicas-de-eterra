@@ -332,6 +332,16 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   #menu .opt small { display: inline; margin: 0 0 0 1em; }
 }
 
+/* ---- Menu de acampamento: coluna estreita à direita, ícone + palavra, três grupos separados por um fio ---- */
+#sidemenu { position: absolute; z-index: 6; display: none; top: calc(var(--u) * 4); right: calc(var(--u) * 4); padding: calc(var(--u) * 3) calc(var(--u) * 4);
+  flex-direction: column; font-size: var(--f2); line-height: 1.2; max-height: calc(100% - var(--u) * 8); overflow: auto; }
+#sidemenu.open { display: flex; }
+#sidemenu .opt { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 1.5) calc(var(--u) * 2); white-space: nowrap; }
+#sidemenu .opt img { width: calc(var(--f2) * 2); height: calc(var(--f2) * 2); image-rendering: pixelated; flex: none; }
+#sidemenu .opt.sep { margin-top: calc(var(--u) * 2); padding-top: calc(var(--u) * 3.5); border-top: var(--u) solid var(--rim); }
+#sidemenu .opt.sel { color: var(--gold); background: var(--win2); }
+#game.talking:has(#sidemenu.open) #wmBtn { visibility: hidden; }
+
 /* ---- Heróis (src/equipview.js): o herói de corpo inteiro, a ficha e o livro ---- */
 /* Text: body at --f2 (menu size), titles at --fd (dialog size); nothing smaller */
 #heroview { position: absolute; inset: 0; z-index: 20; display: none; background: var(--hv-bg, var(--bg)); padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);

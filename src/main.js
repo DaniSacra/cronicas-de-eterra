@@ -375,7 +375,7 @@ async function floorClues(f) {
   if (FLOOR_TALKS[f]) await partyTalk(FLOOR_TALKS[f], TALKS[FLOOR_TALKS[f]]);
 }
 
-// Uses one bag item outside battle: an item id, or 'key:<id>' to read a key item. Shared by the Items menu and the Heroes screen.
+// Uses one bag item outside battle: an item id, or 'key:<id>' to read a key item (the Bolsa screen)
 async function useBagItem(it) {
   if (it === 'key:carta') return readLetter();
   if (String(it).startsWith('key:')) { const k = KEY_ITEMS[it.slice(4)]; for (const t of k.text) await UI.say(`${k.name}:\n${t}`); return; }
@@ -388,9 +388,7 @@ async function campMenu() {
   G.busy = true;
   for (;;) {
     const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length });
-    const v = await UI.choose(m.opts, { title: m.title, cancel: true, cols: 3, party: true });
-    if (v === 'diary') await showDiary();
-    if (v === 'world') await WorldMap.show();
+    const v = await UI.choose(m.opts, { style: 'side', cancel: true, party: true });
     if (v === null) break;
     if (v === 'quit') {
       const ok = await UI.choose([{ label: 'Sim, sair', value: true }, { label: 'Não', value: false }],
@@ -398,30 +396,14 @@ async function campMenu() {
       if (ok) { G.bigMap = false; G.held.clear(); return titleScreen(); }
       continue;
     }
+    if (v === 'bag') await HeroView.show('bag');
+    if (v === 'book') await HeroView.show('book');
+    if (v === 'status') await HeroView.show('hero');
+    if (v === 'macros') await campMacros();
+    if (v === 'diary') await showDiary();
+    if (v === 'world') await WorldMap.show();
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
-    if (v === 'status') await HeroView.show();
-    if (v === 'macros') await campMacros();
-    if (v === 'item') {
-      const keys = Object.keys(KEY_ITEMS).filter(k => G.key[k]).map(k => ({ label: G.key.lida || !KEY_ITEMS[k].sealedName ? KEY_ITEMS[k].name : KEY_ITEMS[k].sealedName, hint: KEY_ITEMS[k].desc, value: 'key:' + k }));
-      const opts = [...itemOptions(), ...keys];
-      if (!opts.length) { await UI.say('A bolsa está vazia.'); continue; }
-      const it = await UI.choose(opts, { title: 'Usar qual item?', cancel: true, party: true });
-      if (it != null) await useBagItem(it);
-    }
-    if (v === 'magic') {
-      const casters = G.party.filter(m => m.hp > 0 && knownSpells(m).some(s => SPELLS[s].field));
-      if (!casters.length) { await UI.say('Ninguém pode usar magia agora.'); continue; }
-      const cm = casters.length === 1 ? casters[0] : await UI.choose(casters.map(m => ({ label: pdef(m).name, value: m })), { title: 'Quem vai conjurar?', cancel: true, cols: 3, party: true });
-      if (cm == null) continue;
-      const sp = await UI.choose(knownSpells(cm).filter(s => SPELLS[s].field).map(s => ({ label: SPELLS[s].name, hint: SPELLS[s].mp + 'PM', value: s, disabled: cm.mp < SPELLS[s].mp })),
-        { title: `Magias de ${pdef(cm).name} (PM ${cm.mp})`, cancel: true, party: true });
-      if (sp == null) continue;
-      const t = SPELLS[sp].target === 'allAllies' ? 'all' : await pickAlly(SPELLS[sp].target, `${SPELLS[sp].name} em quem?`);
-      if (t == null) continue;
-      cm.mp -= SPELLS[sp].mp; UI.updateParty();
-      await UI.say(castSupport(cm, sp, t));
-    }
   }
   G.busy = false; exploreHint();
 }

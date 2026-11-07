@@ -14,6 +14,9 @@ const UI = (() => {
   // Battle command bar: a small icon-only window that floats above the active hero's card
   const barEl = document.createElement('div'); barEl.id = 'cmdbar';
   document.getElementById('screen').appendChild(barEl);
+  // Camp menu: a narrow column of icon + word on the right side; the scene and the party cards stay in view
+  const sideEl = document.createElement('div'); sideEl.id = 'sidemenu'; sideEl.className = 'win';
+  document.getElementById('screen').appendChild(sideEl);
   let menu = null, sayR = null, sayTimer = null, typeT = null, finishType = null, hideT = null;
 
   // Janela de texto dentro da cena: abre quando há fala ou menu, fecha sozinha quando o jogo fica livre
@@ -55,7 +58,7 @@ const UI = (() => {
     finishType = done;
     typeT = setInterval(() => { n += 1; body.textContent = t.slice(0, n); if (n >= t.length) done(); }, 22);
   }
-  function clearMenu() { menuEl.innerHTML = ''; menuEl.classList.remove('icons'); barEl.innerHTML = ''; barEl.classList.remove('open'); }
+  function clearMenu() { menuEl.innerHTML = ''; menuEl.classList.remove('icons'); barEl.innerHTML = ''; barEl.classList.remove('open'); sideEl.innerHTML = ''; sideEl.classList.remove('open'); }
 
   function say(text, opts = {}) {
     clearMenu();
@@ -76,7 +79,8 @@ const UI = (() => {
     clearTimeout(infoT); infoT = setTimeout(() => infoEl.classList.remove('show'), 6000);
   }
 
-  // o.style: 'list' (in the dialog, default), 'bar' (floating icon bar above o.anchor) or
+  // o.style: 'list' (in the dialog, default), 'bar' (floating icon bar above o.anchor), 'side' (the camp menu column,
+  // options with icon and sep: a rule above the first of each group) or
   // 'pointer' (nothing drawn: the caller shows the selection through o.onHover, e.g. an arrow over the target).
   // o.keys: shortcut key -> value, returned at once (e.g. '1' repeats Tática 1 from the command bar)
   // o.party: the menu is about the heroes' PV and PM, so the town shows the party strip with it
@@ -87,20 +91,25 @@ const UI = (() => {
       if (style === 'list') {
         if (o.title !== undefined) { const t = splitSpeaker(o.title); setSpeaker(t.who); setText(t.text, false, true); }
         open();
-      } else dialogEl.classList.remove('open');
+      } else { dialogEl.classList.remove('open'); if (style === 'side') gameEl.classList.add('talking'); }
       let sel = opts.findIndex(x => !x.disabled); if (sel < 0) sel = 0;
       const start = opts.findIndex(x => !x.disabled && x.value === o.start); if (start >= 0) sel = start;
-      menu = { opts, sel, res, style, anchor: o.anchor, cancel: !!o.cancel, cols: o.cols || 2, onHover: o.onHover, icons: !!o.icons, keys: o.keys };
+      menu = { opts, sel, res, style, anchor: o.anchor, cancel: !!o.cancel, cols: style === 'side' ? 1 : o.cols || 2, onHover: o.onHover, icons: !!o.icons, keys: o.keys };
       render(); hover();
     });
   }
-  const host = () => menu.style === 'bar' ? barEl : menuEl;
+  const host = () => menu.style === 'bar' ? barEl : menu.style === 'side' ? sideEl : menuEl;
   function render() {
     clearMenu();
     if (menu.style === 'pointer') return;
     if (menu.style === 'bar') {
       menu.opts.forEach((op, i) => barEl.appendChild(optEl(op, i, `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt="${esc(op.label)}">`)));
       barEl.classList.add('open'); placeBar();
+      return;
+    }
+    if (menu.style === 'side') {
+      menu.opts.forEach((op, i) => { const d = optEl(op, i, `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`); d.classList.toggle('sep', !!op.sep); sideEl.appendChild(d); });
+      sideEl.classList.add('open');
       return;
     }
     menuEl.style.gridTemplateColumns = menu.icons ? `repeat(${menu.cols},auto)` : `repeat(${menu.cols},1fr)`;
@@ -141,7 +150,7 @@ const UI = (() => {
   // Phone shows command icons only: the selected command's name goes to the prompt line
   function cmdName() { const n = msgEl.querySelector('.cmd-name'); if (n) n.textContent = menu.opts[menu.sel].label; }
   function hover() { const op = menu.opts[menu.sel]; menu.onHover && menu.onHover(op.value, op); }
-  function close(v) { const m = menu; menu = null; clearMenu(); closeSoon(); m.onHover && m.onHover(null); m.res(v); }
+  function close(v) { const m = menu; menu = null; clearMenu(); closeSoon(); if (m.style === 'side') gameEl.classList.remove('talking'); m.onHover && m.onHover(null); m.res(v); }
   function pick() { const op = menu.opts[menu.sel]; if (op.disabled) { Sfx.bump(); return; } Sfx.select(); close(op.value); }
   function cancel() { if (!menu.cancel) return; Sfx.cancel(); close(null); }
   // Bar and pointer wrap around; pointer also skips what can't be chosen (fallen enemies or allies)
@@ -251,7 +260,7 @@ const UI = (() => {
   function showOverlay(html, cls = '') { overlay.className = cls; overlay.innerHTML = html; overlay.style.display = 'flex'; }
   function hideOverlay() { overlay.style.display = 'none'; overlay.innerHTML = ''; }
 
-  document.getElementById('screen').addEventListener('click', () => { Sfx.init(); advance(); });
+  document.getElementById('screen').addEventListener('click', () => { Sfx.init(); if (menu && menu.style === 'side') cancel(); else advance(); }); // a click outside the camp menu closes it
   document.addEventListener('pointerdown', () => Sfx.init(), true); // o tema do título toca também para quem só usa o mouse
 
   return { say, info, choose, pickValue, hoverValue, markCard, placeBar, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };

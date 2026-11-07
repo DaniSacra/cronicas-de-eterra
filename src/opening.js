@@ -487,7 +487,7 @@ async function nightScene() {
   G.busy = true;
   saveGame(); // não perder a noite se o grupo cair antes de salvar
   await fadeTo(0, 800);
-  await UI.say('Objetivo: falar com o ancião Bertoldo, na casa de telhado verde.\nA carta com o selo real está em Itens.');
+  await UI.say('Objetivo: falar com o ancião Bertoldo, na casa de telhado verde.\nA carta com o selo real está na Bolsa.');
   G.busy = false; townHint();
 }
 
