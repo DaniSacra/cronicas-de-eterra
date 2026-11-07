@@ -342,88 +342,128 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #sidemenu .opt.sel { color: var(--gold); background: var(--win2); }
 #game.talking:has(#sidemenu.open) #wmBtn { visibility: hidden; }
 
-/* ---- Heróis (src/equipview.js): o herói de corpo inteiro, a ficha e o livro ---- */
-/* Text: body at --f2 (menu size), titles at --fd (dialog size); nothing smaller */
+/* ---- Heróis, Livro e Bolsa (src/equipview.js): uma camada, data-screen = hero | book | bag ---- */
+/* Text: body at --f2 (menu size), titles at --fd; nothing smaller */
 #heroview { position: absolute; inset: 0; z-index: 20; display: none; background: var(--hv-bg, var(--bg)); padding: calc(var(--u) * 4); gap: calc(var(--u) * 3);
-  grid-template-columns: minmax(0, 34fr) minmax(0, 32fr) minmax(0, 34fr); grid-template-rows: auto minmax(0, 1fr); font-size: var(--f2); line-height: 1.5; color: var(--text); }
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); font-size: var(--f2); line-height: 1.4; color: var(--text); box-sizing: border-box; }
 #heroview.open { display: grid; }
-#heroview p { margin: 0; }
-#heroview small { display: block; font-size: var(--f2); color: var(--dim); margin: calc(var(--u) * 2) 0 var(--u); }
-#heroview button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
-.hv-top { grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 2) calc(var(--u) * 4); }
-.hv-party { flex: 1; display: flex; gap: calc(var(--u) * 3); justify-content: center; }
+#heroview p, #heroview h3, #heroview h4 { margin: 0; }
+#heroview h3 { font-size: var(--fd); font-weight: normal; } #heroview h4 { font-size: var(--f2); font-weight: normal; color: var(--gold); }
+#heroview small { display: block; font-size: var(--f2); color: var(--dim); }
+#heroview button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; text-align: left; }
+#heroview em { color: #3c7a22; font-style: normal; white-space: nowrap; }
+#heroview .dim { color: var(--dim); }
+.hv-top { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 2) calc(var(--u) * 4); min-width: 0; }
+.hv-party { flex: 1; display: flex; gap: calc(var(--u) * 2); justify-content: center; align-items: center; }
 .hv-mini { padding: var(--u) !important; border: var(--bw) solid transparent !important; border-image: var(--frame-slot) 4 fill / var(--bw) round !important; }
-.hv-mini.on { border-image-source: var(--frame-sel) !important; }
+.hv-mini.on { border-image-source: var(--frame-sel) !important; box-shadow: 0 calc(var(--u) * 2) 0 calc(var(--u) * -1) var(--c); }
 .hv-mini img { display: block; width: calc(var(--f2) * 3); height: calc(var(--f2) * 3); image-rendering: pixelated; }
-.hv-mini.ko img { filter: grayscale(1) brightness(.7); }
+.hv-mini.ko img, .bk-ribbon.ko { filter: grayscale(1) brightness(.75); }
 .hv-arrow { color: var(--gold) !important; padding: calc(var(--u) * 2) !important; }
-.hv-close { white-space: nowrap; padding: calc(var(--u) * 2) !important; } .hv-close:hover, .hv-arrow:hover { color: var(--gold2) !important; }
-.hv-modes { display: none; }
-.hv-col { min-height: 0; overflow: auto; padding: calc(var(--u) * 5); display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--rim) transparent; }
-/* more below: a fixed arrow at the foot of the column while it can still scroll (no gradient) */
-.hv-more { display: none; position: sticky; bottom: calc(var(--u) * -5); margin: 0 calc(var(--u) * -5) calc(var(--u) * -5); padding-bottom: var(--u); background: var(--win); text-align: center; color: var(--gold); text-shadow: var(--u) var(--u) 0 var(--ink); }
-.hv-col.more .hv-more { display: block; }
-.hv-col > * { flex-shrink: 0; } /* the column scrolls; only the stage and the book page give up height */
+.hv-close { margin-left: auto; white-space: nowrap; padding: calc(var(--u) * 2) !important; } .hv-close:hover, .hv-arrow:hover { color: var(--gold2) !important; }
 .hv-ico { width: calc(var(--f2) * 2); height: calc(var(--f2) * 2); image-rendering: pixelated; display: block; flex: none; }
 .hv-box { position: relative; flex: none; display: grid; place-items: center; padding: var(--u); border: var(--bw) solid transparent; border-image: var(--frame-slot) 4 fill / var(--bw) round; }
-.hv-box b { position: absolute; right: calc(var(--u) * -1); bottom: calc(var(--u) * -2); font-weight: normal; color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
-/* column 1: the hero on the stage; slots on the sides of the stained glass, over the background only */
-.hv-c1 { text-align: center; }
-.hv-stage { flex: 1 1 0 !important; min-height: calc(var(--f2) * 10); display: grid; place-items: center; }
-.hv-doll { position: relative; }
-.hv-body { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-.hv-slot { position: absolute; top: calc(var(--ap) * 18); width: calc(var(--ap) * 22); display: flex; flex-direction: column; align-items: center; gap: var(--u); text-shadow: 2px 2px 0 var(--ink); }
-.hv-slot:first-of-type { left: 0; } .hv-slot:last-of-type { right: 0; }
-#heroview .hv-gear small { margin: 0; }
-.hv-gear { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 3); line-height: 1.3; margin-top: calc(var(--u) * 2); }
-.hv-gear em { color: #3c7a22; font-style: normal; white-space: nowrap; }
-.hv-name { display: flex; gap: calc(var(--u) * 3); justify-content: center; align-items: baseline; margin-top: calc(var(--u) * 3); }
-.hv-name h3 { margin: 0; font-size: var(--fd); }
-.hv-ko { color: var(--light); background: var(--hp); padding: 0 calc(var(--u) * 2); }
-.bar.xp i { background: linear-gradient(var(--hi) 0 50%, #c89c38 50%); }
-/* column 2: the sheet */
-.hv-bar { display: flex; justify-content: space-between; align-items: baseline; margin-top: calc(var(--u) * 2); }
-.hv-bar b { font-size: var(--fd); font-weight: normal; } #heroview .hv-bar b small { display: inline; margin: 0; }
-.hv-c2 .bar { height: calc(var(--u) * 5); }
-.hv-stats { display: grid; gap: calc(var(--u) * 2); margin-top: calc(var(--u) * 4); }
-.hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 3.5em; grid-template-rows: auto auto; column-gap: calc(var(--u) * 4); align-items: center; }
-.hv-stat .hv-ico { grid-row: 1 / 3; }
-.hv-stat b { font-size: var(--fd); font-weight: normal; } .hv-stat em { color: #3c7a22; font-style: normal; }
-.hv-cmp { grid-column: 2 / 5; max-width: 100%; height: var(--u); background: var(--win2); } .hv-cmp i { display: block; height: 100%; background: var(--rim); }
-.hv-story { margin-top: calc(var(--u) * 4); display: grid; gap: calc(var(--u) * 2); }
-.hv-quote { color: var(--gold); }
-/* column 3: the book */
-.hv-c3 { padding-top: calc(var(--u) * 3); }
-.hv-book-tabs { display: flex; gap: calc(var(--u) * 2); border-bottom: var(--u) solid var(--rim); }
-.hv-book-tabs button { padding: calc(var(--u) * 2) calc(var(--u) * 4) !important; color: var(--dim) !important; }
-.hv-book-tabs button.on { color: var(--text) !important; background: var(--win2) !important; }
-.hv-page { flex: 1 1 0 !important; min-height: 0; overflow: auto; padding-top: calc(var(--u) * 2); }
-.hv-row { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2); cursor: pointer; }
-.hv-row.sel, .hv-item.sel .hv-box { background: var(--win2); outline: var(--u) solid var(--gold); }
+.hv-box > b { position: absolute; right: calc(var(--u) * -1); bottom: calc(var(--u) * -2); font-weight: normal; color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
+.hv-btn { padding: calc(var(--u) * 2) calc(var(--u) * 5) !important; color: var(--light) !important; background: var(--rim2) !important; }
+.hv-btn.sel, .hv-btn:hover { outline: var(--u) solid var(--gold); }
+.hv-btn.dis { background: var(--off) !important; cursor: default !important; }
+.hv-actions { display: flex; gap: calc(var(--u) * 3); align-items: center; flex-wrap: wrap; margin-top: calc(var(--u) * 3); }
+.hv-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2); width: 100%; box-sizing: border-box; }
+.hv-row.sel, .bg-cell.sel .hv-box { background: var(--win2); outline: var(--u) solid var(--gold); }
 .hv-row.off { color: var(--off); }
-.hv-line { display: flex; justify-content: space-between; gap: calc(var(--u) * 3); }
 #heroview .hv-cost { font-weight: normal; color: #2a5aa0; white-space: nowrap; } #heroview .hv-row.off .hv-cost { color: var(--off); }
-#heroview .hv-row small { margin: 0; }
-.hv-gold { color: var(--gold); }
-.hv-items { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 4); padding: var(--u); }
-.hv-detail { display: flex; gap: calc(var(--u) * 3); align-items: center; justify-content: space-between; margin-top: calc(var(--u) * 2); padding: calc(var(--u) * 3); background: var(--win2); }
-.hv-detail button { padding: calc(var(--u) * 2) calc(var(--u) * 4) !important; color: var(--light) !important; background: var(--rim2) !important; }
-/* phones: three tabs (Herói, Ficha, Livro); only the open one shows */
-#heroview[data-mode="tabs"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+.bar.xp i { background: linear-gradient(var(--hi) 0 50%, #c89c38 50%); }
+
+/* Heróis: stage (55%) and sheet (45%) */
+.hv-cols { display: grid; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); gap: calc(var(--u) * 3); min-height: 0; }
+.hv-modes { display: none; }
+.hv-stage-col { display: flex; flex-direction: column; min-height: 0; gap: calc(var(--u) * 2); padding: calc(var(--u) * 3);
+  background: linear-gradient(var(--b0) 0 25%, var(--b1) 25% 50%, var(--b2) 50% 75%, var(--b3) 75%); color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
+.hv-name { font-size: var(--fd); margin-right: calc(var(--u) * 2); } .hv-band i { font-style: normal; } .hv-band .bar { margin: var(--u) 0; text-shadow: none; }
+.hv-ko { margin-left: calc(var(--u) * 3); color: var(--light); background: var(--hp); padding: 0 calc(var(--u) * 2); text-shadow: none; }
+.hv-scene { flex: 1 1 0; min-height: 0; display: grid; place-items: end center; }
+.hv-body { display: block; image-rendering: pixelated; }
+.hv-slots { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 3); text-shadow: none; }
+#heroview .hv-slot i { font-style: normal; }
+#heroview .hv-slot { border: var(--bw) solid transparent; border-image: var(--frame) 4 fill / var(--bw) round; }
+#heroview .hv-slot.sel { border-image-source: var(--frame-sel); }
+.hv-slot { display: flex !important; gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2) !important; color: var(--text) !important; line-height: 1.25; min-width: 0; }
+.hv-slot.open { background: var(--win2) !important; }
+.hv-slot > span:last-child { min-width: 0; }
+.hv-sheet { display: flex; flex-direction: column; gap: calc(var(--u) * 1.5); padding: calc(var(--u) * 4) calc(var(--u) * 5); min-height: 0; overflow: hidden; }
+.hv-bar { display: flex; justify-content: space-between; align-items: baseline; }
+.hv-bar b { font-weight: normal; } #heroview .hv-bar b small { display: inline; }
+.hv-sheet > .bar { height: calc(var(--u) * 4); margin: 0 0 var(--u); }
+.hv-stats { display: grid; gap: var(--u); margin-top: calc(var(--u) * 2); }
+.hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 3em; column-gap: calc(var(--u) * 3); align-items: center; }
+.hv-stat .hv-ico { width: calc(var(--f2) * 1.5); height: calc(var(--f2) * 1.5); }
+.hv-stat b { font-weight: normal; }
+.hv-story { margin-top: calc(var(--u) * 3); display: grid; gap: var(--u); }
+.hv-quote { color: var(--gold); }
+.hv-choice { overflow: auto; } .hv-choice .hv-row { grid-template-columns: auto minmax(0, 1fr); }
+.hv-choice i { font-style: normal; white-space: nowrap; } .hv-choice i.up { color: #3c7a22; } .hv-choice i.down { color: #b02a1a; }
+.hv-seal { color: var(--light); background: var(--gold); padding: 0 calc(var(--u) * 2); }
 #heroview[data-mode="tabs"] .hv-modes { display: flex; gap: calc(var(--u) * 2); justify-content: center; }
-#heroview[data-mode="tabs"] .hv-modes button { padding: calc(var(--u) * 2) calc(var(--u) * 4); color: var(--dim); }
+#heroview[data-mode="tabs"] .hv-modes button { padding: calc(var(--u) * 2) calc(var(--u) * 6); color: var(--dim); }
 #heroview[data-mode="tabs"] .hv-modes button.on { color: var(--gold); }
-#heroview[data-mode="tabs"] .hv-col { display: none; }
-#heroview[data-mode="tabs"][data-view="hero"] .hv-c1, #heroview[data-mode="tabs"][data-view="sheet"] .hv-c2,
-#heroview[data-mode="tabs"][data-view="skills"] .hv-c3, #heroview[data-mode="tabs"][data-view="bag"] .hv-c3 { display: flex; }
-#heroview[data-mode="tabs"] .hv-arrow { display: none; }
+#heroview[data-screen="hero"][data-mode="tabs"] { grid-template-rows: auto auto minmax(0, 1fr); }
+#heroview[data-mode="tabs"] .hv-cols { grid-template-columns: minmax(0, 1fr); }
+#heroview[data-mode="tabs"][data-view="stage"] .hv-sheet, #heroview[data-mode="tabs"][data-view="sheet"] .hv-stage-col { display: none; }
 #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 2.5); height: calc(var(--f2) * 2.5); }
-/* phone on its side: the tabs move into the portrait bar (left side, empty without arrows), so the sheet gets the height */
+#heroview[data-mode="tabs"] .hv-sheet { overflow: auto; }
+
+/* Livro: an open book, a ribbon per hero on its top edge, the list on the left page, the chosen skill on the right */
+.bk-title { color: var(--gold); flex: 1; }
+.bk { position: relative; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0, 1fr); min-height: 0;
+  background: #6a3a1a; padding: 0 calc(var(--u) * 4) calc(var(--u) * 4); box-shadow: 0 0 0 var(--u) var(--ink); }
+.bk-ribbons { grid-column: 1 / -1; display: flex; gap: calc(var(--u) * 3); justify-content: center; }
+.bk-ribbon { background: var(--c) !important; color: var(--ink) !important; padding: calc(var(--u) * 1) calc(var(--u) * 4) calc(var(--u) * 4) !important;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%); margin-bottom: calc(var(--u) * 2); }
+.bk-ribbon.on { padding-bottom: calc(var(--u) * 7) !important; margin-bottom: calc(var(--u) * -1); }
+.bk-page { background: var(--win); padding: calc(var(--u) * 5); min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: calc(var(--u) * 2); }
+.bk-left { box-shadow: inset calc(var(--u) * -3) 0 0 var(--win2); } .bk-right { box-shadow: inset calc(var(--u) * 3) 0 0 var(--win2); }
+.bk-big { width: calc(var(--f2) * 4); height: calc(var(--f2) * 4); image-rendering: pixelated; }
+.bk-fx { color: var(--gold); }
+#heroview[data-screen="book"][data-mode="tabs"] .bk { grid-template-columns: minmax(0, 1fr); }
+#heroview[data-mode="tabs"] .bk[data-page="list"] .bk-right, #heroview[data-mode="tabs"] .bk[data-page="detail"] .bk-left { display: none; }
+#heroview[data-mode="tabs"] .bk-ribbon { padding-left: calc(var(--u) * 2) !important; padding-right: calc(var(--u) * 2) !important; }
+
+/* Bolsa: coins, three tabs, a grid of big cells, the chosen one in a strip below */
+#heroview[data-screen="bag"] { grid-template-rows: auto minmax(0, 1fr) auto; }
+.bg-gold { color: var(--gold); white-space: nowrap; }
+.bg-tabs { flex: 1; display: flex; gap: calc(var(--u) * 2); justify-content: center; flex-wrap: wrap; }
+.bg-tabs button { padding: calc(var(--u) * 2) calc(var(--u) * 4) !important; color: var(--dim) !important; }
+.bg-tabs button.on { color: var(--text) !important; background: var(--win2) !important; }
+.bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--f2) * 9), 1fr)); gap: calc(var(--u) * 4); align-content: start; padding: calc(var(--u) * 5); overflow: auto; min-height: 0; }
+.bg-cell { display: flex !important; flex-direction: column; align-items: center; gap: calc(var(--u) * 2); text-align: center !important; }
+.bg-ico { width: calc(var(--f2) * 4); height: calc(var(--f2) * 4); image-rendering: pixelated; display: block; }
+.bg-who { position: absolute; left: calc(var(--u) * -2); top: calc(var(--u) * -2); width: calc(var(--f2) * 1.75); height: calc(var(--f2) * 1.75); image-rendering: pixelated; box-shadow: 0 0 0 var(--u) var(--ink); }
+.bg-who.on { box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--hi); }
+.bg-strip { display: flex; gap: calc(var(--u) * 4); align-items: center; justify-content: space-between; padding: calc(var(--u) * 3) calc(var(--u) * 5); }
+#heroview[data-screen="bag"][data-mode="tabs"] .bg-grid { grid-template-columns: minmax(0, 1fr); gap: calc(var(--u) * 2); }
+#heroview[data-mode="tabs"] .bg-cell { flex-direction: row; text-align: left !important; }
+#heroview[data-mode="tabs"] .bg-ico { width: calc(var(--f2) * 3); height: calc(var(--f2) * 3); }
+#heroview[data-mode="tabs"] .bg-who { width: var(--f2); height: var(--f2); }
+#heroview[data-mode="tabs"] .hv-top { flex-wrap: wrap; }
+#heroview[data-mode="tabs"] .bg-tabs { order: 3; flex-basis: 100%; }
+#heroview[data-mode="tabs"] .bk-right > .hv-btn { align-self: flex-start; }
+@media (orientation: portrait) { #heroview[data-mode="tabs"] .hv-slots { grid-template-columns: minmax(0, 1fr); gap: calc(var(--u) * 2); } }
+/* phone on its side: Palco and Ficha move into the top bar, the stage puts the scene beside the name and the slots,
+   the sheet puts the story beside the numbers, so nothing needs to scroll */
 @media (orientation: landscape) and (max-height: 500px) {
-  #heroview[data-mode="tabs"] { grid-template-rows: auto minmax(0, 1fr); }
-  #heroview[data-mode="tabs"] .hv-top { grid-row: 1; }
-  #heroview[data-mode="tabs"] .hv-modes { grid-row: 1; grid-column: 1; justify-self: start; align-self: center; z-index: 1; margin-left: calc(var(--u) * 5); }
-  #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 1.8); height: calc(var(--f2) * 1.8); }
+  #heroview[data-screen="hero"][data-mode="tabs"] { grid-template-rows: auto minmax(0, 1fr); }
+  #heroview[data-mode="tabs"] .hv-modes { grid-row: 1; grid-column: 1; justify-self: start; align-self: center; z-index: 1; margin-left: calc(var(--u) * 4); }
+  #heroview[data-mode="tabs"] .hv-top { grid-row: 1; grid-column: 1; flex-wrap: nowrap; }
+  #heroview[data-mode="tabs"] .hv-cols { grid-row: 2; }
+  #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 2); height: calc(var(--f2) * 2); }
+  #heroview[data-mode="tabs"][data-view="stage"] .hv-stage-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: calc(var(--u) * 4); }
+  #heroview[data-mode="tabs"] .hv-scene { grid-column: 2; grid-row: 1 / 3; }
+  #sidemenu .opt { padding-top: var(--u); padding-bottom: var(--u); } #sidemenu .opt.sep { margin-top: var(--u); padding-top: calc(var(--u) * 2); }
+  #heroview[data-mode="tabs"] .hv-slots { grid-template-columns: minmax(0, 1fr); align-content: end; }
+  #heroview[data-mode="tabs"][data-view="sheet"] .hv-sheet:not(.hv-choice) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: calc(var(--u) * 6); align-content: start; overflow: hidden; }
+  #heroview[data-mode="tabs"] .hv-sheet > * { grid-column: 1; }
+  #heroview[data-mode="tabs"] .hv-sheet > .hv-story { grid-column: 2; grid-row: 1 / 6; margin-top: 0; align-content: start; }
+  #heroview[data-mode="tabs"] .bg-tabs { order: 0; flex-basis: auto; }
 }
 
 /* ---- Batalha: barra de comandos só com ícones, em cima do cartão do herói da vez ---- */

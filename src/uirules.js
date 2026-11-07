@@ -210,6 +210,21 @@ const TARGET_TEXT = { enemy: 'Um inimigo', allEnemies: 'Todos os inimigos', ally
 const KIND_ICON = { phys: 'atk', heal: 'cura', revive: 'cura', holy: 'luz' };
 const FX_ICON = { fire: 'fogo', ice: 'spell', bolt: 'raio' };
 const spellIcon = sp => FX_ICON[sp.fx] || KIND_ICON[sp.kind] || 'spell';
+// The book's Usar button: only skills that work outside battle (heals); grey with the reason otherwise
+function fieldUse(sp, caster) {
+  if (!sp.field) return { field: false, ok: false, why: 'Só em batalha' };
+  if (caster.hp <= 0) return { field: true, ok: false, why: 'Caído não usa' };
+  if (caster.mp < sp.mp) return { field: true, ok: false, why: `Faltam ${sp.mp - caster.mp} PM` };
+  return { field: true, ok: true, why: '' };
+}
+// What a skill does, in simple numbers for this hero (s: total atk and mag), before the target's defense
+function spellEffect(sp, s) {
+  const each = sp.target === 'allEnemies' || sp.target === 'allAllies' ? ' em cada um' : '';
+  if (sp.kind === 'heal') return `Recupera cerca de ${Math.round(s.mag * sp.power + sp.base)} PV${each}`;
+  if (sp.kind === 'revive') return 'Levanta um aliado caído com metade dos PV';
+  if (sp.kind === 'phys') return `Cerca de ${Math.round(s.atk * sp.power)} de dano${each}` + (sp.pierce ? ', sem contar a armadura' : sp.bone ? `, ${Math.round(s.atk * sp.power * sp.bone)} nos mortos-vivos` : '');
+  return `Cerca de ${Math.round(s.mag * sp.power + sp.base)} de dano${each}`;
+}
 
 // Attributes: one row each, with the equipment bonus and a bar against the best of the party (0..1)
 const STAT_KEYS = ['atk', 'def', 'mag', 'res', 'agi'];
@@ -222,27 +237,31 @@ function statRows(values, i) {
 // "Faltam 12 XP para o nível 3"
 const xpLeftText = (xp, lv, next) => `Faltam ${Math.max(0, next - xp)} XP para o nível\u00a0${lv + 1}`; // "nível 4" never splits
 
-// A hero's story grows with the game: each line has a flag (or none) and shows once the flag is set
-const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when]).map(l => l.text);
+// A hero's story grows with the game: each line has a flag (or none) and shows once the flag is set;
+// only the last STORY_MAX show, so the sheet never scrolls
+const STORY_MAX = 3;
+const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when]).map(l => l.text).slice(-STORY_MAX);
 // The quote: the last unlocked one
 const storyQuote = (quotes, flags) => storyLines(quotes, flags).at(-1) || '';
 
-// The party bag in three groups; the letter keeps its sealed name until it is read
-function bagGroups({ inv, key, owned, items, equips, keyItems, read, equip = {} }) {
+// The party bag in three tabs (always three, maybe empty); the letter keeps its sealed name until it is read
+function bagTabs({ inv, key, owned, items, equips, keyItems, read, equip = {} }) {
   const worn = id => equippedGear(equips[id].who, equips[id].slot, owned, equips, equip) === id;
   return [
     { title: 'Consumíveis', cells: Object.keys(items).filter(k => inv[k] > 0).map(k => ({ id: k, kind: 'item', icon: k, name: items[k].name, n: inv[k], desc: items[k].desc })) },
     { title: 'Equipamentos', cells: [...new Set(owned)].filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0,
-      who: equips[id].who, inUse: worn(id), desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, ${worn(id) ? 'em uso' : 'guardada'}` })) },
+      who: equips[id].who, inUse: worn(id), desc: equips[id].slot === 'arma' ? 'Arma' : 'Armadura' })) },
     { title: 'Itens-chave', cells: Object.keys(keyItems).filter(k => key[k]).map(k => ({ id: k, kind: 'key', icon: k, n: 0, desc: keyItems[k].desc,
       name: read || !keyItems[k].sealedName ? keyItems[k].name : keyItems[k].sealedName })) },
-  ].filter(g => g.cells.length);
+  ];
 }
+const bagGroups = o => bagTabs(o).filter(g => g.cells.length);
 
-// Three columns when there is room; on a phone (portrait, or landscape with little height) three tabs
+// Two columns (Heróis: stage and sheet; Livro: both pages) when there is room; on a phone (portrait, or landscape
+// with little height) one at a time
 const heroViewMode = (w, h) => (w < h || w < 900 || h < 520 ? 'tabs' : 'cols');
-// Views that Tab, Q and E cycle through: the book's two pages, or every tab on a phone
-const heroViewViews = mode => (mode === 'tabs' ? ['hero', 'sheet', 'skills', 'bag'] : ['skills', 'bag']);
+// Views that Tab, Q and E cycle through on the Heróis screen: none in two columns, Palco and Ficha on a phone
+const heroViewViews = mode => (mode === 'tabs' ? ['stage', 'sheet'] : []);
 // Text sizes of the screen: body at the menu size (never under 8 px of the font at a whole scale), titles at the dialog size
 function heroViewFonts(w, h, dpr = 1) {
   const f = fontScale(w, h, dpr);
@@ -316,4 +335,4 @@ const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { lab
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
 if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
-  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };
+  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

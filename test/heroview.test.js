@@ -63,13 +63,16 @@ test('attributes with equipment bonus and a bar against the best of the party', 
 test('the story grows with flags and never shows a spoiler or an em dash', () => {
   const a = D.HERO_STORY.aldo;
   assert.equal(R.storyLines(a.lines, {}).length, 2);
-  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).length, 4);
+  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).length, R.STORY_MAX, 'only the last three show');
+  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).at(-1), a.lines.at(-1).text);
   assert.equal(R.storyQuote(a.quotes, {}), 'Vim procurar trabalho. Só isso.');
   assert.equal(R.storyQuote(a.quotes, { bossDead: true }), 'Trabalho não falta. Isso eu garanto.');
   for (const id of IDS) {
     const st = D.HERO_STORY[id];
     assert.ok(R.storyLines(st.lines, {}).length >= 1 && R.storyQuote(st.quotes, {}), id);
     for (const l of [...st.lines, ...st.quotes]) assert.ok(!/—|Velkor|Morvath|Irmandade|dragão|Sindarin/i.test(l.text), l.text);
+    // short sentences, one per line, so the sheet never scrolls
+    for (const l of st.lines) assert.ok(l.text.length <= 70 && l.text.split(/[.!?](\s|$)/).filter(x => x && x.trim()).length === 1, l.text);
   }
 });
 
@@ -79,9 +82,15 @@ test('the bag groups consumables, equipment and key items; the letter keeps its 
   assert.deepEqual(g[0].cells.map(c => [c.id, c.n]), [['pocao', 3]]);
   assert.equal(g[2].cells[0].name, D.KEY_ITEMS.carta.sealedName);
   assert.deepEqual(R.bagGroups({ inv: {}, key: {}, owned: [], items: D.ITEMS, equips: D.EQUIPS, keyItems: D.KEY_ITEMS }), []);
+  // the Bolsa screen always has its three tabs, empty or not
+  assert.deepEqual(R.bagTabs({ inv: {}, key: {}, owned: [], items: D.ITEMS, equips: D.EQUIPS, keyItems: D.KEY_ITEMS }).map(t => [t.title, t.cells.length]),
+    [['Consumíveis', 0], ['Equipamentos', 0], ['Itens-chave', 0]]);
+  // equipment: who can use it and who is using it (the choice, or the strongest)
+  const eq = R.bagTabs({ inv: {}, key: {}, owned: ['espadaFerro', 'espadaPrata', 'cajadoRunico'], items: D.ITEMS, equips: D.EQUIPS, keyItems: D.KEY_ITEMS, equip: { aldo: { arma: 'espadaFerro' } } })[1].cells;
+  assert.deepEqual(eq.map(c => [c.id, c.who, c.inUse]), [['espadaFerro', 'aldo', true], ['espadaPrata', 'aldo', false], ['cajadoRunico', 'lyra', true]]);
 });
 
-test('layout: three columns on wide screens, three tabs on phones; text never under the minimum', () => {
+test('layout: two columns on wide screens, tabs on phones; text never under the minimum', () => {
   for (const [w, h, mode] of [[1280, 720, 'cols'], [1440, 900, 'cols'], [1920, 1080, 'cols'], [1366, 768, 'cols'], [390, 844, 'tabs'], [844, 390, 'tabs']]) {
     assert.equal(R.heroViewMode(w, h), mode, `${w}x${h}`);
     const dpr = w < 900 || h < 500 ? 3 : 1, f = R.heroViewFonts(w, h, dpr);
@@ -90,6 +99,21 @@ test('layout: three columns on wide screens, three tabs on phones; text never un
     assert.ok(f.big >= f.body);
   }
   assert.ok(R.heroViewFonts(1280, 720).body >= 16);
-  assert.deepEqual(R.heroViewViews('cols'), ['skills', 'bag']);
-  assert.deepEqual(R.heroViewViews('tabs'), ['hero', 'sheet', 'skills', 'bag']);
+  assert.deepEqual(R.heroViewViews('cols'), [], 'stage and sheet side by side');
+  assert.deepEqual(R.heroViewViews('tabs'), ['stage', 'sheet'], 'Palco and Ficha on a phone');
+});
+
+test('book: which skills work outside battle, the Usar button grey with the reason, effects in simple numbers', () => {
+  const S = D.SPELLS, teo = { hp: 30, mp: 5 };
+  assert.deepEqual(R.fieldUse(S.cura, teo), { field: true, ok: true, why: '' });
+  assert.deepEqual(R.fieldUse(S.curaTotal, teo), { field: true, ok: false, why: 'Faltam 5 PM' });
+  assert.equal(R.fieldUse(S.cura, { hp: 0, mp: 20 }).ok, false);
+  assert.deepEqual(R.fieldUse(S.fogo, teo), { field: false, ok: false, why: 'Só em batalha' });
+  const fieldIds = Object.keys(S).filter(k => R.fieldUse(S[k], { hp: 1, mp: 99 }).ok);
+  assert.deepEqual(fieldIds.sort(), ['cura', 'curaTotal', 'reviver']);
+  assert.equal(R.spellEffect(S.cura, { atk: 10, mag: 10 }), 'Recupera cerca de 40 PV');
+  assert.equal(R.spellEffect(S.curaTotal, { atk: 10, mag: 10 }), 'Recupera cerca de 30 PV em cada um');
+  assert.equal(R.spellEffect(S.golpe, { atk: 20, mag: 0 }), 'Cerca de 36 de dano');
+  assert.match(R.spellEffect(S.quebraJunta, { atk: 20, mag: 0 }), /mortos-vivos/);
+  for (const [k, sp] of Object.entries(S)) assert.ok(!R.spellEffect(sp, { atk: 10, mag: 10 }).includes('NaN'), k);
 });

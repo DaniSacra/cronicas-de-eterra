@@ -101,34 +101,34 @@ const START_GEAR = {
 const HERO_STORY = {
   aldo: {
     lines: [
-      { text: 'Chegou a Valmor sozinho, com a espada nas costas e a bolsa vazia. Diz que veio procurar trabalho.' },
-      { text: 'A vila inteira sabe que ele volta por causa da Clara, a professora. Ninguém diz isso na cara dele.' },
-      { when: 'quest', text: 'Aceitou o pedido do ancião: descer à cripta da igreja velha e descobrir o que acorda os mortos.' },
-      { when: 'bossDead', text: 'O sino de Valmor parou. Agora a estrada leva a Erukh.' },
+      { text: 'Chegou a Valmor sozinho, com a espada nas costas e a bolsa vazia.' },
+      { text: 'Diz que veio por trabalho, mas a vila sabe que é pela Clara.' },
+      { when: 'quest', text: 'Aceitou descer à cripta e descobrir o que acorda os mortos.' },
+      { when: 'bossDead', text: 'O sino parou, e agora a estrada leva a Erukh.' },
     ],
     quotes: [{ text: 'Vim procurar trabalho. Só isso.' }, { when: 'bossDead', text: 'Trabalho não falta. Isso eu garanto.' }],
   },
   lyra: {
     lines: [
-      { text: 'Irmã caçula do Aldo. Chegou na carroça do correio, com mais livros que bagagem.' },
-      { text: 'Veio por duas coisas: o irmão e a fonte de luz de Valmor.' },
-      { when: 'fonteLyra', text: 'Tocou a água da fonte e sentiu que ela lembra de quem passa.' },
+      { text: 'Irmã caçula do Aldo, chegou com mais livros que bagagem.' },
+      { text: 'Veio pelo irmão e pela fonte de luz de Valmor.' },
+      { when: 'fonteLyra', text: 'Tocou a fonte e sentiu que a água lembra de quem passa.' },
     ],
     quotes: [{ text: 'Alguém tem que contar essa história direito.' }, { when: 'talk:claraLyra', text: 'Aldo vê a professora. Aldo esquece como se anda.' }, { when: 'fonteLyra', text: 'A água lembra de quem passa. Dá para sentir.' }],
   },
   teo: {
     lines: [
-      { text: 'Aprendiz, ainda aprendendo as coisas, com o sonho de servir no Templo. Veio ajudar a irmã Irene no inverno.' },
-      { when: 'teoWin', text: 'O grupo o achou no cemitério, cercado de mortos que não ficavam quietos.' },
-      { when: 'carta', text: 'Guarda uma carta com o selo real e não vai rompê-lo. Só a rainha pode.' },
+      { text: 'Aprendiz, sonha servir no Templo e veio ajudar a irmã Irene.' },
+      { when: 'teoWin', text: 'O grupo o achou no cemitério, cercado de mortos inquietos.' },
+      { when: 'carta', text: 'Guarda uma carta de selo real que só a rainha pode romper.' },
     ],
     quotes: [{ text: 'Os mortos merecem descanso. Os vivos também.' }],
   },
   andilla: {
     lines: [
       { text: 'Joga dados na taverna e ganha mais do que devia.' },
-      { when: 'andillaNome', text: 'Diz que se chama Andilla. Perdeu um estojo de ganchos no cemitério e não explica para que serve.' },
-      { when: 'bossDead', text: 'Ficou no grupo. Diz que é pelo ouro.' },
+      { when: 'andillaNome', text: 'Diz que se chama Andilla e perdeu uns ganchos no cemitério.' },
+      { when: 'bossDead', text: 'Ficou no grupo e jura que é pelo ouro.' },
     ],
     quotes: [{ text: 'Tudo tem preço. Até a coragem.' }, { when: 'porque', text: 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.' }],
   },
