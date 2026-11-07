@@ -12,10 +12,22 @@ test('crispPx lands on multiples of 8 device pixels', () => {
   assert.equal(R.crispPx(12, 2), 12); // 24 device px: crisp as is
 });
 
+test('no text under the body minimum: 16 px on a PC screen, 12 on a phone, in every size of the type scale', () => {
+  for (const [w, h, dpr] of [[1280, 720, 1], [844, 390, 3], [390, 844, 3], [1920, 1080, 1], [1000, 650, 1]]) {
+    const f = R.fontScale(w, h, dpr), min = R.bodyMin(w, h);
+    for (const k of ['f1', 'f2', 'fd']) assert.ok(f[k] >= min, `${w}x${h} ${k} ${f[k]} < ${min}`);
+  }
+  assert.equal(R.bodyMin(1280, 720), 16);
+  assert.equal(R.bodyMin(390, 844), 12);
+  // fixed sizes in the stylesheet never go under the phone minimum either (0 hides a glyph behind its icon)
+  const css = require('node:fs').readFileSync(`${__dirname}/../style.css`, 'utf8');
+  for (const [, n] of css.matchAll(/font-size:\s*([\d.]+)px/g)) assert.ok(+n === 0 || +n >= 12, `font-size ${n}px`);
+});
+
 test('fontScale: PC, large PC and phone', () => {
   assert.deepEqual(R.fontScale(1280, 800, 1), { f1: 16, f2: 16, fd: 24 });
-  assert.deepEqual(R.fontScale(1000, 650, 1), { f1: 8, f2: 16, fd: 16 });
-  assert.deepEqual(R.fontScale(390, 844, 2), { f1: 8, f2: 12, fd: 12 });
+  assert.deepEqual(R.fontScale(1000, 650, 1), { f1: 16, f2: 16, fd: 16 }); // 12 would blur at 1x: crispPx rounds it to 16
+  assert.deepEqual(R.fontScale(390, 844, 2), { f1: 12, f2: 12, fd: 12 });
   assert.deepEqual(R.fontScale(1920, 1080, 1), { f1: 16, f2: 24, fd: 24 });
 });
 

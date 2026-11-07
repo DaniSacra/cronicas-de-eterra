@@ -1,7 +1,11 @@
 /* ===== Eterra · sistema de janelas clássico =====
-   --u = 1 "pixel" da moldura. Textos em múltiplos de 8 px (a Press Start 2P é desenhada numa grade de 8). */
+   --u = 1 "pixel" da moldura. Textos em múltiplos de 8 px (a Press Start 2P é desenhada numa grade de 8).
+   Duas fontes: Pixelify Sans no texto corrido (falas, descrições, listas, história) e Press Start 2P só em títulos,
+   números e rótulos curtos (.px e a lista de seletores logo abaixo). Corpo mínimo: 16 px no PC, 12 no celular.
+   A Pixelify tem letra mais baixa (x de 0,45 contra 0,75): font-size-adjust a mostra 1,25 vezes maior, ainda mais estreita. */
 :root {
-  --u: 3px; --bw: calc(var(--u) * 4); --f1: 8px; --f2: 16px; --fd: 16px; --face: 128px;
+  --font-text: 'Pixelify Sans', ui-sans-serif, sans-serif; --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+  --u: 3px; --bw: calc(var(--u) * 4); --f1: 12px; --f2: 16px; --fd: 16px; --face: 128px;
   --boxw: min(100%, calc(var(--fd) * 56)); /* dialog box and party strip share one width */
   /* Palette: parchment windows in a wooden frame (src/frame.js draws the frame from the same colors) */
   --ink: #24140a; --win: #ecd8aa; --win2: #d6b984; --rim: #9a6236; --rim2: #5c3318;
@@ -18,8 +22,12 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
-  font-family: 'Press Start 2P', ui-monospace, monospace; -webkit-user-select: none; user-select: none;
+  font-family: var(--font-text); font-size-adjust: 0.5625; -webkit-user-select: none; user-select: none;
   -webkit-font-smoothing: none; font-smooth: never; }
+/* Press Start 2P: titles, numbers, short labels and buttons */
+.px, h1, h2, h3, h4, .title .sub:not(.end), .num, .card .nm, .card .lv, .float, #hudbar .chip, #hudtop .label, #cmdbar, #menu.icons .opt, #info::first-line,
+  .hv-close, .hv-btn, .hv-cost, .hv-box > b, .bg-gold, .bg-tabs, .bk-title, .hv-name, .hv-bar b, .hv-stat b, .hv-seal, .hv-ko, .bk-ribbon,
+  .card.elo::after { font-family: var(--font-pixel); font-size-adjust: none; }
 #game { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 #game.on-title #party, #game.on-title #info { display: none !important; }
 
@@ -139,14 +147,14 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .title h1.red { background-image: linear-gradient(180deg, #ffd0c0 0 28%, #ff7060 28% 52%, #d02a2a 52% 76%, #701010 76%); }
 .title .sub { margin: 0; padding: 14px 22px; font-size: 16px; color: var(--text); letter-spacing: 2px; }
 .title p { margin: 0; font-size: 16px; color: var(--light); text-shadow: 3px 3px 0 var(--ink); }
-.title p.small { font-size: 8px; color: var(--dim); }
+.title p.small { font-size: 12px; color: var(--dim); }
 .title .sub.end { display: flex; flex-direction: column; gap: .55em; max-width: min(92vw, calc(var(--f2) * 36)); text-align: center; letter-spacing: 0; }
 .title .sub.end p { font-size: var(--f2); line-height: 1.35; color: var(--text); text-shadow: none; }
 #overlay.ov-end { padding-bottom: 38vh; background: rgba(3, 3, 12, .45); } /* a light veil over the dawn */
 #game.on-end #party, #game.on-end #hudbar, #game.on-end #wmBtn, #game.on-end #touch [data-k="m"] { display: none !important; } /* the end screen owns the whole view */
 @media (max-height: 500px) { #overlay.ov-end { padding: 8px 0 0; justify-content: flex-start; } #overlay.ov-end .emblem { display: none; } }
 .foot { position: absolute; bottom: 12px; left: 0; right: 0; font-size: var(--f1); color: var(--dim); }
-@media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 8px; } .title { gap: 16px; } }
+@media (max-width: 900px) { .title h1 { font-size: 32px; letter-spacing: 2px; } .title .emblem { width: 72px; height: 72px; } .title .sub { font-size: 12px; } .title { gap: 16px; } }
 
 /* Título: logo no céu e menu compacto no canto de baixo à esquerda, nas posições de titleLayout (src/titlebg.js) */
 #overlay.ov-title { display: block !important; background: none; pointer-events: none; }
@@ -189,6 +197,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   /* 4 cartões em pé: nome por cima do nível, números sem quebrar */
   .card .nm span:first-child { font-size: var(--f1); }
   .card .num { white-space: nowrap; letter-spacing: -.04em; overflow: hidden; }
+  /* narrow cards: name, level and numbers in the narrow font at the body minimum; the number takes its bar's color */
+  .card .nm span:first-child, .card .num, .card .lv { font-family: var(--font-text); font-size-adjust: 0.5625; letter-spacing: 0; }
+  .card .num b { display: none; } .card .mpn { color: #2a5aa0; } .card .mpn.en { color: #9a6a18; }
   .card { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 2); } .card .pf { align-self: center; }
 }
 @media (orientation: portrait) and (pointer: coarse) { #bottom { padding-bottom: 150px; } #touch { width: calc(100% - 16px); opacity: .9; } }
@@ -200,7 +211,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 @media (max-width: 480px) { .title h1 { font-size: 24px; } }
 @media (orientation: portrait) { #menu[style*="repeat(3"] { grid-template-columns: repeat(2, 1fr) !important; } }
 @media (max-height: 820px) { .title h1 { font-size: 48px; } .title .emblem { width: 90px; height: 90px; } .title { gap: 16px; } }
-@media (max-height: 500px) { .title h1 { font-size: 24px; letter-spacing: 2px; } .title .emblem { width: 45px; height: 45px; } .title { gap: 8px; } .title .sub { font-size: 8px; padding: 8px 12px; } #overlay { padding-bottom: 44vh; } .foot { display: none; } }
+@media (max-height: 500px) { .title h1 { font-size: 24px; letter-spacing: 2px; } .title .emblem { width: 45px; height: 45px; } .title { gap: 8px; } .title .sub { font-size: 12px; padding: 8px 12px; } #overlay { padding-bottom: 44vh; } .foot { display: none; } }
 
 /* Acento circunflexo do logo, desenhado sobre a letra (ver logoText em src/main.js) */
 .title h1 .acc { position: relative; }
@@ -214,7 +225,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
     grid-template-areas: 'nm nm' 'hp hp' 'mp mp' 'hpn mpn'; }
   .card .nm { grid-area: nm; } .card .bar.hp { grid-area: hp; } .card .bar.mp { grid-area: mp; margin-top: 1px; }
   .card .hpn { grid-area: hpn; } .card .mpn { grid-area: mpn; } .card .bar { height: 3px; padding: 0; }
-  .card .info { column-gap: 4px; } .card .num { letter-spacing: -.125em; } .card .num b { display: none; } .card .mpn { color: #2a5aa0; } .card .mpn.en { color: #9a6a18; } /* no room for "PV"/"PM"/"EN": the number has its bar's color */
+  .card .info { column-gap: 4px; } .card .num { letter-spacing: 0; font-family: var(--font-text); font-size-adjust: 0.5625; } /* the narrow font keeps the body minimum */ .card .num b { display: none; } .card .mpn { color: #2a5aa0; } .card .mpn.en { color: #9a6a18; } /* no room for "PV"/"PM"/"EN": the number has its bar's color */
   #msgbox { min-height: 0; padding: 8px 12px; } #menu { gap: .3em 1.5em; margin-top: .3em; } #bottom { padding: 6px; gap: 4px; }
 }
 
@@ -520,7 +531,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   .card .nm span:first-child { font-size: var(--f1); } /* names fit the narrower cards, as in portrait */
   #game:not(.in-battle) .card .pfw { display: none; } /* walking: no faces, so "58/58" and the PM fit on one line */
   .card .num { white-space: nowrap; }
-  #touch .pad2 .small { font-size: 5.34px; letter-spacing: 0; } /* MAPA: 16 real pixels at 3x, sharp */
+  #touch .pad2 .small { font-size: 12px; letter-spacing: 0; } /* MAPA: the body minimum, in Pixelify Sans it fits the button */
 }
 @media (pointer: coarse) { #game.in-battle #touch [data-k="m"] { display: none; } } /* no map in battle */
 #bottom > #info { align-self: flex-start; margin-bottom: calc(var(--u) * 2); } /* low note (fog areas): left, above the party */

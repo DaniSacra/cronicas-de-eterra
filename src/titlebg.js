@@ -212,8 +212,11 @@ function titleLayout({ W, H, px, f1, f2 }) {
   const menu = { w: Math.ceil(17 * m + 2 * pad), h: Math.ceil(3 * 2.3 * m + 1.6 * t + 2 * pad) };
   Object.assign(menu, { x: 4, y: H - 4 - menu.h });
   const L = H >= 300 && W >= 240 ? 16 : 8;                       // letras do logo, em pixels lógicos (sempre nítidas)
-  // logo em duas linhas, subtítulo e crédito, com meia letra de espaço entre eles
-  const logo = { w: Math.ceil(Math.max(9 * L, 39 * t)), h: Math.ceil(2 * 1.3 * L + L / 2 + 1.3 * L / 2 + L / 2 + 1.6 * t), y: 4, L };
+  // logo em duas linhas, subtítulo e crédito, com meia letra de espaço entre eles; o crédito (39 letras) é em
+  // Pixelify Sans, com letra de cerca de 0,6 da altura
+  // (style.css hides it on screens up to 500 px tall, so it takes no room there)
+  const credit = H * px > 500;
+  const logo = { w: Math.ceil(Math.max(9 * L, credit ? 39 * 0.6 * t : 0)), h: Math.ceil(2 * 1.3 * L + L / 2 + 1.3 * L / 2 + (credit ? L / 2 + 1.6 * t : 0)), y: 4, L };
   logo.x = Math.round((W - logo.w) / 2);
   // horizonte: Erukh fica sempre acima do menu; em pé, sobe para pouco além do meio e leva a ruína junto
   const hy = H > W ? Math.round(H * 0.55) : Math.min(H - 62, menu.y - 6);

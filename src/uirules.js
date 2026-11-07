@@ -5,10 +5,12 @@ function crispPx(target, dpr = 1) {
   return Math.max(1, Math.round(target * dpr / 8)) * 8 / dpr;
 }
 
+// The smallest text the game shows: 16 px on a PC screen, 12 on a phone (or a small window). w, h in CSS px.
+const bodyMin = (w, h) => (w <= 900 || h <= 500 ? 12 : 16);
 // One type scale for the whole UI (docs/ui-spec.md §5). w, h in CSS px.
 function fontScale(w, h, dpr = 1) {
   const land = w >= h, huge = land && w >= 1700, large = land && w >= 1200 && h >= 700, small = w <= 900 || h <= 500;
-  const t1 = huge || large ? 16 : 8; // small text: 16 on a PC screen (2026-11-06), 8 on small ones
+  const t1 = huge || large ? 16 : 12; // small text: 16 on a PC screen (2026-11-06), the body minimum (12) on small ones
   const t2 = huge ? 24 : small ? 12 : 16;
   const td = huge || large ? 24 : small ? 12 : 16; // dialog text
   return { f1: crispPx(t1, dpr), f2: crispPx(t2, dpr), fd: crispPx(td, dpr) };
@@ -346,5 +348,5 @@ const encounterChance = since => (since < 5 ? 0 : Math.min(0.22, 0.05 + (since -
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
