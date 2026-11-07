@@ -28,7 +28,7 @@ BUILDINGS.forEach(b => { b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h -
 
 // Aparência: pele, cabelo, roupa, pernas, e o jeito de cada um (campos de estilo em src/folk.js)
 const LOOKS = {
-  aldo:  { skin: '#f0c090', hair: '#7a4220', body: '#d08a30', legs: '#5a3a20', hairStyle: 'spiky', eye: '#3a6ad0', belt: '#5a3418', tool: 'sword', cape: '#b03a30' },
+  aldo:  { skin: '#f0c090', hair: '#7a4220', body: '#d08a30', legs: '#5a3a20', hairStyle: 'spiky', eye: '#3a6ad0', belt: '#5a3418', tool: 'sword', cape: '#2c3c80' }, // capa azul da paleta: de costas ele não vira um bloco vermelho como a Andilla
   lyra:  { skin: '#f4cca0', hair: '#f0d860', body: '#a050c0', legs: '#5a2a70', robe: true, long: true, hairStyle: 'long', hat: 'circlet', gem: '#40c0ff', tool: 'staff', orb: '#9ae8ff', eye: '#9a50d0', trim: '#f0c040', blush: 1 },
   teo:   { skin: '#e8b888', hair: '#3a2a1a', body: '#e8f0e8', legs: '#4a8a6a', robe: true, hairStyle: 'messy', eye: '#3a9a5a', trim: '#4a8a6a', belt: '#4a8a6a', tool: 'satchel' },
   andilla: { skin: '#e8c0a0', hair: '#1a1418', body: '#7a7a82', legs: '#4a3424', mark: '#9a1a24', hairStyle: 'bob', eye: '#a02030', cape: '#5a5a64', tool: 'dagger', belt: '#3a2a20' }, // capa cinza como a dos encapuzados; lenço escuro no peito
@@ -786,7 +786,7 @@ function drawTown(now, bare = false) {
     c.save(); c.translate(x + 8, y + spr.height - 7); c.rotate(-Math.PI / 2); c.drawImage(spr, -8, -spr.height / 2); c.restore();
   }
   TownArt.weather(c, A, now, camX, camY, VW, VH); // fumaça, anoitecer com poças de luz, neve caindo
-  if (A.vision) drawSight(c, A, lp, camX, camY);
+  if (A.vision && !bare) drawSight(c, A, lp, camX, camY); // fundo da batalha: o lugar inteiro, sem a névoa
   // Setinha amarela sobre o próximo lugar da história, balançando
   const goal = !bare && goalSpot();
   if (goal) {
@@ -794,7 +794,7 @@ function drawTown(now, bare = false) {
     c.fillStyle = '#1a1000'; c.beginPath(); c.moveTo(gx - 5, gy - 1); c.lineTo(gx + 5, gy - 1); c.lineTo(gx, gy + 6); c.closePath(); c.fill();
     c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(gx - 3.5, gy); c.lineTo(gx + 3.5, gy); c.lineTo(gx, gy + 4.5); c.closePath(); c.fill();
   }
-  if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  if (TOWN.dim > 0 && !bare) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
   if (A.vision) { // a luz quente do lampião em volta do grupo
     const gx = lp.x - camX + TS / 2, gy = lp.y - camY + TS / 2, R = A.vision.radius * TS, gr = c.createRadialGradient(gx, gy, 0, gx, gy, R);
     gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');

@@ -77,7 +77,10 @@ let lastGoal = null;
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 function placeHint(place, kind, help) {
   const lines = [];
-  if (help && !G.seen['ajuda_' + kind]) { G.seen['ajuda_' + kind] = 1; lines.push(TOUCH ? 'Setas andar · OK interagir · ✕ menu' : help); }
+  if (help && !G.seen['ajuda_' + kind]) { G.seen['ajuda_' + kind] = 1; lines.push(keepPairs(TOUCH ? 'Setas andar · OK interagir · ✕ menu' : help)); }
+  // where the party sees only around itself (cemetery fog), the note sits low, above the party strip, off the new area
+  const info = document.getElementById('info'), home = document.getElementById(hintHome(G.mode, !!(G.mode === 'town' && TOWN.A.vision)));
+  if (info && home && info.parentNode !== home) home.insertBefore(info, home.id === 'bottom' ? document.getElementById('party') : null);
   const goal = journalGoal();
   if (goal && goal !== lastGoal) { lines.push('Objetivo: ' + goal); lastGoal = goal; }
   if (lines.length) UI.info(lines.join('\n'));

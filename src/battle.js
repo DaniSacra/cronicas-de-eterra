@@ -366,7 +366,7 @@ async function tryRun(m, isBoss) {
 
 // Véu sobre o fundo da batalha, na cor do lugar
 const battleVeil = isBoss => isBoss ? 'rgba(58,20,72,.6)' : G.mode !== 'town' ? 'rgba(0,0,0,.5)'
-  : G.area === 'taverna' ? 'rgba(58,20,10,.5)' : 'rgba(21,30,78,.55)';
+  : G.area === 'taverna' ? 'rgba(58,20,10,.5)' : G.area === 'cemiterio' ? 'rgba(21,30,78,.35)' : 'rgba(21,30,78,.55)'; // no cemitério, véu leve: o morcego não some no fundo
 
 // ---------- Fluxo principal ----------
 // opts: surprise (força o resultado), intro (texto de entrada), hints (dicas do tutorial), noRun (texto ao tentar fugir)

@@ -40,3 +40,16 @@ test('the camera room for the dialog box holds through a scene and lets go when 
   hold = R.dialogPad(hold, 82, true); assert.equal(hold, 82, 'a bigger box moves it up once');
   assert.equal(R.dialogPad(hold, 0, false), 0, 'free to walk: the camera comes back');
 });
+
+test('control hints keep each key with its action, and in fog areas the note sits low', () => {
+  assert.equal(R.keepPairs('Setas andar · Esc menu'), 'Setas andar · Esc menu');
+  assert.equal(R.hintHome('town', true), 'bottom');
+  assert.equal(R.hintHome('town', false), 'hudbar');
+  assert.equal(R.hintHome('explore', false), 'hudbar');
+});
+
+test("Aldo's cape is the palette's night blue, not Andilla's red", () => {
+  const { run } = story(['aldo']);
+  assert.equal(run('LOOKS.aldo.cape'), '#2c3c80');
+  assert.ok(require('../src/palette.js').inPalette(run('LOOKS.aldo.cape')));
+});

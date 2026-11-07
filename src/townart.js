@@ -818,7 +818,7 @@ const TownArt = (() => {
 
   // ---------- Luz e clima (por quadro, por cima dos personagens) ----------
   // Poças de luz em degraus: cada anel tira um pouco do anoitecer e põe um pouco de âmbar. Sem degradê suave.
-  const lightRings = r => [{ r, cut: 0.35, warm: 0.10 }, { r: Math.round(r * 0.68), cut: 0.5, warm: 0.16 }, { r: Math.round(r * 0.38), cut: 0.7, warm: 0.24 }];
+  const lightRings = r => [{ r, cut: 0.25, warm: 0.14 }, { r: Math.round(r * 0.68), cut: 0.4, warm: 0.22 }, { r: Math.round(r * 0.38), cut: 0.55, warm: 0.32 }]; // poça dourada, não holofote creme
   const DUSK = 'rgba(28,40,96,.48)';   // noite #1c2860
   function disc(c, cx, cy, r) {
     const ry = Math.round(r * 0.7);    // achatada: chão em 3/4

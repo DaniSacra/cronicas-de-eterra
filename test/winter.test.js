@@ -17,7 +17,7 @@ test('winter colors come from the master palette', () => {
   for (const c of TownArt.WINTER_COLORS) assert.ok(inPalette(c), c);
 });
 
-test('light pools: whole-pixel rings, smaller inside, the center almost free of dusk', () => {
+test('light pools: whole-pixel rings, smaller inside, warmer inside; the center keeps a little dusk (gold, not a spotlight)', () => {
   for (const r of [12, 13, 22, 30]) {
     const rings = TownArt.lightRings(r);
     let left = 1;
@@ -26,7 +26,8 @@ test('light pools: whole-pixel rings, smaller inside, the center almost free of 
       if (i) assert.ok(g.r < rings[i - 1].r, `r=${r} ring ${i}`);
       left *= 1 - g.cut;
     });
-    assert.ok(left < 0.15, `center keeps ${left} of the dusk`);
+    assert.ok(left > 0.15 && left < 0.25, `center keeps ${left} of the dusk`);
+    rings.forEach((g, i) => { if (i) assert.ok(g.warm > rings[i - 1].warm, 'warmer towards the lamp'); });
   }
 });
 

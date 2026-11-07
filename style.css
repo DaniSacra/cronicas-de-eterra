@@ -430,4 +430,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   #game.in-battle #touch .pad { display: none; }
   #game.in-battle #bottom { padding-left: calc(110px + var(--u) * 2); padding-right: calc(var(--u) * 4); } /* no d-pad: OK/✕ move left */
   .card .nm span:first-child { font-size: var(--f1); } /* names fit the narrower cards, as in portrait */
+  #game:not(.in-battle) .card .pfw { display: none; } /* walking: no faces, so "58/58" and the PM fit on one line */
+  .card .num { white-space: nowrap; }
+  #touch .pad2 .small { font-size: 6.67px; } /* MAPA: 20 real pixels at 3x */
 }
+@media (pointer: coarse) { #game.in-battle #touch [data-k="m"] { display: none; } } /* no map in battle */
+#bottom > #info { align-self: flex-start; margin-bottom: calc(var(--u) * 2); } /* low note (fog areas): left, above the party */
