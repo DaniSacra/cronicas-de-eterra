@@ -835,6 +835,11 @@ const GEAR_LOOK = {
   cotaMalha:    { b: '#cbd8ec', c: '#a4b8da', d: '#7488b8', q: '#4a5a8c' },
   cajadoRunico: { E: '#f0a8f8', F: '#ffffff', v: '#72308e', V: '#40145a' },
   mantoSagrado: { a: '#f0d860', A: '#e8b840', B: '#c89c38', T: '#e8b840' },
+  // Gaspar's forge: the weapon in hand changes with the choice too
+  espadaCurta:  { g: '#cbd8ec', G: '#a2a2ac', x: '#7a7a82' },
+  macaFerro:    { g: '#cbd8ec', G: '#7a7a82', x: '#55555e' },
+  adagaAfiada:  { g: '#ffffff', G: '#cbd8ec', x: '#a4b8da' },
+  cajadoFreixo: { v: '#d8a478', V: '#9a6232' },
 };
 
 if (typeof module !== 'undefined') module.exports = { HERO_BODY, GEAR_LOOK };

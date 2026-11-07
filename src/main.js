@@ -12,7 +12,7 @@ let SPR = null;
 
 const G = {
   mode: 'title', floor: 0, x: 1, y: 1, dir: 1,
-  party: [], inv: {}, opened: {}, gear: [], explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
+  party: [], inv: {}, opened: {}, gear: [], equip: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
   sinceFight: 0, anim: null, busy: false, queue: [], held: new Set(),
   bigMap: false, fade: 0, fadeAnim: null, flash: null, flashColor: '255,255,255', shakeUntil: 0,
 };
@@ -259,7 +259,7 @@ async function interact(o) {
     const eq0 = EQUIPS[o.loot];
     if (eq0 && !inParty(eq0.who)) { await UI.say(`Um equipamento que só ${heroName(eq0.who)} saberia usar.`); return; }
     if (!G.seen.bau1 && inParty('andilla')) { G.seen.bau1 = 1; await say2(heroName('andilla'), 'Tranca velha. Dois ganchos e... pronto.'); }
-    const delta = EQUIPS[o.loot] ? equipDelta(o.loot, HeroView.owned(), EQUIPS) : null; // before the chest counts as opened
+    const delta = EQUIPS[o.loot] ? equipDelta(o.loot, HeroView.owned(), EQUIPS, G.equip) : null; // before the chest counts as opened
     G.opened[key] = true; Sfx.chest();
     if (ITEMS[o.loot]) {
       G.inv[o.loot] = (G.inv[o.loot] || 0) + 1;
@@ -432,7 +432,7 @@ function saveGame() {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 3, floor: G.floor, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
-      inv: G.inv, opened: G.opened, gear: G.gear || [], explored, bossDead: G.bossDead,
+      inv: G.inv, opened: G.opened, gear: G.gear || [], equip: G.equip || {}, explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
     }));
@@ -451,7 +451,7 @@ function loadGame() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return false;
-    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.gear = s.gear || []; G.bossDead = s.bossDead;
+    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.gear = s.gear || []; G.equip = s.equip || {}; // saves without a choice wear the strongest piece of each slot G.bossDead = s.bossDead;
     G.gold = s.gold || 0; G.quest = s.quest ?? 1; // saves antigos já estavam na dungeon
     G.key = s.key || { carta: true }; G.intro = s.intro ?? 1;
     G.seen = s.seen || {};
@@ -556,7 +556,7 @@ async function titleScreen() {
 async function newGame() {
   G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no prólogo
   G.inv = { pocao: 2 };
-  G.opened = {}; G.gear = []; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
+  G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();
@@ -567,7 +567,7 @@ async function newGame() {
 async function quickDungeon() {
   G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
-  G.opened = {}; G.gear = []; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
+  G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;
   G.key.estojo = false; // já devolvido à ladina
   G.seen = { job: 1, cem1: 1, cem2: 1, cem3: 1, teoWin: 1, estojo: 1, cemEntrou: 1, hugo4: 1, andillaNome: 1 };
   G.macros = normalizeMacros(); G.lastRound = null;

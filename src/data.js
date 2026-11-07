@@ -73,29 +73,29 @@ const ITEMS = {
 };
 
 const EQUIPS = {
-  espadaFerro:  { name: 'Espada de Ferro', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 6 } },
-  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', slot: 'armadura', icon: 'def',   bonus: { def: 15 } },
-  cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'spell', bonus: { mag: 6 } },
-  espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'atk',   bonus: { atk: 10 } },
-  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'def',   bonus: { def: 13, mag: 5 } },
+  espadaFerro:  { name: 'Espada de Ferro', who: 'aldo', slot: 'arma',     icon: 'espada',   bonus: { atk: 6 } },
+  cotaMalha:    { name: 'Cota de Malha',   who: 'aldo', slot: 'armadura', icon: 'cota',   bonus: { def: 15 } },
+  cajadoRunico: { name: 'Cajado Rúnico',   who: 'lyra', slot: 'arma',     icon: 'cajado', bonus: { mag: 6 } },
+  espadaPrata:  { name: 'Espada de Prata', who: 'aldo', slot: 'arma',     icon: 'espada',   bonus: { atk: 10 } },
+  mantoSagrado: { name: 'Manto Sagrado',   who: 'teo',  slot: 'armadura', icon: 'manto',   bonus: { def: 13, mag: 5 } },
   // Forja do Gaspar: aço simples de Valmor, mais fraco que o que está na cripta
-  espadaCurta:   { name: 'Espada Curta',     who: 'aldo',    slot: 'arma',     icon: 'atk',   bonus: { atk: 3 } },
-  gibao:         { name: 'Gibão Acolchoado', who: 'aldo',    slot: 'armadura', icon: 'def',   bonus: { def: 5 } },
-  cajadoFreixo:  { name: 'Cajado de Freixo', who: 'lyra',    slot: 'arma',     icon: 'spell', bonus: { mag: 2 } },
-  capaLa:        { name: 'Capa de Lã',       who: 'lyra',    slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
-  macaFerro:     { name: 'Maça de Ferro',    who: 'teo',     slot: 'arma',     icon: 'atk',   bonus: { atk: 2 } },
-  habitoForrado: { name: 'Hábito Forrado',   who: 'teo',     slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
-  adagaAfiada:   { name: 'Adaga Afiada',     who: 'andilla', slot: 'arma',     icon: 'atk',   bonus: { atk: 3 } },
-  gibaoCouro:    { name: 'Gibão de Couro',   who: 'andilla', slot: 'armadura', icon: 'def',   bonus: { def: 4 } },
+  espadaCurta:   { name: 'Espada Curta',     who: 'aldo',    slot: 'arma',     icon: 'espada',   bonus: { atk: 3 } },
+  gibao:         { name: 'Gibão Acolchoado', who: 'aldo',    slot: 'armadura', icon: 'couro',   bonus: { def: 5 } },
+  cajadoFreixo:  { name: 'Cajado de Freixo', who: 'lyra',    slot: 'arma',     icon: 'cajado', bonus: { mag: 2 } },
+  capaLa:        { name: 'Capa de Lã',       who: 'lyra',    slot: 'armadura', icon: 'manto',   bonus: { def: 4 } },
+  macaFerro:     { name: 'Maça de Ferro',    who: 'teo',     slot: 'arma',     icon: 'maca',   bonus: { atk: 2 } },
+  habitoForrado: { name: 'Hábito Forrado',   who: 'teo',     slot: 'armadura', icon: 'habito',   bonus: { def: 4 } },
+  adagaAfiada:   { name: 'Adaga Afiada',     who: 'andilla', slot: 'arma',     icon: 'adaga',   bonus: { atk: 3 } },
+  gibaoCouro:    { name: 'Gibão de Couro',   who: 'andilla', slot: 'armadura', icon: 'couro',   bonus: { def: 4 } },
 };
 
 // Heroes screen: attribute names in full, the starting gear of each hero (shown until something better is found)
 const STAT_FULL = { atk: 'Ataque', def: 'Defesa', mag: 'Magia', res: 'Resistência', agi: 'Agilidade' };
 const START_GEAR = {
-  aldo:    { arma: { name: 'Espada de viagem', icon: 'atk' },  armadura: { name: 'Túnica de couro', icon: 'def' } },
-  lyra:    { arma: { name: 'Cajado de estudo', icon: 'spell' }, armadura: { name: 'Vestido de viagem', icon: 'def' } },
-  teo:     { arma: { name: 'Maça de aprendiz', icon: 'atk' },    armadura: { name: 'Hábito branco', icon: 'def' } },
-  andilla: { arma: { name: 'Adaga', icon: 'atk' },             armadura: { name: 'Capa cinza', icon: 'def' } },
+  aldo:    { arma: { name: 'Espada de viagem', icon: 'espada' }, armadura: { name: 'Túnica de couro', icon: 'tunica' } },
+  lyra:    { arma: { name: 'Cajado de estudo', icon: 'cajado' }, armadura: { name: 'Vestido de viagem', icon: 'tunica' } },
+  teo:     { arma: { name: 'Maça de aprendiz', icon: 'maca' },   armadura: { name: 'Hábito branco', icon: 'habito' } },
+  andilla: { arma: { name: 'Adaga', icon: 'adaga' },            armadura: { name: 'Capa cinza', icon: 'manto' } },
 };
 // The story of each hero grows with the game: a line shows once its flag is set (flags: G.seen, plus quest, bossDead, carta)
 const HERO_STORY = {

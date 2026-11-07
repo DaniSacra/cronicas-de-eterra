@@ -659,7 +659,7 @@ async function forge() {
       const id = await UI.choose([...forgeOptions(G.gold, HeroView.owned()), { label: 'Voltar', value: null }],
         { title: `${GASPAR}:\nPara quem vai ser?  (${G.gold} moedas)`, cancel: true, cols: 2, party: true });
       if (id == null) break;
-      const delta = equipDelta(id, HeroView.owned(), EQUIPS);
+      const delta = equipDelta(id, HeroView.owned(), EQUIPS, G.equip);
       G.gold -= FORGE.find(([f]) => f === id)[1]; G.gear = [...(G.gear || []), id]; Sfx.coin();
       await UI.say(wearGear(id, delta).replace('Encontraram', 'Compraram'));
       saveGame(); // the coins and the gear go together

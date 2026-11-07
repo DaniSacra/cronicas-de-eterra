@@ -49,3 +49,21 @@ test('review 2026-11-07 (2): the forge sells weak gear; a hero wears the stronge
   assert.ok(log.includes('Compraram: Espada Curta!\nAldo equipa (ATQ +3).'));
   assert.ok(run.json('forgeOptions(100, G.gear)').find(o => o.value === 'espadaCurta').disabled, 'no second copy');
 });
+
+test('equipment choice: the strongest by default (old saves too), a chosen piece stays worn, Melhor picks the strongest', () => {
+  const R = require('../src/uirules.js');
+  const { EQUIPS } = require('../src/data.js');
+  const owned = ['espadaFerro', 'espadaCurta', 'cotaMalha'];
+  assert.equal(R.equippedGear('aldo', 'arma', owned, EQUIPS), 'espadaFerro', 'no choice (old save): the strongest');
+  assert.equal(R.equippedGear('aldo', 'arma', owned, EQUIPS, { aldo: { arma: 'espadaCurta' } }), 'espadaCurta');
+  assert.equal(R.equippedGear('aldo', 'arma', ['espadaFerro'], EQUIPS, { aldo: { arma: 'espadaCurta' } }), 'espadaFerro', 'a choice no longer owned falls back');
+  const list = R.gearChoices('aldo', 'arma', owned, EQUIPS, { aldo: { arma: 'espadaCurta' } });
+  assert.deepEqual(list.map(c => [c.id, c.equipped, c.diff]), [['espadaFerro', false, { atk: 3 }], ['espadaCurta', true, {}]]);
+  assert.deepEqual(R.bestChoice('aldo', owned, EQUIPS), { arma: 'espadaFerro', armadura: 'cotaMalha' });
+  assert.deepEqual(R.bonusDiff('espadaCurta', 'espadaFerro', EQUIPS), { atk: -3 });
+  assert.deepEqual(R.equipDelta('espadaPrata', owned, EQUIPS, { aldo: { arma: 'espadaCurta' } }), { atk: 7 }, 'against what is worn, not the best owned');
+  const pal = R.bodyPal({ g: 'x' }, 'aldo', ['espadaFerro', 'espadaPrata'], EQUIPS, { espadaFerro: { g: 'ferro' }, espadaPrata: { g: 'prata' } }, { aldo: { arma: 'espadaFerro' } });
+  assert.equal(pal.g, 'ferro', 'the weapon in hand is the one worn');
+  const bag = R.bagGroups({ inv: {}, key: {}, owned, items: {}, equips: EQUIPS, keyItems: {}, equip: {} }).find(g => g.title === 'Equipamentos').cells;
+  assert.deepEqual(bag.map(c => [c.id, c.who, c.inUse]), [['espadaFerro', 'aldo', true], ['espadaCurta', 'aldo', false], ['cotaMalha', 'aldo', true]]);
+});

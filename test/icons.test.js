@@ -36,7 +36,7 @@ test('disabled keeps the outline and greys everything else', () => {
   for (const id of ids) {
     const n = F.iconGrid(id, 'normal'), d = F.iconGrid(id, 'dis');
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-      if (n[y][x] === '.' || n[y][x] === 'k') assert.equal(d[y][x], n[y][x]);
+      if (n[y][x] === '.' || n[y][x] === 'k' || n[y][x] === 'a') assert.equal(d[y][x], n[y][x]);
       else assert.ok(d[y][x] === 'm' || d[y][x] === 'x', `${id} pixel ${x},${y} is grey`);
     }
   }
@@ -45,4 +45,15 @@ test('disabled keeps the outline and greys everything else', () => {
 test('unknown icon or state fails loudly', () => {
   assert.throws(() => F.iconGrid('nope'));
   assert.throws(() => F.iconGrid('atk', 'shiny'));
+});
+
+test('every equipment, from the start, the crypt and the forge, has its own kind of icon, in master palette colors', () => {
+  const { EQUIPS, START_GEAR } = require('../src/data.js');
+  const { inPalette } = require('../src/palette.js');
+  const all = [...Object.values(EQUIPS), ...Object.values(START_GEAR).flatMap(g => Object.values(g))];
+  for (const e of all) {
+    assert.ok(F.GEAR_ICONS[e.icon], `${e.name}: ${e.icon}`);
+    for (const row of F.GEAR_ICONS[e.icon]) for (const ch of row) if (ch !== '.') assert.ok(inPalette(F.GEAR_ICON_PAL[ch]), `${e.icon}: ${ch}`);
+  }
+  assert.equal(START_GEAR.teo.arma.icon, 'maca', 'the apprentice mace is a mace, not a sword');
 });

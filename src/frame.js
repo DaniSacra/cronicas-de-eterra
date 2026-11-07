@@ -27,6 +27,14 @@ const UI_PAL = {
   q: '#ecd8aa', // parchment
   Q: '#d6b984', // parchment, darker (slots, inset)
 };
+// Equipment icons are drawn with master palette colors only (src/palette.js): a is their outline
+const GEAR_ICON_PAL = {
+  a: '#26202e', c: '#e8eff8', e: '#a4b8da', i: '#7488b8', j: '#d8a478', l: '#9a6232', u: '#6a3a1a',
+  v: '#f0d860', z: '#c89c38', A: '#a2a2ac', C: '#7a7a82', E: '#55555e', G: '#f0a8f8', I: '#a84ad8',
+  M: '#b07c58', N: '#f4cca0', O: '#3a78c8', R: '#2c3c80', S: '#3a9a6a', T: '#2a5440', U: '#a8323e', V: '#7a1a24', L: '#cbd8ec',
+};
+Object.assign(UI_PAL, GEAR_ICON_PAL);
+const OUTLINES = new Set(['k', 'a']);
 
 // ---------- 9-slice frame: 16×16 tile, 3 px corners, 10 px tileable edges ----------
 const FRAME_SLICE = 4;
@@ -73,6 +81,45 @@ const POTION = [
   '................', '......kkkk......', '......knnk......', '......kbbk......', '.....ktsssk.....', '....ktsssssk....',
   '...ktLLLLLLsk...', '..ktLLLLLLLLsk..', '..kLtLLLLLLLDk..', '..kLLLLLLLLLDk..', '..kLLLLLLLLDDk..', '...kDLLLLLDDk...',
   '....kkDDDDkk....', '......kkkk......', '................', '................'];
+// One icon per kind of equipment (EQUIPS[id].icon and START_GEAR in src/data.js)
+const GEAR_ICONS = {
+  espada: [
+    '................', '............aaa.', '...........acea.', '..........acea..', '.........acea...', '........acea....',
+    '.......acea.....', '..aa..acea......', '..avaacea.......', '...avaea........', '....ava.........', '...auava........',
+    '..aua.ava.......', '.aua...aa.......', '.aa.............', '................'],
+  maca: [
+    '................', '..........aaa...', '.........aAAAa..', '........aAcACCa.', '........aAACCEa.', '.......aaACCEEa.',
+    '......auaaCEEa..', '.....auja.aaa...', '....auja........', '...auja.........', '..auja..........', '.auja...........',
+    '.aua............', '.aa.............', '................', '................'],
+  cajado: [
+    '..........aaa...', '.........aGIIa..', '........aGGIIIa.', '........aGIIIIa.', '.........aIIIa..', '.........ajaa...',
+    '........ajla....', '.......ajla.....', '......ajla......', '.....ajla.......', '....ajla........', '...ajla.........',
+    '..ajla..........', '.ajla...........', '.aaa............', '................'],
+  adaga: [
+    '................', '................', '...........aa...', '..........acea..', '.........acea...', '........acea....',
+    '.......acea.....', '...aa.acea......', '...avacea.......', '....avaa........', '....auava.......', '...aua..aa......',
+    '..aua...........', '..aa............', '................', '................'],
+  tunica: [
+    '................', '....aaa..aaa....', '...aMjMaaMMMa...', '..aMjMMMMMMlla..', '.aMjMMuuuuMMlla.', '.aMMMa.aa.aMlla.',
+    '.aaaMa....aMaaa.', '....aMjMMMMla...', '....aMjMMMMla...', '....auuuvuula...', '....aMjMMMMla...', '....aMMMMMMla...',
+    '....aMMMMMlla...', '....aaaaaaaaa...', '................', '................'],
+  habito: [
+    '................', '.....aaaaaa.....', '....acLLLLea....', '...acLaaaaLea...', '..acLLaSSaLLea..', '.acLLLaSSaLLLea.',
+    '.acLLLLaaLLLLea.', '.aaaLLLSSLLLaaa.', '...acLLSSLLea...', '...acLLLLLLea...', '...acLLLLLLLea..', '..acLLLLLLLLea..',
+    '..aSSSSSSSSSSa..', '..aaaaaaaaaaaa..', '................', '................'],
+  manto: [
+    '................', '......aaaa......', '.....aOOORa.....', '....aOavvaRa....', '...aOOOvvORRa...', '...aOOOOOORRa...',
+    '..aOOOOOOORRRa..', '..aOOOOOOORRRa..', '.aOOOOOOOORRRRa.', '.aOOOOOOOORRRRa.', '.aOOOOOOORRRRRa.', 'aOOOOOOOORRRRRRa',
+    'aRRRRRRRRRRRRRRa', '.aaaaaaaaaaaaaa.', '................', '................'],
+  cota: [
+    '................', '....aaa..aaa....', '...aceaaaaeia...', '..aceceeeeeiia..', '.aceieieieiiiia.', '.aeieaeieiaiiia.',
+    '.aaaaeieieiaaaa.', '....aeieieia....', '....aieieiia....', '....aeieieia....', '....aieieiia....', '....aeieieia....',
+    '....aiiiiiiia...', '....aaaaaaaaa...', '................', '................'],
+  couro: [
+    '................', '....aaa..aaa....', '...auluaaului...', '..aujlllllluua..', '.aujllaaaallluua', '.aullla.avaluua.',
+    '.aaaula.aaaluaa.', '....ajllaallua..', '....ajllvvllua..', '....ajllaallua..', '....ajllllllua..', '....auuuuuuuua..',
+    '....ajlllllua...', '....aaaaaaaaa...', '................', '................'],
+};
 const ICON_ART = {
   atk: [ // sword
     '................', '............kkk.', '...........ktsk.', '..........ktsk..', '.........ktsk...', '........ktsk....',
@@ -137,6 +184,32 @@ const ICON_ART = {
     '................', '................', '..kkkkkkkkkkkk..', '.kyyyyyyyyyyyyk.', '.kymmmmmmmmmmyk.', '.kyyyyyyyyyyyyk.',
     '.kymmmmmmyyyyyk.', '.kyyyyyyyyDDyyk.', '.kymmmmyyDhhDyk.', '.kyyyyyyyDhhDyk.', '.kyyyyyyyyDDyyk.', '.kyyyyyyyyyyyyk.',
     '..kkkkkkkkkkkk..', '................', '................', '................'],
+  // the camp menu (campMenuOpts in src/uirules.js)
+  livro: [
+    '................', '..kkkkkk.kkkkk..', '.kyyyyyykyyyyyk.', '.kymmmmykymmmyk.', '.kyyyyyykyyyyyk.', '.kymmmmykymmmyk.',
+    '.kyyyyyykyyyyyk.', '.kymmmyykymmmyk.', '.kyyyyyykyyyyyk.', '.kymmmmykyyyyyk.', '.kyyyyyykyyyyyk.', '.kbbbbbbkbbbbbk.',
+    '..kkkkkkdkkkkk..', '........dk......', '........Dk......', '................'],
+  heroi: [
+    '................', '......kkkk......', '.....krrrrk.....', '....krttrrsk....', '....krrrrrsk....', '....kkrrrrkk....',
+    '.....knnnnk.....', '....kgkkkkgk....', '...knnnnnnnnk...', '..knnngggnnnnk..', '..knnnngnnnnbk..', '..kbnnngnnnnbk..',
+    '...kbnnnnnnbk...', '....kkkkkkkk....', '................', '................'],
+  diario: [
+    '................', '...kkkkkkkkkk...', '..kbnnnnnnnnnk..', '..kbnggggggnnk..', '..kbnnnnnnnnnk..', '..kbnnyyyyynnk..',
+    '..kbnnymmmynnk..', '..kbnnyyyyynnk..', '..kbnnymmmynnk..', '..kbnnyyyyynnk..', '..kbnnnnnnnnnk..', '..kbnnnnnnnnnk..',
+    '..kbbbbbbbbbbk..', '...kkkkkkkkkk...', '................', '................'],
+  mapa: [
+    '................', '................', '.kkkk..kkkk.kkk.', 'kyyyykkyyyykyyyk', 'kymyyyyyymyyyymk', 'kyyhhyyyyyyymyyk',
+    'kymyhhyyymyyyyyk', 'kyyyyhhyyyyhyyyk', 'kyymyyhhyyhhmyyk', 'kyyyyyyhhhhyyyyk', 'kymyyyyyyyyyymyk', 'kyyyykkyyyykyyyk',
+    '.kkkk..kkkk.kkk.', '................', '................', '................'],
+  salvar: [
+    '................', '.kkkkkkkkkkkkk..', '.kppkttttttkppk.', '.kppkttttttkppk.', '.kppkttttssksppk', '.kppkkkkkkkkpppk',
+    '.kppppppppppppk.', '.kppkkkkkkkkppk.', '.kppkyyyyyykppk.', '.kppkymmmmykppk.', '.kppkyyyyyykppk.', '.kppkymmmmykppk.',
+    '.kBBkyyyyyykBBk.', '.kkkkkkkkkkkkkk.', '................', '................'],
+  sair: [
+    '................', '..kkkkkkkk......', '..knnnnnnk......', '..knkkkknk......', '..knkyykn.k.....', '..knkyykn.k..k..',
+    '..knkyykn..kkgk.', '..knkyykggggggk.', '..knkyykggggggk.', '..knkyykn..kkgk.', '..knkyykn.k..k..', '..knkkkkn.k.....',
+    '..knnnnnnk......', '..kkkkkkkk......', '................', '................'],
+  ...GEAR_ICONS,
 };
 // Command words map to the same art (Técnica/Magia/Truque share the star)
 const ICON_STATES = ['normal', 'sel', 'dis'];
@@ -151,7 +224,7 @@ function iconGrid(id, state = 'normal') {
       : D4.some(([dx, dy]) => (g[y + dy] || '')[x + dx] && g[y + dy][x + dx] !== '.') ? 'g' : '.').join(''));
   }
   if (state === 'dis') { // two greys by brightness, outline kept
-    return g.map(row => [...row].map(ch => ch === '.' || ch === 'k' ? ch : luma(UI_PAL[ch]) > 0.45 ? 'm' : 'x').join(''));
+    return g.map(row => [...row].map(ch => ch === '.' || OUTLINES.has(ch) ? ch : luma(UI_PAL[ch]) > 0.45 ? 'm' : 'x').join(''));
   }
   throw new Error('unknown state ' + state);
 }
@@ -197,4 +270,4 @@ function installFrames(root = document.documentElement) {
 }
 
 if (typeof document !== 'undefined') installFrames();
-if (typeof module !== 'undefined') module.exports = { luma, UI_PAL, FRAME_GRID, FRAME_SLICE, FRAME_VARIANTS, frameGrid, frameSlices, ICON_ART, ICON_STATES, iconGrid, CURSOR_GRID, recolor };
+if (typeof module !== 'undefined') module.exports = { GEAR_ICONS, GEAR_ICON_PAL, luma, UI_PAL, FRAME_GRID, FRAME_SLICE, FRAME_VARIANTS, frameGrid, frameSlices, ICON_ART, ICON_STATES, iconGrid, CURSOR_GRID, recolor };

@@ -148,19 +148,37 @@ function bestGear(heroId, slot, ownedIds, equips) {
   for (const id of ownedIds) { const e = equips[id]; if (e && e.who === heroId && e.slot === slot && (!best || gearPower(e) >= gearPower(equips[best]))) best = id; }
   return best;
 }
-// What a new piece changes on its hero's bonus: nothing when the hero already wears something as strong in that slot,
-// otherwise the new piece's bonus minus the one it replaces (ownedIds: what the party had before)
-function equipDelta(id, ownedIds, equips) {
-  const e = equips[id], prev = bestGear(e.who, e.slot, ownedIds, equips), old = prev ? equips[prev].bonus : {};
-  if (prev && gearPower(equips[prev]) >= gearPower(e)) return {};
-  const d = {};
-  for (const k of new Set([...Object.keys(old), ...Object.keys(e.bonus)])) { const v = (e.bonus[k] || 0) - (old[k] || 0); if (v) d[k] = v; }
+// What the hero wears in a slot: the player's choice (G.equip[heroId][slot]) while the party still owns it, else the strongest
+function equippedGear(heroId, slot, ownedIds, equips, choice = {}) {
+  const c = choice[heroId] && choice[heroId][slot], e = c && equips[c];
+  return e && e.who === heroId && e.slot === slot && ownedIds.includes(c) ? c : bestGear(heroId, slot, ownedIds, equips);
+}
+// Bonus change from wearing `to` in place of `from` (either may be null: the starting gear gives nothing)
+function bonusDiff(to, from, equips) {
+  const a = to ? equips[to].bonus : {}, b = from ? equips[from].bonus : {}, d = {};
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const v = (a[k] || 0) - (b[k] || 0); if (v) d[k] = v; }
   return d;
 }
+// What a new piece changes on its hero's bonus: nothing when what the hero wears in that slot is as strong,
+// otherwise the new piece's bonus minus the one it replaces (ownedIds: what the party had before)
+function equipDelta(id, ownedIds, equips, choice = {}) {
+  const e = equips[id], prev = equippedGear(e.who, e.slot, ownedIds, equips, choice);
+  if (prev && gearPower(equips[prev]) >= gearPower(e)) return {};
+  return bonusDiff(id, prev, equips);
+}
+// The equipment screen's list for one hero and slot: every piece the party has for it, its bonus,
+// the difference to what is worn now and which one is worn
+function gearChoices(heroId, slot, ownedIds, equips, choice = {}) {
+  const now = equippedGear(heroId, slot, ownedIds, equips, choice);
+  return [...new Set(ownedIds)].filter(id => equips[id] && equips[id].who === heroId && equips[id].slot === slot)
+    .map(id => ({ id, name: equips[id].name, icon: equips[id].icon, bonus: equips[id].bonus, diff: bonusDiff(id, now, equips), equipped: id === now }));
+}
+// "Melhor": the strongest piece of each slot of one hero, as the choice to keep
+const bestChoice = (heroId, ownedIds, equips) => Object.fromEntries(GEAR_SLOTS.map(([slot]) => [slot, bestGear(heroId, slot, ownedIds, equips)]).filter(([, id]) => id));
 
-function slotGear(heroId, ownedIds, equips, start) {
+function slotGear(heroId, ownedIds, equips, start, choice = {}) {
   return heroGear(heroId, ownedIds, equips).map(s => {
-    const it = s.items.find(i => i.id === bestGear(heroId, s.slot, ownedIds, equips));
+    const it = s.items.find(i => i.id === equippedGear(heroId, s.slot, ownedIds, equips, choice));
     return it ? { slot: s.slot, label: s.label, name: it.name, icon: it.icon, bonus: it.bonus, id: it.id, start: false }
       : { slot: s.slot, label: s.label, ...start[heroId][s.slot], bonus: {}, start: true };
   });
@@ -181,8 +199,9 @@ function gearFromBonus(party, ownedIds, equips) {
   return found;
 }
 // Colors of the full-body sprite: the base palette with each found equipment's look on top
-const bodyPal = (pal, heroId, ownedIds, equips, looks) =>
-  Object.assign({}, pal, ...ownedIds.filter(id => equips[id] && equips[id].who === heroId && looks[id]).map(id => looks[id]));
+// (only what the hero wears: the weapon in hand is the equipped one)
+const bodyPal = (pal, heroId, ownedIds, equips, looks, choice = {}) =>
+  Object.assign({}, pal, ...GEAR_SLOTS.map(([slot]) => equippedGear(heroId, slot, ownedIds, equips, choice)).filter(id => id && looks[id]).map(id => looks[id]));
 
 // Skills book: every skill of the hero by level, known or still to come
 const spellBook = (spells, lv) => spells.map(([at, id]) => ({ id, lv: at, known: lv >= at }));
@@ -208,11 +227,12 @@ const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when])
 const storyQuote = (quotes, flags) => storyLines(quotes, flags).at(-1) || '';
 
 // The party bag in three groups; the letter keeps its sealed name until it is read
-function bagGroups({ inv, key, owned, items, equips, keyItems, read }) {
+function bagGroups({ inv, key, owned, items, equips, keyItems, read, equip = {} }) {
+  const worn = id => equippedGear(equips[id].who, equips[id].slot, owned, equips, equip) === id;
   return [
     { title: 'Consumíveis', cells: Object.keys(items).filter(k => inv[k] > 0).map(k => ({ id: k, kind: 'item', icon: k, name: items[k].name, n: inv[k], desc: items[k].desc })) },
-    { title: 'Equipamentos', cells: owned.filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0,
-      desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, ${bestGear(equips[id].who, equips[id].slot, owned, equips) === id ? 'em uso' : 'guardada'}` })) },
+    { title: 'Equipamentos', cells: [...new Set(owned)].filter(id => equips[id]).map(id => ({ id, kind: 'equip', icon: equips[id].icon, name: equips[id].name, n: 0,
+      who: equips[id].who, inUse: worn(id), desc: `${equips[id].slot === 'arma' ? 'Arma' : 'Armadura'}, ${worn(id) ? 'em uso' : 'guardada'}` })) },
     { title: 'Itens-chave', cells: Object.keys(keyItems).filter(k => key[k]).map(k => ({ id: k, kind: 'key', icon: k, n: 0, desc: keyItems[k].desc,
       name: read || !keyItems[k].sealedName ? keyItems[k].name : keyItems[k].sealedName })) },
   ].filter(g => g.cells.length);
@@ -294,5 +314,5 @@ function gridPath(from, goal, free, limit = 400) {
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Direto à cripta', hint: 'grupo de 4, pula o prólogo', value: 'dungeon' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, bagGroups, heroViewMode, heroViewViews, heroViewFonts };

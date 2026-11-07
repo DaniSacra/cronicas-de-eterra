@@ -41,6 +41,7 @@ function wearGear(id, delta) {
   const eq = EQUIPS[id], m = G.party.find(p => p.id === eq.who), nm = pdef(m).name;
   if (!Object.keys(delta).length) return `Encontraram: ${eq.name}!\n${nm} já usa algo melhor e guarda na bolsa.`;
   for (const [k, v] of Object.entries(delta)) m.bonus[k] = (m.bonus[k] || 0) + v;
+  G.equip = G.equip || {}; G.equip[eq.who] = { ...G.equip[eq.who], [eq.slot]: id }; // the new piece is what the hero wears now
   UI.updateParty(); UI.cardGlow(m);
   return `Encontraram: ${eq.name}!\n${nm} equipa (${bonusText(eq.bonus, STAT_NAMES)}).`;
 }
