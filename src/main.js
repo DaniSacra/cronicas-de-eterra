@@ -284,7 +284,8 @@ async function interact(o) {
     await UI.say('Uma fonte de água cristalina brilha na escuridão.\nO grupo foi totalmente restaurado!' + (saved ? '\nJogo salvo.' : ''));
     if (!G.seen.fonteLyra && inParty('lyra')) { G.seen.fonteLyra = 1; await say2('Lyra', 'É verdade, então. A água lembra de quem passa. Dá para sentir.'); }
   } else if (o.type === 'boss' && G.bossDead) {
-    await UI.say('O túmulo do rei, arrombado e vazio. Sob os quatro símbolos dos paladinos, os nichos continuam vazios.');
+    await UI.say('O túmulo do rei, arrombado e vazio. Na tampa caída, o mesmo leão de pé, partido ao meio.');
+    await UI.say('Sob as quatro espadas erguidas, o sinal dos paladinos, os nichos continuam vazios.');
   } else if (o.type === 'boss') {
     // kept in the save at once: after a loss to the boss, the clue and the talk are not read again
     if (!G.seen.altar) { G.seen.altar = 1; await clue(FLOOR_CLUES[2]); await partyTalk('altar', TALKS.altar); ['altar', 'talk:altar'].forEach(keepSeen); }
@@ -363,9 +364,10 @@ const FLOOR_CLUES = [
   [[null, 'Num altar, alguém riscou o nome de Elun. Por cima, em letra nova: "O rei voltará."']],
 ];
 const FLOOR_TALKS = ['olho'];
-// The far wall of the crypt, broken through; the sign around the hole is nobody's the party knows (not named yet)
+// The far wall of the crypt, broken through; carved in the old stone over the hole, the standing lion of Hanokh (the royal
+// seal's lion), cracked from top to bottom
 const BREACH = [[null, 'No fundo da sala, a parede foi arrombada. As pedras caíram para dentro, e do outro lado só há escuro.'],
-  [null, 'Em cima do buraco, alguém riscou um símbolo na pedra: um anel com um ponto no meio, e uma linha que sai dele e sobe.']];
+  [null, 'Em cima do buraco, entalhado na pedra antiga, um leão de pé. A rachadura atravessa o leão de cima a baixo.']];
 // The party talks (TALKS) and the tunnel clue live with the rest of the prologue story, in src/opening.js
 const clue = async lines => { Sfx.clue(); for (const [who, t] of lines) await say2(who, t); };
 async function floorClues(f) {
@@ -587,7 +589,8 @@ async function ending() {
   }
   await UI.say('Atrás dele, o túnel chega ao túmulo do rei.');
   await UI.say('A tampa foi arrombada. O túmulo está vazio, e há marcas de arrasto no chão.');
-  await UI.say('Nos quatro cantos, entalhados na pedra, os símbolos dos paladinos. Embaixo de cada um, um nicho vazio.');
+  await UI.say('Na tampa caída, o mesmo leão de pé, partido ao meio.');
+  await UI.say('Nos quatro cantos, entalhadas na pedra, quatro espadas erguidas, o sinal dos paladinos. Embaixo de cada uma, um nicho vazio.');
   await partyTalk('tumulo', TALKS.tumulo);
   await fadeTo(1, 900);
   enterTown(CRYPT_FRONT, 'valmor', null, false); // no waltz between the silence and the ending

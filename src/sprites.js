@@ -19,6 +19,10 @@ const Sprites = (() => {
   }
   const shadow = (c, x, y, rx) => ell(c, x, y, rx, rx * 0.18, 'rgba(0,0,0,.45)');
 
+  // The standing lion of Hanokh (the royal seal, the crypt wall over the breach); a smaller one on the king's tomb lid
+  const LION = ['...####......', '..######.....', '.###..###....', '.##.#.###....', '.###..###....', '..######.##..', '...####..##..',
+    '...#####.#...', '....#####....', '....####.....', '....#####..#.', '...##..##..#.', '..##....##.#.', '..#......###.', '.##.......#..'];
+  const LION_SMALL = ['.##....', '####...', '.###.#.', '.####..', '..####.', '..#.#.#', '.#...#.'];
   const draw = {
     slime(c, p) {
       shadow(c, 32, 59, 26);
@@ -215,7 +219,7 @@ const Sprites = (() => {
       poly(c, [64, 33, 62, 37, 66, 37], '#222');
       for (let i = 0; i < 5; i++) line(c, [59.5 + i * 2.2, 39, 59.5 + i * 2.2, 43], '#555', 0.8);
     },
-    tomb(c) { // túmulo do rei arrombado: tampa caída, interior vazio, símbolos dos paladinos, marcas de arrasto
+    tomb(c) { // túmulo do rei arrombado: tampa caída com o leão partido, interior vazio, espadas erguidas dos paladinos, arrasto
       shadow(c, 32, 60, 28);
       c.fillStyle = lg(c, 0, 30, 0, 60, [[0, '#9a948a'], [1, '#5a5650']]); c.fillRect(6, 34, 52, 24);
       c.strokeStyle = '#2e2a26'; c.lineWidth = 1; c.strokeRect(6.5, 34.5, 51, 23);
@@ -224,7 +228,9 @@ const Sprites = (() => {
       c.save(); c.translate(36, 28); c.rotate(-0.35);
       c.fillStyle = lg(c, -26, -5, 26, 5, [[0, '#b0aa9e'], [1, '#6e6a62']]); c.fillRect(-26, -5, 52, 9);
       c.strokeStyle = '#2e2a26'; c.strokeRect(-26, -5, 52, 9);
-      c.beginPath(); c.moveTo(-4, -5); c.lineTo(2, 4); c.stroke(); c.restore();
+      c.fillStyle = '#2e2a26'; LION_SMALL.forEach((row, y) => [...row].forEach((ch, x) => ch === '#' && c.fillRect(x - 4, y - 4, 1, 1))); // the lion, split
+      c.beginPath(); c.moveTo(-1, -5); c.lineTo(1, 4); c.stroke(); c.restore();
+      for (const x of [20, 44]) { c.fillStyle = '#d8d4cc'; c.fillRect(x, 43, 1, 7); c.fillRect(x - 1, 50, 3, 1); c.fillStyle = '#6a3a1a'; c.fillRect(x, 51, 1, 3); } // swords raised
       line(c, [22, 58, 15, 64], '#3a3430', 1.5); line(c, [29, 58, 24, 64], '#3a3430', 1.5);
     },
     chest(c, open) {
@@ -245,7 +251,7 @@ const Sprites = (() => {
       }
     },
     // the far wall of the crypt broken through: grey bricks like the crypt walls, a ragged black hole down to the floor, rubble,
-    // and scratched in the stone over the hole a sign nobody in the party can read (a ring with a dot, a line rising from it)
+    // and carved in the old stone over the hole the standing lion of Hanokh, cracked from top to bottom
     breach(c) {
       const P = { hi: '#a2a2ac', face: '#7a7a82', deep: '#55555e', mortar: '#26202e', hole: '#26202e', mark: '#e8eff8' };
       const px = (x, y, col) => { c.fillStyle = col; c.fillRect(x, y, 1, 1); };
@@ -264,9 +270,10 @@ const Sprites = (() => {
         c.fillStyle = P.face; c.fillRect(x, y, w, h); c.fillStyle = P.hi; c.fillRect(x, y, w, 1); c.fillRect(x, y, 1, h);
         c.fillStyle = P.deep; c.fillRect(x + w - 1, y + 1, 1, h - 1);
       }
-      // the sign: a ring with a dot in the middle and a line that rises from its top, scratched pale
-      for (let a = 0; a < 40; a++) { const t = a / 40 * Math.PI * 2; px(Math.round(32 + Math.cos(t) * 5), Math.round(11 + Math.sin(t) * 5), P.mark); }
-      px(32, 11, P.mark); for (let y = 1; y < 6; y++) px(32, y, P.mark);
+      // the lion of Hanokh, pale in the stone, and the crack that runs through it down into the hole
+      c.fillStyle = P.deep; c.fillRect(24, 0, 17, 18); c.fillStyle = P.mortar; c.fillRect(24, 0, 1, 18); c.fillRect(24, 17, 17, 1); // the carved panel, sunk in shade
+      LION.forEach((row, y) => [...row].forEach((ch, x) => ch === '#' && px(26 + x, 2 + y, P.mark)));
+      for (let y = 0; y < 19; y++) px(32 + (y % 6 < 3 ? 0 : 1), y, P.hole);
     },
     clue(c) { // no chão do túnel: rastro de sangue seco e um pedaço de capa marrom, de viajante
       for (const [x, y, rx] of [[14, 60, 5], [24, 58, 4], [33, 61, 6], [44, 58, 3]]) ell(c, x, y, rx, 1.6, '#4a1416');

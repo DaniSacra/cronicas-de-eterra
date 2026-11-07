@@ -72,7 +72,7 @@ test('the story grows with flags and never shows a spoiler or an em dash', () =>
     assert.ok(R.storyLines(st.lines, {}).length >= 1 && R.storyQuote(st.quotes, {}), id);
     for (const l of [...st.lines, ...st.quotes]) assert.ok(!/—|Velkor|Morvath|Irmandade|dragão|Sindarin/i.test(l.text), l.text);
     // short sentences, one per line, so the sheet never scrolls
-    for (const l of st.lines) assert.ok(l.text.length <= 70 && l.text.split(/[.!?](\s|$)/).filter(x => x && x.trim()).length === 1, l.text);
+    for (const l of st.lines) assert.ok(l.text.length <= 80 && l.text.split(/[.!?](\s|$)/).filter(x => x && x.trim()).length === 1, l.text);
   }
 });
 

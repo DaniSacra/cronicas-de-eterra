@@ -50,12 +50,12 @@ test('the night: the dice girl plays, stays when the hooded men come, fights unn
     const i = t => { const k = log.indexOf(t); assert.ok(k >= 0, t); return k; };
     i('Moça dos dados~alegre:\nNinguém tira. Eu tiro.');
     i('Lyra~alegre:\nVocê nunca vai descobrir como ela faz, Aldo.');
-    assert.ok(i('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.') > i('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real.'));
+    assert.ok(i('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.') > i('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real: um leão de pé, em cera vermelha.'));
     assert.ok(i('Ela guarda os dados no bolso. Na outra mão, já tem uma faca.') > i('Encapuzado:\nO homem caído vem com a gente. E ninguém mais precisa sangrar esta noite.'));
     const name = i('Andilla:\nMe chamam de Andilla. Às vezes é verdade.');
     assert.ok(i('Andilla:\nCapa cinza é a mais barata do sul. Metade desta taverna usa.') > i('Bruno:\nCapa cinza, igual à deles.'), 'the grey cloak keeps the false lead');
     assert.ok(log.slice(0, name).every(t => !t.startsWith('Andilla')), 'no name before she says it');
-    assert.ok(name > i('Teo:\nPor isso mesmo. Quem abrir tem de ter o direito.'), 'the introductions come after the letter');
+    assert.ok(name > i('Teo:\nPor isso mesmo. Ela vai fechada até a casa de Hanokh.'), 'the introductions come after the letter');
     assert.ok(i('Andilla entrou para o grupo!') > i('Andilla~alegre:\nViu? Eu sempre ganho.'));
     assert.ok(log.includes(estojo ? 'Andilla~alegre:\nMeus ganchos! Achei que tinham ficado para os mortos. Te devo uma, cavaleiro. Eu nunca devo duas.'
       : 'Andilla:\nLarguei meus ganchos lá quando eles me viram. Se acharem, são meus.'));

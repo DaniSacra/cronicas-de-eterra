@@ -226,6 +226,7 @@ function drawGraveTile(c, t, X, Y, x, y, px, rng) {
     R(3, 14, 11, 2, 'rgba(0,0,0,.3)');
     R(3, 3, 10, 11, '#8a8894'); R(4, 2, 8, 1, '#8a8894'); R(3, 3, 1, 11, '#aeacb8');
     R(7, 3, 1, 4, '#3a3840'); R(8, 6, 1, 4, '#3a3840'); R(7, 10, 1, 3, '#3a3840'); // rachadura
+    R(11, 4, 1, 5, '#3a3840'); R(10, 9, 3, 1, '#3a3840'); R(11, 10, 1, 2, '#3a3840'); // espada erguida, o sinal de um paladino
   } else if (t === TILE.DEADTREE) {
     R(7, 6, 2, 10, '#5a4a3e'); R(3, 4, 4, 1, '#6a5a4e'); R(9, 3, 4, 1, '#6a5a4e'); R(5, 2, 1, 3, '#6a5a4e');
     R(11, 1, 1, 3, '#6a5a4e'); R(6, 5, 1, 2, '#6a5a4e'); R(9, 4, 1, 2, '#6a5a4e'); R(4, 15, 9, 1, 'rgba(0,0,0,.3)');
@@ -692,7 +693,8 @@ async function elderTalk() {
   if (G.quest) { await say(nm, ['O que acorda os mortos está no fundo da cripta.', 'Na cripta, procurem a fonte de luz para recuperar as forças.', 'E se precisarem, a irmã Irene cuida dos feridos na capela.']); return; }
   await say(nm, [
     'A Berta mandou vocês? Mostrem essa carta.',
-    'É o selo real. E vocês não abriram. Bom.',
+    'É o selo real, o leão de Hanokh. E vocês não abriram. Bom.',
+    'Na minha casa se dizia: o que o leão fecha, só o sangue de Hanokh abre.',
     'Se quase mataram o homem que a trazia, o que tem dentro é maior que Valmor.',
     'O homem que a trouxe delira "o selo... o selo". As covas abrem sozinhas.',
     'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',

@@ -1,0 +1,35 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { story } = require('./harness.js');
+
+const src = f => fs.readFileSync(`${__dirname}/../src/${f}`, 'utf8');
+const GAME = fs.readdirSync(`${__dirname}/../src`).filter(f => f.endsWith('.js')).map(src).join('\n');
+
+test('the lion of Hanokh: no line says the opener "has to have the right" any more', () => {
+  assert.doesNotMatch(GAME, /tem de ter o direito/);
+  const D = require('../src/data.js');
+  assert.match(D.KEY_ITEMS.carta.sealed.join(' '), /leão de Hanokh/);
+  assert.match(D.KEY_ITEMS.carta.sealed.join(' '), /sangue de Hanokh/);
+});
+
+test('the breach and the tomb lid show the lion; the old grave and the tomb show the raised sword of the paladins', () => {
+  const main = src('main.js'), opening = src('opening.js');
+  const breach = main.slice(main.indexOf('const BREACH'), main.indexOf(']];', main.indexOf('const BREACH')));
+  assert.match(breach, /um leão de pé/);
+  assert.doesNotMatch(breach, /anel/);
+  const end = main.slice(main.indexOf('async function ending'), main.indexOf('Music.play(\'ending\')'));
+  assert.match(end, /Na tampa caída, o mesmo leão de pé, partido ao meio/);
+  assert.match(end, /quatro espadas erguidas, o sinal dos paladinos/);
+  assert.match(main, /'O túmulo do rei, arrombado e vazio\. Na tampa caída, o mesmo leão de pé/);
+  assert.match(opening, /Esta espada erguida na lápide quebrada é o sinal de um paladino/);
+  assert.doesNotMatch(GAME, /símbolos? dos paladinos|símbolo de um paladino/);
+});
+
+test('the party talks at the breach and at the tomb name the lion and the swords', async () => {
+  const { run } = story(['aldo', 'lyra', 'teo', 'andilla']);
+  const buraco = run.json('TALKS.buraco.map(t => t[1])'), tumulo = run.json('TALKS.tumulo.filter(t => typeof t[1] === "string").map(t => t[1])');
+  assert.equal(buraco[0], 'Um leão. O mesmo do selo real.');
+  assert.ok(buraco.some(t => t.includes('Hanokh lutou na guerra de Elun')));
+  assert.ok(tumulo.includes('Essas quatro espadas são de paladinos. E embaixo de cada uma havia alguma coisa.'));
+});

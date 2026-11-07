@@ -319,7 +319,7 @@ Object.assign(AREAS.cemiterio, {
     if (t === TILE.GRAVE_OLD) return async () => {
       if (!inParty('teo')) return UI.say('Uma cova antiga, de lápide rachada.');
       await UI.say('A cova mais antiga de Valmor. A terra ainda está fofa.');
-      await line('Teo', 'Este símbolo na lápide quebrada é de um paladino. Quem descansava aqui deu a vida por Valmor.');
+      await line('Teo', 'Esta espada erguida na lápide quebrada é o sinal de um paladino. Quem descansava aqui deu a vida por Valmor.');
       G.seen.paladino = 1;
     };
     return null;
@@ -422,7 +422,7 @@ async function nightScene() {
   await line('Mensageiro', 'Você é do Templo. Eu vejo pelo livro. Leve. Não deixe que eles...');
   tobias.lying = true; Sfx.fall(); shake(200);
   G.key.carta = true;
-  await UI.say('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real.');
+  await UI.say('O mensageiro desmaia aos pés de Teo. Nas mãos do clérigo fica um rolo fechado com o selo real: um leão de pé, em cera vermelha.');
   Sfx.keyItem();
   await UI.say('As botas dele estão cobertas de terra úmida. A capa marrom está rasgada na barra. E tem cera de vela na manga.');
 
@@ -464,9 +464,10 @@ async function nightScene() {
   await line('Berta', 'Gente daqui não usa essa marca.');
   await UI.say('A velha Ana para de fiar. A moça dos dados também olha a marca. Por tempo demais.');
   await line('Aldo', 'Teo... o que diz a carta?');
-  await line('Teo', 'É o selo real. Não cabe a mim rompê-lo.');
+  await line('Teo', 'É o selo real. O leão de Hanokh.');
+  await line('Teo', 'Só quem é do sangue de Hanokh pode rompê-lo. A rainha Lara é.');
   await line('Aldo', 'Quase mataram um homem. E ele só pensava nela.', 'bravo');
-  await line('Teo', 'Por isso mesmo. Quem abrir tem de ter o direito.');
+  await line('Teo', 'Por isso mesmo. Ela vai fechada até a casa de Hanokh.');
   if (lyra) await line('Lyra', 'Então ninguém abre. Mas eu quero muito saber por que querem tanto esse homem.');
   await introduceAndilla();
   await line('Rui', 'As covas abertas... e agora isso. Na mesma semana.');
@@ -509,11 +510,11 @@ const TALKS = {
     ['lyra', 'Alguém que sabia que ia ter gente apanhando aqui embaixo.', 'alegre'],
     ['aldo', 'E que deixou a água no meio do caminho. Nem antes, nem depois.'],
     ['teo', 'Não questionem. Bebam.', 'alegre']],
-  buraco: [['teo', 'Esse símbolo não é de paladino. Nem do Templo.', 'preocupado'], ['andilla', 'Nem dos encapuzados. O olho deles é outro.'],
-    ['lyra', 'Eu li muito livro. Esse não estava em nenhum.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'],
+  buraco: [['teo', 'Um leão. O mesmo do selo real.', 'preocupado'], ['andilla', 'O leão da rainha numa parede de cripta?'],
+    ['lyra', 'Não da rainha. Da casa dela. Os livros dizem que Hanokh lutou na guerra de Elun. Não dizem o que ele fechou aqui.'], ['aldo', 'Fiquem atrás de mim.', 'bravo'],
     ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
   sino: [['andilla', 'Sino tocando numa igreja sem ninguém. Que ótimo.', 'preocupado'], ['aldo', 'Fiquem atrás de mim.', 'bravo'], ['lyra', 'Fica você atrás de mim. Eu tenho o fogo.', 'alegre']],
-  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Esses quatro símbolos são de paladinos. E embaixo de cada um havia alguma coisa.'],
+  tumulo: [['lyra', 'Arrombaram a tampa. E arrastaram alguma coisa para fora.', 'preocupado'], ['teo', 'Essas quatro espadas são de paladinos. E embaixo de cada uma havia alguma coisa.'],
     ['andilla', 'E alguém levou. Não fui eu, antes que alguém olhe para mim.', 'preocupado'], ['aldo', 'Chegamos tarde.', 'bravo'],
     ['lyra', () => `${heroName('aldo')} ficou quieto. Quando ${heroName('aldo')} fica quieto assim, é raiva.`, 'preocupado']],
   estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
