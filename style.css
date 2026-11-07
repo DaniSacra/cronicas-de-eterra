@@ -436,7 +436,14 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .bk-left { box-shadow: inset calc(var(--u) * -3) 0 0 var(--win2); } .bk-right { box-shadow: inset calc(var(--u) * 3) 0 0 var(--win2); }
 .bk-big { width: calc(var(--f2) * 4); height: calc(var(--f2) * 4); image-rendering: pixelated; }
 .bk-fx { color: var(--gold); }
-#heroview[data-screen="book"][data-mode="tabs"] .bk { grid-template-columns: minmax(0, 1fr); }
+#heroview[data-screen="book"][data-mode="tabs"] .bk, #heroview[data-screen="elos"][data-mode="tabs"] .bk { grid-template-columns: minmax(0, 1fr); }
+/* Livro de Elos: no ribbons; the two faces of the pair, or two silhouettes with a question mark */
+.el-book { grid-template-rows: minmax(0, 1fr); padding-top: calc(var(--u) * 4); }
+.el-pair { display: flex; gap: calc(var(--u) * 3); }
+.el-face { position: relative; width: calc(var(--f2) * 4); height: calc(var(--f2) * 4); border: var(--u) solid var(--win2); background: var(--ink); }
+.el-face img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.el-face.unk img { filter: brightness(0); opacity: .55; }
+.el-face b { position: absolute; inset: 0; display: grid; place-items: center; color: var(--hi); font-size: var(--fd); }
 #heroview[data-mode="tabs"] .bk[data-page="list"] .bk-right, #heroview[data-mode="tabs"] .bk[data-page="detail"] .bk-left { display: none; }
 #heroview[data-mode="tabs"] .bk-ribbon { padding-left: calc(var(--u) * 2) !important; padding-right: calc(var(--u) * 2) !important; }
 

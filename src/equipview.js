@@ -169,6 +169,22 @@ const HeroView = (() => {
         <section class="bk-page bk-left"><h3 style="color:${ink(d.color)}">${esc(d.skillWord)}</h3>${list}</section>
         <section class="bk-page bk-right">${back}${detail}</section></div>`;
   }
+  // ---------- Livro de Elos: the same open book, one card per Elo (known, or two silhouettes and a hint) ----------
+  const elosBook = () => eloBook(ELOS, G.seen.elos || {});
+  function elosScreen() {
+    const book = elosBook(), e = book[skill];
+    const list = book.map((r, i) => `<button class="hv-row${i === skill ? ' sel' : ''}${r.known ? '' : ' off'}" data-act="skill" data-v="${i}">${icon('spell', r.known ? 'normal' : 'dis')}
+      <b>${r.known ? esc(r.name) : '???'}</b></button>`).join('');
+    const pair = r => `<div class="el-pair">${r.heroes.map(h => `<span class="el-face${r.known ? '' : ' unk'}"><img src="${face(h)}" alt="">${r.known ? '' : '<b>?</b>'}</span>`).join('')}</div>`;
+    const detail = !e ? '' : e.known
+      ? `${pair(e)}<h3>${esc(e.name)}</h3><p class="hv-cost">${e.heroes.map(heroName).join(' e ')}</p><p>${esc(e.asks)}</p><p class="bk-fx">${esc(e.does)}</p>`
+      : `${pair(e)}<h3>???</h3><p class="dim">${esc(e.hint)}</p>`;
+    const back = mode() === 'tabs' ? btn('back', 0, '◀ Lista', 'hv-btn') : '';
+    return `<div class="hv-top win"><h3 class="bk-title">Livro de Elos</h3>${btn('close', 0, 'Fechar', 'hv-close')}</div>
+      <div class="bk el-book" data-page="${bookPage}"><section class="bk-page bk-left"><h3>Elos</h3>${list}</section>
+        <section class="bk-page bk-right">${back}${detail}</section></div>`;
+  }
+
   async function cast() {
     const m = hero(), r = spellBook(pdef(m).spells, m.lv)[skill], sp = r && r.known && SPELLS[r.id];
     if (!sp || !fieldUse(sp, m).ok) return Sfx.cancel();
@@ -212,6 +228,7 @@ const HeroView = (() => {
       root.innerHTML = heroStrip() + tabs + `<div class="hv-cols">${stageCol(m, d)}${sheetCol(m)}</div>`;
       drawCanvas();
     } else if (screen === 'book') root.innerHTML = bookScreen();
+    else if (screen === 'elos') root.innerHTML = elosScreen();
     else root.innerHTML = bagScreen();
     const s = root.querySelector('.hv-row.sel, .bg-cell.sel');
     if (s) s.scrollIntoView({ block: 'nearest' });
@@ -231,7 +248,7 @@ const HeroView = (() => {
   // Esc: back one level (the choice to the sheet, the skill page to the list), then to the menu
   function back() {
     if (screen === 'hero' && choosing) { choosing = false; Sfx.cancel(); render(); }
-    else if (screen === 'book' && bookPage === 'detail' && mode() === 'tabs') { bookPage = 'list'; Sfx.cancel(); render(); }
+    else if ((screen === 'book' || screen === 'elos') && bookPage === 'detail' && mode() === 'tabs') { bookPage = 'list'; Sfx.cancel(); render(); }
     else close();
   }
   const wrap = (i, n) => (n ? (i + n) % n : 0);
@@ -247,6 +264,11 @@ const HeroView = (() => {
     if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Tab') return setHero(wrap(cur + (k === 'ArrowLeft' ? -1 : 1), G.party.length));
     if (k === 'ArrowUp' || k === 'ArrowDown') { skill = wrap(skill + (k === 'ArrowUp' ? -1 : 1), n); Sfx.cursor(); return render(); }
     if (k === 'Enter') { if (mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); render(); } else cast(); }
+  }
+  function elosKey(k) {
+    const n = elosBook().length;
+    if (k === 'ArrowUp' || k === 'ArrowDown') { skill = wrap(skill + (k === 'ArrowUp' ? -1 : 1), n); Sfx.cursor(); return render(); }
+    if (k === 'Enter' && mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); render(); }
   }
   function bagKey(k) {
     const n = tabsOf()[tab].cells.length, cols = bagCols();
@@ -264,13 +286,13 @@ const HeroView = (() => {
       if (screen === 'book') return setHero(wrap(cur - 1, G.party.length));
       k = 'Tab';
     }
-    (screen === 'hero' ? heroKey : screen === 'book' ? bookKey : bagKey)(k);
+    (screen === 'hero' ? heroKey : screen === 'book' ? bookKey : screen === 'elos' ? elosKey : bagKey)(k);
   }
 
   // The screen hides while a picker or a message runs (using an item or a skill), then comes back as it was
   function hide() { open = false; root.classList.remove('open'); }
   function reshow() { open = true; root.classList.add('open'); render(); }
-  // screen: 'hero' (Heróis), 'book' (Livro) or 'bag' (Bolsa); resolves when it closes
+  // screen: 'hero' (Heróis), 'book' (Livro), 'elos' (Livro de Elos) or 'bag' (Bolsa); resolves when it closes
   function show(s = 'hero') {
     if (!root) build();
     screen = s; open = true; cur = Math.min(cur, G.party.length - 1);

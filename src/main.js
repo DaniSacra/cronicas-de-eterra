@@ -519,6 +519,12 @@ async function campMacros() {
   }
 }
 async function showDiary() {
+  // after the Sineiro the Diário also holds the Livro de Elos (src/elos.js)
+  if (eloBookOpen(G)) {
+    const v = await UI.choose([{ label: 'Anotações', value: 'notes' }, { label: 'Livro de Elos', value: 'elos' }], { title: 'Diário', cancel: true, cols: 1, party: true });
+    if (v == null) return;
+    if (v === 'elos') return HeroView.show('elos');
+  }
   const pages = diaryPages();
   if (!pages.length) { await UI.say('O diário ainda está em branco.'); return; }
   for (const p of pages) if (await UI.say(p) === 'esc') return; // Enter passa a página, Esc fecha o Diário
