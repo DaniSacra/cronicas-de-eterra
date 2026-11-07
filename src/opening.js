@@ -499,7 +499,7 @@ const TUNNEL_CLUE = [[null, 'Um rastro de sangue seco e um pedaço de capa marro
 // Conversas do grupo (docs/mundo/historias/prologo.md)
 const TALKS = {
   pista: [['teo', 'Sangue. E não é de morto.'], ['andilla', 'Capa de estrada. Alguém desceu aqui sem ser dos deles.']],
-  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.', 'preocupado'], ['lyra', 'Então não vieram a Valmor só pela carta.']],
+  olho: [['andilla', 'Tinta fresca. Faz menos de uma semana.'], ['aldo', 'Eles já estiveram aqui embaixo.', 'preocupado'], ['lyra', 'Então não vieram a Valmor só pelo mensageiro.']],
   lapide: [['teo', 'Morvath. O rei que o ancião não quis nomear.'], ['andilla', 'Rei enterrado com a coroa, e a gente aqui de mão vazia.', 'alegre'],
     ['teo', () => `${heroName('andilla')}.`, 'bravo'], ['andilla', 'Brincadeira. Quase toda.', 'alegre']],
   bilhete: [['lyra', '"O homem do sumo sacerdote." Quem seria?'], ['aldo', 'O homem que caiu na taverna carregava um selo real. Não é qualquer mensageiro.'],
@@ -508,8 +508,8 @@ const TALKS = {
   igreja: [['lyra', 'Construíram uma igreja em cima de um túmulo. Ou queriam rezar pelo morto, ou queriam que ele não saísse.'],
     ['teo', 'Uma casa de oração vazia. Ninguém reza aqui faz cinquenta anos.'], ['andilla', 'Porta caída, telhado aberto. Pelo menos não vou precisar dos ganchos.', 'alegre']],
   fonte: [['andilla', 'Uma fonte. No meio de uma cripta. Quem constrói uma fonte numa cripta?'],
-    ['lyra', 'Alguém que sabia que ia ter gente apanhando aqui embaixo.', 'alegre'],
-    ['aldo', 'E que deixou a água no meio do caminho. Nem antes, nem depois.'],
+    ['lyra', 'Ninguém constrói. Elas brotam. Eu vim de longe para ver uma.', 'alegre'],
+    ['lyra', 'Dizem que guardam a memória de quem passa. Esta aqui está quieta.'],
     ['teo', 'Não questionem. Bebam.', 'alegre']],
   buraco: [['teo', 'Um leão. O mesmo do selo real.', 'preocupado'], ['andilla', 'O leão da rainha numa parede de cripta?'],
     ['lyra', 'Não da rainha. Da casa dela. Os livros dizem que Hanokh lutou na guerra de Elun. Não dizem o que ele fechou aqui.'], ['aldo', 'Fiquem atrás de mim.', 'bravo'],
@@ -520,7 +520,7 @@ const TALKS = {
     ['lyra', () => `${heroName('aldo')} ficou quieto. Quando ${heroName('aldo')} fica quieto assim, é raiva.`, 'preocupado']],
   estrada: [['aldo', 'Fui contratado para olhar umas covas. E agora vou para a capital.'],
     ['lyra', porqueRoad], // a resposta da porta da igreja (G.seen.porque); saves sem resposta pulam a fala
-    ['aldo', 'Se alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou.'],
+    ['aldo', 'Se alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou. Por Valmor.'],
     ['lyra', 'Você diz que vai por Valmor. Eu ouço: por uma certa professora.', 'alegre'],
     ['aldo', () => `${heroName('lyra')}.`, 'bravo'],
     ['teo', 'A carta vai até a rainha. Até lá, ninguém toca nela.'], ['lyra', 'Dizem que Erukh tem fontes em todas as praças. Quero ver se alguma lembra.'],

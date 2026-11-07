@@ -46,3 +46,14 @@ test('the bell wakes the dead: Rui says so on the morning after, the elder too, 
   assert.ok(name > 0 && irene > name && end.slice(irene - 40, irene).includes('Irmã Irene'), 'Irene speaks it after Tobias says his name');
   assert.match(src('data.js'), /O Sineiro ergue o sino de bronze. Em algum lugar acima, a terra das covas estremece./);
 });
+
+test('review of the prologue for chapter 1: the Brotherhood came for the messenger, Aldo says Valmor, Lyra takes the fountain seriously', async () => {
+  const { run } = story(['aldo', 'lyra', 'teo', 'andilla']);
+  const say = id => run.json(`TALKS.${id}.filter(t => typeof t[1] === 'string').map(t => t[0] + ': ' + t[1])`);
+  assert.ok(say('olho').includes('lyra: Então não vieram a Valmor só pelo mensageiro.'));
+  assert.doesNotMatch(say('olho').join(' '), /carta/, 'the Brotherhood does not know about the letter');
+  const road = say('estrada'), go = road.indexOf('aldo: Se alguém tirou um rei daquele buraco, não foi para deixar ele quieto. Eu vou. Por Valmor.');
+  assert.ok(go >= 0 && road[go + 1].startsWith('lyra: Você diz que vai por Valmor'), 'Lyra answers what Aldo just said');
+  assert.deepEqual(say('fonte'), ['andilla: Uma fonte. No meio de uma cripta. Quem constrói uma fonte numa cripta?',
+    'lyra: Ninguém constrói. Elas brotam. Eu vim de longe para ver uma.', 'lyra: Dizem que guardam a memória de quem passa. Esta aqui está quieta.', 'teo: Não questionem. Bebam.']);
+});
