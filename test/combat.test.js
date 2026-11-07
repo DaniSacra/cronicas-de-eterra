@@ -2,22 +2,37 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { story } = require('./harness.js');
 
-// Combat design, Phase 1: Defesa and Resistência are percentages capped at 75
-test('physical damage is cut by Defesa as a percentage, never below 1', () => {
+// Combat design, Phase 1b: Defesa and Resistência are points; a diminishing curve turns them into the share cut
+test('cutPct: 80 x points / (points + 55), rising, always under 80, negative counts as 0', () => {
   const { run } = story(['aldo']);
-  assert.equal(run('physDmg(20, 0, 1, 1)'), 20);
-  assert.equal(run('physDmg(20, 25, 1, 1)'), 15);
-  assert.equal(run('physDmg(20, 25, 1.5, 1)'), 23, 'skill power multiplies before the cut');
-  assert.equal(run('physDmg(20, 90, 1, 1)'), 5, 'Defesa caps at 75%');
-  assert.equal(run('physDmg(1, 50, 1, 1)'), 1, 'at least 1');
+  const pct = p => Math.round(run(`cutPct(${p})`) * 10) / 10;
+  for (const [p, v] of [[0, 0], [10, 12.3], [22.5, 23.2], [25, 25], [42.5, 34.9], [60, 41.7], [100, 51.6], [167.5, 60.2]]) assert.equal(pct(p), v, `${p} points`);
+  assert.equal(pct(-10), 0);
+  let prev = -1;
+  for (let p = 0; p <= 2000; p += 5) { const v = run(`cutPct(${p})`); assert.ok(v > prev && v < 80); prev = v; }
 });
 
-test('magic damage is cut by Resistência, with the same cap', () => {
+test('physical and magic damage follow the curve, never below 1; pierce ignores Defesa', () => {
   const { run } = story(['aldo']);
-  assert.equal(run('magDmg(40, 10)'), 36);
+  assert.equal(run('physDmg(20, 0, 1, 1)'), 20, 'same as before with no Defesa');
+  assert.equal(run('physDmg(20, 22.5, 1, 1)'), 15);
+  assert.equal(run('physDmg(20, 60, 1, 1)'), 12);
+  assert.equal(run('physDmg(20, 22.5, 1.5, 1)'), 23, 'skill power multiplies before the cut');
+  assert.equal(run('physDmg(1, 50, 1, 1)'), 1, 'at least 1');
   assert.equal(run('magDmg(40, 0)'), 40);
-  assert.equal(run('magDmg(40, 100)'), 10);
+  assert.equal(run('magDmg(40, 22.5)'), 31);
+  assert.equal(run('magDmg(40, 60)'), 23);
   assert.equal(run('magDmg(0.2, 0)'), 1);
+  assert.match(require('node:fs').readFileSync(`${__dirname}/../src/battle.js`, 'utf8'), /sp\.pierce \? 0 : t\.def/);
+});
+
+test('Aldo at level 30 with no gear still cuts less than 65%: the curve never stops at a cap', () => {
+  const { G, run } = story(['aldo']);
+  G.party[0].lv = 30;
+  const c = run(`cutPct(stat(G.party[0], 'def'))`);
+  assert.ok(c < 65 && c > 55, String(c));
+  G.party[0].lv = 29;
+  assert.ok(run(`cutPct(stat(G.party[0], 'def'))`) < c);
 });
 
 test('heroes and enemies carry the converted values: Defesa x2.5 for heroes, x1.8 for enemies, Resistência x0.7', () => {

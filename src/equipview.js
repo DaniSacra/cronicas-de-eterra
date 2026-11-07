@@ -107,8 +107,8 @@ const HeroView = (() => {
     const bar = (lbl, v, max, cls) => `<div class="hv-bar"><span>${lbl}</span><b>${v}<small>/${max}</small></b></div>
       <div class="bar ${cls}"><i style="width:${max ? 100 * v / max : 0}%"></i></div>`;
     return `<section class="hv-sheet win">` + bar('PV', m.hp, maxHp(m), '') + bar('PM', m.mp, maxMp(m), 'mp') +
-      `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}</span>
-        <b>${r.key === 'def' || r.key === 'res' ? guardText(r.value) : r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em></div>`).join('')}</div>
+      `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}${r.key === 'def' || r.key === 'res' ? `<small class="hv-cut">reduz ${guardText(r.value)} do dano</small>` : ''}</span>
+        <b>${r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em></div>`).join('')}</div>
       <div class="hv-story">${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div></section>`;
   }
   const choices = m => gearChoices(m.id, GEAR_SLOTS[slot][0], ownedEquips(), EQUIPS, choice());

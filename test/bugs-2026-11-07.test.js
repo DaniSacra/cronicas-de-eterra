@@ -166,12 +166,12 @@ test('the journal: Lyra arrives before Berta asks', () => {
   assert.ok(notes[0].startsWith('Lyra') && notes[1].startsWith('A Berta'));
 });
 
-test('Defesa and Resistência show the share of damage the combat cuts', () => {
+test('Defesa and Resistência: the Heroes screen shows the points and the share the curve really cuts', () => {
   const { run } = story(['aldo']);
-  assert.equal(run('guardText(22)'), '22%');
-  assert.equal(run('guardText(90)'), '75%', 'the cap');
+  assert.equal(run('guardText(22.5)'), '23%');
   assert.equal(run('guardText(0)'), '0%');
-  assert.equal(run('Math.round(100 * (1 - guardCut(40)))') + '%', run('guardText(40)'));
+  assert.equal(run('guardText(1000)'), '76%', 'no cap at 75 any more, and never 80');
+  assert.match(require('node:fs').readFileSync(`${__dirname}/../src/equipview.js`, 'utf8'), /reduz \$\{guardText\(r\.value\)\} do dano.*\n.*<b>\$\{r\.value\}<\/b>/);
 });
 
 test('combat: the bar opens on the last command, a single skill still opens the list, the list shows what a spell does', async () => {

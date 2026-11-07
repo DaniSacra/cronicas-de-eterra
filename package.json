@@ -1,5 +1,5 @@
 {
   "name": "cronicas-de-eterra",
   "private": true,
-  "scripts": { "test": "node --test test/*.test.js" }
+  "scripts": { "test": "node --test test/*.test.js", "sim": "node tools/simulate.js" }
 }

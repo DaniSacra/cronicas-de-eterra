@@ -7,15 +7,18 @@ const maxMp = m => stat(m, 'mp');
 const knownSpells = m => pdef(m).spells.filter(([lv]) => m.lv >= lv).map(s => s[1]);
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-// Damage (combat design, Phase 1): Defesa cuts physical damage and Resistência cuts magic damage, both as a
-// percentage capped at 75. v is the random spread, passed in by the tests.
-const GUARD_CAP = 75;
-const guardCut = pct => 1 - Math.min(GUARD_CAP, Math.max(0, pct || 0)) / 100;
-// Defesa and Resistência on the Heroes screen: the share of damage the combat really cuts ("75%" at the cap)
-const guardText = pct => `${Math.round(100 - 100 * guardCut(pct))}%`;
+// Damage (combat design, Phases 1 and 1b): Defesa cuts physical damage and Resistência cuts magic damage. Both are
+// points; the share they cut follows a diminishing curve, GUARD_MAX x points / (points + GUARD_HALF): every point is
+// worth a little less than the one before, the cut never reaches GUARD_MAX, and a hero keeps improving up to level 30.
+// v is the random spread, passed in by the tests.
+const GUARD_MAX = 80, GUARD_HALF = 55;
+const cutPct = points => { const p = Math.max(0, points || 0); return GUARD_MAX * p / (p + GUARD_HALF); };
+const guardCut = points => 1 - cutPct(points) / 100;
+// The Heroes screen shows the points and, beside them, the share of damage they really cut
+const guardText = points => `${Math.round(cutPct(points))}%`;
 const physDmg = (atk, def, power = 1, v = rnd(0.88, 1.12)) => Math.max(1, Math.round(atk * power * v * guardCut(def)));
 const magDmg = (raw, res) => Math.max(1, Math.round(raw * guardCut(res)));
-// Saves before v3 kept Defesa as points: the equipment bonus becomes a percentage (x2.5, like the heroes' Defesa)
+// Saves before v3 kept the old Defesa scale: the equipment bonus is multiplied once (x2.5, like the heroes' Defesa)
 const migrateBonus = (bonus, v) => (v || 0) >= 3 || !bonus.def ? bonus : { ...bonus, def: Math.round(bonus.def * 2.5) };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const aliveParty = () => G.party.filter(m => m.hp > 0);
