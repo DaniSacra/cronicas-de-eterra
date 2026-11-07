@@ -1,6 +1,9 @@
 # Fica só no computador do Daniel: cânone, segredos da história, relatórios e agentes
 docs/*
 !docs/arte/
+!docs/ui/
+docs/ui/*
+!docs/ui/propostas/
 .claude/
 node_modules/
 *.bak
