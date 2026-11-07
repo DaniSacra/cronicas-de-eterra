@@ -599,6 +599,7 @@ async function ending() {
   await fadeTo(0, 900);
   await say2(null, 'Na porta da igreja velha, apoiado na irmã Irene, espera o mensageiro.');
   await say2('Irmã Irene', 'Acordou hoje cedo. Disse o nome: Tobias. E a primeira coisa que perguntou foi da carta.');
+  await say2('Irmã Irene', 'E desde que o sino parou, nenhuma cova abriu.');
   await say2('Tobias', 'A carta... continua fechada?');
   if (inParty('teo')) await say2('Teo', 'Fechada. Como veio.');
   await say2(null, 'Tobias chora em silêncio.');

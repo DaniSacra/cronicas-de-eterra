@@ -260,7 +260,7 @@ async function teoScene() {
   G.seen.teoWin = 1;
   backToArea();
   await line('Teo', 'Obrigado. Sou Teo. Ainda estou aprendendo, mas um dia quero servir no Templo. Vim ajudar a irmã Irene no inverno.');
-  await line('Teo', 'Rezo por estas covas há três noites e elas continuam abrindo.', 'preocupado');
+  await line('Teo', 'Rezo por estas covas há três noites. E toda noite, antes de elas abrirem, eu ouço um sino.', 'preocupado');
   await line('Teo', `Mortos não se levantam sozinhos. Vou com ${G.party.length > 2 ? 'vocês' : 'você'} até descobrir quem os chama.`, 'bravo');
   await joined('Teo');
   if (inParty('lyra')) {
@@ -480,6 +480,7 @@ async function nightScene() {
   await UI.say('Ninguém dorme. Teo passa a noite com a carta fechada no colo.');
   Sfx.bellFar();
   await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
+  if (inParty('teo')) await UI.say('Teo levanta a cabeça. É o mesmo sino do cemitério.');
   await UI.say('Pão quente e mais sopa. O grupo recupera as forças.');
   for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
   UI.updateParty();

@@ -33,3 +33,16 @@ test('the party talks at the breach and at the tomb name the lion and the swords
   assert.ok(buraco.some(t => t.includes('Hanokh lutou na guerra de Elun')));
   assert.ok(tumulo.includes('Essas quatro espadas são de paladinos. E embaixo de cada uma havia alguma coisa.'));
 });
+
+test('the bell wakes the dead: Rui says so on the morning after, the elder too, and Irene says no grave opened since it stopped', async () => {
+  const { log, run } = story(['aldo', 'lyra', 'teo', 'andilla'], { intro: 1, seen: { job: 1 } });
+  run(`enterTown({ x: 22, y: 17, dir: 2 }, 'valmor')`);
+  assert.equal(run('stage()'), 'start');
+  await run(`talkTo(TOWN.npcs.find(n => n.def.id === 'rui'))`);
+  assert.equal(log[0], 'Rui, o lavrador:\nO sino tocou de novo. E hoje cedo tinha mais três covas abertas. Por dentro.');
+  assert.match(src('town.js'), /'Toda noite em que ele toca, mais covas amanhecem abertas\. O sino chama, e os mortos obedecem\.'/);
+  const main = src('main.js'), end = main.slice(main.indexOf('async function ending'));
+  const name = end.indexOf('Disse o nome: Tobias'), irene = end.indexOf("'E desde que o sino parou, nenhuma cova abriu.'");
+  assert.ok(name > 0 && irene > name && end.slice(irene - 40, irene).includes('Irmã Irene'), 'Irene speaks it after Tobias says his name');
+  assert.match(src('data.js'), /O Sineiro ergue o sino de bronze. Em algum lugar acima, a terra das covas estremece./);
+});

@@ -78,7 +78,7 @@ const NPC_DEFS = [
     desceu: ['Vocês desceram mesmo! O Bigode não estava lá, né? Ele tem medo de escuro.'],
     won: ['O Bigode voltou pra casa! Ele voltou sozinho... mas obrigada mesmo assim!'] } },
   { id: 'rui', name: 'Rui, o lavrador', x: 6, y: 7, dir: 2, wander: 2, when: () => G.intro, lines: {
-    start: ['Ouviu o sino de madrugada? É o da igreja velha.', 'Aquela igreja está vazia faz cinquenta anos. Quem é que toca?'],
+    start: ['O sino tocou de novo. E hoje cedo tinha mais três covas abertas. Por dentro.', 'Aquela igreja está vazia faz cinquenta anos. Quem é que toca?'],
     quest: ['Vão descer? Levem uma pá. Eu levaria.'],
     desceu: ['Desceram e voltaram! Viram quem abriu as covas?', 'Ninguém acreditou em mim. Agora a vila inteira só fala disso.'],
     won: ['Dormi a noite inteira pela primeira vez em semanas!', 'Mas aquelas covas cavadas com pá... Morto não usa pá.'] } },
@@ -698,6 +698,7 @@ async function elderTalk() {
     'Se quase mataram o homem que a trazia, o que tem dentro é maior que Valmor.',
     'O homem que a trouxe delira "o selo... o selo". As covas abrem sozinhas.',
     'E o sino que vocês ouviram de madrugada é o da igreja velha. Ninguém toca aquele sino há cinquenta anos.',
+    'Toda noite em que ele toca, mais covas amanhecem abertas. O sino chama, e os mortos obedecem.',
     'Tudo aponta para o mesmo lugar. Debaixo da igreja velha, no fundo da cripta, dorme um rei, selado na guerra de Elun.',
     'Não digo o nome dele. Não aqui em cima.',
     ...(G.party.length < 4 ? [ // only old saves reach this line: the party is four before the elder since the tavern night

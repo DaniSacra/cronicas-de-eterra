@@ -178,7 +178,7 @@ const ENEMIES = {
   // Chefe do prólogo (prologo.md)
   sineiro:   { name: 'O Sineiro', hp: 650, atk: 24, def: 25, res: 10, agi: 11, xp: 0, chama: 20, dreno: 24, sprite: 'bellringer', undead: true, boss: true,
                say: {
-                 intro: 'O Sineiro ergue o sino de bronze.\n"O último toque foi há cinquenta anos. Ninguém mais desce."',
+                 intro: 'O Sineiro ergue o sino de bronze. Em algum lugar acima, a terra das covas estremece.\n"O último toque foi há cinquenta anos. Ninguém mais desce."',
                  enrage: 'O Sineiro sacode o sino com fúria! "Ninguém mais desce!"',
                  hit: t => `O Sineiro golpeia ${t} com o sino!`,
                  aoe: 'O Sineiro toca a Badalada! O som atravessa os ossos.',
