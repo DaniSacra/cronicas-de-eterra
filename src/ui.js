@@ -212,22 +212,27 @@ const UI = (() => {
         <div class="nm${shortName(d.name).length > 6 ? ' long' : ''}"><span>${esc(shortName(d.name))}</span><img class="dfn" src="${iconUrl('def')}" alt=""></div>
         <div class="cls">${esc(d.cls)}</div>
         <div class="bar hp"><i></i></div><div class="num hpn"></div>
-        <div class="bar mp"><i></i></div><div class="num mpn"></div></div>`;
+        ${resourceBar(m)}<div class="num mpn${usesEnergy(m) ? ' en' : ''}"></div></div>`;
       card.onclick = ev => { if (pickValue(m)) ev.stopPropagation(); };
       card.onmouseenter = () => hoverValue(m);
       partyEl.appendChild(card);
     }
     updateParty();
   }
+  // The second bar: PM for the magic heroes, Energia (amber, marks at the costs) for the combat ones
+  function resourceBar(m) {
+    if (!usesEnergy(m)) return '<div class="bar mp"><i></i></div>';
+    return `<div class="bar mp en"><i></i>${ENERGY.tiers.map(t => `<s style="--at:${t / ENERGY.max}"></s>`).join('')}</div>`;
+  }
   function updateParty(activeId) {
     for (const m of G.party) {
       const card = document.getElementById('card-' + m.id); if (!card) continue;
-      const mh = maxHp(m), mm = maxMp(m);
+      const mh = maxHp(m), r = resourceOf(m);
       card.querySelector('.lv').textContent = 'Nv ' + m.lv;
       card.querySelector('.hp i').style.width = (100 * m.hp / mh) + '%';
-      card.querySelector('.mp i').style.width = (mm ? 100 * m.mp / mm : 0) + '%';
+      card.querySelector('.mp i').style.width = (r.max ? 100 * r.cur / r.max : 0) + '%';
       // low screens hide the labels; three-digit numbers drop the blank column of each glyph, so they fit on one line
-      for (const [sel, lbl, v, max] of [['.hpn', 'PV', m.hp, mh], ['.mpn', 'PM', m.mp, mm]]) {
+      for (const [sel, lbl, v, max] of [['.hpn', 'PV', m.hp, mh], ['.mpn', r.kind === 'energy' ? 'EN' : 'PM', r.cur, r.max]]) {
         const el = card.querySelector(sel);
         el.innerHTML = `<b>${lbl} </b>${v}/${max}`; el.classList.toggle('long', `${v}/${max}`.length > 5);
       }

@@ -274,7 +274,7 @@ async function innkeeper() {
     if (v === null) return;
     if (v === 'rest') {
       G.gold -= INN.price;
-      for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
+      for (const m of G.party) { fullRestore(m); UI.cardGlow(m); }
       UI.updateParty(); Sfx.holy();
       await UI.say('Uma noite de cama quente. Todos foram restaurados.' + (saveGame() ? '\nJogo salvo.' : ''));
       continue;

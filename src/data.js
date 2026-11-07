@@ -34,9 +34,9 @@ const oldCryptKey = k => /^\d+:/.test(k) && parseInt(k, 10) >= CRYPT_FLOORS;
 const PARTY_DEFS = [
   {
     id: 'aldo', name: 'Aldo', cls: 'Guerreiro', color: '#e0a040',
-    base: { hp: 48, mp: 8, atk: 13, def: 22.5, res: 4, mag: 3, agi: 7 },
-    grow: { hp: 10, mp: 1, atk: 3, def: 5, res: 1, mag: 0.5, agi: 1 },
-    spells: [[1, 'golpe'], [3, 'quebraJunta'], [5, 'furia']], skillWord: 'Técnica',
+    base: { hp: 48, mp: 0, atk: 13, def: 22.5, res: 4, mag: 3, agi: 7 },
+    grow: { hp: 10, mp: 0, atk: 3, def: 5, res: 1, mag: 0.5, agi: 1 },
+    spells: [[4, 'golpe'], [12, 'quebraJunta'], [18, 'furia']], skillWord: 'Técnica', energy: true,
   },
   {
     id: 'lyra', name: 'Lyra', cls: 'Maga', color: '#d070e0',
@@ -48,22 +48,29 @@ const PARTY_DEFS = [
     id: 'teo', name: 'Teo', cls: 'Clérigo', color: '#60d0a0',
     base: { hp: 36, mp: 16, atk: 9, def: 15, res: 10, mag: 9, agi: 6 },
     grow: { hp: 7, mp: 3, atk: 2, def: 3.75, res: 3, mag: 2, agi: 1 },
-    spells: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [7, 'curaTotal']], skillWord: 'Magia',
+    spells: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [10, 'curaTotal']], skillWord: 'Magia',
   },
   {
     // até dizer o nome na noite da taverna (G.seen.andillaAnon), ela é a moça dos dados também no cartão e na batalha
     id: 'andilla', get name() { return typeof G !== 'undefined' && G.seen && G.seen.andillaAnon ? 'Moça dos dados' : 'Andilla'; }, cls: 'Ladina', color: '#e05a5a',
-    base: { hp: 34, mp: 10, atk: 11, def: 12.5, res: 6, mag: 4, agi: 14 },
-    grow: { hp: 6, mp: 2, atk: 2.5, def: 3, res: 2, mag: 0.5, agi: 1.6 },
-    spells: [[1, 'golpeBaixo'], [3, 'leque']], skillWord: 'Truque',
+    base: { hp: 34, mp: 0, atk: 11, def: 12.5, res: 6, mag: 4, agi: 14 },
+    grow: { hp: 6, mp: 0, atk: 2.5, def: 3, res: 2, mag: 0.5, agi: 1.6 },
+    spells: [[3, 'leque'], [7, 'golpeBaixo']], skillWord: 'Truque', energy: true,
   },
 ];
 
-// Every hero learns something new on the odd levels (1, 3, 5, 7)
+// Two kinds of hero (combat design, Phase 2a): Lyra and Teo cast with PM (field `mp` on the spell); Aldo and Andilla
+// fight with Energia (field `en`, PARTY_DEFS energy: true). Energia lives only in battle: it starts every fight at
+// `start`, fills with attacks, defending and (per hero) taking hits or landing crits, and is gone when the fight ends.
+// A technique and a miss give nothing. Costs come in three tiers.
+const ENERGY = { max: 100, start: 10, attack: 15, defend: 10, hurt: { aldo: 8 }, crit: { andilla: 10 }, tiers: [20, 40, 80] };
+const MAX_LEVEL = 30;
+
+// What each hero learns and when (PARTY_DEFS spells); old saves follow it, since it depends only on the level
 const SPELLS = {
-  golpe:     { name: 'Golpe Forte', mp: 4,  target: 'enemy',      kind: 'phys',   power: 1.8, fx: 'slash', desc: 'Um golpe com toda a força.' },
-  quebraJunta: { name: 'Quebra-Junta', mp: 5, target: 'enemy', kind: 'phys', power: 1.4, bone: 1.5, fx: 'slash', desc: 'Mira nas juntas. Osso quebra: mais forte contra mortos-vivos.' },
-  furia:     { name: 'Fúria',       mp: 8,  target: 'allEnemies', kind: 'phys',   power: 1.15, fx: 'slash', desc: 'Gira a espada contra todos.' },
+  golpe:     { name: 'Golpe Forte', en: 20, target: 'enemy',      kind: 'phys',   power: 1.4, fx: 'slash', desc: 'Um golpe com toda a força.' },
+  quebraJunta: { name: 'Quebra-Junta', en: 40, target: 'enemy', kind: 'phys', power: 1.35, bone: 1.5, fx: 'slash', desc: 'Mira nas juntas. Osso quebra: mais forte contra mortos-vivos.' },
+  furia:     { name: 'Fúria',       en: 80, target: 'allEnemies', kind: 'phys',   power: 0.95, fx: 'slash', desc: 'Gira a espada contra todos.' },
   fogo:      { name: 'Fogo',        mp: 4,  target: 'enemy',      kind: 'mag',    power: 2.2, base: 8,  fx: 'fire', desc: 'Uma chama que queima um inimigo.' },
   gelo:      { name: 'Gelo',        mp: 8,  target: 'allEnemies', kind: 'mag',    power: 1.4, base: 6,  fx: 'ice', desc: 'Geada sobre todos os inimigos.' },
   raio:      { name: 'Raio',        mp: 12, target: 'enemy',      kind: 'mag',    power: 3.4, base: 16, fx: 'bolt', desc: 'Um raio forte num inimigo só.' },
@@ -71,8 +78,8 @@ const SPELLS = {
   luz:       { name: 'Luz Sagrada', mp: 5,  target: 'enemy',      kind: 'holy',   power: 2,   base: 10, fx: 'holy', desc: 'Luz que fere. Dobra contra mortos-vivos.' },
   reviver:   { name: 'Reviver',     mp: 12, target: 'deadAlly',   kind: 'revive', field: true, desc: 'Põe de pé um aliado caído.' },
   curaTotal: { name: 'Cura Total',  mp: 10, target: 'allAllies',  kind: 'heal',   power: 1.5, base: 15, field: true, desc: 'Cura todo o grupo de uma vez.' },
-  golpeBaixo: { name: 'Golpe Baixo',   mp: 3,  target: 'enemy',      kind: 'phys',   power: 1.4, pierce: true, fx: 'slash', desc: 'Acerta onde a armadura não cobre.' },
-  leque:      { name: 'Leque de Facas', mp: 6, target: 'allEnemies', kind: 'phys',   power: 0.8, fx: 'slash', desc: 'Facas para todos os inimigos.' },
+  golpeBaixo: { name: 'Golpe Baixo',   en: 20, target: 'enemy',      kind: 'phys',   power: 1.3, pierce: true, fx: 'slash', desc: 'Acerta onde a armadura não cobre.' },
+  leque:      { name: 'Leque de Facas', en: 20, target: 'allEnemies', kind: 'phys',   power: 0.71, fx: 'slash', desc: 'Facas para todos os inimigos.' },
 };
 
 const ITEMS = {
@@ -280,4 +287,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
+if (typeof module !== 'undefined') module.exports = { ENERGY, MAX_LEVEL, BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };

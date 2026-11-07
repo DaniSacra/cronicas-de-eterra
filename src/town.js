@@ -771,7 +771,7 @@ async function chapel() {
       won: ['O mensageiro já se levanta sozinho. E o sino da igreja velha se calou.', 'Esta noite, enfim, eu durmo.'] }));
     if (v === 'talk' && G.bossDead) await say('Tobias', ['Em Erukh, ninguém antes da rainha.', 'Que a luz de Elun vá com vocês.']); // he rests at the chapel
     if (v === 'pray') {
-      for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
+      for (const m of G.party) { fullRestore(m); UI.cardGlow(m); }
       UI.updateParty(); Sfx.holy();
       G.flashColor = '255,250,220'; G.flash = { t0: performance.now(), dur: 600 };
       await UI.say('Uma luz cálida envolve o grupo.\nTodos foram restaurados.' + (saveGame() ? '\nJogo salvo.' : ''));

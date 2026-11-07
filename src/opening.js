@@ -205,7 +205,7 @@ const CEM_FIGHTS = {
   rato:     { foe: 'rat',  name: 'Rato de Cova', x: 5,  y: 8, dir: 1, flag: 'cem1', ids: ['ratoCova'],
     intro: 'Um rato do tamanho de um gato sai de uma cova!', hint: 'Cada golpe conta. Escolha Atacar e o alvo.' },
   morcegos: { foe: 'bats', name: 'Morcegos',     x: 10, y: 4, dir: 3, flag: 'cem2', ids: ['morcegoCova', 'morcegoCova'],
-    intro: 'Dois morcegos descem do muro!', hint: () => `Técnica e Magia gastam PM: o Golpe Forte de Aldo bate quase em dobro${inParty('lyra') ? ', e o Fogo de Lyra derruba um morcego de uma vez' : ''}. Defender segura o golpe seguinte.` },
+    intro: 'Dois morcegos descem do muro!', hint: () => `Atacar enche a Energia de Aldo.${inParty('lyra') ? ' Lyra gasta PM no Fogo, que derruba um morcego de uma vez.' : ''}` },
   ossada:   { foe: 'bone', name: 'Ossada',       x: 12, y: 3, dir: 2, flag: 'cem3', ids: ['ossada'],
     intro: 'Uma mão de osso rompe a terra. Uma Ossada se levanta!', hint: 'PV baixo? Item → Poção. Ainda não há ninguém no grupo que saiba curar.' },
 };
@@ -385,7 +385,7 @@ async function nightScene() {
   await fadeTo(0, 300);
   await line('Berta', 'Ossadas andando? E ainda trouxeram um aprendiz de brinde. Sentem, o quarto é de vocês.');
   await UI.say('A Berta serve sopa quente. O grupo recupera as forças.');
-  for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
+  for (const m of G.party) fullRestore(m);
   UI.updateParty();
   await fadeTo(1, 900);
 
@@ -482,7 +482,7 @@ async function nightScene() {
   await UI.say('De madrugada, um sino toca ao longe, devagar. Ninguém na taverna sabe dizer quem tocou.');
   if (inParty('teo')) await UI.say('Teo levanta a cabeça. É o mesmo sino do cemitério.');
   await UI.say('Pão quente e mais sopa. O grupo recupera as forças.');
-  for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
+  for (const m of G.party) fullRestore(m);
   UI.updateParty();
   G.intro = 1;
   enterTown({ x: 6, y: 4, dir: 2 }, 'taverna');

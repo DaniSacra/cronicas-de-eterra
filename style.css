@@ -100,6 +100,10 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .bar { height: calc(var(--u) * 3); background: #4a2c16; padding: calc(var(--u) / 2); margin: calc(var(--u) * 2) 0 var(--u); }
 .bar i { display: block; height: 100%; background: linear-gradient(var(--hp2) 0 50%, var(--hp) 50%); transition: width .3s steps(6); }
 .bar.mp i { background: linear-gradient(var(--mp2) 0 50%, var(--mp) 50%); }
+/* Energia (Aldo, Andilla): the same bar in amber, with thin marks at the three costs (20, 40, 80) */
+.bar.en { position: relative; }
+.bar.en i { background: linear-gradient(#f0c850 0 50%, #e0a030 50%); }
+.bar.en s { position: absolute; top: 0; bottom: 0; left: calc(var(--u) / 2 + (100% - var(--u)) * var(--at)); width: max(1px, calc(var(--u) / 2)); background: var(--light); opacity: .6; }
 .num { font-size: var(--f1); color: var(--text); }
 .float { position: absolute; right: calc(var(--u) * 6); top: calc(var(--u) * 3); font-size: var(--f2); animation: float .9s steps(6) forwards;
   pointer-events: none; color: var(--light); text-shadow: var(--u) var(--u) 0 var(--ink); }
@@ -207,7 +211,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
     grid-template-areas: 'nm nm' 'hp hp' 'mp mp' 'hpn mpn'; }
   .card .nm { grid-area: nm; } .card .bar.hp { grid-area: hp; } .card .bar.mp { grid-area: mp; margin-top: 1px; }
   .card .hpn { grid-area: hpn; } .card .mpn { grid-area: mpn; } .card .bar { height: 3px; padding: 0; }
-  .card .info { column-gap: 4px; } .card .num { letter-spacing: -.125em; } .card .num b { display: none; } .card .mpn { color: #2a5aa0; } /* no room for "PV"/"PM": the PM number is blue like its bar */
+  .card .info { column-gap: 4px; } .card .num { letter-spacing: -.125em; } .card .num b { display: none; } .card .mpn { color: #2a5aa0; } .card .mpn.en { color: #9a6a18; } /* no room for "PV"/"PM"/"EN": the number has its bar's color */
   #msgbox { min-height: 0; padding: 8px 12px; } #menu { gap: .3em 1.5em; margin-top: .3em; } #bottom { padding: 6px; gap: 4px; }
 }
 
@@ -396,6 +400,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-sheet { display: flex; flex-direction: column; gap: calc(var(--u) * 1.5); padding: calc(var(--u) * 4) calc(var(--u) * 5); min-height: 0; overflow: hidden; }
 .hv-bar { display: flex; justify-content: space-between; align-items: baseline; }
 .hv-bar b { font-weight: normal; } #heroview .hv-bar b small { display: inline; }
+.hv-en { margin: var(--u) 0 calc(var(--u) * 2); color: #9a6a18; }
 .hv-sheet > .bar { height: calc(var(--u) * 4); margin: 0 0 var(--u); }
 .hv-stats { display: grid; gap: var(--u); margin-top: calc(var(--u) * 2); }
 .hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 3em; column-gap: calc(var(--u) * 3); align-items: center; }

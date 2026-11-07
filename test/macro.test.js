@@ -10,14 +10,18 @@ const SPELLS = {
   gelo: { name: 'Gelo', mp: 8, target: 'allEnemies', kind: 'mag', fx: 'ice' },
   cura: { name: 'Cura', mp: 3, target: 'ally', kind: 'heal' },
   reviver: { name: 'Reviver', mp: 12, target: 'deadAlly', kind: 'revive' },
-  golpe: { name: 'Golpe Forte', mp: 4, target: 'enemy', kind: 'phys', fx: 'slash' },
+  golpe: { name: 'Golpe Forte', en: 20, target: 'enemy', kind: 'phys', fx: 'slash' },
 };
 const ITEMS = { pocao: { name: 'Poção', target: 'ally' }, eter: { name: 'Éter', target: 'ally' }, pena: { name: 'Pena Vital', target: 'deadAlly' } };
 const hero = (id, hp, mp = 10) => ({ id, hp, mp, max: 100 });
+// Aldo and Andilla fight with Energia (m.en), the others cast with PM, as in src/party.js
+const fighter = (id, hp, en) => ({ id, hp, mp: 0, en, max: 100 });
+const resourceOf = m => m.en != null ? { kind: 'energy', label: 'Energia', cur: m.en } : { kind: 'mp', label: 'PM', cur: m.mp };
+const canPay = (m, sp) => resourceOf(m).cur >= (sp.en ?? sp.mp);
 const ctx = (actor, o = {}) => ({
   actor, name: actor.id, party: o.party || [actor], enemies: o.enemies || [{ i: 0, hp: 10, x: 50 }, { i: 1, hp: 10, x: 20 }],
   inv: o.inv || { pocao: 1, eter: 1, pena: 1 }, spells: SPELLS, items: ITEMS, maxHp: m => m.max, maxMp: () => 20,
-  useless: o.useless || (() => null),
+  useless: o.useless || (() => null), resourceOf, canPay,
 });
 
 test('a chosen command becomes a rule: enemy by index, run kept as an attack, allies never stored', () => {
@@ -53,6 +57,9 @@ test('healing goes to the living ally with the lowest HP share; Éter to the low
   assert.equal(M.resolveMacro({ type: 'spell', spell: 'cura' }, ctx(teo, { party })).cmd.target, aldo);
   assert.equal(M.resolveMacro({ type: 'item', item: 'pocao' }, ctx(teo, { party })).cmd.target, aldo);
   assert.equal(M.resolveMacro({ type: 'item', item: 'eter' }, ctx(teo, { party })).cmd.target, lyra);
+  // Éter looks only at the heroes with PM: Aldo with no PM at all is never its target
+  const party2 = [fighter('aldo', 90, 0), hero('lyra', 50, 15), teo];
+  assert.equal(M.resolveMacro({ type: 'item', item: 'eter' }, ctx(teo, { party: party2 })).cmd.target, teo);
 });
 
 test('revive and Pena Vital: the first fallen ally, or Defend when nobody fell', () => {
@@ -72,6 +79,9 @@ test('substitutions: no item in the bag, not enough MP, an item that would do no
   assert.equal(noItem.warn, 'Sem Poção na bolsa. aldo se defende.');
   const noMp = M.resolveMacro({ type: 'spell', spell: 'fogo', enemy: 1 }, ctx(lyra));
   assert.deepEqual([noMp.cmd.type, noMp.cmd.target.i, noMp.warn], ['attack', 1, 'PM insuficiente. lyra ataca.']);
+  const tired = M.resolveMacro({ type: 'spell', spell: 'golpe', enemy: 0 }, ctx(fighter('aldo', 50, 15)));
+  assert.deepEqual([tired.cmd.type, tired.cmd.target.i, tired.warn], ['attack', 0, 'Energia insuficiente. aldo ataca.']);
+  assert.equal(M.resolveMacro({ type: 'spell', spell: 'golpe', enemy: 0 }, ctx(fighter('aldo', 50, 20))).cmd.type, 'spell');
   const full = M.resolveMacro({ type: 'item', item: 'pocao' }, ctx(aldo, { useless: () => 'aldo já está com os PV cheios.' }));
   assert.deepEqual([full.cmd.type, full.warn], ['defend', 'aldo já está com os PV cheios. aldo se defende.']);
 });

@@ -13,7 +13,7 @@ function devParty(lv, gear = []) {
   G.party = DEV_HEROES.map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = lv; m.xp = 0; return m; });
   G.gear = [...gear]; G.equip = {};
   for (const g of gear) { const m = G.party.find(p => p.id === EQUIPS[g].who); for (const [k, v] of Object.entries(EQUIPS[g].bonus)) m.bonus[k] = (m.bonus[k] || 0) + v; }
-  for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); }
+  for (const m of G.party) fullRestore(m);
 }
 function devState(o) {
   devParty(o.lv, o.gear);

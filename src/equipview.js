@@ -92,8 +92,8 @@ const HeroView = (() => {
     const slotBtn = (s, i) => `<button class="hv-slot win${i === slot ? ' sel' : ''}${choosing && i === slot ? ' open' : ''}" data-act="slot" data-v="${i}" title="${s.label}">
       <span class="hv-box slot-frame">${icon(s.icon)}</span><span>${esc(s.name)}<br>${s.start ? '<i class="dim">sem bônus</i>' : `<em>${esc(bonusText(s.bonus, STAT_NAMES))}</em>`}</span></button>`;
     return `<section class="hv-stage-col" style="--b0:${bg[0]};--b1:${bg[1]};--b2:${bg[2]};--b3:${bg[3]}">
-      <div class="hv-band"><p><span class="hv-name" style="color:${d.color}">${esc(d.name)}</span> ${esc(d.cls)} · Nível ${m.lv}${dead ? '<span class="hv-ko">Caído</span>' : ''}</p><div class="bar xp"><i style="width:${Math.min(100, 100 * m.xp / xpNext(m.lv))}%"></i></div>
-        <p>${xpLeftText(m.xp, m.lv, xpNext(m.lv))}</p></div>
+      <div class="hv-band"><p><span class="hv-name" style="color:${d.color}">${esc(d.name)}</span> ${esc(d.cls)} · Nível ${m.lv}${dead ? '<span class="hv-ko">Caído</span>' : ''}</p><div class="bar xp"><i style="width:${m.lv >= MAX_LEVEL ? 100 : Math.min(100, 100 * m.xp / xpNext(m.lv))}%"></i></div>
+        <p>${m.lv >= MAX_LEVEL ? 'Nível máximo' : xpLeftText(m.xp, m.lv, xpNext(m.lv))}</p></div>
       <div class="hv-scene"><canvas class="hv-body" width="${STAGE_W}" height="${STAGE_H}"></canvas></div>
       <div class="hv-slots">${slots.map(slotBtn).join('')}</div></section>`;
   }
@@ -106,7 +106,8 @@ const HeroView = (() => {
     const st = storyLines(HERO_STORY[m.id].lines, flags()), q = storyQuote(HERO_STORY[m.id].quotes, flags());
     const bar = (lbl, v, max, cls) => `<div class="hv-bar"><span>${lbl}</span><b>${v}<small>/${max}</small></b></div>
       <div class="bar ${cls}"><i style="width:${max ? 100 * v / max : 0}%"></i></div>`;
-    return `<section class="hv-sheet win">` + bar('PV', m.hp, maxHp(m), '') + bar('PM', m.mp, maxMp(m), 'mp') +
+    return `<section class="hv-sheet win">` + bar('PV', m.hp, maxHp(m), '') +
+      (usesEnergy(m) ? `<p class="hv-en">Energia: começa cada luta em ${ENERGY.start} e vai até ${ENERGY.max}</p>` : bar('PM', m.mp, maxMp(m), 'mp')) +
       `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}${r.key === 'def' || r.key === 'res' ? `<small class="hv-cut">reduz ${guardText(r.value)} do dano</small>` : ''}</span>
         <b>${r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em></div>`).join('')}</div>
       <div class="hv-story">${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div></section>`;
@@ -153,12 +154,12 @@ const HeroView = (() => {
     const list = book.map((r, i) => {
       const s = SPELLS[r.id];
       return `<button class="hv-row${i === skill ? ' sel' : ''}${r.known ? '' : ' off'}" data-act="skill" data-v="${i}">${icon(spellIcon(s), r.known ? 'normal' : 'dis')}
-        <b>${r.known ? esc(s.name) : '???'}</b><b class="hv-cost">${r.known ? s.mp + ' PM' : 'Nível ' + r.lv}</b></button>`;
+        <b>${r.known ? esc(s.name) : '???'}</b><b class="hv-cost">${r.known ? costText(s) : 'Nível ' + r.lv}</b></button>`;
     }).join('');
     let detail = '';
     if (sp && known) {
       const u = fieldUse(sp, m);
-      detail = `${icon(spellIcon(sp), 'normal', 'bk-big')}<h3>${esc(sp.name)}</h3><p class="hv-cost">${sp.mp} PM · ${TARGET_TEXT[sp.target]}</p>
+      detail = `${icon(spellIcon(sp), 'normal', 'bk-big')}<h3>${esc(sp.name)}</h3><p class="hv-cost">${costText(sp)} · ${TARGET_TEXT[sp.target]}</p>
         <p>${esc(sp.desc)}</p><p class="bk-fx">${spellEffect(sp, statsOf(m))}.</p>
         ${u.field ? `<div class="hv-actions">${btn('cast', 0, 'Usar', `hv-btn${u.ok ? '' : ' dis'}`)}${u.ok ? '' : `<span class="dim">${u.why}</span>`}</div>` : `<p class="dim">${u.why}.</p>`}`;
     } else if (sp) detail = `${icon(spellIcon(sp), 'dis', 'bk-big')}<h3>???</h3><p class="dim">${esc(d.name)} aprende no nível ${book[skill].lv}.</p>`;
@@ -173,7 +174,7 @@ const HeroView = (() => {
     if (!sp || !fieldUse(sp, m).ok) return Sfx.cancel();
     hide();
     const t = sp.target === 'allAllies' ? 'all' : await pickAlly(sp.target, `${sp.name} em quem?`);
-    if (t != null) { m.mp -= sp.mp; UI.updateParty(); await UI.say(castSupport(m, r.id, t)); }
+    if (t != null) { pay(m, sp); UI.updateParty(); await UI.say(castSupport(m, r.id, t)); }
     reshow();
   }
 

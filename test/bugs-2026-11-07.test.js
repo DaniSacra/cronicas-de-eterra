@@ -177,7 +177,7 @@ test('Defesa and Resistência: the Heroes screen shows the points and the share 
 test('combat: the bar opens on the last command, a single skill still opens the list, the list shows what a spell does', async () => {
   const starts = [], lists = [];
   let turn = 0;
-  const { run } = battle(['aldo'], (opts, o, run) => {
+  const { run } = battle(['lyra'], (opts, o, run) => {
     if (barHero(o)) {
       starts.push(o.start); turn++;
       if (turn === 3) { run('B.enemies.forEach(e => { e.hp = 0; })'); return 'def'; }
@@ -189,7 +189,7 @@ test('combat: the bar opens on the last command, a single skill still opens the 
   });
   await run(`startBattle(['boneco'], false, { surprise: 'normal' })`);
   assert.deepEqual(starts.slice(0, 3), ['atk', 'spell', 'atk'], 'each bar opens on the last command');
-  assert.ok(lists.some(t => t && t.includes('Técnica')), 'Aldo has one skill and still sees the list with its name');
+  assert.ok(lists.some(t => t && t.includes('Magia de Lyra (PM 20)')), 'Lyra has one skill and still sees the list with its name');
   const src = fs.readFileSync(`${__dirname}/../src/battle.js`, 'utf8');
   assert.ok(src.includes('B.label = v ? SPELLS[v].desc : null'));
 });

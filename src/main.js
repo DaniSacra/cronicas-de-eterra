@@ -279,7 +279,7 @@ async function interact(o) {
     }
     Sfx.holy();
     G.flashColor = '160,230,255'; G.flash = { t0: performance.now(), dur: 700 };
-    for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
+    for (const m of G.party) { fullRestore(m); UI.cardGlow(m); }
     UI.updateParty();
     const saved = saveGame();
     await UI.say('Uma fonte de água cristalina brilha na escuridão.\nO grupo foi totalmente restaurado!' + (saved ? '\nJogo salvo.' : ''));
@@ -416,7 +416,7 @@ function saveGame() {
   try {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 3, floor: G.floor, floorId: floorKey(G.floor), chapter: G.chapter, part: G.part, x: G.x, y: G.y, dir: G.dir, party: G.party.map(({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus })),
+      v: 3, floor: G.floor, floorId: floorKey(G.floor), chapter: G.chapter, part: G.part, x: G.x, y: G.y, dir: G.dir, party: G.party.map(saveMember),
       inv: G.inv, opened: G.opened, gear: G.gear || [], equip: G.equip || {}, explored, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
@@ -436,7 +436,7 @@ function loadGame() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return false;
-    G.party = s.party.map(m => ({ ...m, bonus: migrateBonus(m.bonus || {}, s.v) })); G.inv = s.inv; G.opened = s.opened; G.gear = s.gear || []; G.equip = s.equip || {}; // saves without a choice wear the strongest piece of each slot G.bossDead = s.bossDead;
+    G.party = s.party.map(m => loadMember(m, s.v)); G.inv = s.inv; G.opened = s.opened; G.gear = s.gear || []; G.equip = s.equip || {}; // saves without a choice wear the strongest piece of each slot G.bossDead = s.bossDead;
     G.gold = s.gold || 0; G.quest = s.quest ?? 1; // saves antigos já estavam na dungeon
     G.key = s.key || { carta: true }; G.intro = s.intro ?? 1;
     G.seen = s.seen || {};
@@ -553,7 +553,7 @@ async function newGame() {
 
 // Atalho do título: grupo como depois da abertura (nível 3, carta, missão do ancião) direto na cripta
 async function quickDungeon() {
-  G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; m.hp = maxHp(m); m.mp = maxMp(m); return m; });
+  G.party = ['aldo', 'lyra', 'teo', 'andilla'].map(id => { const m = newMember(PARTY_DEFS.find(d => d.id === id)); m.lv = 3; m.xp = 15; fullRestore(m); return m; });
   G.inv = { pocao: 5, eter: 1, pena: 1 };
   G.chapter = 0; G.part = 0;
   G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 40; G.quest = 1; G.key = { carta: true, estojo: true }; G.intro = 1; G.reached = 0;

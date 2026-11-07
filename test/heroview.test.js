@@ -113,7 +113,7 @@ test('book: which skills work outside battle, the Usar button grey with the reas
   assert.deepEqual(fieldIds.sort(), ['cura', 'curaTotal', 'reviver']);
   assert.equal(R.spellEffect(S.cura, { atk: 10, mag: 10 }), 'Recupera cerca de 40 PV');
   assert.equal(R.spellEffect(S.curaTotal, { atk: 10, mag: 10 }), 'Recupera cerca de 30 PV em cada um');
-  assert.equal(R.spellEffect(S.golpe, { atk: 20, mag: 0 }), 'Cerca de 36 de dano');
+  assert.equal(R.spellEffect(S.golpe, { atk: 20, mag: 0 }), 'Cerca de 28 de dano');
   assert.match(R.spellEffect(S.quebraJunta, { atk: 20, mag: 0 }), /mortos-vivos/);
   for (const [k, sp] of Object.entries(S)) assert.ok(!R.spellEffect(sp, { atk: 10, mag: 10 }).includes('NaN'), k);
 });

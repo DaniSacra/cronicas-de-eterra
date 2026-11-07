@@ -214,7 +214,7 @@ const spellIcon = sp => FX_ICON[sp.fx] || KIND_ICON[sp.kind] || 'spell';
 function fieldUse(sp, caster) {
   if (!sp.field) return { field: false, ok: false, why: 'Só em batalha' };
   if (caster.hp <= 0) return { field: true, ok: false, why: 'Caído não usa' };
-  if (caster.mp < sp.mp) return { field: true, ok: false, why: `Faltam ${sp.mp - caster.mp} PM` };
+  if (caster.mp < sp.mp) return { field: true, ok: false, why: `Faltam ${sp.mp - caster.mp} PM` }; // field skills are all magic (PM)
   return { field: true, ok: true, why: '' };
 }
 // What a skill does, in simple numbers for this hero (s: total atk and mag), before the target's defense

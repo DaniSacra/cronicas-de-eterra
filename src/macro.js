@@ -39,7 +39,8 @@ const lowest = (party, cur, max) => aliveOf(party).filter(m => max(m) > 0)
   .reduce((a, m) => (!a || cur(m) / max(m) < cur(a) / max(a) ? m : a), null);
 const firstFallen = party => party.find(m => m.hp <= 0) || null;
 
-// ctx: { actor, name, party, enemies, inv, spells, items, maxHp, maxMp, useless(itemId, target) -> message|null }
+// ctx: { actor, name, party, enemies, inv, spells, items, maxHp, maxMp, useless(itemId, target) -> message|null,
+//        resourceOf(m) -> { kind, label, cur }, canPay(m, spell) }
 // Returns { cmd, warn }: the command to run now, and what the game says when the rule had to change it
 function resolveMacro(entry, ctx) {
   const { actor, name, party, enemies } = ctx;
@@ -47,12 +48,13 @@ function resolveMacro(entry, ctx) {
   const allyTarget = (kind, mp) => kind === 'enemy' ? enemyRule(entry, enemies)
     : kind === 'allEnemies' || kind === 'allAllies' ? 'all'
     : kind === 'deadAlly' ? firstFallen(party)
-    : mp ? lowest(party, m => m.mp, ctx.maxMp) : lowest(party, m => m.hp, ctx.maxHp);
+    : mp ? lowest(party.filter(m => ctx.resourceOf(m).kind === 'mp'), m => m.mp, ctx.maxMp) // Éter: only the heroes with PM
+    : lowest(party, m => m.hp, ctx.maxHp);
   if (entry.type === 'defend') return defend(null);
   if (entry.type === 'attack') return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: null };
   if (entry.type === 'spell') {
     const sp = ctx.spells[entry.spell];
-    if (!sp || actor.mp < sp.mp) return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: sp ? `PM insuficiente. ${name} ataca.` : `${name} ainda não aprendeu isso. ${name} ataca.` };
+    if (!sp || !ctx.canPay(actor, sp)) return { cmd: { type: 'attack', target: enemyRule(entry, enemies) }, warn: sp ? `${ctx.resourceOf(actor).label} insuficiente. ${name} ataca.` : `${name} ainda não aprendeu isso. ${name} ataca.` };
     const target = allyTarget(sp.target, false);
     if (!target) return defend(sp.target === 'deadAlly' ? `Ninguém caído. ${name} se defende.` : null);
     return { cmd: { type: 'spell', spell: entry.spell, target }, warn: null };

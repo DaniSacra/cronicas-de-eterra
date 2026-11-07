@@ -54,12 +54,15 @@ test('old saves: the Defesa bonus of the equipment becomes a percentage once', (
   assert.deepEqual(run.json('migrateBonus({ atk: 6 }, 2)'), { atk: 6 });
 });
 
-test('every hero learns on odd levels; Quebra-Junta hits the undead harder', async () => {
-  const { PARTY_DEFS, SPELLS } = require('../src/data.js');
-  for (const d of PARTY_DEFS) for (const [lv] of d.spells) assert.equal(lv % 2, 1, `${d.id} learns on level ${lv}`);
-  assert.deepEqual(PARTY_DEFS.find(d => d.id === 'aldo').spells.map(s => s[1]), ['golpe', 'quebraJunta', 'furia']);
-  assert.ok(SPELLS.quebraJunta.power * SPELLS.quebraJunta.bone > SPELLS.golpe.power, 'better than Golpe Forte against the dead');
-  assert.ok(SPELLS.quebraJunta.power < SPELLS.golpe.power, 'worse against the living');
+test('Phase 2a: the exact skills table, by level', () => {
+  const { PARTY_DEFS } = require('../src/data.js');
+  const table = Object.fromEntries(PARTY_DEFS.map(d => [d.id, d.spells]));
+  assert.deepEqual(table, {
+    aldo: [[4, 'golpe'], [12, 'quebraJunta'], [18, 'furia']],
+    lyra: [[1, 'fogo'], [3, 'gelo'], [5, 'raio']],
+    teo: [[1, 'cura'], [3, 'luz'], [5, 'reviver'], [10, 'curaTotal']],
+    andilla: [[3, 'leque'], [7, 'golpeBaixo']],
+  });
 });
 
 test('Phase 2 cut: Andilla crits more, both sides miss, dodge and crit, the boss never crits', () => {

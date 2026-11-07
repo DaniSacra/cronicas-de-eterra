@@ -5,6 +5,28 @@ function stat(m, k) { const d = pdef(m); return Math.floor(d.base[k] + d.grow[k]
 const maxHp = m => stat(m, 'hp');
 const maxMp = m => stat(m, 'mp');
 const knownSpells = m => pdef(m).spells.filter(([lv]) => m.lv >= lv).map(s => s[1]);
+// The resource a hero spends (combat design, Phase 2a): Energia for the combat heroes, PM for the magic ones.
+// Nothing else reads sp.mp or m.mp for a cost; only the PM-only things do (Éter, the mage's PM bar).
+const usesEnergy = m => !!pdef(m).energy;
+const resourceOf = m => usesEnergy(m)
+  ? { kind: 'energy', label: 'Energia', cur: m.en || 0, max: ENERGY.max }
+  : { kind: 'mp', label: 'PM', cur: m.mp, max: maxMp(m) };
+const spellCost = sp => sp.en ?? sp.mp;
+const costText = sp => sp.en != null ? `${sp.en} de Energia` : `${sp.mp} PM`;
+const costHint = sp => sp.en != null ? `${sp.en} Energia` : `${sp.mp}PM`;
+const canPay = (m, sp) => resourceOf(m).cur >= spellCost(sp);
+function pay(m, sp) { if (usesEnergy(m)) m.en = (m.en || 0) - spellCost(sp); else m.mp -= spellCost(sp); }
+// Energia gained (or lost, n < 0), kept between 0 and ENERGY.max; returns what really changed. PM heroes get none.
+function gainEnergy(m, n) {
+  if (!usesEnergy(m)) return 0;
+  const before = m.en || 0;
+  m.en = Math.max(0, Math.min(ENERGY.max, before + n));
+  return m.en - before;
+}
+// Energia a hero's attack earns (0 on a miss or a dodge; the crit bonus is per hero)
+const attackEnergy = (heroId, roll) => roll === 'miss' || roll === 'dodge' ? 0 : ENERGY.attack + (roll === 'crit' ? ENERGY.crit[heroId] || 0 : 0);
+// Rest, fountain, Elixir, a new member: PV and PM full; Energia never carries over
+function fullRestore(m) { m.hp = maxHp(m); m.mp = maxMp(m); m.en = 0; }
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 // Damage (combat design, Phases 1 and 1b): Defesa cuts physical damage and Resistência cuts magic damage. Both are
@@ -20,6 +42,10 @@ const physDmg = (atk, def, power = 1, v = rnd(0.88, 1.12)) => Math.max(1, Math.r
 const magDmg = (raw, res) => Math.max(1, Math.round(raw * guardCut(res)));
 // Saves before v3 kept the old Defesa scale: the equipment bonus is multiplied once (x2.5, like the heroes' Defesa)
 const migrateBonus = (bonus, v) => (v || 0) >= 3 || !bonus.def ? bonus : { ...bonus, def: Math.round(bonus.def * 2.5) };
+// A hero from a save: old bonus scale fixed, Energia always 0 (it is never saved) and no PM left on the combat heroes
+// (saves from before Phase 2a kept Aldo and Andilla with PM)
+const saveMember = ({ id, lv, xp, hp, mp, bonus }) => ({ id, lv, xp, hp, mp, bonus });
+const loadMember = (m, v) => ({ ...m, bonus: migrateBonus(m.bonus || {}, v), mp: usesEnergy(m) ? 0 : m.mp, en: 0 });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const aliveParty = () => G.party.filter(m => m.hp > 0);
 
@@ -52,7 +78,7 @@ function wearGear(id, delta) {
 // Novo companheiro: chega no nível e XP do líder, com vida e magia cheias. A mensagem fica com quem chama.
 function recruit(id, actor = null) {
   const lead = G.party[0], m = newMember(PARTY_DEFS.find(d => d.id === id));
-  if (lead) { m.lv = lead.lv; m.xp = lead.xp; m.hp = maxHp(m); m.mp = maxMp(m); }
+  if (lead) { m.lv = lead.lv; m.xp = lead.xp; fullRestore(m); }
   G.party.push(m); UI.buildParty();
   if (G.mode === 'town' && TOWN.p) {
     const a = actor || TOWN.p;
@@ -62,7 +88,7 @@ function recruit(id, actor = null) {
   return m;
 }
 
-function newMember(d) { const m = { id: d.id, lv: 1, xp: 0, hp: 0, mp: 0, bonus: {} }; m.hp = maxHp(m); m.mp = maxMp(m); return m; }
+function newMember(d) { const m = { id: d.id, lv: 1, xp: 0, hp: 0, mp: 0, bonus: {} }; fullRestore(m); return m; }
 
 function healHp(m, n) {
   const before = m.hp; m.hp = Math.min(maxHp(m), m.hp + n);
@@ -83,6 +109,7 @@ function itemUseless(id, target) {
   const name = target && target.id && pdef(target).name;
   if ((id === 'pocao' || id === 'eter' || id === 'pao') && target.hp <= 0) return `${name} caiu. ${id === 'pocao' ? 'A poção' : id === 'pao' ? 'O pão' : 'O éter'} não tem efeito.`;
   if ((id === 'pocao' || id === 'pao') && target.hp >= maxHp(target)) return `${name} já está com os PV cheios.`;
+  if (id === 'eter' && usesEnergy(target)) return `${name} não usa PM. O éter não tem efeito.`;
   if (id === 'eter' && target.mp >= maxMp(target)) return `${name} já está com os PM cheios.`;
   if (id === 'pena' && target.hp > 0) return `${name} não precisa disso.`;
   if (id === 'elixir' && G.party.every(m => m.hp >= maxHp(m) && m.mp >= maxMp(m))) return 'O grupo já está inteiro. O Elixir fica guardado.';
@@ -102,7 +129,7 @@ function applyItem(id, target) {
     case 'eter': msg = `${pdef(target).name} recupera ${healMp(target, 20)} PM.`; Sfx.heal(); break;
     case 'pena': revive(target, 0.5); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
     case 'elixir':
-      for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); }
+      for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); } // PM only fill for the magic heroes; Energia stays as it is
       msg = 'O Elixir restaura todo o grupo!'; Sfx.holy(); break;
   }
   UI.updateParty();
@@ -149,14 +176,21 @@ function itemOptions() {
   return Object.keys(ITEMS).filter(k => G.inv[k] > 0).map(k => ({ label: `${ITEMS[k].name} x${G.inv[k]}`, hint: ITEMS[k].desc, value: k }));
 }
 
+// XP from a fight; at MAX_LEVEL nothing more is gained
+function gainXp(m, xp) {
+  if (m.lv >= MAX_LEVEL) { m.xp = 0; return []; }
+  m.xp += xp;
+  return levelUp(m);
+}
 // Applies the XP the member already has: one entry per level gained, { name, lv, learned: [spell names] }
 function levelUp(m) {
   const ups = [];
-  while (m.xp >= xpNext(m.lv)) {
+  while (m.lv < MAX_LEVEL && m.xp >= xpNext(m.lv)) {
     m.xp -= xpNext(m.lv);
     const oh = maxHp(m), om = maxMp(m);
     m.lv++;
     m.hp += maxHp(m) - oh; m.mp += maxMp(m) - om;
+    if (m.lv >= MAX_LEVEL) m.xp = 0;
     ups.push({ name: pdef(m).name, lv: m.lv, learned: pdef(m).spells.filter(([lv]) => lv === m.lv).map(([, id]) => SPELLS[id].name) });
   }
   return ups;

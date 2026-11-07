@@ -49,8 +49,17 @@ function hurtMember(m, dmg, quiet = false) {
   if (m.defending) dmg = Math.max(1, Math.round(dmg / 2));
   m.hp = Math.max(0, m.hp - dmg);
   UI.cardFloat(m, '-' + dmg, 'dmg'); UI.cardHit(m); shake(); if (!quiet) Sfx.hurt();
+  if (m.hp > 0) energize(m, ENERGY.hurt[m.id] || 0, 500); // Aldo takes the blow and comes back angrier
   UI.updateParty();
   return dmg;
+}
+// Energia gained in battle: the number floats on the card (after the damage number, when there is one)
+const EN_COLOR = '#f0c850';
+function energize(m, n, delay = 0) {
+  const got = n ? gainEnergy(m, n) : 0;
+  if (!got) return;
+  UI.updateParty();
+  setTimeout(() => UI.cardFloat(m, '+' + got, EN_COLOR), delay);
 }
 
 
@@ -95,7 +104,7 @@ async function chooseCommand(m) {
       { label: 'Fugir', value: 'run', icon: 'run' },
       { label: 'Tática', value: 'macro', icon: 'tatica' },
     ], { style: 'bar', anchor: document.getElementById('card-' + m.id), start: last, cols: 6, keys: MACRO_KEYS,
-      onHover: (v, op) => { B.label = !op ? null : op.value === 'spell' && one ? `${one.name} · ${one.mp} PM` : op.label; } });
+      onHover: (v, op) => { B.label = !op ? null : op.value === 'spell' && one ? `${one.name} · ${costText(one)}` : op.label; } });
     if (['atk', 'spell', 'item', 'def'].includes(v)) mem.cmd = v;
     if (v === 'macro') v = await macroMenu();
     if (v == null) continue;
@@ -114,8 +123,9 @@ async function chooseCommand(m) {
     if (v === 'spell') {
       // the list opens even for a single skill: the player reads its name and sees there is room for more;
       // it opens on the last one used
-      const sp = await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: SPELLS[id].mp + 'PM', value: id, disabled: m.mp < SPELLS[id].mp })),
-        { title: `${d.skillWord} ${midName(d.name, 'de')} (PM ${m.mp})`, cancel: true, cols: 2, start: mem.spell,
+      const r = resourceOf(m);
+      const sp = await UI.choose(spells.map(id => ({ label: SPELLS[id].name, hint: costHint(SPELLS[id]), value: id, disabled: !canPay(m, SPELLS[id]) })),
+        { title: `${d.skillWord} ${midName(d.name, 'de')} (${r.label} ${r.cur})`, cancel: true, cols: 2, start: mem.spell,
           onHover: v => { B.label = v ? SPELLS[v].desc : null; } }); // the plaque says what the spell does
       if (sp == null) continue;
       mem.spell = sp;
@@ -166,7 +176,7 @@ async function heroCommand(m, opts) {
     const saved = B.macro && B.macro.entries[m.id];
     if (saved) {
       const { cmd, warn } = resolveMacro(saved, { actor: m, name: pdef(m).name, party: G.party, enemies: B.enemies, inv: G.inv,
-        spells: Object.fromEntries(knownSpells(m).map(id => [id, SPELLS[id]])), items: ITEMS, maxHp, maxMp, useless: itemUseless });
+        spells: Object.fromEntries(knownSpells(m).map(id => [id, SPELLS[id]])), items: ITEMS, maxHp, maxMp, useless: itemUseless, resourceOf, canPay });
       if (warn) await bsay(warn);
       return { cmd, entry: saved };
     }
@@ -204,7 +214,7 @@ async function macroTip() {
 // ---------- Execução ----------
 async function partyAct(c) {
   const a = c.actor, an = pdef(a).name;
-  if (c.type === 'defend') { a.defending = true; Sfx.defend(); UI.updateParty(); await bsay(`${an} se defende.`); return; }
+  if (c.type === 'defend') { a.defending = true; Sfx.defend(); energize(a, ENERGY.defend); UI.updateParty(); await bsay(`${an} se defende.`); return; }
   if (c.type === 'attack') {
     const t = retarget(c.target); if (!t) return;
     await bsay(`${an} ataca ${midName(ename(t))}!`);
@@ -214,6 +224,7 @@ async function partyAct(c) {
     if (roll === 'dodge') { Sfx.miss(); addNum(t.x, t.top + 10, 'ESQUIVA', '#aaa'); await bsay(`${ename(t)} se esquiva!`); return; }
     const dmg = physDmg(stat(a, 'atk'), t.def, crit ? HIT.critMul : 1);
     if (crit) { Sfx.crit(); shake(150); } else Sfx.hit();
+    energize(a, attackEnergy(a.id, roll));
     await hitEnemy(t, dmg, crit ? '#ffd23f' : '#fff');
     if (crit && t.hp > 0) await bsay('Golpe crítico!');
     if (crit) await heroLine('crit', a);
@@ -227,8 +238,8 @@ async function partyAct(c) {
   }
   if (c.type === 'spell') {
     const sp = SPELLS[c.spell];
-    if (a.mp < sp.mp) { await bsay(`${an} não tem PM suficiente!`); return; }
-    a.mp -= sp.mp; UI.updateParty();
+    if (!canPay(a, sp)) { await bsay(`${an} não tem ${resourceOf(a).label} suficiente!`); return; }
+    pay(a, sp); UI.updateParty();
     const targets = sp.kind === 'heal' || sp.kind === 'revive' ? [] : sp.target === 'allEnemies' ? aliveEnemies() : [retarget(c.target)].filter(Boolean);
     await bsay(spellLine(an, sp.name, sp.target === 'enemy' && targets[0] ? ename(targets[0]) : ''));
     if (sp.kind === 'heal' || sp.kind === 'revive') { await bsay(castSupport(a, c.spell, c.target)); return; }
@@ -413,7 +424,8 @@ async function startBattle(ids, isBoss, opts = {}) {
   await UI.say(isBoss ? B.enemies.find(e => e.boss).say.intro
     : opts.intro || `${names.join(', ')} ${names.length > 1 ? 'aparecem' : 'aparece'}!`, { auto: isBoss ? 3200 : 1300 });
 
-  G.party.forEach(m => { m.defending = false; });
+  G.party.forEach(m => { m.defending = false; m.en = usesEnergy(m) ? ENERGY.start : 0; });
+  UI.updateParty();
   B.surprise = opts.surprise || rollSurprise(isBoss);
   const hints = [...(opts.hints || [])];
   const sur = SURPRISE[B.surprise];
@@ -456,7 +468,7 @@ async function startBattle(ids, isBoss, opts = {}) {
   }
   B.order = null; B.macro = null;
 
-  G.party.forEach(m => { m.defending = false; delete m._fallenMsg; });
+  G.party.forEach(m => { m.defending = false; m.en = 0; delete m._fallenMsg; }); // Energia ends with the fight, however it ends
   if (result === 'win') {
     await wait(300);
     Music.stop(); if (!isBoss) Sfx.victory(); // o chefe cai com a última badalada (ending)
@@ -472,7 +484,7 @@ async function startBattle(ids, isBoss, opts = {}) {
           Sfx.chest(); await UI.say(`${ename(e)} deixou cair: ${ITEMS[e.drop[0]].name}!`);
         }
       }
-      const ups = aliveParty().flatMap(m => { m.xp += xp; const u = levelUp(m); if (u.length) UI.cardGlow(m); return u; });
+      const ups = aliveParty().flatMap(m => { const u = gainXp(m, xp); if (u.length) UI.cardGlow(m); return u; });
       UI.updateParty();
       for (const msg of levelUpLines(ups)) { Sfx.levelup(); await UI.say(msg); }
     }
