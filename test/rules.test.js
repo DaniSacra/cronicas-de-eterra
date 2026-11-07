@@ -33,17 +33,19 @@ test('enemy health words follow the HP fraction', () => {
   assert.equal(R.healthWord(1, 10), 'quase caindo');
 });
 
-test('camp menu: a column of icons in three groups; Livro and Bolsa replace Magia and Itens; Mapa only in the crypt; no Voltar, no coins', () => {
+test('camp menu: a column of icons in three groups; Magia and Item shortcuts on top; Mapa only in the crypt; no Voltar, no coins', () => {
   const labels = m => m.opts.map(o => o.label);
   const town = R.campMenuOpts({ gold: 20, inTown: true, bagCount: 0 });
-  assert.deepEqual(labels(town), ['Bolsa', 'Livro', 'Heróis', 'Táticas', 'Diário', 'Mundo', 'Salvar', 'Sair']);
-  assert.ok(!labels(town).some(l => ['Magia', 'Itens', 'Voltar'].includes(l)));
+  assert.deepEqual(labels(town), ['Magia', 'Item', 'Bolsa', 'Livro', 'Heróis', 'Táticas', 'Diário', 'Mundo', 'Salvar', 'Sair']);
+  assert.ok(!labels(town).includes('Voltar'));
+  assert.deepEqual(town.opts.slice(0, 2).map(o => o.disabled), [true, true], 'nothing to cast or use: grey');
+  assert.deepEqual(R.campMenuOpts({ inTown: true, bagCount: 1, itemCount: 1, canCast: true }).opts.slice(0, 2).map(o => o.disabled), [false, false]);
   assert.equal(town.title, undefined, 'the coins are in the corner already');
   assert.equal(town.opts.find(o => o.value === 'bag').disabled, true, 'empty bag in grey');
   assert.deepEqual(town.opts.filter(o => o.sep).map(o => o.label), ['Diário', 'Salvar'], 'a rule above each group');
   assert.ok(town.opts.every(o => o.icon));
   const crypt = R.campMenuOpts({ gold: 40, inTown: false, bagCount: 2 });
-  assert.deepEqual(labels(crypt).slice(4, 7), ['Diário', 'Mundo', 'Mapa']);
+  assert.deepEqual(labels(crypt).slice(6, 9), ['Diário', 'Mundo', 'Mapa']);
   assert.equal(crypt.opts.find(o => o.value === 'bag').disabled, false);
   const F = require('../src/frame.js');
   for (const o of crypt.opts) assert.ok(F.ICON_ART[o.icon], o.icon);
@@ -120,4 +122,17 @@ test('town camera: centered on the party above the dialog box, small areas cente
   assert.equal(R.camLift(200, 400, 180, 100), 140, 'party under the box: lifted just enough, not centered (168)');
   assert.equal(R.camLift(200, 400, 180, 170), 203, 'never more than centering above the box');
   assert.equal(R.camLift(170, 400, 180), R.camAxis(170, 400, 180), 'box closed: same as before');
+});
+
+test('camp menu Magia: only field spells, with the caster; grey with the reason when short of PM or fallen', () => {
+  const { SPELLS } = require('../src/data.js');
+  const heroes = [
+    { id: 'aldo', name: 'Aldo', hp: 50, mp: 0, spells: ['golpe'] },
+    { id: 'lyra', name: 'Lyra', hp: 30, mp: 20, spells: ['fogo', 'gelo'] },
+    { id: 'teo', name: 'Teo', hp: 40, mp: 4, spells: ['cura', 'luz', 'reviver'] },
+  ];
+  const o = R.fieldCasts(heroes, SPELLS);
+  assert.deepEqual(o.map(x => [x.label, x.hint, x.disabled]), [['Cura', 'Teo · 3 PM', false], ['Reviver', 'Teo · Faltam 8 PM', true]]);
+  assert.deepEqual(o[0].value, { who: 'teo', spell: 'cura' });
+  assert.equal(R.fieldCasts([{ ...heroes[2], hp: 0 }], SPELLS)[0].disabled, true);
 });

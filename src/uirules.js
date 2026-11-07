@@ -28,10 +28,12 @@ function healthWord(hp, maxhp) {
 }
 
 // Camp menu: a column of icons in three groups (adventure, information, system), split by a rule (sep).
-// Mapa only in the crypt, Bolsa greyed out while the bag is empty; no coins (the corner shows them) and no Voltar (Esc)
+// Magia and Item are quick shortcuts (choose, aim, use) beside the full Livro and Bolsa screens; each is grey when
+// there is nothing to use. Mapa only in the crypt; no coins (the corner shows them) and no Voltar (Esc)
 function campMenuOpts(s) {
   const groups = [
-    [{ label: 'Bolsa', value: 'bag', icon: 'item', disabled: s.bagCount === 0 }, { label: 'Livro', value: 'book', icon: 'livro' },
+    [{ label: 'Magia', value: 'magic', icon: 'spell', disabled: !s.canCast }, { label: 'Item', value: 'item', icon: 'pocao', disabled: !s.itemCount },
+      { label: 'Bolsa', value: 'bag', icon: 'item', disabled: s.bagCount === 0 }, { label: 'Livro', value: 'book', icon: 'livro' },
       { label: 'Heróis', value: 'status', icon: 'heroi' }, { label: 'Táticas', value: 'macros', icon: 'tatica' }],
     [{ label: 'Diário', value: 'diary', icon: 'diario' }, { label: 'Mundo', value: 'world', icon: 'mundo' }, ...(s.inTown ? [] : [{ label: 'Mapa', value: 'map', icon: 'mapa' }])],
     [{ label: 'Salvar', value: 'save', icon: 'salvar' }, { label: 'Sair', value: 'quit', icon: 'sair' }],
@@ -210,6 +212,12 @@ const TARGET_TEXT = { enemy: 'Um inimigo', allEnemies: 'Todos os inimigos', ally
 const KIND_ICON = { phys: 'atk', heal: 'cura', revive: 'cura', holy: 'luz' };
 const FX_ICON = { fire: 'fogo', ice: 'spell', bolt: 'raio' };
 const spellIcon = sp => FX_ICON[sp.fx] || KIND_ICON[sp.kind] || 'spell';
+// Magia from the camp menu: one line per field spell of each hero ({ id, name, hp, mp, spells: [spellId] }),
+// grey with the reason when it cannot be cast now
+const fieldCasts = (heroes, SPELLS) => heroes.flatMap(h => h.spells.filter(id => SPELLS[id].field).map(id => {
+  const u = fieldUse(SPELLS[id], h);
+  return { label: SPELLS[id].name, hint: `${h.name} · ${u.ok ? SPELLS[id].mp + ' PM' : u.why}`, value: { who: h.id, spell: id }, disabled: !u.ok };
+}));
 // The book's Usar button: only skills that work outside battle (heals); grey with the reason otherwise
 function fieldUse(sp, caster) {
   if (!sp.field) return { field: false, ok: false, why: 'Só em batalha' };
@@ -334,5 +342,5 @@ function gridPath(from, goal, free, limit = 400) {
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

@@ -390,7 +390,8 @@ async function useBagItem(it) {
 async function campMenu() {
   G.busy = true;
   for (;;) {
-    const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length });
+    const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length,
+      itemCount: itemOptions().length, canCast: castOptions().length > 0 });
     const v = await UI.choose(m.opts, { style: 'side', cancel: true, party: true });
     if (v === null) break;
     if (v === 'quit') {
@@ -399,6 +400,8 @@ async function campMenu() {
       if (ok) { G.bigMap = false; G.held.clear(); return titleScreen(); }
       continue;
     }
+    if (v === 'magic') await quickMagic();
+    if (v === 'item') await quickItem();
     if (v === 'bag') await HeroView.show('bag');
     if (v === 'book') await HeroView.show('book');
     if (v === 'status') await HeroView.show('hero');
@@ -409,6 +412,32 @@ async function campMenu() {
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }
   }
   G.busy = false; exploreHint();
+}
+
+// Shortcuts of the camp menu: choose, aim and use, again and again until Esc (the strip shows PV and PM)
+const castOptions = () => fieldCasts(G.party.map(m => ({ id: m.id, name: pdef(m).name, hp: m.hp, mp: m.mp, spells: knownSpells(m) })), SPELLS);
+async function quickMagic() {
+  for (;;) {
+    const opts = castOptions();
+    if (!opts.some(o => !o.disabled)) return opts.length ? UI.say('Ninguém tem PM para isso agora.') : null;
+    const c = await UI.choose(opts, { title: 'Usar qual magia?', cancel: true, cols: 2, party: true });
+    if (c == null) return;
+    const m = G.party.find(p => p.id === c.who), sp = SPELLS[c.spell];
+    const t = sp.target === 'allAllies' ? 'all' : await pickAlly(sp.target, `${sp.name} em quem?`, { party: true });
+    if (t == null) continue;
+    pay(m, sp); UI.updateParty();
+    await UI.say(castSupport(m, c.spell, t));
+  }
+}
+async function quickItem() {
+  for (;;) {
+    if (!itemOptions().length) return;
+    const it = await UI.choose(itemOptions(), { title: 'Usar qual item?', cancel: true, cols: 2, party: true });
+    if (it == null) return;
+    const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`, { party: true });
+    if (t == null) continue;
+    await UI.say(applyItem(it, t));
+  }
 }
 
 // ---------- Salvar / carregar ----------
