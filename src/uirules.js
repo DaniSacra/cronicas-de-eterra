@@ -32,7 +32,17 @@ function healthWord(hp, maxhp) {
 // Camp menu: a column of icons in three groups (adventure, information, system), split by a rule (sep).
 // Magia and Item are quick shortcuts (choose, aim, use) beside the full Livro and Bolsa screens; each is grey when
 // there is nothing to use. Mapa only in the crypt; no coins (the corner shows them) and no Voltar (Esc)
+// One line under the camp menu: what the selected option does
+const CAMP_HELP = {
+  magic: 'Usa uma magia de cura fora da luta.', item: 'Usa uma poção ou outro item em alguém do grupo.',
+  bag: 'Poções, equipamentos e itens-chave do grupo.', book: 'As habilidades de cada herói e as que ainda vêm.',
+  status: 'Atributos, equipamento e história de cada herói.', macros: 'Um turno inteiro do grupo num comando só.',
+  diary: 'O objetivo, as anotações e as dicas da viagem.', world: 'O mapa de Eterra e os lugares conhecidos.',
+  map: 'O mapa do andar da cripta.', save: 'Guarda o jogo neste navegador.', quit: 'Volta à tela inicial.',
+};
+// s.dots: { book, diary } true when there is something new there (a red dot until it is opened)
 function campMenuOpts(s) {
+  const dots = s.dots || {};
   const groups = [
     [{ label: 'Magia', value: 'magic', icon: 'spell', disabled: !s.canCast }, { label: 'Item', value: 'item', icon: 'pocao', disabled: !s.itemCount },
       { label: 'Bolsa', value: 'bag', icon: 'item', disabled: s.bagCount === 0 }, { label: 'Livro', value: 'book', icon: 'livro' },
@@ -40,8 +50,11 @@ function campMenuOpts(s) {
     [{ label: 'Diário', value: 'diary', icon: 'diario' }, { label: 'Mundo', value: 'world', icon: 'mundo' }, ...(s.inTown ? [] : [{ label: 'Mapa', value: 'map', icon: 'mapa' }])],
     [{ label: 'Salvar', value: 'save', icon: 'salvar' }, { label: 'Sair', value: 'quit', icon: 'sair' }],
   ];
-  return { opts: groups.flatMap((g, i) => g.map((o, j) => (i && !j ? { ...o, sep: true } : o))) };
+  return { opts: groups.flatMap((g, i) => g.map((o, j) => ({ ...o, help: CAMP_HELP[o.value], dot: !!dots[o.value], ...(i && !j ? { sep: true } : {}) }))) };
 }
+// The red dot: what shows now (keys) and was never opened (seen, kept in the save). An old save without the list
+// counts everything it already has as seen, so only what comes later gets a dot.
+const unseen = (keys, seen) => (seen ? keys.filter(k => !seen.includes(k)) : []);
 
 // Starting over replaces the save: with one, ask first, with No already selected
 async function replaceSaveOk(saved) {
@@ -348,5 +361,5 @@ const encounterChance = since => (since < 5 ? 0 : Math.min(0.22, 0.05 + (since -
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

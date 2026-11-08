@@ -390,7 +390,7 @@ async function campMenu() {
   G.busy = true;
   for (;;) {
     const m = campMenuOpts({ gold: G.gold, inTown: G.mode === 'town', bagCount: itemOptions().length + Object.keys(KEY_ITEMS).filter(k => G.key[k]).length,
-      itemCount: itemOptions().length, canCast: castOptions().length > 0 });
+      itemCount: itemOptions().length, canCast: castOptions().length > 0, dots: menuDots() });
     const v = await UI.choose(m.opts, { style: 'side', cancel: true, party: true });
     if (v === null) break;
     if (v === 'quit') {
@@ -402,10 +402,10 @@ async function campMenu() {
     if (v === 'magic') await quickMagic();
     if (v === 'item') await quickItem();
     if (v === 'bag') await HeroView.show('bag');
-    if (v === 'book') await HeroView.show('book');
+    if (v === 'book') { markRead('book'); await HeroView.show('book'); }
     if (v === 'status') await HeroView.show('hero');
     if (v === 'macros') await campMacros();
-    if (v === 'diary') await showDiary();
+    if (v === 'diary') { markRead('diary'); await showDiary(); }
     if (v === 'world') await WorldMap.show();
     if (v === 'map') { G.bigMap = true; await UI.say('Mapa do andar (M alterna durante a exploração).'); G.bigMap = false; }
     if (v === 'save') { await UI.say(saveGame() ? 'Jogo salvo.' : 'Não foi possível salvar neste navegador.'); }

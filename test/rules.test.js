@@ -63,6 +63,14 @@ test('camp menu: a column of icons in three groups; Magia and Item shortcuts on 
   for (const o of crypt.opts) assert.ok(F.ICON_ART[o.icon], o.icon);
 });
 
+test('camp menu: one help line for every option, and a red dot on Livro and Diário when something is new', () => {
+  for (const inTown of [true, false]) for (const o of R.campMenuOpts({ inTown }).opts) assert.ok(o.help && !o.help.includes('—'), o.value);
+  const m = R.campMenuOpts({ inTown: true, dots: { book: true, diary: false } }).opts;
+  assert.deepEqual(m.filter(o => o.dot).map(o => o.value), ['book']);
+  assert.deepEqual(R.unseen(['aldo:golpe', 'aldo:quebraJunta'], ['aldo:golpe']), ['aldo:quebraJunta']);
+  assert.deepEqual(R.unseen(['1', '2'], undefined), [], 'an old save without the list: nothing is new');
+});
+
 test('equipment screen: gear grouped by hero and slot', () => {
   const EQ = { a: { name: 'Espada', who: 'aldo', slot: 'arma', bonus: { atk: 6 } }, b: { name: 'Cota', who: 'aldo', slot: 'armadura', bonus: { def: 6 } },
     c: { name: 'Cajado', who: 'lyra', slot: 'arma', bonus: { mag: 6 } } };

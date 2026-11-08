@@ -108,8 +108,9 @@ const UI = (() => {
       return;
     }
     if (menu.style === 'side') {
-      menu.opts.forEach((op, i) => { const d = optEl(op, i, `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>`); d.classList.toggle('sep', !!op.sep); sideEl.appendChild(d); });
-      sideEl.classList.add('open');
+      menu.opts.forEach((op, i) => { const d = optEl(op, i, `<img src="${iconUrl(op.icon, iconState(op, i === menu.sel))}" alt=""><span>${esc(op.label)}</span>${op.dot ? '<i class="dot" title="novo"></i>' : ''}`); d.classList.toggle('sep', !!op.sep); sideEl.appendChild(d); });
+      if (menu.opts.some(op => op.help)) sideEl.insertAdjacentHTML('beforeend', '<p class="side-help"></p>');
+      sideEl.classList.add('open'); sideHelp();
       return;
     }
     menuEl.style.gridTemplateColumns = menu.icons ? `repeat(${menu.cols},auto)` : `repeat(${menu.cols},1fr)`;
@@ -141,12 +142,14 @@ const UI = (() => {
   window.addEventListener('resize', placeBar);
   // Icon states follow the cursor: normal, selected (gold halo), disabled (grey)
   const iconState = (op, sel) => op.disabled ? 'dis' : sel ? 'sel' : 'normal';
+  // The camp menu's last line says what the selected option does
+  function sideHelp() { const p = menu.style === 'side' && sideEl.querySelector('.side-help'); if (p) p.textContent = menu.opts[menu.sel].help || ''; }
   function update() {
-    [...host().children].forEach((c, i) => {
+    [...host().children].filter(c => c.classList.contains('opt')).forEach((c, i) => {
       c.classList.toggle('sel', i === menu.sel);
       const op = menu.opts[i], img = op.icon && c.querySelector('img');
       if (img) img.src = iconUrl(op.icon, iconState(op, i === menu.sel));
-    }); if (menu.style === 'list') menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); cmdName(); hover(); }
+    }); if (menu.style === 'list') menuEl.children[menu.sel]?.scrollIntoView({ block: 'nearest' }); cmdName(); sideHelp(); hover(); }
   // Phone shows command icons only: the selected command's name goes to the prompt line
   function cmdName() { const n = msgEl.querySelector('.cmd-name'); if (n) n.textContent = menu.opts[menu.sel].label; }
   function hover() { const op = menu.opts[menu.sel]; menu.onHover && menu.onHover(op.value, op); }

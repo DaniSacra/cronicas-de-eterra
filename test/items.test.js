@@ -68,3 +68,19 @@ test('equipment choice: the strongest by default (old saves too), a chosen piece
   const bag = R.bagGroups({ inv: {}, key: {}, owned, items: {}, equips: EQUIPS, keyItems: {}, equip: {} }).find(g => g.title === 'Equipamentos').cells;
   assert.deepEqual(bag.map(c => [c.id, c.who, c.inUse]), [['espadaFerro', 'aldo', true], ['espadaCurta', 'aldo', false], ['cotaMalha', 'aldo', true]]);
 });
+
+test('the red dots: a skill learned or a note added shows one until the Livro or the Diário is opened; the list goes in the save', () => {
+  const { G, run } = story(['aldo', 'lyra']);
+  assert.deepEqual(run.json('menuDots()'), { book: false, diary: false }, 'a new game starts with nothing new');
+  assert.ok(G.seen.bookRead.includes('aldo:golpe'));
+  run('G.party[0].lv = 6');
+  assert.deepEqual(run.json('menuDots()'), { book: true, diary: false }, 'Quebra-Junta at level 6');
+  G.seen.job = 1;
+  assert.deepEqual(run.json('menuDots()'), { book: true, diary: true }, 'a note from the Berta');
+  run("markRead('book')");
+  assert.deepEqual(run.json('menuDots()'), { book: false, diary: true });
+  run("markRead('diary')");
+  assert.deepEqual(run.json('menuDots()'), { book: false, diary: false });
+  const saved = JSON.parse(JSON.stringify(G.seen));
+  assert.ok(saved.bookRead.includes('aldo:quebraJunta') && saved.diaryRead.length, 'G.seen goes in the save as it is');
+});

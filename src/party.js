@@ -172,6 +172,17 @@ async function pickAlly(kind, title, o = {}) {
   return UI.choose(opts, { title, cancel: true, cols: G.party.length > 3 ? 2 : 3, party: true, ...o });
 }
 
+// What the red dots of the menu compare: the skills each hero knows and the notes the Diário shows (G.seen keeps
+// what was already opened; an old save starts with everything it has as seen)
+const bookKeys = () => G.party.flatMap(m => knownSpells(m).map(s => `${m.id}:${s}`));
+const diaryKeys = () => JOURNAL.notes.flatMap((n, i) => (n.show() ? [String(i)] : []));
+const READ = { book: ['bookRead', bookKeys], diary: ['diaryRead', diaryKeys] };
+function menuDots() {
+  for (const [k, keys] of Object.values(READ)) if (!G.seen[k]) G.seen[k] = keys();
+  return Object.fromEntries(Object.entries(READ).map(([v, [k, keys]]) => [v, unseen(keys(), G.seen[k]).length > 0]));
+}
+const markRead = v => { const [k, keys] = READ[v]; G.seen[k] = [...new Set([...(G.seen[k] || []), ...keys()])]; };
+
 function itemOptions() {
   return Object.keys(ITEMS).filter(k => G.inv[k] > 0).map(k => ({ label: `${ITEMS[k].name} x${G.inv[k]}`, hint: ITEMS[k].desc, value: k }));
 }
