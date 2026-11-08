@@ -278,7 +278,7 @@ async function estradaStart() {
 
 AREAS.estrada = makeArea('Estrada do Sul', 'ESTRADA', 32, 60, planGrid(ESTRADA_PLAN), [DORIVAL_HOUSE], TILE.TREE);
 Object.assign(AREAS.estrada, {
-  poi: 'valmor', winter: true, trees: 'pine', river: true, vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'cemiterio',
+  poi: 'valmor', winter: true, trees: 'pine', river: true, vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'estrada',
   music: () => 'cemetery', mapv: 2, start: ESTRADA_START,
   field: ESTRADA_FIELD, roamers: ESTRADA_ROAMERS,
   puzzles: { pinheiro: () => true, atalho: objs => objs.find(o => o.id === 'pedra').y >= 37 },
@@ -320,7 +320,7 @@ AREAS.estrada.enterBuilding = b => (b.id === 'dorival' ? dorivalDoor() : null);
 const GRUTA_PLAN = ['^^^^^^^^', '^......^', '^......^', '^......^', '^......^', '^^^:^^^^'];
 AREAS.gruta = makeArea('Gruta da Cascata', 'GRUTA', 8, 6, planGrid(GRUTA_PLAN), [], TILE.CLIFF);
 Object.assign(AREAS.gruta, {
-  poi: 'valmor', winter: true, dimCol: '10,24,56', dim: () => 0.38, battle: 'cemiterio', music: () => 'cemetery',
+  poi: 'valmor', winter: true, dimCol: '10,24,56', dim: () => 0.38, battle: 'estrada', music: () => 'cemetery',
   field: () => [{ id: 'bauGruta', kind: 'chest', x: 4, y: 2, open: true }, { id: 'gelo', kind: 'iceBlock', x: 4, y: 2 }],
   exits: [{ x: 3, y: 5, to: 'estrada', pos: { x: 24, y: 26, dir: 2 } }],
   async onField(o) {
@@ -590,7 +590,7 @@ const horseDef = i => {
 
 AREAS.pasto = makeArea('Pasto do Vau', 'PASTO', 32, 24, planGrid(PASTO_PLAN), [], TILE.TREE);
 Object.assign(AREAS.pasto, {
-  poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'cemiterio',
+  poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'estrada',
   music: () => 'cemetery', mapv: 2, start: PASTO_START,
   field: PASTO_FIELD, roamers: PASTO_ROAMERS, puzzles: { porteira: gateClear },
   cast: () => HORSE_SPOTS.map((_, i) => horseDef(i)).filter(d => !c1('cavalo' + d.n)),
@@ -677,7 +677,7 @@ const CAMP_FIRE = { x: 6, y: 4 };
 const campGrid = () => { const g = planGrid(CAMP_PLAN); g[CAMP_FIRE.y * 12 + CAMP_FIRE.x] = TILE.FIRE; return g; };
 AREAS.acampamento = makeArea('Beira da Floresta Púrpura', 'ACAMPAMENTO', 12, 9, campGrid(), [], TILE.TREE);
 Object.assign(AREAS.acampamento, {
-  poi: 'acampamento', winter: true, dusk: true, trees: 'pine', battle: 'cemiterio', music: () => 'cemetery',
+  poi: 'acampamento', winter: true, dusk: true, trees: 'pine', battle: 'estrada', music: () => 'cemetery',
   cast: () => HORSE_COATS.map((coat, i) => ({ id: 'cavaloC' + i, name: 'Cavalo', horse: coat, x: 1 + (i % 2), y: 5 + (i >> 1), dir: 1, wander: 0 })),
 });
 // Around the fire: Aldo south of it, the others on the other sides

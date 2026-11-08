@@ -17,13 +17,15 @@ const BATTLE_BG_C = {
   fire: ['#fff6c0', '#f0d860', '#e8b840', '#a8323e'],
   dark: '#26202e',
   tree: ['#1c2860', '#26202e'],
+  pine: ['#14402a', '#2a5440', '#3a9a6a'],
+  ice: ['#8ac0f0', '#a4b8da', '#cbd8ec', '#e8eff8', '#3a78c8'],
   crypt: { hi: '#4a5a8c', face: '#2c3c80', deep: '#1c2860', mortar: '#151e4e', floor: ['#4a5a8c', '#2c3c80'], moss: ['#3a9a6a', '#2a5440'], glow: ['#90e0b0', '#4ad08a'] },
   altar: { hi: '#72308e', face: '#40145a', deep: '#3a1448', mortar: '#26202e', floor: ['#55555e', '#40145a'], moss: ['#a84ad8', '#72308e'], glow: ['#f0a8f8', '#a84ad8'] },
   glass: ['#1c2860', '#3a78c8'],
   bottle: ['#3a9a6a', '#a8323e', '#3a78c8'],
   house: { wall: ['#d8a478', '#b07c58'], beam: '#6a3a1a', roof: ['#a8323e', '#7a1a24'], win: ['#f0d860', '#e8b840'] },
 };
-const BATTLE_PLACES = ['cemiterio', 'taverna', 'cripta', 'altar', 'vila'];
+const BATTLE_PLACES = ['cemiterio', 'taverna', 'cripta', 'altar', 'vila', 'estrada'];
 const BATTLE_HORIZON = 0.4;
 
 // Which backdrop a fight uses: the boss room, the dungeon floor (its own `battle` or the crypt), or the town area
@@ -125,6 +127,28 @@ const BattleBG = (() => {
     rect(x0 + 1, top, bw - 2, 2, W[0]);
     for (const k of [0.22, 0.75]) rect(x0, top + Math.round(bh * k), bw, Math.max(1, Math.round(2 * s)), BATTLE_BG_C.stone[2]);
     rect(x0 - 1, base, bw + 2, 2, BATTLE_BG_C.dark);
+  }
+  // snowy pine: stacked tiers, dark on the right, snow on the left tips (light from the top left)
+  function pine(K, x, base, ht) {
+    const { rect, put } = K, P = BATTLE_BG_C.pine, N = BATTLE_BG_C.snow, tiers = ht > 24 ? 4 : 3, tw = Math.max(1, Math.round(ht / 16));
+    rect(x - (tw >> 1), base - Math.round(ht * 0.18), tw, Math.round(ht * 0.18), BATTLE_BG_C.dirt[0]);
+    for (let t = 0; t < tiers; t++) {
+      const top = base - ht + Math.round(t * ht * 0.2), th = Math.round(ht * 0.34), half = Math.round(ht * (0.16 + t * 0.07));
+      for (let j = 0; j < th; j++) {
+        const hw = Math.max(1, Math.round(half * (j + 1) / th));
+        for (let i = -hw; i <= hw; i++) put(x + i, top + j, j === 0 || (i < -hw + 2 && j < th - 1) ? N[3] : i > hw * 0.35 ? P[0] : j === th - 1 ? P[0] : P[1]);
+        if (j === th - 1) for (let i = -hw; i < 0; i += 2) put(x + i, top + j, N[2]); // snow along the lower edge of the tier
+      }
+    }
+    put(x, base - ht - 1, N[4]);
+  }
+  // a rock with a snow cap, half sunk in the snow
+  function snowRock(K, x, base, s) {
+    const { put } = K, S = BATTLE_BG_C.stone, N = BATTLE_BG_C.snow, rw = Math.max(4, Math.round(20 * s)), rh = Math.max(3, Math.round(11 * s));
+    for (let j = 0; j < rh; j++) {
+      const hw = Math.round((rw / 2) * Math.sqrt(1 - ((rh - j) / (rh + 1)) ** 2));
+      for (let i = -hw; i < hw; i++) put(x + i, base - rh + j, j < Math.max(1, rh * 0.3) ? (i < 0 ? N[4] : N[3]) : i < -hw + 2 ? S[0] : i > hw * 0.3 ? S[2] : S[1]);
+    }
   }
   function candle(K, x, base, col) {
     const { rect, put } = K, F = BATTLE_BG_C.fire;
@@ -239,6 +263,64 @@ const BattleBG = (() => {
       rect(tx + 2, t.y - th, 2, th, W[3]); rect(tx + tw - 4, t.y - th, 2, th, W[3]);
       rect(tx, t.y - th - 3, tw, 3, W[2]); rect(tx, t.y - th - 3, tw, 1, W[0]); rect(tx, t.y, tw, 1, C.dark);
       rect(tx + 5, t.y - th - 8, 4, 5, S[1]); put(tx + 5, t.y - th - 8, S[0]); put(tx + 9, t.y - th - 6, S[1]);
+    },
+
+    // the road through the snowy hills at night (Estrada do Sul, Pasto do Vau, the camp): snowy ridges far away, a
+    // line of pines on the horizon, the road with its wheel ruts going away, a frozen pond, pines and rocks at the sides
+    estrada(K) {
+      const { w, h, hy, gh, cx, put, rect, vgrad, at, ground, band, r, hash, bay } = K, C = BATTLE_BG_C, N = C.snow, I = C.ice;
+      vgrad(0, w, 0, hy, C.night, 1.3);
+      for (let i = 0; i < Math.round(w * hy / 70); i++) put(r() * w, r() * hy * 0.6, C.stars[r() < 0.7 ? 0 : 1]);
+      // a thin moon on the left
+      const mx = Math.round(w * 0.16), my = Math.round(hy * 0.22), mr = Math.max(3, Math.round(h / 34));
+      for (let y = -mr; y <= mr; y++) for (let x = -mr; x <= mr; x++) if (x * x + y * y <= mr * mr && (x + 2) ** 2 + (y - 1) ** 2 > mr * mr) put(mx + x, my + y, x < 0 ? C.moon[0] : C.moon[1]);
+      // two ridges: far and pale, near and darker, snow on the lit (left) slopes
+      const ridge = (y0, amp, f, seed, body, lit) => {
+        const top = x => y0 - amp * (0.55 * Math.abs(Math.sin(x / f + seed)) + 0.45 * Math.abs(Math.sin(x / (f * 0.43) + seed * 2)));
+        for (let x = 0; x < w; x++) {
+          const t = Math.round(top(x)), slope = top(x + 2) - top(x - 2), cap = slope < -0.3 ? 5 : 2; // the slopes facing the light keep more snow
+          for (let y = t; y < hy; y++) put(x, y, y - t < cap ? lit : body);
+        }
+      };
+      ridge(hy - Math.round(hy * 0.18), hy * 0.32, w / 9, 1.3, C.night[2], N[2]);
+      ridge(hy - Math.round(hy * 0.06), hy * 0.17, w / 6, 4.1, C.night[1], N[1]);
+      // the line of pines along the horizon
+      for (let x = -4; x < w + 4; x += 5 + Math.floor(r() * 4)) {
+        const ht = 6 + Math.floor(r() * 8);
+        for (let j = 0; j < ht; j++) { const hw = Math.round(j * 0.35); for (let i = -hw; i <= hw; i++) put(x + i, hy - ht + j, i < 0 && j % 3 === 0 ? N[1] : C.pine[0]); }
+      }
+      // ground: snow, dark far away; the road in the middle with two ruts; a frozen pond on the right
+      const pond = (X, Z) => ((X - 0.62) / 0.3) ** 2 + ((Z - 2.6) / 0.9) ** 2 < 1;
+      ground(0.5, 0.6, false, (x, y, X, Z, k) => {
+        if (pond(X, Z)) {
+          const e = ((X - 0.62) / 0.3) ** 2 + ((Z - 2.6) / 0.9) ** 2;
+          if (e > 0.8) return N[1];
+          return hash(x * 3, y) < 0.02 ? I[3] : (x + y * 2) % 13 === 0 ? I[2] : e < 0.3 ? I[0] : I[1];
+        }
+        const road = Math.abs(X + 0.05) < 0.17;
+        if (road) {
+          const rut = Math.abs(Math.abs(X + 0.05) - 0.09) < 0.012;
+          if (rut && k > 0.08) return N[0];
+          return band(x, y, N, 0.6 + k * 2.2);
+        }
+        return hash(x * 7, y) < 0.02 * k ? N[4] : band(x, y, N, 0.2 + k * 2.6);
+      });
+      // footprints of wolves crossing the road
+      for (let i = 0; i < 9; i++) { const q = at(-0.3 + i * 0.07, 2.2 + (i % 2) * 0.12); put(q.x, q.y, N[0]); put(q.x + 1, q.y, N[0]); }
+      // pines and rocks, far first; the middle stays clear between the heroes and the enemies
+      const g = rng(7), props = [];
+      for (const Z of [7, 5.5, 4.4, 3.5, 2.8, 2.2, 1.7, 1.3]) for (let X = -1.2; X <= 1.2; X += 0.3) {
+        const x = X + (g() - 0.5) * 0.15, z = Z + g() * 0.3, sx = at(x, z).x, roll = g();
+        if (roll < 0.5 || Math.abs(x + 0.05) < 0.25 || pond(x, z) || pond(x, z - 0.4)) continue;
+        if (Z < 3.2 && sx > w * 0.16 && sx < w * 0.84) continue;
+        props.push({ x, z, kind: roll > 0.78 ? 'rock' : 'pine' });
+      }
+      for (const p of props) { const q = at(p.x, p.z); p.kind === 'rock' ? snowRock(K, q.x, q.y, q.s * 1.6) : pine(K, q.x, q.y, Math.round(70 * q.s)); }
+      // low mist on the far snow
+      for (let y = hy; y < hy + Math.round(gh * 0.12); y++) for (let x = 0; x < w; x++) if (bay(x, y) < 0.12 * (1 - (y - hy) / (gh * 0.12)) * (0.6 + 0.4 * Math.sin(x / 19))) put(x, y, N[2]);
+      // a big pine close by at each edge, framing the fight
+      pine(K, Math.round(w * 0.03), Math.round(hy + gh * 0.82), Math.round(Math.min(h * 0.75, w * 0.4)));
+      pine(K, Math.round(w * 0.97), Math.round(hy + gh * 0.9), Math.round(Math.min(h * 0.7, w * 0.36)));
     },
 
     cripta(K) { cryptRoom(K, BATTLE_BG_C.crypt, false); },

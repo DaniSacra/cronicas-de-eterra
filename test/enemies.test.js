@@ -123,3 +123,15 @@ test('turn queue faces: every grid enemy has a 32x32 head crop inside its sprite
     assert.ok(filled > 32 * 32 * 0.4, `${k}: only ${filled} pixels in the head crop`);
   }
 });
+
+test('common enemies stand out on the field, one size under a boss; the road north fights on snow, not among graves', () => {
+  const R = require('../src/uirules.js'), { battlePlace, BATTLE_PLACES } = require('../src/battlebg.js');
+  const sizes = ['loboGeada', 'loboGeada'].map(id => GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite]));
+  for (const [w, h] of [[320, 180], [294, 634], [422, 196]]) {
+    const L = R.battleLayout(sizes, w, h), floor = Math.round(h * R.battleFloor(w, h));
+    assert.ok(L.every(l => l.scale <= 2), `${w}x${h} scale ${L[0].scale}`);
+    assert.ok(Math.max(...L.map(l => l.base)) < floor - 12, `${w}x${h}: a step into the scene`);
+  }
+  assert.ok(BATTLE_PLACES.includes('estrada'));
+  assert.equal(battlePlace({ mode: 'town', area: 'estrada' }), 'estrada');
+});
