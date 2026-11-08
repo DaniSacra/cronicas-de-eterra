@@ -17,7 +17,7 @@ function devParty(lv, gear = []) {
 }
 function devState(o) {
   devParty(o.lv, o.gear);
-  Object.assign(G, { chapter: 0, part: 0, inv: { pocao: 4, eter: 2, pena: 1 }, opened: {}, explored: {}, bossDead: false, gold: 80,
+  Object.assign(G, { chapter: 0, part: 0, inv: { pocao: 4, eter: 2, pena: 1 }, opened: {}, explored: {}, field: {}, mapv: {}, bossDead: false, gold: 80,
     quest: 1, key: { carta: true }, intro: 1, reached: 1, macros: normalizeMacros(), lastRound: null }, o.G || {});
   G.seen = { ...DEV_PROLOGUE, ...(o.seen || {}) };
   for (const [k, v] of Object.entries(o.c1 || {})) G.seen['c1:' + k] = v;

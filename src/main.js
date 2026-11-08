@@ -12,7 +12,7 @@ let SPR = null;
 
 const G = {
   mode: 'title', floor: 0, x: 1, y: 1, dir: 1,
-  chapter: 0, part: 0, party: [], inv: {}, opened: {}, gear: [], equip: {}, explored: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
+  chapter: 0, part: 0, party: [], inv: {}, opened: {}, gear: [], equip: {}, explored: {}, field: {}, mapv: {}, bossDead: false, gold: 0, quest: 0, town: null, area: 'valmor', key: {}, intro: 1, reached: 0, seen: {}, macros: [null, null], lastRound: null,
   sinceFight: 0, anim: null, busy: false, queue: [], held: new Set(),
   bigMap: false, fade: 0, fadeAnim: null, flash: null, flashColor: '255,255,255', shakeUntil: 0,
 };
@@ -442,7 +442,7 @@ function saveGame() {
     const explored = packExplored(G.explored); // andares da cripta e áreas com névoa (area:<id>)
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 3, floor: G.floor, floorId: floorKey(G.floor), chapter: G.chapter, part: G.part, x: G.x, y: G.y, dir: G.dir, party: G.party.map(saveMember),
-      inv: G.inv, opened: G.opened, gear: G.gear || [], equip: G.equip || {}, explored, bossDead: G.bossDead,
+      inv: G.inv, opened: G.opened, gear: G.gear || [], equip: G.equip || {}, explored, field: G.field || {}, mapv: G.mapv || {}, bossDead: G.bossDead,
       place: G.mode === 'town' ? 'town' : 'dungeon', town: G.mode === 'town' ? { x: TOWN.p.x, y: TOWN.p.y, dir: TOWN.p.dir } : G.town,
       area: G.mode === 'town' ? G.area : 'valmor', gold: G.gold, quest: G.quest, key: G.key, intro: G.intro, reached: G.reached, seen: G.seen, macros: G.macros,
     }));
@@ -468,6 +468,7 @@ function loadGame() {
     G.macros = normalizeMacros(s.macros); G.lastRound = null; // saves without tactics get two empty slots
     G.reached = s.reached ?? (s.place === 'town' ? Object.keys(s.explored || {}).length : s.floor + 1);
     G.explored = unpackExplored(s.explored);
+    G.field = s.field || {}; G.mapv = s.mapv || {}; // saves without field state start every area as drawn
     // saves da versão de 3 andares: quem estava no B2/B3 volta ao começo da cripta
     G.chapter = s.chapter || 0; G.part = s.part || 0; // saves from the prologue have neither
     const fi = savedFloor(s);
@@ -579,7 +580,7 @@ async function newGame() {
   G.party = [newMember(PARTY_DEFS.find(d => d.id === 'aldo'))]; // Aldo chega sozinho; o grupo se forma no prólogo
   G.inv = { pocao: 2 };
   G.chapter = 0; G.part = 0;
-  G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
+  G.opened = {}; G.gear = []; G.equip = {}; G.explored = {}; G.field = {}; G.mapv = {}; G.bossDead = false; G.gold = 20; G.quest = 0; G.key = {}; G.intro = 0; G.reached = 0; G.seen = {};
   G.macros = normalizeMacros(); G.lastRound = null;
   loadFloor(0);
   UI.buildParty();

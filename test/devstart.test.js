@@ -4,7 +4,7 @@ const { loadStory } = require('./harness');
 
 const dev = () => {
   const G = { mode: 'title', queue: [], held: new Set(), seen: {}, key: {}, inv: {}, explored: {}, party: [] };
-  const s = loadStory(G, { files: ['town', 'opening', 'chapter1', 'devstart'],
+  const s = loadStory(G, { files: ['town', 'explore', 'opening', 'chapter1', 'devstart'],
     ctx: { loadFloor() {}, normalizeMacros: () => [null, null], newGame: async () => { G.started = 'new'; }, quickDungeon: async () => { G.started = 'crypt'; },
       titleScreen: async () => { G.started = 'title'; }, WorldMap: { travel: async () => {} } } });
   return { G, ...s };

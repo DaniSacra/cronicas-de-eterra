@@ -38,7 +38,7 @@ test('the cemetery has random fights, never visible ones: none before the first 
   assert.equal(G.explored['area:cemiterio'][1 * 16 + 1], 0, 'the far corner is still dark');
   await run('TOWN.A.onEnter()');
   assert.ok(log.indexOf('Aldo acende o lampião. A névoa engole tudo além da luz.') === log.findIndex(t => t.includes('covas abertas por toda parte')) + 1);
-  assert.equal(run('typeof TOWN.roamers'), 'undefined', 'no enemy walks on the map');
+  assert.equal(run('TOWN.roamers.length'), 0, 'no enemy walks on the map');
 });
 
 test('random fights in the open areas follow the crypt rule: none in the first steps, never on a reserved tile', () => {

@@ -129,6 +129,8 @@ const EQUIPS = {
   habitoForrado: { name: 'Hábito Forrado',   who: 'teo',     slot: 'armadura', icon: 'habito',   bonus: { def: 4 } },
   adagaAfiada:   { name: 'Adaga Afiada',     who: 'andilla', slot: 'arma',     icon: 'adaga',   bonus: { atk: 3 } },
   gibaoCouro:    { name: 'Gibão de Couro',   who: 'andilla', slot: 'armadura', icon: 'couro',   bonus: { def: 4 } },
+  // capítulo 1: the chest behind the frozen waterfall of the southern road (above the forge, below the crypt)
+  gibaoPele:     { name: 'Gibão de Pele',    who: 'andilla', slot: 'armadura', icon: 'couro',   bonus: { def: 8 } },
 };
 
 // Heroes screen: attribute names in full, the starting gear of each hero (shown until something better is found)
@@ -240,6 +242,37 @@ const ENEMIES = {
 };
 
 // Itens de missão (não aparecem na batalha)
+// ---------- Field exploration (src/field.js) ----------
+// Each hero's way of changing the world outside battle. No PM, no Energia. first: what the party says the first time
+// the verb is used (G.seen 'campo:<verb>'), never again
+const FIELD_VERBS = {
+  acende:    { hero: 'lyra',    word: 'acende',    fx: 'fire',  first: [[null, 'Lyra estala os dedos e a chama pula para o pavio.'], ['lyra', 'Acender coisas é a melhor parte de ser maga.', 'alegre']] },
+  derrete:   { hero: 'lyra',    word: 'derrete',   fx: 'fire' },
+  congela:   { hero: 'lyra',    word: 'congela',   fx: 'ice',   first: [['lyra', 'Se eu congelar o riacho, a gente passa. Se eu errar, a gente nada.'], ['teo', 'Então não erre.']] },
+  empurra:   { hero: 'aldo',    word: 'empurra',   fx: 'push',  first: [['andilla', 'Eu ia sugerir dar a volta.'], ['aldo', 'Esse é o caminho.']] },
+  atravessa: { hero: 'andilla', word: 'atravessa', fx: 'step',  first: [['andilla', 'Ninguém olhe para baixo. Eu já olhei. Não ajuda.']] },
+  abre:      { hero: 'andilla', word: 'abre',      fx: 'step',  first: [['andilla', 'Fechadura de estrada. Quem fez queria que alguém abrisse.', 'alegre']] },
+  ilumina:   { hero: 'teo',     word: 'ilumina',   fx: 'holy' },
+  cura:      { hero: 'teo',     word: 'cura',      fx: 'heal',  first: [['teo', 'Calma. Ninguém vai te deixar aqui.'], ['aldo', 'Ele confia mais em você do que em mim.'], ['teo', 'Cavalo sabe de quem gostar.', 'alegre']] },
+};
+// Kinds of field object: the verb that acts on it, whether it stops the party, whether it goes away once done
+// (melted ice), whether it can be pushed and how far its light reaches once lit (tiles)
+const FIELD_KINDS = {
+  lamp:     { verb: 'acende',    block: true, light: 3 },
+  fire:     { verb: 'acende',    block: true, light: 3 },
+  iceBlock: { verb: 'derrete',   block: true, gone: true },
+  icicles:  { verb: 'derrete',   block: true, gone: true },
+  log:      { verb: 'empurra',   block: true, push: true },
+  rock:     { verb: 'empurra',   block: true, push: true },
+  post:     { verb: 'empurra',   block: true, push: true },
+  beam:     { verb: 'atravessa', block: true },
+  chest:    { verb: 'abre',      block: true },
+  rune:     { verb: 'ilumina',   block: true },
+  hurt:     { verb: 'cura',      block: true },
+  sign:     { block: true },               // a stone with something to read (look)
+  rope:     { gone: true },                // the loose rope bridge, drawn over the ravine until it is tied
+};
+
 const KEY_ITEMS = {
   // O texto da carta fica em docs/mundo/historias/prologo.md até o capítulo em que ela for aberta
   carta: { name: 'Carta com o selo real', desc: 'Item de missão',
@@ -311,4 +344,4 @@ const TIPS = [
   { show: () => G.seen.dicaTatica || G.seen.macro, get text() { return MACRO_TIP + ' Esc interrompe.'; } },
 ];
 
-if (typeof module !== 'undefined') module.exports = { ENERGY, MAX_LEVEL, ELOS, BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY };
+if (typeof module !== 'undefined') module.exports = { ENERGY, MAX_LEVEL, ELOS, BATTLE_LINES, ENEMIES, FLOORS, CRYPT_FLOORS, floorKey, savedFloor, oldCryptKey, PARTY_DEFS, SPELLS, ITEMS, EQUIPS, KEY_ITEMS, STAT_FULL, START_GEAR, HERO_STORY, FIELD_VERBS, FIELD_KINDS };

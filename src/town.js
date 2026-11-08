@@ -5,8 +5,10 @@ const TILE = { GRASS: 0, PATH: 1, WATER: 2, TREE: 3, CLIFF: 4, BUSH: 5, FLOWER: 
   FLOOR: 7, WALL: 8, COUNTER: 9, TABLE: 10, HEARTH: 11, BARREL: 12, DOOR: 13,
   // cemitério
   GATE: 14, MURO: 15, TOMB: 16, GRAVE_O: 17, GRAVE_U: 18, GRAVE_OLD: 19, DEADTREE: 20,
-  FORD: 21, FIRE: 22 }; // capítulo 1: the shallow crossing of the Vau do Corvo, the campfire
-const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE, TILE.FORD]);
+  FORD: 21, FIRE: 22, // capítulo 1: the shallow crossing of the Vau do Corvo, the campfire
+  // exploration (src/explore.js): ice to slide on, a bridge, the ravine, an avalanche, a ramp between ledges, wheel ruts
+  ICE: 23, BRIDGE: 24, CHASM: 25, SNOWPILE: 26, RAMP: 27, RUTS: 28 };
+const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE, TILE.FORD, TILE.ICE, TILE.BRIDGE, TILE.RAMP, TILE.RUTS]);
 const isInterior = t => t >= TILE.FLOOR && t <= TILE.DOOR;
 const TDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
 const CRYPT_FRONT = { x: 27, y: 18, dir: 2 };
@@ -195,7 +197,7 @@ const TOWN = {
   inside(x, y) { return x >= 0 && y >= 0 && x < this.A.W && y < this.A.H; },
   tileAt(x, y) { return this.inside(x, y) ? this.A.g[y * this.A.W + x] : this.A.outside; },
   buildingAt(x, y) { const i = this.inside(x, y) ? this.A.bld[y * this.A.W + x] : -1; return i >= 0 ? this.A.buildings[i] : null; },
-  walkable(x, y) { return WALKABLE.has(this.tileAt(x, y)) && !this.buildingAt(x, y); },
+  walkable(x, y) { return WALKABLE.has(this.tileAt(x, y)) && !this.buildingAt(x, y) && !fieldBlockAt(x, y); },
 };
 
 // ---------- Desenho estático (tiles e prédios) ----------
@@ -302,6 +304,8 @@ function batsSprite(now, col = '#4a3a5a') {
 function foeSprite(n, now) {
   if (n.def.foe === 'rat') return catSprite(n.dir === 1 ? 1 : 3, Math.floor(now / 400) % 2, '#7a6a5a', '#4a3a2e');
   if (n.def.foe === 'bats') return batsSprite(now);
+  if (n.def.foe === 'wolf') return catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : Math.floor(now / 400) % 2, '#a2a2ac', '#55555e'); // a grey wolf of the road
+  if (n.def.foe === 'crow') return batsSprite(now, '#26202e');
   return personSprite('ossada', n.dir, 0);
 }
 
@@ -324,6 +328,7 @@ function enterTown(pos, area = 'valmor', cast = null, music = true) {
   TOWN.A = AREAS[area];
   TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0;
   G.town = { x: pos.x, y: pos.y, dir: pos.dir };
+  enterField(); // objects as the party left them, roamers born again (src/explore.js)
   if (!TOWN.A.layer) TOWN.A.layer = drawTownLayer(TOWN.A);
   TOWN.p = newActor(pos.x, pos.y, pos.dir);
   TOWN.followers = G.party.slice(1).map(() => newActor(pos.x, pos.y, pos.dir));
@@ -350,8 +355,13 @@ const partyAt = (x, y) => [TOWN.p, ...TOWN.followers].some(a => a.x === x && a.y
 
 // ---------- Visão (áreas com vision: { radius }; regras em src/vision.js) ----------
 const areaSeen = () => seenTiles(G.explored, areaKey(G.area), TOWN.A.W * TOWN.A.H);
-function lookAround() { const V = TOWN.A.vision; if (V) markSight(areaSeen(), TOWN.A.W, TOWN.A.H, TOWN.p.x, TOWN.p.y, V.radius); }
-const visibleAt = (x, y) => !TOWN.A.vision || inSight(x, y, TOWN.p.x, TOWN.p.y, TOWN.A.vision.radius);
+function lookAround() {
+  const V = TOWN.A.vision;
+  if (!V) return;
+  markSight(areaSeen(), TOWN.A.W, TOWN.A.H, TOWN.p.x, TOWN.p.y, V.radius);
+  for (const l of fieldLights()) markSight(areaSeen(), TOWN.A.W, TOWN.A.H, l.x, l.y, l.r); // a lit lamp shows its surroundings
+}
+const visibleAt = (x, y) => !TOWN.A.vision || inSight(x, y, TOWN.p.x, TOWN.p.y, TOWN.A.vision.radius) || litTile(x, y);
 
 // ---------- Encontros (áreas com encounters: () => [{ ids, intro }]) ----------
 // Como na cripta: ninguém aparece no mapa e a luta vem com os passos (encounterChance, src/uirules.js). Uma área
@@ -403,11 +413,18 @@ function tryTownMove(d) {
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny && d === 0) { townBusy(() => enterBuilding(b)); return; }
   // Moradores só conversam com Espaço (townAction); andar contra eles só esbarra
-  if (!TOWN.walkable(nx, ny) || npcAt(nx, ny)) { if (P.t >= 1) { Sfx.bump(); P.t = 0; P.fx = P.x; P.fy = P.y; P.dur = 200; } return; }
-  const F = TOWN.followers;
-  for (let i = F.length - 1; i > 0; i--) moveActor(F[i], F[i - 1].x, F[i - 1].y, 180);
-  if (F[0]) moveActor(F[0], P.x, P.y, 180);
-  moveActor(P, nx, ny, 180);
+  const o = fieldObjAt(nx, ny); // walking into a log or a rock: Aldo pushes it (src/explore.js)
+  if (o && FIELD_KINDS[o.kind].push && !o.fixed && P.t >= 1) { townBusy(() => pushObj(o, d, false)); return; }
+  if (TOWN.tileAt(nx, ny) === TILE.ICE && TOWN.walkable(nx, ny) && !npcAt(nx, ny) && !roamerAt(nx, ny)) { townBusy(() => slideParty(d)); return; }
+  if (!TOWN.walkable(nx, ny) || npcAt(nx, ny) || roamerAt(nx, ny)) { if (P.t >= 1) { Sfx.bump(); P.t = 0; P.fx = P.x; P.fy = P.y; P.dur = 200; } return; }
+  stepParty(nx, ny, 180);
+}
+// The leader takes a step and each follower takes the place of the one ahead
+function stepParty(nx, ny, dur) {
+  const P = TOWN.p, F = TOWN.followers;
+  for (let i = F.length - 1; i > 0; i--) moveActor(F[i], F[i - 1].x, F[i - 1].y, dur);
+  if (F[0]) moveActor(F[0], P.x, P.y, dur);
+  moveActor(P, nx, ny, dur);
   lookAround();
   TOWN.moved = true;
   F.forEach(f => { f.dir = f.x !== f.fx ? (f.x > f.fx ? 1 : 3) : f.y !== f.fy ? (f.y > f.fy ? 2 : 0) : f.dir; });
@@ -426,6 +443,8 @@ function townAction(openMenu = true) {
   if (npc) return townBusy(() => talkTo(npc));
   const b = TOWN.buildingAt(nx, ny);
   if (b && b.door.x === nx && b.door.y === ny) return townBusy(() => enterBuilding(b));
+  const act = fieldAction(nx, ny); // a hero's verb on the object ahead (src/explore.js)
+  if (act) return townBusy(act);
   const look = TOWN.A.look && TOWN.A.look(nx, ny);
   if (look) return townBusy(look);
   if (openMenu) campMenu();
@@ -433,7 +452,12 @@ function townAction(openMenu = true) {
 
 function updateTown(dt) {
   const P = TOWN.p;
-  for (const a of [P, ...TOWN.followers, ...TOWN.npcs]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
+  for (const a of [P, ...TOWN.followers, ...TOWN.npcs, ...(TOWN.roamers || []), ...(TOWN.objs || [])]) if (a.t < 1) a.t = Math.min(1, a.t + dt / a.dur);
+  if (!G.busy && !UI.busy()) updateRoamers(dt);
+  if (P.t >= 1 && !G.busy && !UI.busy()) {
+    const r = roamerTouching();
+    if (r) { townBusy(() => roamerFight(r)); return; }
+  }
   // Gatilhos ao pisar (lutas e achados do cemitério, cena do Teo...)
   if (P.t >= 1 && TOWN.moved && !G.busy && !UI.busy()) {
     TOWN.moved = false;
@@ -443,6 +467,7 @@ function updateTown(dt) {
     if (g) { townBusy(() => wildFight(g)); return; }
   }
   if (TOWN.A.update) TOWN.A.update(dt); // an area's own life (the horses of the pasture)
+  if (P.t >= 1 && !G.busy && !UI.busy()) fieldHintCheck();
   if (P.t >= 1 && !G.busy && !UI.busy()) {
     let d = null;
     while (G.queue.length && d === null) d = townDir(G.queue.shift());
@@ -781,7 +806,7 @@ async function shop() {
 // dá a borda macia. Primeiro tira a cor do que está fora do raio, depois escurece: névoa no que já foi visto, preto no resto.
 const SIGHT_MASKS = {}, SIGHT_DARK = [4, 4, 12]; // the never-seen dark, also past the map's edge
 function drawSight(c, A, lp, camX, camY) {
-  const W = A.W + 2, H = A.H + 2, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS, py = lp.y / TS;
+  const W = A.W + 2, H = A.H + 2, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS, py = lp.y / TS, lights = fieldLights();
   let M = SIGHT_MASKS[A.name];
   if (!M) {
     const mk = () => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d'); return { cv, cx, img: cx.createImageData(W, H) }; };
@@ -790,7 +815,8 @@ function drawSight(c, A, lp, camX, camY) {
   const g = M.gray.img.data, d = M.dark.img.data;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const tx = x - 1, ty = y - 1, i = (y * W + x) * 4, inMap = tx >= 0 && ty >= 0 && tx < A.W && ty < A.H;
-    const k = inMap ? Math.min(1, Math.max(0, (Math.hypot(tx - px, ty - py) - (r - 1)) / 1.5)) : 1; // 0 perto do grupo, 1 além do raio
+    let k = inMap ? Math.min(1, Math.max(0, (Math.hypot(tx - px, ty - py) - (r - 1)) / 1.5)) : 1; // 0 perto do grupo, 1 além do raio
+    if (inMap) for (const l of lights) k = Math.min(k, Math.max(0, (Math.hypot(tx - l.x, ty - l.y) - (l.r - 1)) / 1.5)); // lit lamps show their ground
     const a = inMap && seen[ty * A.W + tx] ? 0.6 * k : k;
     g[i] = g[i + 1] = g[i + 2] = 128; g[i + 3] = 255 * k;
     [d[i], d[i + 1], d[i + 2]] = SIGHT_DARK; d[i + 3] = 255 * a;
@@ -833,7 +859,7 @@ function drawTown(now) {
   // with the dialog open, the camera moves only if the box would cover the party (eased, 200 ms)
   const padB = (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
-  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(Math.max(TOWN.pad, portraitRows())));
+  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(Math.max(TOWN.pad, portraitRows()))) + (TOWN.camOff || 0); // camOff: a vista past the edge
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
@@ -872,12 +898,14 @@ function drawTown(now) {
   const list = [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
+    ...(TOWN.objs || []).filter(o => !fieldGone(o)).map(o => ({ a: o, obj: true, spr: () => TownArt.fieldSprite(o.kind, o.done, now, o) })),
+    ...(TOWN.roamers || []).filter(r => visibleAt(r.x, r.y)).map(r => ({ a: r, foe: true, spr: () => foeSprite(r, now) })),
     ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : n.def.horse ? horseSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0, n.def.horse) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
   for (const o of list) {
-    const spr = o.spr(), x = Math.round(o.pos.x - camX), y = Math.round(o.pos.y - camY - 3 - (spr.height - 18));
+    const spr = o.spr(), x = Math.round(o.pos.x - camX + (o.obj ? (TS - spr.width) / 2 : 0)), y = Math.round(o.pos.y - camY - (o.obj ? spr.height - TS : 3 + spr.height - 18));
     if (!o.lying) {
       c.drawImage(spr, x, y);
       // Aviso de luta: "!" amarelo piscando sobre o inimigo quando o herói chega perto
@@ -898,6 +926,8 @@ function drawTown(now) {
     c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(gx - 3.5, gy); c.lineTo(gx + 3.5, gy); c.lineTo(gx, gy + 4.5); c.closePath(); c.fill();
   }
   if (TOWN.dim > 0) { c.fillStyle = `rgba(${A.dimCol || '4,2,16'},${TOWN.dim})`; c.fillRect(0, 0, VW, VH); }
+  if (TOWN.objs && TOWN.objs.length) drawFieldLights(c, camX, camY);
+  drawFieldFx(c, now, camX, camY);
   if (A.vision) { // a luz quente do lampião em volta do grupo
     const gx = lp.x - camX + TS / 2, gy = lp.y - camY + TS / 2, R = A.vision.radius * TS, gr = c.createRadialGradient(gx, gy, 0, gx, gy, R);
     gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');
@@ -916,6 +946,11 @@ function drawTown(now) {
         c.fillStyle = gr; c.fillRect(Math.round(off), y + r, Math.round(w), 2);
       }
     }
+  }
+  // a painted view past the edge of the map (the camera rises onto it: panVista in src/explore.js)
+  if (TOWN.vistaSide && A.vista) {
+    const north = TOWN.vistaSide === 'north';
+    c.drawImage(vistaCanvas(A, TOWN.vistaSide, VW, VH), 0, north ? -VH - camY : A.H * TS - camY);
   }
 
 }

@@ -6,7 +6,7 @@ const vm = require('node:vm');
 function loadStory(G, o = {}) {
   const log = [], picks = [];
   const ctx = {
-    console, G, log, picks, Set, Promise, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
+    console, G, log, picks, Set, Promise, performance: { now: () => 0 }, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
     setTimeout: f => { ctx.tick && ctx.tick(); queueMicrotask(f); return 0; },
     UI: { say: async t => { log.push(t); }, choose: async (opts, oo) => (o.choose ? o.choose(opts, oo || {}) : picks.length ? picks.shift() : opts[0].value),
       buildParty() {}, updateParty() {}, cardFloat() {}, cardGlow() {}, cardHit() {}, markCard() {}, busy: () => false },
@@ -16,7 +16,7 @@ function loadStory(G, o = {}) {
     ...o.ctx,
   };
   vm.createContext(ctx);
-  for (const f of ['palette', 'data', 'map', 'uirules', 'party', 'elos', 'vision', ...(o.files || ['town', 'opening', 'chapter1'])])
+  for (const f of ['palette', 'data', 'map', 'uirules', 'party', 'elos', 'vision', 'field', ...(o.files || ['town', 'explore', 'opening', 'chapter1'])])
     vm.runInContext(fs.readFileSync(`${__dirname}/../src/${f}.js`, 'utf8'), ctx, { filename: f });
   const run = code => vm.runInContext(code, ctx);
   // values from the vm realm have other prototypes: compare them as plain JSON
