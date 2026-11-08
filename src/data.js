@@ -106,11 +106,12 @@ const ELOS = {
 };
 
 const ITEMS = {
-  pocao:  { name: 'Poção',      desc: 'Recupera 50 PV',             target: 'ally' },
-  eter:   { name: 'Éter',       desc: 'Recupera 20 PM',             target: 'ally' },
-  pena:   { name: 'Pena Vital', desc: 'Revive um aliado caído',     target: 'deadAlly' },
-  elixir: { name: 'Elixir',     desc: 'Restaura todo o grupo',      target: 'allAllies' },
-  pao:    { name: 'Pão da Berta', desc: 'Recupera 30 PV',           target: 'ally' }, // the four loaves of the farewell (capítulo 1)
+  // fx: what it does (hp or mp it gives back, revive with that share of the PV, all: the whole party), read by applyItem and the target cards
+  pocao:  { name: 'Poção',      desc: 'Recupera 50 PV',             target: 'ally',      fx: { hp: 50 } },
+  eter:   { name: 'Éter',       desc: 'Recupera 20 PM',             target: 'ally',      fx: { mp: 20 } },
+  pena:   { name: 'Pena Vital', desc: 'Revive um aliado caído',     target: 'deadAlly',  fx: { revive: 0.5 } },
+  elixir: { name: 'Elixir',     desc: 'Restaura todo o grupo',      target: 'allAllies', fx: { all: true } },
+  pao:    { name: 'Pão da Berta', desc: 'Recupera 30 PV',           target: 'ally',      fx: { hp: 30 } }, // the four loaves of the farewell (capítulo 1)
 };
 
 const EQUIPS = {

@@ -413,7 +413,8 @@ async function campMenu() {
   G.busy = false; exploreHint();
 }
 
-// Shortcuts of the camp menu: choose, aim and use, again and again until Esc (the strip shows PV and PM)
+// Shortcuts of the camp menu: Magia picks the skill and opens the Livro on it with the target cards; Item opens the
+// Bolsa on the consumables (the same cards: no list of names, nobody gets an item that would do nothing)
 const castOptions = () => fieldCasts(G.party.map(m => ({ id: m.id, name: pdef(m).name, hp: m.hp, mp: m.mp, spells: knownSpells(m) })), SPELLS);
 async function quickMagic() {
   for (;;) {
@@ -421,23 +422,10 @@ async function quickMagic() {
     if (!opts.some(o => !o.disabled)) return opts.length ? UI.say('Ninguém tem PM para isso agora.') : null;
     const c = await UI.choose(opts, { title: 'Usar qual magia?', cancel: true, cols: 2, party: true });
     if (c == null) return;
-    const m = G.party.find(p => p.id === c.who), sp = SPELLS[c.spell];
-    const t = sp.target === 'allAllies' ? 'all' : await pickAlly(sp.target, `${sp.name} em quem?`, { party: true });
-    if (t == null) continue;
-    pay(m, sp); UI.updateParty();
-    await UI.say(castSupport(m, c.spell, t));
+    await HeroView.show('book', { hero: c.who, spell: c.spell, aim: true });
   }
 }
-async function quickItem() {
-  for (;;) {
-    if (!itemOptions().length) return;
-    const it = await UI.choose(itemOptions(), { title: 'Usar qual item?', cancel: true, cols: 2, party: true });
-    if (it == null) return;
-    const t = ITEMS[it].target === 'allAllies' ? 'all' : await pickAlly(ITEMS[it].target, `${ITEMS[it].name} em quem?`, { party: true });
-    if (t == null) continue;
-    await UI.say(applyItem(it, t));
-  }
-}
+const quickItem = () => itemOptions().length && HeroView.show('bag');
 
 // ---------- Salvar / carregar ----------
 function saveGame() {

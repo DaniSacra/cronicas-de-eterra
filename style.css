@@ -392,7 +392,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-btn.dis { background: var(--off) !important; cursor: default !important; }
 .hv-actions { display: flex; gap: calc(var(--u) * 3); align-items: center; flex-wrap: wrap; margin-top: calc(var(--u) * 3); }
 .hv-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2); width: 100%; box-sizing: border-box; }
-.hv-row.sel, .bg-cell.sel .hv-box { background: var(--win2); outline: var(--u) solid var(--gold); }
+.hv-row.sel { background: var(--win2); outline: var(--u) solid var(--gold); }
 .hv-row.off { color: var(--off); }
 #heroview .hv-cost { font-weight: normal; color: #2a5aa0; white-space: nowrap; } #heroview .hv-row.off .hv-cost { color: var(--off); }
 .bar.xp i { background: linear-gradient(var(--hi) 0 50%, #c89c38 50%); }
@@ -461,21 +461,39 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"] .bk-ribbon { padding-left: calc(var(--u) * 2) !important; padding-right: calc(var(--u) * 2) !important; }
 
 /* Bolsa: coins, three tabs, a grid of big cells, the chosen one in a strip below */
-#heroview[data-screen="bag"] { grid-template-rows: auto minmax(0, 1fr) auto; }
+#heroview[data-screen="bag"] { grid-template-rows: auto minmax(0, 1fr); }
 .bg-gold { color: var(--gold); white-space: nowrap; }
 .bg-tabs { flex: 1; display: flex; gap: calc(var(--u) * 2); justify-content: center; flex-wrap: wrap; }
 .bg-tabs button { padding: calc(var(--u) * 2) calc(var(--u) * 4) !important; color: var(--dim) !important; }
 .bg-tabs button.on { color: var(--text) !important; background: var(--win2) !important; }
-.bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--f2) * 9), 1fr)); gap: calc(var(--u) * 4); align-content: start; padding: calc(var(--u) * 5); overflow: auto; min-height: 0; }
-.bg-cell { display: flex !important; flex-direction: column; align-items: center; gap: calc(var(--u) * 2); text-align: center !important; }
+/* Bolsa: the list on the left, the chosen one and its target cards on the right */
+.bg-body { display: grid; grid-template-columns: minmax(0, 36fr) minmax(0, 64fr); gap: calc(var(--u) * 3); min-height: 0; }
+.bg-list { display: flex; flex-direction: column; gap: var(--u); padding: calc(var(--u) * 4); overflow: auto; min-height: 0; }
+.bg-row { grid-template-columns: auto minmax(0, 1fr) auto auto !important; }
+.bg-row .hv-ico { width: calc(var(--f2) * 2.5); height: calc(var(--f2) * 2.5); }
+.bg-row b { font-weight: normal; white-space: nowrap; }
+.bg-keys { margin-top: auto !important; padding-top: calc(var(--u) * 3); }
+.bg-detail { display: flex; flex-direction: column; gap: calc(var(--u) * 3); padding: calc(var(--u) * 5); overflow: auto; min-height: 0; }
+.bg-head { display: flex; gap: calc(var(--u) * 4); align-items: center; }
 .bg-ico { width: calc(var(--f2) * 4); height: calc(var(--f2) * 4); image-rendering: pixelated; display: block; }
-.bg-who { position: absolute; left: calc(var(--u) * -2); top: calc(var(--u) * -2); width: calc(var(--f2) * 1.75); height: calc(var(--f2) * 1.75); image-rendering: pixelated; box-shadow: 0 0 0 var(--u) var(--ink); }
+.bg-who { width: calc(var(--f2) * 1.75); height: calc(var(--f2) * 1.75); image-rendering: pixelated; box-shadow: 0 0 0 var(--u) var(--ink); }
 .bg-who.on { box-shadow: 0 0 0 var(--u) var(--ink), 0 0 0 calc(var(--u) * 2) var(--hi); }
-.bg-strip { display: flex; gap: calc(var(--u) * 4); align-items: center; justify-content: space-between; padding: calc(var(--u) * 3) calc(var(--u) * 5); }
-#heroview[data-screen="bag"][data-mode="tabs"] .bg-grid { grid-template-columns: minmax(0, 1fr); gap: calc(var(--u) * 2); }
-#heroview[data-mode="tabs"] .bg-cell { flex-direction: row; text-align: left !important; }
-#heroview[data-mode="tabs"] .bg-ico { width: calc(var(--f2) * 3); height: calc(var(--f2) * 3); }
-#heroview[data-mode="tabs"] .bg-who { width: var(--f2); height: var(--f2); }
+.bg-note { color: var(--gold); }
+/* Target cards: face, name, the bar of what changes and the preview ("28/45 +17 → 45/45"), or the reason it is grey */
+.tg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 3); }
+.tg-card { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2) !important;
+  border: var(--bw) solid transparent !important; border-image: var(--frame) 4 fill / var(--bw) round !important; }
+.tg-card img { width: calc(var(--f2) * 3); height: calc(var(--f2) * 3); image-rendering: pixelated; display: block; }
+.tg-card .bar { display: block; margin: var(--u) 0; }
+.tg-card small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text) !important; font-size: var(--f1) !important; }
+.tg-card.sel, .tg-card:not(.off):hover { border-image-source: var(--frame-sel) !important; }
+.tg-card.off { opacity: .5; filter: grayscale(.6); cursor: default !important; }
+.tg-card.off small { color: var(--dim) !important; }
+#heroview[data-mode="tabs"] .bg-body { grid-template-columns: minmax(0, 1fr); }
+#heroview[data-mode="tabs"] .bg-body[data-page="list"] .bg-detail, #heroview[data-mode="tabs"] .bg-body[data-page="detail"] .bg-list { display: none; }
+#heroview[data-mode="tabs"] .bg-keys { display: none; }
+#heroview[data-mode="tabs"] .bg-detail > .hv-btn { align-self: flex-start; }
+@media (orientation: portrait) { #heroview[data-mode="tabs"] .tg-grid { grid-template-columns: minmax(0, 1fr); } }
 #heroview[data-mode="tabs"] .hv-top { flex-wrap: wrap; }
 #heroview[data-mode="tabs"] .bg-tabs { order: 3; flex-basis: 100%; }
 #heroview[data-mode="tabs"] .bk-right > .hv-btn { align-self: flex-start; }

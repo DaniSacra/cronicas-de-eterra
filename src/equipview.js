@@ -9,6 +9,7 @@ const HeroView = (() => {
   let view = 'stage', slot = 0, choosing = false, pick = 0; // Heróis
   let skill = 0, bookPage = 'list'; // Livro
   let tab = 0, cell = 0; // Bolsa
+  let aim = -1, note = ''; // Bolsa and Livro: the target card under the cursor (-1: none, the list has the cursor) and the last result
   const STAGE_W = 64, STAGE_H = 72; // the hero's stage in art pixels: stained glass, the 48x64 sprite and the pedestal
 
   // Equipment the party found: opened chests whose loot is an equipment; saves from the 3-floor version also opened
@@ -49,11 +50,12 @@ const HeroView = (() => {
       else if (act === 'gear') { pick = n; equipPick(); }
       else if (act === 'best') equipBest();
       else if (act === 'back') back();
-      else if (act === 'skill') { skill = n; bookPage = 'detail'; Sfx.cursor(); render(); }
+      else if (act === 'skill') { skill = n; bookPage = 'detail'; aim = -1; note = ''; Sfx.cursor(); render(); }
       else if (act === 'cast') cast();
-      else if (act === 'tab') { tab = n; cell = 0; Sfx.cursor(); render(); }
-      else if (act === 'cell') { if (cell === n) useCell(); else { cell = n; Sfx.cursor(); render(); } }
+      else if (act === 'tab') { tab = n; cell = 0; aim = -1; note = ''; Sfx.cursor(); render(); }
+      else if (act === 'cell') { cell = n; bookPage = 'detail'; aim = -1; note = ''; Sfx.cursor(); render(); }
       else if (act === 'use') useCell();
+      else if (act === 'aim') { aim = n; useOn(); }
     });
     addEventListener('resize', () => open && render());
   }
@@ -161,7 +163,9 @@ const HeroView = (() => {
       const u = fieldUse(sp, m);
       detail = `${icon(spellIcon(sp), 'normal', 'bk-big')}<h3>${esc(sp.name)}</h3><p class="hv-cost">${costText(sp)} · ${TARGET_TEXT[sp.target]}</p>
         <p>${esc(sp.desc)}</p><p class="bk-fx">${spellEffect(sp, statsOf(m))}.</p>
-        ${u.field ? `<div class="hv-actions">${btn('cast', 0, 'Usar', `hv-btn${u.ok ? '' : ' dis'}`)}${u.ok ? '' : `<span class="dim">${u.why}</span>`}</div>` : `<p class="dim">${u.why}.</p>`}`;
+        ${!u.field ? `<p class="dim">${u.why}.</p>` : aim >= 0 ? targetsBlock(spellFx(sp, m), `${sp.name} em quem?`)
+          : `<div class="hv-actions">${btn('cast', 0, 'Usar', `hv-btn${u.ok ? '' : ' dis'}`)}${u.ok ? '' : `<span class="dim">${u.why}</span>`}</div>`}
+        ${note ? `<p class="bg-note">${esc(note)}</p>` : ''}`;
     } else if (sp) detail = `${icon(spellIcon(sp), 'dis', 'bk-big')}<h3>???</h3><p class="dim">${esc(d.name)} aprende no nível ${book[skill].lv}.</p>`;
     const back = mode() === 'tabs' ? btn('back', 0, '◀ Lista', 'hv-btn') : '';
     return `<div class="hv-top win"><h3 class="bk-title">Livro</h3>${btn('close', 0, 'Fechar', 'hv-close')}</div>
@@ -185,38 +189,82 @@ const HeroView = (() => {
         <section class="bk-page bk-right">${back}${detail}</section></div>`;
   }
 
-  async function cast() {
+  // ---------- Target cards (Bolsa and Livro): each hero with what the item or skill would do, or why not ----------
+  // fx: { hp } | { mp } | { revive } | { all }; a hero who would gain nothing is greyed out and cannot be chosen
+  function targetsBlock(fx, title) {
+    if (fx.all) { const ok = groupNeeds(fx); return `<div class="hv-actions">${btn('aim', 0, 'Usar no grupo', `hv-btn${ok ? '' : ' dis'}`)}${ok ? '' : '<span class="dim">O grupo já está inteiro.</span>'}</div>`; }
+    const cards = G.party.map((p, i) => {
+      const v = previewFor(fx, p), mp = !!fx.mp, cur = mp ? p.mp : p.hp, max = mp ? maxMp(p) : maxHp(p);
+      const line = v.ok ? v.text.replace(/\+(\d+) → (\S+)/, '<em>+$1 → $2</em>') : `${cur}/${max} · ${esc(v.why)}`;
+      return `<button class="tg-card${v.ok ? '' : ' off'}${i === aim ? ' sel' : ''}" data-act="aim" data-v="${i}"${v.ok ? '' : ' disabled'}>
+        <img src="${face(p.id)}" alt=""><span><b style="color:${ink(pdef(p).color)}">${esc(pdef(p).name)}</b>
+        <span class="bar${mp ? ' mp' : ''}"><i style="width:${max ? 100 * cur / max : 0}%"></i></span><small class="px">${line}</small></span></button>`;
+    }).join('');
+    return `<h4>${esc(title)}</h4><div class="tg-grid">${cards}</div>`;
+  }
+  // What the target cards are for now: the item of the Bolsa or the skill of the Livro
+  function aimFx() {
+    if (screen === 'bag') { const c = tabsOf()[tab].cells[cell]; return c && c.kind === 'item' ? ITEMS[c.id].fx : null; }
+    const m = hero(), r = spellBook(pdef(m).spells, m.lv)[skill], sp = r && r.known && SPELLS[r.id];
+    return sp && fieldUse(sp, m).ok ? spellFx(sp, m) : null;
+  }
+  const canAim = (fx, i) => fx && (fx.all ? i === 0 && groupNeeds(fx) : previewFor(fx, G.party[i]).ok);
+  // First (or next, d = 1 / -1) hero the cursor can stand on; -1 when nobody would gain anything
+  function nextAim(from, d = 1) {
+    const fx = aimFx(), n = fx && fx.all ? 1 : G.party.length;
+    for (let k = 1; k <= n; k++) { const i = ((from + d * k) % n + n) % n; if (canAim(fx, i)) return i; }
+    return -1;
+  }
+  function startAim() {
+    aim = nextAim(-1);
+    if (aim < 0) { Sfx.bump(); note = aimFx() && aimFx().all ? 'O grupo já está inteiro.' : 'Ninguém precisa disso agora.'; } else Sfx.select();
+    render();
+  }
+  // Uses the item or the skill on the hero under the cursor; the cursor stays while there is someone to help
+  function useOn() {
+    const fx = aimFx();
+    if (!canAim(fx, aim)) { Sfx.bump(); return; }
+    const t = fx.all ? 'all' : G.party[aim];
+    if (screen === 'bag') { const id = tabsOf()[tab].cells[cell].id; note = applyItem(id, t); if (!G.inv[id]) { aim = -1; cell = Math.max(0, Math.min(cell, tabsOf()[tab].cells.length - 1)); } }
+    else { const m = hero(), id = spellBook(pdef(m).spells, m.lv)[skill].id; pay(m, SPELLS[id]); note = castSupport(m, id, t); }
+    UI.updateParty();
+    if (aim >= 0 && !canAim(aimFx(), aim)) aim = nextAim(aim);
+    render();
+  }
+  function aimKey(k) {
+    const cols = 2, d = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols }[k];
+    if (d) { const n = nextAim(aim, Math.sign(d)); if (Math.abs(d) === cols && canAim(aimFx(), aim + d)) aim += d; else if (n >= 0) aim = n; Sfx.cursor(); return render(); }
+    if (k === 'Enter') useOn();
+  }
+  function cast() {
     const m = hero(), r = spellBook(pdef(m).spells, m.lv)[skill], sp = r && r.known && SPELLS[r.id];
     if (!sp || !fieldUse(sp, m).ok) return Sfx.cancel();
-    hide();
-    const t = sp.target === 'allAllies' ? 'all' : await pickAlly(sp.target, `${sp.name} em quem?`);
-    if (t != null) { pay(m, sp); UI.updateParty(); await UI.say(castSupport(m, r.id, t)); }
-    reshow();
+    note = ''; startAim();
   }
 
-  // ---------- Bolsa: coins, three tabs, a grid of cells and the strip of the chosen one ----------
+  // ---------- Bolsa: three tabs, the list of what the party carries and, beside it, the chosen one ----------
+  // A consumable shows the heroes as target cards right there (targetsBlock); a key item can be read
   const tabsOf = () => bagTabs({ inv: G.inv, key: G.key, owned: ownedEquips(), items: ITEMS, equips: EQUIPS, keyItems: KEY_ITEMS, read: !!G.key.lida, equip: choice() });
   function bagScreen() {
     const tabs = tabsOf(), cells = tabs[tab].cells, c = cells[cell];
-    const who = c => (c.who ? `<img class="bg-who${c.inUse ? ' on' : ''}" src="${face(c.who)}" alt="">` : '');
-    const grid = cells.map((x, i) => `<button class="bg-cell${i === cell ? ' sel' : ''}" data-act="cell" data-v="${i}"><span class="hv-box slot-frame">${icon(x.icon, 'normal', 'bg-ico')}
-      ${x.n ? `<b>${x.n}</b>` : ''}${who(x)}</span><span class="bg-name">${esc(x.name)}</span></button>`).join('');
+    const who = x => (x.who ? `<img class="bg-who${x.inUse ? ' on' : ''}" src="${face(x.who)}" alt="">` : '');
+    const rows = cells.map((x, i) => `<button class="hv-row bg-row${i === cell ? ' sel' : ''}" data-act="cell" data-v="${i}">${icon(x.icon)}
+      <span>${esc(x.name)}</span>${who(x)}<b class="px">${x.n ? '× ' + x.n : ''}</b></button>`).join('');
     const user = c && c.who ? `, ${bonusText(EQUIPS[c.id].bonus, STAT_NAMES)}. ${c.inUse ? 'Em uso por' : 'Guardada, serve para'} ${heroName(c.who)}.` : '';
-    const strip = c ? `<div class="bg-strip win"><div><b>${esc(c.name)}</b><p>${esc(c.desc)}${user}</p></div>
-      ${c.kind !== 'equip' ? btn('use', 0, c.kind === 'key' ? 'Ler' : 'Usar', 'hv-btn') : ''}</div>` : '';
-    return `<div class="hv-top win"><span class="bg-gold">${G.gold} moedas</span>
-      <div class="bg-tabs">${tabs.map((t, i) => btn('tab', i, t.title, i === tab ? 'on' : '')).join('')}</div>${btn('close', 0, 'Fechar', 'hv-close')}</div>
-      <section class="bg-grid win">${grid || `<p class="dim">Nada aqui.</p>`}</section>${strip}`;
+    const act = !c ? '' : c.kind === 'item' ? targetsBlock(ITEMS[c.id].fx, 'Usar em quem?')
+      : c.kind === 'key' ? `<div class="hv-actions">${btn('use', 0, 'Ler', 'hv-btn')}</div>` : '';
+    const back = mode() === 'tabs' ? btn('back', 0, '◀ Lista', 'hv-btn') : '';
+    const detail = c ? `<section class="bg-detail win">${back}<div class="bg-head"><span class="hv-box slot-frame">${icon(c.icon, 'normal', 'bg-ico')}</span>
+      <div><h3>${esc(c.name)}</h3><p>${esc(c.desc)}${user}</p></div></div>${act}${note ? `<p class="bg-note">${esc(note)}</p>` : ''}</section>` : '';
+    return `<div class="hv-top win"><h3 class="bk-title">Bolsa</h3>
+      <div class="bg-tabs">${tabs.map((t, i) => btn('tab', i, t.title, i === tab ? 'on' : '')).join('')}</div><span class="bg-gold">${G.gold} moedas</span>${btn('close', 0, 'Fechar', 'hv-close')}</div>
+      <div class="bg-body" data-page="${bookPage}"><section class="bg-list win">${rows || '<p class="dim">Nada aqui.</p>'}<p class="bg-keys dim">↑↓ escolhe · Enter usa · Esc volta</p></section>${detail}</div>`;
   }
   async function useCell() {
     const c = tabsOf()[tab].cells[cell];
     if (!c || c.kind === 'equip') return;
-    hide(); await useBagItem(c.kind === 'key' ? 'key:' + c.id : c.id); reshow();
-    cell = Math.min(cell, Math.max(0, tabsOf()[tab].cells.length - 1)); render();
-  }
-  function bagCols() {
-    const g = root.querySelector('.bg-grid');
-    return g ? getComputedStyle(g).gridTemplateColumns.split(' ').length : 1;
+    if (c.kind === 'item') { note = ''; return aim >= 0 ? useOn() : startAim(); }
+    hide(); await useBagItem('key:' + c.id); reshow();
   }
 
   function render() {
@@ -230,7 +278,7 @@ const HeroView = (() => {
     } else if (screen === 'book') root.innerHTML = bookScreen();
     else if (screen === 'elos') root.innerHTML = elosScreen();
     else root.innerHTML = bagScreen();
-    const s = root.querySelector('.hv-row.sel, .bg-cell.sel');
+    const s = root.querySelector('.hv-row.sel');
     if (s) s.scrollIntoView({ block: 'nearest' });
   }
   function drawCanvas() {
@@ -243,12 +291,13 @@ const HeroView = (() => {
 
   function setHero(i) {
     if (i < 0 || i >= G.party.length || i === cur) return;
-    cur = i; choosing = false; skill = 0; bookPage = 'list'; Sfx.cursor(); render();
+    cur = i; choosing = false; skill = 0; bookPage = 'list'; aim = -1; note = ''; Sfx.cursor(); render();
   }
   // Esc: back one level (the choice to the sheet, the skill page to the list), then to the menu
   function back() {
-    if (screen === 'hero' && choosing) { choosing = false; Sfx.cancel(); render(); }
-    else if ((screen === 'book' || screen === 'elos') && bookPage === 'detail' && mode() === 'tabs') { bookPage = 'list'; Sfx.cancel(); render(); }
+    if (aim >= 0) { aim = -1; Sfx.cancel(); render(); }
+    else if (screen === 'hero' && choosing) { choosing = false; Sfx.cancel(); render(); }
+    else if (screen !== 'hero' && bookPage === 'detail' && mode() === 'tabs') { bookPage = 'list'; note = ''; Sfx.cancel(); render(); }
     else close();
   }
   const wrap = (i, n) => (n ? (i + n) % n : 0);
@@ -262,7 +311,7 @@ const HeroView = (() => {
   function bookKey(k) {
     const n = spellBook(pdef(hero()).spells, hero().lv).length;
     if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Tab') return setHero(wrap(cur + (k === 'ArrowLeft' ? -1 : 1), G.party.length));
-    if (k === 'ArrowUp' || k === 'ArrowDown') { skill = wrap(skill + (k === 'ArrowUp' ? -1 : 1), n); Sfx.cursor(); return render(); }
+    if (k === 'ArrowUp' || k === 'ArrowDown') { skill = wrap(skill + (k === 'ArrowUp' ? -1 : 1), n); note = ''; Sfx.cursor(); return render(); }
     if (k === 'Enter') { if (mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); render(); } else cast(); }
   }
   function elosKey(k) {
@@ -271,18 +320,19 @@ const HeroView = (() => {
     if (k === 'Enter' && mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); render(); }
   }
   function bagKey(k) {
-    const n = tabsOf()[tab].cells.length, cols = bagCols();
-    if (k === 'Tab') { tab = wrap(tab + 1, 3); cell = 0; Sfx.cursor(); return render(); }
-    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols }[k];
-    if (step && n) { cell = Math.max(0, Math.min(n - 1, cell + step)); Sfx.cursor(); return render(); }
-    if (k === 'Enter') useCell();
+    const n = tabsOf()[tab].cells.length;
+    if (k === 'Tab') { tab = wrap(tab + 1, 3); cell = 0; note = ''; Sfx.cursor(); return render(); }
+    const step = { ArrowUp: -1, ArrowDown: 1 }[k];
+    if (step && n) { cell = wrap(cell + step, n); note = ''; Sfx.cursor(); return render(); }
+    if (k === 'Enter') { if (mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); return render(); } useCell(); }
   }
   const KEY_ALIAS = { a: 'ArrowLeft', d: 'ArrowRight', w: 'ArrowUp', s: 'ArrowDown', ' ': 'Enter', e: 'Tab', q: 'ShiftTab' };
   function key(k0) {
     let k = KEY_ALIAS[k0] || k0;
     if (['Escape', 'x', 'Backspace'].includes(k)) return back();
+    if (aim >= 0 && k !== 'ShiftTab' && k !== 'Tab') return aimKey(k); // the cursor is on the target cards
     if (k === 'ShiftTab') { // Q: the tab before
-      if (screen === 'bag') { tab = wrap(tab - 1, 3); cell = 0; Sfx.cursor(); return render(); }
+      if (screen === 'bag') { tab = wrap(tab - 1, 3); cell = 0; note = ''; Sfx.cursor(); return render(); }
       if (screen === 'book') return setHero(wrap(cur - 1, G.party.length));
       k = 'Tab';
     }
@@ -293,12 +343,15 @@ const HeroView = (() => {
   function hide() { open = false; root.classList.remove('open'); }
   function reshow() { open = true; root.classList.add('open'); render(); }
   // screen: 'hero' (Heróis), 'book' (Livro), 'elos' (Livro de Elos) or 'bag' (Bolsa); resolves when it closes
-  function show(s = 'hero') {
+  // o: { hero, spell, aim } opens the Livro on that hero and skill, aim puts the cursor on the targets (the Magia shortcut)
+  function show(s = 'hero', o = {}) {
     if (!root) build();
     screen = s; open = true; cur = Math.min(cur, G.party.length - 1);
-    view = 'stage'; choosing = false; slot = 0; skill = 0; bookPage = 'list'; tab = 0; cell = 0;
+    view = 'stage'; choosing = false; slot = 0; skill = 0; bookPage = 'list'; tab = 0; cell = 0; aim = -1; note = '';
     if (s === 'bag') tab = Math.max(0, tabsOf().findIndex(t => t.cells.length));
+    if (o.hero) { cur = Math.max(0, G.party.findIndex(m => m.id === o.hero)); skill = Math.max(0, spellBook(pdef(hero()).spells, hero().lv).findIndex(r => r.id === o.spell)); bookPage = 'detail'; }
     root.classList.add('open'); render(); Sfx.select();
+    if (o.aim) cast(); // straight onto the target cards
     timer = setInterval(() => { frame ^= 1; if (open && screen === 'hero') drawCanvas(); }, 650); // breathing, cape and hair in the wind
     return new Promise(res => { done = res; });
   }

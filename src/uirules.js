@@ -280,6 +280,19 @@ function bagTabs({ inv, key, owned, items, equips, keyItems, read, equip = {} })
 }
 const bagGroups = o => bagTabs(o).filter(g => g.cells.length);
 
+// A target card: what an effect (fx: { hp } | { mp } | { revive } from ITEMS or a field skill) would do to one hero
+// (m: { hp, maxHp, mp, maxMp, mpUser }). { ok, gain, text: '28/45 +17 → 45/45' } or { ok: false, why } when it would
+// do nothing: that hero is greyed out and the item is never spent on them
+function targetPreview(fx, m) {
+  if (fx.revive) return m.hp > 0 ? { ok: false, why: 'De pé' } : { ok: true, gain: 0, text: `0/${m.maxHp} → ${Math.max(1, Math.floor(m.maxHp * fx.revive))}/${m.maxHp}` };
+  if (m.hp <= 0) return { ok: false, why: 'Caído' };
+  const [k, max, word] = fx.mp ? ['mp', 'maxMp', 'PM'] : ['hp', 'maxHp', 'PV'];
+  if (fx.mp && !m.mpUser) return { ok: false, why: 'Não usa PM' };
+  if (m[k] >= m[max]) return { ok: false, why: `${word} cheio` };
+  const gain = Math.min(fx[k], m[max] - m[k]);
+  return { ok: true, gain, text: `${m[k]}/${m[max]} +${gain} → ${m[k] + gain}/${m[max]}` };
+}
+
 // Two columns (Heróis: stage and sheet; Livro: both pages) when there is room; on a phone (portrait, or landscape
 // with little height) one at a time
 const heroViewMode = (w, h) => (w < h || w < 900 || h < 520 ? 'tabs' : 'cols');
@@ -362,4 +375,4 @@ const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { lab
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
 if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
-  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
+  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

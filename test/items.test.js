@@ -84,3 +84,49 @@ test('the red dots: a skill learned or a note added shows one until the Livro or
   const saved = JSON.parse(JSON.stringify(G.seen));
   assert.ok(saved.bookRead.includes('aldo:quebraJunta') && saved.diaryRead.length, 'G.seen goes in the save as it is');
 });
+
+test('target cards: the preview of each consumable and the reason a hero is greyed out', () => {
+  const { G, run } = story(['aldo', 'lyra', 'teo', 'andilla']);
+  const pv = (id, i) => run.json(`previewFor(ITEMS.${id}.fx, G.party[${i}])`);
+  const max = i => run(`maxHp(G.party[${i}])`);
+  G.party[1].hp = 20; G.party[3].hp = 0; G.party[2].mp = 1;
+  assert.equal(pv('pocao', 0).why, 'PV cheio');
+  assert.deepEqual(pv('pocao', 1), { ok: true, gain: Math.min(50, max(1) - 20), text: `20/${max(1)} +${Math.min(50, max(1) - 20)} → ${Math.min(max(1), 70)}/${max(1)}` });
+  assert.equal(pv('pocao', 3).why, 'Caído');
+  assert.equal(pv('pao', 0).why, 'PV cheio');
+  assert.equal(pv('eter', 0).why, 'Não usa PM', 'Aldo fights with Energia');
+  assert.equal(pv('eter', 1).why, 'PM cheio');
+  assert.ok(pv('eter', 2).ok);
+  assert.equal(pv('pena', 0).why, 'De pé');
+  assert.equal(pv('pena', 3).text, `0/${max(3)} → ${Math.floor(max(3) / 2)}/${max(3)}`);
+  assert.equal(run('groupNeeds(ITEMS.elixir.fx)'), true);
+});
+
+test('no item is ever spent on a greyed-out hero, and a lit one gets exactly what its card promised', () => {
+  const { G, run } = story(['aldo', 'lyra', 'teo', 'andilla']);
+  for (const id of ['pocao', 'pao', 'eter', 'pena']) for (const hp of [0, 10, 'max']) for (let i = 0; i < 4; i++) {
+    G.party.forEach(m => { m.hp = run(`maxHp(G.party[${G.party.indexOf(m)}])`); m.mp = 0; });
+    G.party[i].hp = hp === 'max' ? run(`maxHp(G.party[${i}])`) : hp;
+    G.inv = { [id]: 2 };
+    const v = run.json(`previewFor(ITEMS.${id}.fx, G.party[${i}])`), before = { hp: G.party[i].hp, mp: G.party[i].mp };
+    run(`applyItem('${id}', G.party[${i}])`);
+    const tag = `${id} on ${G.party[i].id} at ${hp}`;
+    assert.equal(G.inv[id], v.ok ? 1 : 2, tag);
+    if (v.ok && v.gain) assert.equal(id === 'eter' ? G.party[i].mp - before.mp : G.party[i].hp - before.hp, v.gain, tag);
+  }
+});
+
+test('the Cura of the Livro outside battle follows the same cards: full or fallen heroes are greyed out', () => {
+  const { G, run } = story(['aldo', 'teo']);
+  const fx = run.json('spellFx(SPELLS.cura, G.party[1])');
+  assert.equal(fx.hp, run('Math.round(stat(G.party[1], "mag") * SPELLS.cura.power + SPELLS.cura.base)'));
+  assert.equal(run.json('previewFor(spellFx(SPELLS.cura, G.party[1]), G.party[0])').why, 'PV cheio');
+  G.party[0].hp = 0;
+  assert.equal(run.json('previewFor(spellFx(SPELLS.cura, G.party[1]), G.party[0])').why, 'Caído');
+  assert.ok(run.json('previewFor(spellFx(SPELLS.reviver, G.party[1]), G.party[0])').ok);
+  G.party[0].hp = 5;
+  assert.ok(run.json('previewFor(spellFx(SPELLS.cura, G.party[1]), G.party[0])').text.startsWith('5/'));
+  assert.equal(run('groupNeeds(spellFx(SPELLS.curaTotal, G.party[1]))'), true);
+  G.party[0].hp = run('maxHp(G.party[0])');
+  assert.equal(run('groupNeeds(spellFx(SPELLS.curaTotal, G.party[1]))'), false, 'everyone full: Cura Total greyed out');
+});

@@ -124,10 +124,10 @@ function applyItem(id, target) {
   G.inv[id]--;
   let msg = '';
   switch (id) {
-    case 'pocao': msg = `${pdef(target).name} recupera ${healHp(target, 50)} PV.`; Sfx.heal(); break;
-    case 'pao': msg = `${pdef(target).name} come o pão da Berta e recupera ${healHp(target, 30)} PV.`; Sfx.heal(); break;
-    case 'eter': msg = `${pdef(target).name} recupera ${healMp(target, 20)} PM.`; Sfx.heal(); break;
-    case 'pena': revive(target, 0.5); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
+    case 'pocao': msg = `${pdef(target).name} recupera ${healHp(target, ITEMS.pocao.fx.hp)} PV.`; Sfx.heal(); break;
+    case 'pao': msg = `${pdef(target).name} come o pão da Berta e recupera ${healHp(target, ITEMS.pao.fx.hp)} PV.`; Sfx.heal(); break;
+    case 'eter': msg = `${pdef(target).name} recupera ${healMp(target, ITEMS.eter.fx.mp)} PM.`; Sfx.heal(); break;
+    case 'pena': revive(target, ITEMS.pena.fx.revive); msg = `${pdef(target).name} voltou à vida!`; Sfx.holy(); break;
     case 'elixir':
       for (const m of G.party) { m.hp = maxHp(m); m.mp = maxMp(m); UI.cardGlow(m); } // PM only fill for the magic heroes; Energia stays as it is
       msg = 'O Elixir restaura todo o grupo!'; Sfx.holy(); break;
@@ -158,6 +158,18 @@ function castSupport(caster, spellId, target, out = {}) {
   }
   return `${c} hesita.`;
 }
+
+// The target cards of the Bolsa and the Livro: what an item or a field skill would do to each hero
+function spellFx(sp, caster) {
+  if (sp.kind === 'revive') return { revive: 0.5 };
+  const hp = Math.round(stat(caster, 'mag') * sp.power + sp.base);
+  return sp.target === 'allAllies' ? { all: true, hp } : { hp };
+}
+const fxStats = m => ({ hp: m.hp, maxHp: maxHp(m), mp: m.mp, maxMp: maxMp(m), mpUser: !usesEnergy(m) });
+const previewFor = (fx, m) => targetPreview(fx, fxStats(m));
+// An effect on the whole party is worth it when someone gains: the Cura Total heals who stands; the Elixir fills
+// PV and PM of everyone, the fallen too
+const groupNeeds = fx => G.party.some(m => (fx.hp ? previewFor({ hp: 1 }, m).ok : m.hp < maxHp(m) || m.mp < maxMp(m)));
 
 async function pickAlly(kind, title, o = {}) {
   const opts = G.party.map(m => ({
