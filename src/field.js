@@ -82,4 +82,8 @@ function fieldPlace(defs, state) {
 // A fresh state for an area (old saves have none: every area starts as drawn)
 const fieldState = (all, key) => (all[key] = all[key] || { s: {}, p: {}, tiles: {}, solved: {} });
 
-if (typeof module !== 'undefined') module.exports = { FDIRS, fieldVerb, fieldHint, fieldBlocks, pushTarget, freezeAhead, slidePath, litAt, inCone, coneTiles, perchedAttack, fieldPlace, fieldState };
+// Where a loaded save stands: an area redrawn since that save (its map version changed) starts at its entry, with
+// every flag kept; otherwise the saved spot
+const savedSpot = (A, savedMapv, pos) => (A && A.mapv && savedMapv !== A.mapv ? A.start : pos);
+
+if (typeof module !== 'undefined') module.exports = { FDIRS, fieldVerb, fieldHint, fieldBlocks, pushTarget, freezeAhead, slidePath, litAt, inCone, coneTiles, perchedAttack, fieldPlace, fieldState, savedSpot };

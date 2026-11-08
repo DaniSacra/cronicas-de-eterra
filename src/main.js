@@ -481,7 +481,7 @@ function loadGame() {
     }
     UI.buildParty();
     if (s.place === 'town') {
-      enterTown(s.town || CRYPT_FRONT, s.area || 'valmor');
+      enterTown(savedSpot(AREAS[s.area || 'valmor'], (s.mapv || {})[s.area], s.town || CRYPT_FRONT), s.area || 'valmor'); // a redrawn area: its entry
       // saves antigos podem apontar para um lugar que hoje é parede (ex.: onde a taverna foi construída)
       if (!TOWN.walkable(TOWN.p.x, TOWN.p.y)) enterTown(CRYPT_FRONT, 'valmor');
     }

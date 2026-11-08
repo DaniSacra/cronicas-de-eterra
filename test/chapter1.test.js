@@ -9,7 +9,7 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 
 test('chapter 1 areas: same-width rows, every letter a tile, the way from the entry reaches every exit', () => {
   const { run } = story(['aldo']);
-  for (const [id, plan, from] of [['estrada', 'ESTRADA_PLAN', 'ESTRADA_START'], ['vau', 'VAU_PLAN', '{ x: 11, y: 18 }'], ['pasto', 'PASTO_PLAN', '{ x: 1, y: 8 }']]) {
+  for (const [id, plan, from] of [['vau', 'VAU_PLAN', '{ x: 11, y: 18 }'], ['pasto', 'PASTO_PLAN', '{ x: 1, y: 8 }']]) {
     const rows = run.json(plan), w = rows[0].length;
     assert.ok(rows.every(r => r.length === w), id);
     assert.ok(rows.join('').split('').every(ch => run(`C1_TILES[${JSON.stringify(ch)}] !== undefined`)), id);
@@ -47,13 +47,85 @@ test('the bread heals 30 and is never wasted', () => {
   assert.strictEqual(G.inv.pao, 1);
 });
 
-test('the grey silhouette shows twice at the edge of the light, once each', () => {
+test('the grey silhouette shows twice at the edge of the light, once each: past the second lamp and at the lookout', () => {
   const { G, run } = story(['aldo']);
-  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 8, y: 26 })`), null);
-  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 10, y: 22 }).flag`), 'silhueta1');
+  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 14, y: 50 })`), null);
+  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 8, y: 42 }).flag`), 'silhueta1');
   G.seen['c1:silhueta1'] = 1;
-  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 10, y: 22 })`), null);
-  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 11, y: 9 }).flag`), 'silhueta2');
+  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 8, y: 42 })`), null);
+  assert.strictEqual(run(`silhouetteNear(G.seen, { x: 26, y: 2 }).flag`), 'silhueta2');
+});
+
+const FOUR = ['aldo', 'lyra', 'teo', 'andilla'];
+// Can the party walk from the entry of the road to (x, y)? (exits count as reached, not walked through)
+const reachEstrada = (run, x, y) => run(`(() => { const s = ESTRADA_START, seen = new Set([s.x + ',' + s.y]), q = [s];
+  while (q.length) { const p = q.shift(); for (const [dx, dy] of TDIRS) { const nx = p.x + dx, ny = p.y + dy, k = nx + ',' + ny;
+    if (seen.has(k)) continue; if (nx === ${x} && ny === ${y}) return true; if (!TOWN.walkable(nx, ny)) continue; seen.add(k); q.push({ x: nx, y: ny }); } }
+  return false; })()`);
+
+test('the southern road: 32x60, the way north opens only with the fallen pine pushed and the rope bridge tied', async () => {
+  const { G, run } = story(FOUR, after());
+  const rows = run.json('ESTRADA_PLAN');
+  assert.strictEqual(rows.length, 60); assert.ok(rows.every(r => r.length === 32));
+  assert.ok(rows.join('').split('').every(ch => run(`C1_TILES[${JSON.stringify(ch)}] !== undefined`)));
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  assert.ok(!reachEstrada(run, 15, 0), 'closed at first');
+  assert.ok(!reachEstrada(run, 12, 33), 'the fallen pine closes the cleft');
+  // Aldo pushes the pine from inside the cleft: once, and it stays where it stopped
+  run(`TOWN.p.x = 12; TOWN.p.y = 35; TOWN.p.dir = 0`);
+  await run('pushObj(fieldObjAt(12, 34), 0, true)');
+  assert.strictEqual(G.field['area:estrada'].solved.pinheiro, 1);
+  assert.strictEqual(run('fieldObjAt(12, 33).fixed'), true);
+  assert.ok(reachEstrada(run, 20, 14), 'up to the ravine');
+  assert.ok(!reachEstrada(run, 15, 0), 'the ravine still closes the way');
+  // Andilla crosses the narrow log and ties the bridge
+  run(`TOWN.p.x = 20; TOWN.p.y = 14; TOWN.p.dir = 0`);
+  await run('fieldAction(20, 13)()');
+  assert.strictEqual(G.seen['c1:ponte'], 1);
+  assert.ok(reachEstrada(run, 15, 0), 'the road north is open');
+  // walking back in keeps both
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  assert.ok(reachEstrada(run, 15, 0));
+});
+
+test('the shortcut: two logs and a rock, four pushes from above; it never opens from below and starts over when left stuck', async () => {
+  const { G, run } = story(FOUR, after());
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  const push = async (px, py, dir) => {
+    const [dx, dy] = [[0, -1], [1, 0], [0, 1], [-1, 0]][dir];
+    run(`TOWN.p.x = ${px}; TOWN.p.y = ${py}; TOWN.p.dir = ${dir}`);
+    await run(`pushObj(fieldObjAt(${px + dx}, ${py + dy}), ${dir}, true)`);
+  };
+  // from below, the rock goes up only until it meets the log, and the cleft stays shut
+  await push(3, 36, 0); await push(3, 35, 0);
+  assert.ok(!G.field['area:estrada'].solved.atalho);
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  assert.deepStrictEqual(run.json('[fieldObjAt(3, 35).id]'), ['pedra'], 'back at its spot');
+  // from above
+  await push(4, 32, 3); await push(3, 34, 2); await push(3, 35, 2); await push(3, 36, 2);
+  assert.strictEqual(G.field['area:estrada'].solved.atalho, 1);
+  assert.strictEqual(G.seen['c1:atalho'], 1);
+});
+
+test('the lamps: Lyra lights them, the light keeps the fog open, and the four give one Pena Vital once', async () => {
+  const { G, log, run } = story(FOUR, after());
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  const pena = G.inv.pena || 0;
+  for (const [x, y] of run.json('ESTRADA_LAMPS')) { run(`TOWN.p.x = ${x}; TOWN.p.y = ${y + 1}; TOWN.p.dir = 0`); await run(`fieldAction(${x}, ${y})()`); }
+  assert.strictEqual(G.inv.pena, pena + 1);
+  assert.strictEqual(log.filter(l => l === 'O Seu Dorival entrega 1 Pena Vital ao grupo.').length, 1);
+  assert.strictEqual(log.filter(l => l.includes('a chama pula para o pavio')).length, 1, 'the first time of Fogo once');
+  assert.strictEqual(run('visibleAt(11, 37)'), true, 'the light of a lamp shows what is around it');
+  assert.ok(run(`TOWN.npcs.some(n => n.def.id === 'dorival')`), 'Seu Dorival opens the door');
+});
+
+test('an old save standing on the old road starts at the entry of the new one with the same flags', () => {
+  const { G, run } = story(FOUR, after());
+  run(`enterTown(ESTRADA_START, 'estrada')`);
+  assert.strictEqual(G.mapv.estrada, 2, 'saves now know which road they stand on');
+  assert.deepStrictEqual(run.json(`savedSpot(AREAS.estrada, undefined, { x: 8, y: 14, dir: 0 })`), run.json('ESTRADA_START'));
+  assert.deepStrictEqual(run.json(`savedSpot(AREAS.estrada, 2, { x: 8, y: 14, dir: 0 })`), { x: 8, y: 14, dir: 0 });
+  assert.deepStrictEqual(run.json(`savedSpot(AREAS.vau, undefined, { x: 5, y: 5, dir: 0 })`), { x: 5, y: 5, dir: 0 }, 'other areas are untouched');
 });
 
 test('the ford: Teo lifts the letter case over the water the first time only', async () => {

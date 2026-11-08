@@ -25,7 +25,9 @@ Object.assign(LOOKS, {
 });
 
 // ---------- Plantas das áreas: uma letra por tile ----------
-const C1_TILES = { T: TILE.TREE, '.': TILE.GRASS, ':': TILE.PATH, r: TILE.BUSH, '~': TILE.WATER, '=': TILE.FORD, f: TILE.FLOWER };
+const C1_TILES = { T: TILE.TREE, '.': TILE.GRASS, ':': TILE.PATH, r: TILE.BUSH, '~': TILE.WATER, '=': TILE.FORD, f: TILE.FLOWER,
+  // exploration: cliff ledge, ramp, wooden bridge, ravine, avalanche, wheel ruts, dead pine, a flat stone in the brook, ice
+  '^': TILE.CLIFF, '/': TILE.RAMP, H: TILE.BRIDGE, '#': TILE.CHASM, A: TILE.SNOWPILE, u: TILE.RUTS, x: TILE.DEADTREE, P: TILE.FORD, I: TILE.ICE };
 const planGrid = plan => Uint8Array.from(plan.join(''), ch => C1_TILES[ch]);
 
 // ---------- 1 · Despedida em Valmor ----------
@@ -72,48 +74,98 @@ async function farewell() {
   await fadeTo(0, 900);
   await UI.say('Capítulo 1 · A Estrada do Sul');
   await UI.say('A estrada sobe para o norte entre os pinheiros. Anoitece cedo no sul.');
+  await estradaStart();
   await UI.say('Objetivo: seguir a estrada para o norte, até o Vau do Corvo.');
 }
 
 // ---------- 2 · A Estrada do Sul ----------
+// Seven stretches from south to north (docs/planos/exploracao-estrada-pasto.md): the bridge over the brook, the road of
+// the lamps (Seu Dorival), the fallen pine, the frozen waterfall (optional), the travellers' cairn, the ravine and the
+// lookout. The road climbs the hills in three ledges; the wolves walk on the map and the light keeps them off.
+// Objects of the field (lamps, logs, the beam over the ravine...) are listed in ESTRADA_FIELD, not in the plan.
 const ESTRADA_PLAN = [
-  'TTTTTTT:TTTTTTTT',
-  'TTTTT..:..TTTTTT',
-  'TTTT...:...TTTTT',
-  'TTT..r.::...TTTT',
-  'TTT.....:....TTT',
-  'TT..T...:..r..TT',
-  'TT......::.....T',
-  'TTT.r....:.....T',
-  'TTTT.....:..T..T',
-  'TTT.....::.....T',
-  'TT.....:::....TT',
-  'TT....::...r..TT',
-  'TT...::.......TT',
-  'TTT..:....T...TT',
-  'TTT..:.........T',
-  'TT...::....r...T',
-  'TT.T..:........T',
-  'TT....::.......T',
-  'TTT....:::....TT',
-  'TTT......::...TT',
-  'TT..r.....:...TT',
-  'TT........::..TT',
-  'TTT...T....:..TT',
-  'TTT........:.TTT',
-  'TT.........:.TTT',
-  'TT..r.....::..TT',
-  'TTT......::...TT',
-  'TTTT....:.....TT',
-  'TTTTT...:...TTTT',
-  'TTTTTTTT:TTTTTTT',
+  'TTTTTTTTTTTTTTT:TTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTT...:.TTTTT.........T',
+  'TTTTTTTTTTT....:...TT..........T',
+  'TTTTTTTTTT.....:...............T',
+  'TTTTTTTTT......:.....x.........T',
+  'TTTTTTTTT..T...::::::::.......TT',
+  'TTTTTTTTTT.....T..T...:..T...TTT',
+  'TTTTTTTTTTT^^^^^^^^^^^/^^^^^^TTT',
+  'TTTTTTTTTTT..........:.....TTTTT',
+  'TTTTTTTTTT..T........:..T....TTT',
+  'TTT^^^^^^^...........:.......TTT',
+  'TT.......^...T.......:.......TTT',
+  'TT.......^###################TTT',
+  'TT.......^###################TTT',
+  'TTT......^...T.......:.......TTT',
+  'TTTT..T............:::...T...TTT',
+  'TTTTTA^^^^.........:.........TTT',
+  'TTTTTATTTT....::::::.........TTT',
+  'TTTTTAAAAA...::..............TTT',
+  'TTTTTAAAAA..::.........T.....TTT',
+  'TTTTT:uuuu:::.......T........TTT',
+  'TTTTT::::::..............T...TTT',
+  'TTTTTTT...:..T..............TTTT',
+  'TTTTTTT^^^/^^^^^^^^^^^^^^^^^^TTT',
+  'TTTTTTT...:........TTTT^^^^^^TTT',
+  'TTTTTT....:.........TTT^^^^^^TTT',
+  'TTTTT.....:...........~~P~~..TTT',
+  'TTTTT.....:..........TT~~~T..TTT',
+  'TTTTT.T...:..........T.~~..T.TTT',
+  'TTTTTT....::........T..~.....TTT',
+  'TTTTTTT....:.........T.~..T..TTT',
+  'TTTTTTTTT^^/^^^^^^^^^^^~^^^^^TTT',
+  'T^..........:....T.....~.....TTT',
+  'T^..........:..........~..T..TTT',
+  'T^^.^^^.....:.T........~.....TTT',
+  'T^^.^^^^^^^^:^^^^^^^^^^~.....TTT',
+  'T^^.^^^^^^TT:TTTT......~.....TTT',
+  'T^.....^^^T.:..T......~~....TTTT',
+  'T^.....^^^..:.........~.....TTTT',
+  'TTT.:::.....:.........~.....TTTT',
+  'TTTT...::...:........~~....TTTTT',
+  'TTTTT....::.:........~....TTTTTT',
+  'TTTTT......:::......~~...TTTTTTT',
+  'TTTTT........:......~...TTTTTTTT',
+  'TTTTT........:......~...TTTTTTTT',
+  'TTTTT........:......~~..TTTTTTTT',
+  'TTTTTT.......:.......~..TTTTTTTT',
+  'TTTTTTT......:.......~.TTTTTTTTT',
+  'TTTTTTTT.....:......~~.TTTTTTTTT',
+  'TTTTTTTT.....:......~..TTTTTTTTT',
+  'TTTTTTTTT....::....~~..TTTTTTTTT',
+  'TTTTTTTTT.....:...~~..TTTTTTTTTT',
+  'TTTTTTTTTT....:..~~...TTTTTTTTTT',
+  '~~~~~~~~~~~~~~H~~~TTTTTTTTTTTTTT',
+  'TTTTTTTTTTT...:.....TTTTTTTTTTTT',
+  'TTTTTTTTTT....:.....TTTTTTTTTTTT',
+  'TTTTTTTTTT....:.....TTTTTTTTTTTT',
+  'TTTTTTTTTTTT..:..TTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTT.:.TTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTTT:TTTTTTTTTTTTTTTTT',
 ];
-const ESTRADA_START = { x: 8, y: 28, dir: 0 };
-// The grey cloak shows at the edge of the lamp light at two fixed spots and is gone before the light reaches it
+const ESTRADA_START = { x: 14, y: 58, dir: 0 };
+const ESTRADA_LAMPS = [[14, 46], [8, 43], [13, 41], [11, 39]];
+const ESTRADA_FIELD = () => [
+  ...ESTRADA_LAMPS.map(([x, y], i) => ({ id: 'lamp' + (i + 1), kind: 'lamp', x, y })),
+  { id: 'seta', kind: 'sign', x: 16, y: 55, look: 'Uma seta riscada na pedra aponta para o norte.' },
+  { id: 'pinheiro', kind: 'log', x: 12, y: 34, puzzle: 'pinheiro' },
+  { id: 'tronco1', kind: 'log', x: 3, y: 32, puzzle: 'atalho' }, { id: 'tronco2', kind: 'log', x: 4, y: 33, puzzle: 'atalho' },
+  { id: 'pedra', kind: 'rock', x: 3, y: 35, puzzle: 'atalho' },
+  { id: 'cascata1', kind: 'falls', x: 23, y: 25 }, { id: 'gruta', kind: 'cave', x: 24, y: 25 }, { id: 'cascata2', kind: 'falls', x: 25, y: 25 },
+  { id: 'marco', kind: 'rune', x: 7, y: 26 },
+  { id: 'fogueira', kind: 'fire', x: 16, y: 26, use: () => campRest() },
+  { id: 'viga1', kind: 'beam', x: 20, y: 12 }, { id: 'viga2', kind: 'beam', x: 20, y: 13 },
+  { id: 'corda1', kind: 'rope', x: 21, y: 12 }, { id: 'corda2', kind: 'rope', x: 21, y: 13 },
+  { id: 'bauToca', kind: 'chest', x: 3, y: 11 },
+];
+// The grey cloak shows at the edge of the light at two fixed spots and is gone before the light reaches it:
+// past the second lamp of the road, and at the tip of the lookout
 const SILHOUETTES = [
-  { flag: 'silhueta1', x: 10, y: 18, lines: [[null, 'No limite da luz do lampião, uma silhueta de capa cinza. Quando a luz chega lá, não há ninguém.'],
+  { flag: 'silhueta1', x: 5, y: 41, lines: [[null, 'No limite da luz do lampião, uma silhueta de capa cinza. Quando a luz chega lá, não há ninguém.'],
     ['andilla', 'Alguém está andando no mesmo passo que a gente.'], ['aldo', 'Fiquem perto da luz.']] },
-  { flag: 'silhueta2', x: 12, y: 6, lines: [[null, 'De novo a capa cinza, mais longe. Some entre os pinheiros.'], ['lyra', 'Duas vezes. Eu estou contando.']] },
+  { flag: 'silhueta2', x: 29, y: 1, lines: [[null, 'De novo a capa cinza, mais longe. Some entre os pinheiros.'], ['lyra', 'Duas vezes. Eu estou contando.']] },
 ];
 const silhouetteNear = (seen, p, radius = 4) => SILHOUETTES.find(s => !seen['c1:' + s.flag] && Math.hypot(s.x - p.x, s.y - p.y) <= radius) || null;
 async function silhouetteScene(s) {
@@ -125,28 +177,158 @@ async function silhouetteScene(s) {
   TOWN.npcs = TOWN.npcs.filter(n => n !== sil);
   await play(s.lines.slice(1));
 }
-// Random encounters on the road and in the pasture (nothing shows on the map, as in the crypt)
+// Wolves and crows of the road and the pasture: on the map, they come after the party once they see it
 const ROAD_FOES = {
-  wolf: { ids: ['loboGeada'], intro: 'Um Lobo da Geada salta dos pinheiros!' },
-  wolf2: { ids: ['loboGeada', 'loboGeada'], intro: 'Dois Lobos da Geada cercam o grupo!' },
-  crow: { ids: ['corvo', 'corvo'], intro: 'Corvos mergulham do escuro!' },
+  wolf: { foe: 'wolf', ids: ['loboGeada'], intro: 'Um Lobo da Geada salta dos pinheiros!' },
+  wolf2: { foe: 'wolf', ids: ['loboGeada', 'loboGeada'], intro: 'Dois Lobos da Geada cercam o grupo!' },
+  crow: { foe: 'crow', ids: ['corvo', 'corvo'], intro: 'Corvos mergulham do escuro!', perch: true },
 };
-const ESTRADA_ENCOUNTERS = [ROAD_FOES.wolf, ROAD_FOES.wolf, ROAD_FOES.wolf2, ROAD_FOES.crow];
+const roamer = (kind, x, y) => ({ ...ROAD_FOES[kind], x, y });
 const PASTO_ENCOUNTERS = [ROAD_FOES.wolf, ROAD_FOES.wolf, ROAD_FOES.wolf2];
+const ESTRADA_ROAMERS = () => [roamer('wolf', 18, 39), roamer('wolf', 16, 43), roamer('wolf2', 7, 47), roamer('wolf', 20, 33),
+  roamer('wolf2', 17, 19), roamer('wolf2', 6, 11), roamer('wolf', 6, 13), roamer('crow', 21, 4)];
 
-AREAS.estrada = makeArea('Estrada do Sul', 'ESTRADA', 16, 30, planGrid(ESTRADA_PLAN), [], TILE.TREE);
+// A lit campfire: rest, heal and save (the travellers' cairn)
+async function campRest() {
+  for (const m of G.party) { fullRestore(m); UI.cardGlow(m); }
+  UI.updateParty(); Sfx.holy();
+  await UI.say('Todos foram restaurados.' + (saveGame() ? '\nJogo salvo.' : ''));
+}
+// Gear found on the way: kept in the bag and worn when it beats what the hero has
+async function giveGear(id) {
+  const owned = typeof HeroView !== 'undefined' ? HeroView.owned() : (G.gear || []);
+  const delta = equipDelta(id, owned, EQUIPS, G.equip || {});
+  G.gear = [...(G.gear || []), id];
+  Sfx.chest();
+  await UI.say(wearGear(id, delta));
+}
+
+LOOKS.dorival = { skin: '#d8a070', hair: '#a2a2ac', body: '#2c3c80', legs: '#3a3a4a', hairStyle: 'short', beard: 'full', hat: 'cap', hatCol: '#55555e', belt: '#3a2010' };
+const DORIVAL_HOUSE = { id: 'dorival', style: 'joaquim', x: 9, y: 44, w: 3, h: 2 };
+DORIVAL_HOUSE.door = { x: 10, y: 45 };
+const DORIVAL = { id: 'dorival', name: 'Seu Dorival', x: 11, y: 46, dir: 3, wander: 0, lines: { start: ['A estrada voltou a ter luz.'] } };
+const lampsLit = () => ESTRADA_LAMPS.filter((_, i) => G.field && G.field['area:estrada'] && G.field['area:estrada'].s['lamp' + (i + 1)]).length;
+async function dorivalDoor() {
+  if (c1('dorivalPena')) return play([['Seu Dorival', 'A estrada voltou a ter luz.']]);
+  await play([[null, 'A porta está trancada. Na janela, a luz fraca de uma vela.'],
+    ['Seu Dorival', 'Desde que a capa cinza passou, os lobos rondam a estrada e eu não saio mais.'],
+    ['Seu Dorival', 'Acende quem tiver coragem. O fogo eles respeitam.']]);
+}
+async function dorivalReward() {
+  c1set('dorivalPena');
+  Sfx.select();
+  await play([[null, 'A porta da casa se abre.']]);
+  TOWN.npcs.push(spawnNpc(DORIVAL));
+  await play([['Seu Dorival', 'A estrada voltou a ter luz. Tomem, para o caminho.']]);
+  G.inv.pena = (G.inv.pena || 0) + 1; Sfx.chest();
+  await UI.say('O Seu Dorival entrega 1 Pena Vital ao grupo.');
+  saveGame();
+}
+
+// The ravine: Andilla walks the narrow log, ties the rope bridge on the far side and comes back over it
+const ROPE_TILES = [[21, 12], [21, 13]];
+async function crossBeam() {
+  const a = heroActor('andilla');
+  if (a && a !== TOWN.p) {
+    for (const [x, y] of [[20, 13], [20, 12], [20, 11], [21, 11]]) { a.dir = y < a.y ? 0 : x > a.x ? 1 : a.dir; moveActor(a, x, y, 260); await wait(270); }
+  }
+  await play([[null, 'A Andilla prende a ponte do outro lado.']]);
+  const st = fieldNow();
+  for (const o of TOWN.objs) if (o.kind === 'beam' || o.kind === 'rope') { o.done = true; st.s[o.id] = 1; }
+  setTiles(ROPE_TILES, TILE.BRIDGE);
+  Sfx.chest();
+  if (a && a !== TOWN.p) {
+    for (const [x, y] of [[21, 12], [21, 13], [21, 14], [TOWN.p.x - 1 >= 0 ? TOWN.p.x : 20, TOWN.p.y + 1]]) { a.dir = 2; moveActor(a, x, y, 220); await wait(230); }
+  }
+  c1set('ponte');
+}
+
+async function estradaField(o, verb) {
+  if (o.kind === 'lamp' && lampsLit() >= ESTRADA_LAMPS.length && !c1('dorivalPena')) return dorivalReward();
+  if (o.id === 'pedra' || (o.def && o.def.puzzle === 'atalho')) {
+    if (fieldNow().solved.atalho && !c1('atalho')) { c1set('atalho'); await UI.say('A pedra rola fenda abaixo. O caminho de volta está aberto.'); }
+    return;
+  }
+  if (o.kind === 'rune') {
+    return play([[null, 'Letras gastas aparecem na luz do Teo: Até aqui.'],
+      ['teo', 'Os antigos empilhavam pedras onde foram ajudados. Cada um põe a sua.'],
+      ['andilla', 'Eu ponho a minha. Não custa nada.'],
+      ['lyra', () => `Para quem não é de lugar nenhum, você pôs bem no meio.`, 'alegre'],
+      ['andilla', 'Lugar bom é lugar bom.']]);
+  }
+  if (o.kind === 'fire') { await UI.say('A fogueira pega. O grupo descansa perto do fogo.'); return campRest(); }
+  if (o.kind === 'beam') return crossBeam();
+  if (o.id === 'bauToca') { G.inv.eter = (G.inv.eter || 0) + 1; Sfx.chest(); return UI.say('O grupo encontrou: Éter.'); }
+}
+
+// The lookout: the mist opens and the camera rises over the valley
+async function mirante() {
+  c1set('mirante');
+  await panVista('north');
+  await play([[null, 'A névoa abre. Lá embaixo, o rio do Vau brilha entre as luzes de um povoado. Ao norte, uma mancha escura cobre o horizonte.'],
+    ['teo', 'Daqui dá para ver o caminho inteiro até a floresta.'], ['aldo', 'E dá para ver a gente daqui também.']]);
+  await vistaBack();
+}
+// The first stretch, right after the farewell: Valmor down below
+async function estradaStart() {
+  await panVista('south');
+  await play([[null, 'Lá embaixo, Valmor acende as janelas. A fumaça das chaminés sobe reta no frio.']]);
+  await vistaBack();
+  await play([['andilla', 'Última chance de voltar para a sopa da Berta.'], ['aldo', 'A sopa espera.']]);
+}
+
+AREAS.estrada = makeArea('Estrada do Sul', 'ESTRADA', 32, 60, planGrid(ESTRADA_PLAN), [DORIVAL_HOUSE], TILE.TREE);
 Object.assign(AREAS.estrada, {
-  poi: 'valmor', winter: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'cemiterio',
-  music: () => 'cemetery',
-  encounters: () => ESTRADA_ENCOUNTERS,
-  cast: () => [{ id: 'viajante', name: 'Viajante', x: 8, y: 14, dir: 3, wander: 0, lines: { start: [
-    'No Vau do Corvo alugam cavalos. A pé, Erukh fica a um mês.', 'E não andem depois que escurece. Os lobos estão com fome este ano.'] } }],
-  exits: [{ x: 7, y: 0, to: 'vau', pos: { x: 11, y: 18, dir: 0 } },
-    { x: 8, y: 29, check: () => 'Valmor fica para trás. A carta segue para o norte.' }],
-  goal: () => ({ x: 7, y: 0 }),
+  poi: 'valmor', winter: true, trees: 'pine', river: true, vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'cemiterio',
+  music: () => 'cemetery', mapv: 2, start: ESTRADA_START,
+  field: ESTRADA_FIELD, roamers: ESTRADA_ROAMERS,
+  puzzles: { pinheiro: () => true, atalho: objs => objs.find(o => o.id === 'pedra').y >= 37 },
+  freezable: (x, y) => y === 26 && (x === 22 || x === 23), // the brook below the frozen waterfall
+  onField: estradaField,
+  vista: { south: (c, w, h) => TownArt.vista(c, w, h, 'valmor'), north: (c, w, h) => TownArt.vista(c, w, h, 'vale') },
+  cast: () => [{ id: 'viajante', name: 'Viajante', x: 14, y: 44, dir: 3, wander: 0, lines: { start: [
+    'No Vau do Corvo alugam cavalos. A pé, Erukh fica a um mês.', 'E não andem depois que escurece. Os lobos estão com fome este ano.'] } },
+  ...(c1('dorivalPena') ? [DORIVAL] : [])],
+  exits: [{ x: 15, y: 0, to: 'vau', pos: { x: 11, y: 18, dir: 0 } },
+    { x: 24, y: 25, to: 'gruta', pos: { x: 3, y: 4, dir: 0 } },
+    { x: 14, y: 59, check: () => 'Valmor fica para trás. A carta segue para o norte.' }],
+  reserved: (x, y) => (y === 0 && x === 15) || (x === 24 && y <= 26 && y >= 25),
+  goal: () => ({ x: 15, y: 0 }),
+  look(x, y) {
+    const t = TOWN.tileAt(x, y);
+    if (t === TILE.SNOWPILE) return () => UI.say('A neve da avalanche fecha a estrada velha.');
+    if (t === TILE.CHASM && !c1('ponte')) return () => UI.say('A ponte de cordas está solta do lado de lá. Um tronco estreito atravessa o vão.');
+    return null;
+  },
   onStep(x, y) {
     const s = silhouetteNear(G.seen, { x, y });
-    return s ? () => silhouetteScene(s) : null;
+    if (s) return () => silhouetteScene(s);
+    if (TOWN.tileAt(x, y) === TILE.RUTS && !c1('sulcos')) return async () => {
+      c1set('sulcos');
+      await play([['andilla', 'Carroça pesada. Passou faz poucos dias, antes da neve cair.'], ['aldo', 'Por aqui ninguém passa agora.']]);
+    };
+    if (x >= 19 && x <= 22 && y >= 25 && y <= 28 && !c1('cascata')) return async () => {
+      c1set('cascata');
+      await UI.say('O riacho desce numa cascata congelada que brilha mesmo no escuro.');
+    };
+    if (y <= 6 && !c1('mirante')) return mirante;
+    return null;
+  },
+});
+AREAS.estrada.enterBuilding = b => (b.id === 'dorival' ? dorivalDoor() : null);
+
+// The small grotto behind the frozen waterfall: a chest held in a block of ice
+const GRUTA_PLAN = ['^^^^^^^^', '^......^', '^......^', '^......^', '^......^', '^^^:^^^^'];
+AREAS.gruta = makeArea('Gruta da Cascata', 'GRUTA', 8, 6, planGrid(GRUTA_PLAN), [], TILE.CLIFF);
+Object.assign(AREAS.gruta, {
+  poi: 'valmor', winter: true, dimCol: '10,24,56', dim: () => 0.38, battle: 'cemiterio', music: () => 'cemetery',
+  field: () => [{ id: 'bauGruta', kind: 'chest', x: 4, y: 2, open: true }, { id: 'gelo', kind: 'iceBlock', x: 4, y: 2 }],
+  exits: [{ x: 3, y: 5, to: 'estrada', pos: { x: 24, y: 26, dir: 2 } }],
+  async onField(o) {
+    if (o.kind !== 'iceBlock' || c1('gibaoPele')) return;
+    c1set('gibaoPele');
+    await UI.say('O gelo escorre e solta um baú.');
+    await giveGear('gibaoPele');
   },
 });
 

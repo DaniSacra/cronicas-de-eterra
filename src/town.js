@@ -328,6 +328,7 @@ function enterTown(pos, area = 'valmor', cast = null, music = true) {
   TOWN.A = AREAS[area];
   TOWN.dim = TOWN.A.dim ? TOWN.A.dim() : 0;
   G.town = { x: pos.x, y: pos.y, dir: pos.dir };
+  if (TOWN.A.mapv) (G.mapv = G.mapv || {})[area] = TOWN.A.mapv; // the version of the map the save stands on
   enterField(); // objects as the party left them, roamers born again (src/explore.js)
   if (!TOWN.A.layer) TOWN.A.layer = drawTownLayer(TOWN.A);
   TOWN.p = newActor(pos.x, pos.y, pos.dir);

@@ -270,7 +270,9 @@ const FIELD_KINDS = {
   rune:     { verb: 'ilumina',   block: true },
   hurt:     { verb: 'cura',      block: true },
   sign:     { block: true },               // a stone with something to read (look)
-  rope:     { gone: true },                // the loose rope bridge, drawn over the ravine until it is tied
+  rope:     { gone: true },
+  falls:    { block: true },               // a frozen waterfall (scenery)
+  cave:     {},                            // the dark mouth of a grotto (scenery; the exit is the tile)                // the loose rope bridge, drawn over the ravine until it is tied
 };
 
 const KEY_ITEMS = {

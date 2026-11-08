@@ -11,7 +11,8 @@
 const fieldDefs = A => (A && A.field ? A.field() : []);
 const fieldNow = () => fieldState(G.field || (G.field = {}), areaKey(G.area));
 const fieldGone = o => o.done && FIELD_KINDS[o.kind].gone;
-const fieldObjAt = (x, y) => (TOWN.objs || []).find(o => o.x === x && o.y === y && !fieldGone(o));
+// the topmost object of the tile (the ice block over its chest)
+const fieldObjAt = (x, y) => (TOWN.objs || []).findLast(o => o.x === x && o.y === y && !fieldGone(o));
 const fieldBlockAt = (x, y) => { const o = fieldObjAt(x, y); return !!o && fieldBlocks(o, FIELD_KINDS); };
 // Lit lamps and fires: [{ x, y, r }] in tiles
 const fieldLights = () => (TOWN.objs || []).filter(o => o.done && FIELD_KINDS[o.kind].light).map(o => ({ x: o.x, y: o.y, r: FIELD_KINDS[o.kind].light }));
@@ -24,7 +25,7 @@ function enterField() {
   if (A.field) {
     const st = fieldNow(), defs = fieldDefs(A), at = fieldPlace(defs, st);
     applyTiles(A, st.tiles);
-    TOWN.objs = defs.map((d, i) => ({ ...newActor(at[i].x, at[i].y, 0), def: d, id: d.id, kind: d.kind, done: !!st.s[d.id], fixed: !!(d.puzzle && st.solved[d.puzzle]) }));
+    TOWN.objs = defs.map((d, i) => ({ ...newActor(at[i].x, at[i].y, 0), def: d, id: d.id, kind: d.kind, done: !!(st.s[d.id] || d.open), fixed: !!(d.puzzle && st.solved[d.puzzle]) }));
   }
   if (A.roamers) spawnRoamers();
 }
@@ -125,6 +126,7 @@ function fieldAction(nx, ny) {
   if (o) {
     const v = fieldVerb(o, FIELD_KINDS, FIELD_VERBS);
     if (v && inParty(v.hero)) return () => fieldAct(o, v);
+    if (o.done && o.def.use) return () => o.def.use(o); // a lit campfire: rest again
     const look = typeof o.def.look === 'function' ? o.def.look(o) : o.def.look;
     if (look) return () => UI.say(look);
   }
@@ -197,6 +199,7 @@ async function roamerFight(r) {
 
 // ---------- Vistas: the camera rises past the edge of the map onto a painted view, holds, and comes back ----------
 const vistaTween = (from, to, ms) => new Promise(res => {
+  if (typeof requestAnimationFrame === 'undefined') { TOWN.camOff = to; return res(); } // tests: no screen
   const t0 = performance.now();
   const step = () => { const k = Math.min(1, (performance.now() - t0) / ms), e = k * k * (3 - 2 * k); TOWN.camOff = Math.round(from + (to - from) * e); k < 1 ? requestAnimationFrame(step) : res(); };
   step();
@@ -205,7 +208,7 @@ const vistaTween = (from, to, ms) => new Promise(res => {
 async function panVista(side) {
   if (!TOWN.A.vista || !TOWN.A.vista[side]) return;
   TOWN.vistaSide = side;
-  await vistaTween(0, Math.round(VH * 0.85) * (side === 'north' ? -1 : 1), 1800);
+  await vistaTween(0, Math.round((typeof VH === 'undefined' ? 200 : VH) * 0.85) * (side === 'north' ? -1 : 1), 1800);
 }
 async function vistaBack() {
   if (!TOWN.vistaSide) return;

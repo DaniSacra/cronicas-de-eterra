@@ -25,6 +25,13 @@ function devState(o) {
   UI.buildParty();
 }
 const C1_BASE = { G: { chapter: 1, part: 1, bossDead: true, key: { carta: true, bilhete: true } }, gear: DEV_CRYPT_GEAR };
+// The road as if the party had already passed the fallen pine and the ravine
+function devRoad(done) {
+  const st = fieldState(G.field, 'area:estrada');
+  if (done.pinheiro) { st.solved.pinheiro = 1; st.p.pinheiro = [12, 33]; }
+  if (done.ponte) { for (const id of ['viga1', 'viga2', 'corda1', 'corda2']) st.s[id] = 1; st.tiles['21,12'] = TILE.BRIDGE; st.tiles['21,13'] = TILE.BRIDGE; }
+  G.seen['c1:cascata'] = 0;
+}
 const devTown = async (pos, area) => { enterTown(pos, area); G.busy = false; townHint(); };
 
 const DEV_STARTS = [
@@ -47,6 +54,16 @@ const DEV_STARTS = [
     devState({ lv: 4, ...C1_BASE, G: { ...C1_BASE.G, inv: { pocao: 4, eter: 2, pena: 1, pao: 4 } } });
     return devTown(ESTRADA_START, 'estrada');
   } },
+  // The road, stretch by stretch: what lies south of the stretch is already done (the pine pushed, the bridge tied)
+  ...[['os lampiões', { x: 13, y: 48, dir: 0 }, {}], ['o pinheiro caído', { x: 12, y: 37, dir: 0 }, {}],
+    ['a cascata', { x: 19, y: 27, dir: 1 }, { pinheiro: 1 }], ['o Marco', { x: 10, y: 28, dir: 0 }, { pinheiro: 1 }],
+    ['a ravina', { x: 20, y: 16, dir: 0 }, { pinheiro: 1 }], ['a Toca dos Lobos', { x: 11, y: 15, dir: 3 }, { pinheiro: 1 }],
+    ['o mirante', { x: 21, y: 9, dir: 0 }, { pinheiro: 1, ponte: 1 }]].map(([name, pos, done]) => ({
+    label: 'Capítulo 1 · Estrada: ' + name, hint: 'nível 4', go() {
+      devState({ lv: 4, ...C1_BASE, G: { ...C1_BASE.G, inv: { pocao: 4, eter: 2, pena: 1, pao: 4 } }, c1: { ...(done.ponte ? { ponte: 1 } : {}) } });
+      devRoad(done);
+      return devTown(pos, 'estrada');
+    } })),
   { label: 'Capítulo 1 · Vau do Corvo', hint: 'nível 5', go() {
     devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1 } });
     return devTown({ x: 11, y: 18, dir: 0 }, 'vau');

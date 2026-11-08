@@ -857,6 +857,71 @@ const TownArt = (() => {
   }
 
   // ---------- Field objects (drawn per frame, src/explore.js): each kind with its state, in grid rows ----------
+
+  // ---------- Vistas past the edge of a map (panVista in src/explore.js) ----------
+  // A painted view in flat bands, light from the upper left, a Bayer row at the edge of each sky band.
+  // 'vale': from the lookout, the valley of the Vau (the river shining, the lights of the village, the dark mass of the
+  // Purple Forest far north). 'valmor': Valmor down below, windows lit, smoke rising straight in the cold.
+  const BAYER2 = [[0, 2], [3, 1]];
+  function bands(c, w, y0, y1, cols) {
+    const n = cols.length, hh = (y1 - y0) / n;
+    for (let i = 0; i < n; i++) {
+      const top = Math.round(y0 + i * hh), bot = Math.round(y0 + (i + 1) * hh);
+      R(c, 0, top, w, bot - top, cols[i]);
+      if (i + 1 < n) for (let x = 0; x < w; x++) if (BAYER2[0][x & 1] < 2) R(c, x, bot - 1, 1, 1, cols[i + 1]);
+    }
+  }
+  function ridge(c, w, base, amp, seed, col, top = null) {
+    for (let x = 0; x < w; x++) {
+      const y = Math.round(base - amp * noise(x / 23, 0.5, seed) - amp * 0.4 * noise(x / 7, 1.5, seed + 1));
+      R(c, x, y, 1, 400, col);
+      if (top) R(c, x, y, 1, 1, top);
+    }
+  }
+  function pineRow(c, w, base, h, col, seed) {
+    for (let x = -4; x < w; x += 5 + Math.floor(hash(x, 0, seed) * 4)) {
+      const th = h + Math.floor(hash(x, 1, seed) * h * 0.5);
+      for (let j = 0; j < th; j++) { const half = Math.floor((j / th) * 4); R(c, x + 3 - half, base - th + j, half * 2 + 1, 1, col); }
+      R(c, x + 3, base - th, 1, 1, SNOW.lt);
+    }
+  }
+  function vista(c, w, h, kind) {
+    if (kind === 'vale') {
+      bands(c, w, 0, Math.round(h * 0.5), ['#151e4e', '#1c2860', '#2c3c80', '#3a78c8', '#8ac0f0']);
+      for (let i = 0; i < 24; i++) R(c, Math.floor(hash(i, 2, 90) * w), Math.floor(hash(i, 3, 90) * h * 0.3), 1, 1, i % 5 ? '#e8eff8' : '#fff6c0');
+      ridge(c, w, h * 0.5, h * 0.12, 91, '#4a5a8c', '#cbd8ec');          // far mountains, snow on top
+      ridge(c, w, h * 0.56, h * 0.05, 93, '#40145a', '#72308e');          // the Purple Forest, a dark mass far north
+      ridge(c, w, h * 0.64, h * 0.04, 95, '#7488b8', '#a4b8da');          // snowy hills of the valley
+      R(c, 0, Math.round(h * 0.66), w, h, '#a4b8da');
+      // the river in an S, shining
+      for (let y = Math.round(h * 0.66); y < h; y++) {
+        const k = (y - h * 0.66) / (h * 0.34), cx = Math.round(w * (0.5 + 0.18 * Math.sin(k * 4.2)) ), half = 1 + Math.round(k * 4);
+        R(c, cx - half, y, half * 2, 1, '#3a78c8'); if (y % 3 === 0) R(c, cx - half + 1, y, Math.max(1, half - 1), 1, '#8ac0f0');
+      }
+      // the village of the ford: roofs and lit windows by the river
+      const vx = Math.round(w * 0.62), vy = Math.round(h * 0.76);
+      for (let i = 0; i < 7; i++) { const x = vx + (i - 3) * 6 + Math.floor(hash(i, 4, 92) * 3), y = vy + Math.floor(hash(i, 5, 92) * 6); R(c, x, y, 5, 3, '#55555e'); R(c, x, y - 1, 5, 1, '#e8eff8'); R(c, x + 2, y + 1, 1, 1, '#f0d860'); }
+      pineRow(c, w, h, Math.round(h * 0.14), '#14402a', 94);
+      return;
+    }
+    // Valmor down below at dusk
+    bands(c, w, 0, Math.round(h * 0.42), ['#151e4e', '#1c2860', '#2c3c80', '#3a78c8']);
+    ridge(c, w, h * 0.44, h * 0.1, 81, '#4a5a8c', '#cbd8ec');
+    R(c, 0, Math.round(h * 0.5), w, h, '#cbd8ec');
+    ridge(c, w, h * 0.52, h * 0.03, 83, '#a4b8da', '#e8eff8');
+    const vx = Math.round(w * 0.45), vy = Math.round(h * 0.6);
+    for (let i = 0; i < 11; i++) {
+      const x = vx + (i - 5) * 9 + Math.floor(hash(i, 6, 82) * 4), y = vy + Math.floor(hash(i, 7, 82) * 14), big = i === 5;
+      R(c, x, y, big ? 9 : 7, big ? 6 : 4, '#9a6232'); R(c, x - 1, y - 2, big ? 11 : 9, 2, '#e8eff8'); R(c, x + 2, y + 2, 1, 1, '#f0d860');
+      if (big) { R(c, x + 3, y - 7, 3, 5, '#e8eff8'); R(c, x + 4, y - 9, 1, 2, '#c89c38'); }   // the chapel tower
+      if (i % 3 === 0) for (let k = 1; k < 7; k++) R(c, x + 3 + (k > 4 ? 1 : 0), y - 2 - k * 2, 1, 1, k % 2 ? '#a4b8da' : '#cbd8ec');   // smoke straight up
+    }
+    pineRow(c, w, h, Math.round(h * 0.18), '#14402a', 84);
+  }
+  const FALLS_ROWS = ['oWWlWWWlWWWWlWWo', 'oWlLWWlLWWWlLWWo', 'oWlLWlLLWWlLLWlo', 'oWlLWlLWWWlLWWlo', 'oWWLWlLWWlLLWWlo', 'oWlLWWLWWlLWWlLo',
+    'oWlLWWLWWlLWWlLo', 'oWlWWlLWWlLWlLLo', 'oWlWWlLWWWLWlLWo', 'oWlWlLWWlWLWlLWo', 'oWWWlLWWlWWWlWWo', 'oWlWlWWWlWWlLWWo', 'oWlWWWlWWWlLWlWo', 'oWWlWWlWlWWLWWlo', 'oWWWWWWWWWWWWWWo', 'oooooooooooooooo'];
+  const CAVE_ROWS = ['....oooooooo....', '..ooDDDDDDDDoo..', '.oDDKKKKKKKKDDo.', 'oDDKKKKKKKKKKDDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo',
+    'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo'];
   const FSPR = {};
   const sprite = (key, w, h, draw) => FSPR[key] || (FSPR[key] = (() => { const cv = canvas(w, h); draw(cv.getContext('2d')); return cv; })());
   const LAMP_OFF = { o: '#26202e', I: '#55555e', i: '#7a7a82', S: SNOW.lt, y: '#1c2860', Y: '#2c3c80', W: '#3a78c8' };
@@ -900,6 +965,8 @@ const TownArt = (() => {
       case 'iceBlock': return sprite('iceBlock', 16, 12, c => pix(c, 0, 0, BLOCK_ROWS, BLOCK_PAL));
       case 'rope': return sprite('rope', 16, 9, c => pix(c, 0, 0, ROPE_ROWS, ROPE_PAL));
       case 'beam': return sprite('beam', 16, 16, c => pix(c, 0, 0, BEAM_ROWS, BEAM_PAL));
+      case 'falls': return sprite('falls' + f, 16, 16, c => { pix(c, 0, 0, FALLS_ROWS, ICE_PAL); R(c, 3 + f * 8, 2 + f * 5, 1, 2, '#ffffff'); });
+      case 'cave': return sprite('cave', 16, 16, c => pix(c, 0, 0, CAVE_ROWS, { o: '#26202e', D: '#55555e', K: '#151e4e' }));
       default: return sprite('none', 1, 1, () => {});
     }
   }
@@ -996,7 +1063,7 @@ const TownArt = (() => {
   // Toda cor nova do inverno (o teste confere que estão na paleta mestre)
   const WINTER_COLORS = [...Object.values(SNOW), ...LEAF_W, ...PINE_W, '#2c3c80', '#3a78c8', '#1c2860', '#26202e', '#55555e', '#7a7a82',
     '#a2a2ac', '#e8b840', '#f0d860', '#fff6c0', '#c89c38'];
-  return { layer, hash, weather, lightRings, disc, fieldSprite, smokePuff, flake, SNOW, WINTER_COLORS, INTERIOR_COLORS, PUFFS };
+  return { layer, hash, weather, lightRings, disc, fieldSprite, vista, smokePuff, flake, SNOW, WINTER_COLORS, INTERIOR_COLORS, PUFFS };
 })();
 
 if (typeof module !== 'undefined') module.exports = { TownArt };
