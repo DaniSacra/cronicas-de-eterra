@@ -591,8 +591,14 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   #game.in-battle #touch .pad { display: none; }
   #game.in-battle #bottom { padding-left: calc(110px + var(--u) * 2); padding-right: calc(var(--u) * 4); } /* no d-pad: OK/✕ move left */
   .card .nm span:first-child { font-size: var(--f1); } /* names fit the narrower cards, as in portrait */
-  #game:not(.in-battle) .card .pfw { display: none; } /* walking: no faces, so "58/58" and the PM fit on one line */
-  .card .num { white-space: nowrap; }
+  /* the face always stays; each number sits right of its own bar, as in the classic party strips */
+  .card { gap: 6px; padding: 4px 6px; }
+  .card .info { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'nm nm' 'hp hpn' 'mp mpn'; column-gap: 4px; align-items: center; }
+  .card .bar, .card .bar.mp { margin: 0; }
+  .card .num { white-space: nowrap; line-height: 1.2; }
+  .card .lv { font-family: var(--font-text); font-size-adjust: 0.5625; letter-spacing: 0; } /* the level badge no wider than the face */
+  #game:not(.in-battle) .card .info { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'nm' 'hp' 'hpn' 'mp' 'mpn'; } /* walking, between the pads: each number under its bar */
+  #game:not(.in-battle) .card .num { text-align: right; line-height: 1.1; }
   #touch .pad2 .small { font-size: 12px; letter-spacing: 0; } /* MAPA: the body minimum, in Pixelify Sans it fits the button */
 }
 @media (pointer: coarse) { #game.in-battle #touch [data-k="m"] { display: none; } } /* no map in battle */
