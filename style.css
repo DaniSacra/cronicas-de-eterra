@@ -507,7 +507,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .tg-card.off { opacity: .5; filter: grayscale(.6); cursor: default !important; }
 .tg-card.off small { color: var(--dim) !important; }
 /* Shop window (Dora, Gaspar): who sells and one line on top, coins in the corner; the list and the purchase below */
-.sh-top { display: flex; gap: calc(var(--u) * 3); align-items: stretch; } .sh-say { flex: 1; }
+.sh-top { display: flex; gap: calc(var(--u) * 3); align-items: stretch; } #heroview .sh-top .hv-close { align-self: stretch; padding: 0 calc(var(--u) * 5) !important; color: var(--text); border: var(--bw) solid transparent; border-image: var(--frame) 4 fill / var(--bw) round; } .sh-say { flex: 1; }
 .sh-face { width: calc(var(--f2) * 4.5); height: calc(var(--f2) * 4.5); image-rendering: pixelated; padding: var(--u); box-sizing: content-box; }
 .sh-say { padding: calc(var(--u) * 3) calc(var(--u) * 5); display: flex; flex-direction: column; justify-content: center; gap: var(--u); min-width: 0; }
 .sh-say b { font-weight: 600; color: var(--gold); }

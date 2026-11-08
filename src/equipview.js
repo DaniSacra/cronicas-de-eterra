@@ -288,7 +288,7 @@ const HeroView = (() => {
     const ids = shopRows(), id = shopCell(), key = Portraits.keyFor(shop.who);
     const top = `<div class="sh-top">${key ? `<img class="sh-face win" src="${Portraits.draw(key).toDataURL()}" alt="">` : ''}
       <div class="sh-say win"><b>${esc(shop.who)}</b><p>${esc(note || shop.line)}</p></div>
-      <div class="sh-gold win"><small>Moedas</small><b class="px">${coin(G.gold)}</b></div></div>`;
+      <div class="sh-gold win"><small>Moedas</small><b class="px">${coin(G.gold)}</b></div>${btn('close', 0, 'Fechar', 'hv-close win')}</div>`; // the window covers the touch ✕: its own way out
     const heroes = shop.gear ? [...new Set(shop.items.map(([i]) => EQUIPS[i].who))].filter(inParty) : [];
     const filter = shop.gear ? `<div class="sh-filter">${btn('filt', 'all', 'Todos', filt === 'all' ? 'on' : '')}${heroes.map(h =>
       btn('filt', h, `<img src="${face(h)}" alt="${esc(heroName(h))}">`, filt === h ? 'on' : '')).join('')}</div>` : '';
