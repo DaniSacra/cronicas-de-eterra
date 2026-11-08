@@ -562,6 +562,12 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"][data-screen="shop"] .bg-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 #heroview[data-screen="shop"] .sh-detail [data-act="back"] { display: none; }
 @media (orientation: portrait) { #heroview[data-mode="tabs"][data-screen="shop"] .bg-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } }
+/* Bolsa on a phone held upright: the list on top, the chosen item's card below it, no page flip */
+@media (orientation: portrait) {
+  #heroview[data-mode="tabs"][data-screen="bag"] .bg-body { grid-template-rows: fit-content(45%) minmax(0, 1fr); }
+  #heroview[data-mode="tabs"][data-screen="bag"] .bg-body[data-page] .bg-list, #heroview[data-mode="tabs"][data-screen="bag"] .bg-body[data-page] .bg-detail { display: flex; }
+  #heroview[data-mode="tabs"][data-screen="bag"] .bg-detail > [data-act="back"] { display: none; }
+}
 #heroview[data-mode="tabs"] .bg-keys { display: none; }
 #heroview[data-mode="tabs"] .bg-detail > .hv-btn { align-self: flex-start; }
 @media (orientation: portrait) { #heroview[data-mode="tabs"] .tg-grid { grid-template-columns: minmax(0, 1fr); } }
