@@ -150,15 +150,19 @@ const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE
 // On a tall portrait view the party band and the command bar take the bottom third: the enemies stand higher
 const BATTLE_FLOOR_TALL = 0.56;
 const battleFloor = (vw, vh) => (vh > vw * 1.2 ? BATTLE_FLOOR_TALL : BATTLE_FLOOR);
+// On a tall view three or more enemies stand in two staggered rows (back: 1st, 3rd...; front: 2nd, 4th...), so each
+// gets twice the width and the group is drawn at a bigger whole scale instead of a thin line across the screen
 function battleLayout(sizes, vw, vh, boss = false) {
-  const floor = Math.round(vh * battleFloor(vw, vh)), n = sizes.length, slot = Math.floor(vw / n);
+  const n = sizes.length, rows = !boss && n >= 3 && vh > vw * 1.2, cols = rows ? Math.ceil(n / 2) : n;
+  const floor = Math.round(vh * battleFloor(vw, vh)), slot = Math.floor(vw / (rows ? cols + (n % 2 ? 0 : 0.5) : n)); // odd: the rows stagger by themselves
   const base = boss ? floor : floor - 12, safe = Math.round(vh * (boss ? 0.17 : BATTLE_SAFE_TOP));
   // one scale for the whole group, so every pixel in the scene has the same size
   const scale = Math.max(1, Math.min(BATTLE_MAX_SCALE, ...sizes.map(({ w, h, float }) =>
     Math.min(Math.floor((boss ? vw - 8 : slot - 2) / w), Math.floor((base - (float ? 8 : 0) - safe) / h)))));
   const back = boss || sizes.length < 2 ? 0 : Math.max(0, Math.min(Math.round(vh * BATTLE_BACK), ...sizes.map(({ h, float }) => base - (float ? 8 : 0) - safe - h * scale)));
   return sizes.map(({ w, h, float }, i) => {
-    const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (i - (n - 1) / 2) * slot);
+    const inRow = rows ? (i % 2 ? Math.floor(n / 2) : cols) : n, k = rows ? i >> 1 : i, shift = rows ? (i % 2 ? 0.25 : -0.25) * slot : 0;
+    const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (k - (inRow - 1) / 2) * slot + (rows && n % 2 === 0 ? shift : 0));
     const W = w * scale, H = h * scale, left = x - Math.floor(W / 2), lift = float ? 8 : 0; // flyers hover over their shadow
     const b = base - (i % 2 === 0 ? back : 0);
     return { x, base: b, scale, w: W, h: H, left, top: b - H - lift };

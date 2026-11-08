@@ -71,12 +71,23 @@ test('battle: whole scale, whole pixels, inside the screen and clear of the HUD 
   }
 });
 
-test('the common enemies of one group never overlap', () => {
+test('the common enemies of one group never overlap in their row (a tall view uses two staggered rows)', () => {
   for (const S of Object.values(SCREENS)) {
     const { w: VW, h: VH } = viewFit(S.bw, S.bh);
     const L = battleLayout(['aranha', 'rato', 'morcego'].map(id => GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite])), VW, VH);
-    for (let i = 1; i < L.length; i++) assert.ok(L[i - 1].left + L[i - 1].w <= L[i].left, `${VW}x${VH}: ${i - 1} and ${i}`);
+    const rows = Object.values(Object.groupBy(L, l => l.base)).map(r => r.sort((a, b) => a.left - b.left));
+    for (const r of rows) for (let i = 1; i < r.length; i++) assert.ok(r[i - 1].left + r[i - 1].w <= r[i].left, `${VW}x${VH}: ${i - 1} and ${i}`);
+    for (const l of L) assert.ok(l.left >= 0 && l.left + l.w <= VW, `${VW}x${VH}: inside the view`);
   }
+});
+
+test('portrait battle: three enemies in two rows at scale 2, inside the view and above the command bar', () => {
+  const sizes = ['ratoCova', 'morcegoCova', 'ossada'].map(id => GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite]));
+  const L = battleLayout(sizes, 294, 634);
+  assert.ok(L.every(l => l.scale === 2), L.map(l => l.scale).join());
+  assert.equal(new Set(L.map(l => l.base)).size, 2, 'two rows');
+  for (const l of L) assert.ok(l.left >= 0 && l.left + l.w <= 294 && l.top >= Math.round(634 * 0.26) && l.base <= 634 * 0.56, JSON.stringify(l));
+  assert.equal(new Set(battleLayout(sizes, 320, 180).map(l => l.base)).size, 2, 'landscape keeps its one staggered line (back/front by parity)');
 });
 
 test('1280x720 is the 320x180 base at 4x', () => assert.deepEqual(viewFit(1280, 720), { w: 320, h: 180, s: 4 }));
