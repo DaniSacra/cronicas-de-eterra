@@ -35,7 +35,10 @@ const HUD = (() => {
     compass(letter, x, y) { text(compass, letter); at(compass, x, y); show(compass); },
     title(t, x, y) { text(title, t); at(title, x, y); show(title); },
     note(t) { text(note, t); show(note); },
-    label(t) { text(label, t); show(label); },
+    label(t, face = '') {
+      if (label._t !== t + face) { label._t = t + face; label.textContent = t; if (face) { const i = new Image(); i.src = face; i.alt = ''; label.prepend(i); } }
+      label.classList.toggle('has-face', !!face); show(label);
+    },
     boss(name, frac, enraged, cmd = '') {
       text(boss.querySelector('.nm'), name); text(boss.querySelector('.cmd'), cmd);
       const w = Math.round(1000 * frac) / 10 + '%', fill = boss.querySelector('i');

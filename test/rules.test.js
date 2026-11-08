@@ -189,3 +189,11 @@ test('the scene note: "Objetivo" is a gold label, the commands line and long tex
   assert.deepEqual(R.infoLabel('OK fala · ✕ abre o menu'), { k: '', rest: 'OK fala · ✕ abre o menu' });
   assert.equal(R.infoLabel('Uma frase longa que fala de algo: e segue').k, '', 'only a short label before the colon');
 });
+
+test('battle plaque: a spoken line shows who speaks (and so the face); commands and narration do not', () => {
+  assert.equal(R.battleSpeaker('Aldo: "Fica no chão."'), 'Aldo');
+  assert.equal(R.battleSpeaker('Moça dos dados: "Seis!"'), 'Moça dos dados');
+  assert.equal(R.battleSpeaker('Lyra usa Fogo em Encapuzado B!'), null);
+  assert.equal(R.battleSpeaker('Rato de Cova cai!'), null);
+  assert.equal(R.battleSpeaker(null), null);
+});

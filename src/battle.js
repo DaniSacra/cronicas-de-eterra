@@ -587,7 +587,10 @@ function drawBattle(now) {
 
   // Seta de alvo (balança em cima do inimigo escolhido) e o nome do comando/alvo na placa do topo
   const hv = B.hover;
-  if (B.label && !boss) HUD.label(B.label); // no chefe, o comando sai na placa, longe do rosto dele
+  if (B.label && !boss) { // no chefe, o comando sai na placa, longe do rosto dele; quem fala aparece com o rosto
+    const who = battleSpeaker(B.label), key = who && Portraits.keyFor(who);
+    HUD.label(B.label, key ? UI.faceUrl(key, '') : '');
+  }
   if (hv && hv.hp > 0) {
     const y = Math.max(10, hv.top - 10) - (Math.floor(now / 200) % 2) * 2; // acima da barra de PV
     c.fillStyle = '#ffd23f';

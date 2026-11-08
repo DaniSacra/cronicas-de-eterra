@@ -594,6 +594,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   width: min(92%, calc(var(--fd) * 40)); font-size: var(--f2); }
 #game.in-battle #msgbox { min-height: 0; padding: calc(var(--u) * 3) calc(var(--u) * 6); }
 #game.in-battle #msg { text-align: center; }
+#hudtop .label.has-face { display: flex; align-items: center; gap: calc(var(--u) * 3); text-align: left; }
+#hudtop .label img { flex: none; width: 64px; height: 64px; image-rendering: pixelated; } /* 32 art pixels x 2: the speaker in the plaque */
+@media (max-width: 900px), (max-height: 500px) { #hudtop .label img { width: 32px; height: 32px; } }
 #game.in-battle #face { display: none !important; } /* battle uses the top for the turn queue and the plaque */
 /* Boss fight: the band and the Magia/Item lists sit just above the cards, on the empty floor, so the face stays in view */
 #game.in-battle.boss-fight #dialog { position: relative; top: auto; left: auto; translate: none; width: var(--boxw); }

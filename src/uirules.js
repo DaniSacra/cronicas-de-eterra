@@ -97,6 +97,8 @@ function splitSpeaker(text) {
   const m = /^([^\n:]{1,28}):\n([\s\S]+)$/.exec(text || '');
   return m ? { who: m[1], text: m[2] } : { who: null, text: text || '' };
 }
+// A spoken battle line ('Aldo: "Fica no chão."') -> who speaks; commands and narration give null
+const battleSpeaker = label => { const m = /^([^:\n"]{1,28}): "/.exec(label || ''); return m ? m[1] : null; };
 // Face on a party card: worried when hurt, fierce on its turn in battle, else the normal face
 function cardMood(hp, maxHp, acting) {
   if (hp <= 0) return 'normal';
@@ -433,5 +435,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, wholeFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, wholeFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, battleSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
