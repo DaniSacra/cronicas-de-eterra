@@ -37,18 +37,16 @@ test('review 2026-11-07 (2): the forge sells weak gear; a hero wears the stronge
   for (const [weak, strong] of [['espadaCurta', 'espadaFerro'], ['cajadoFreixo', 'cajadoRunico']]) assert.ok(gearPower(EQUIPS[weak]) < gearPower(EQUIPS[strong]));
 
   const { G, log, run, picks } = story(['aldo', 'lyra'], { gold: 100, gear: [] });
-  run('globalThis.HeroView = { owned: () => [...G.gear] }');
-  const opts = run.json('forgeOptions(100, [])');
-  assert.ok(opts.every(o => ['aldo', 'lyra'].includes(run(`EQUIPS['${o.value}'].who`))), 'only gear for the heroes in the party');
-  assert.ok(opts.find(o => o.value === 'espadaCurta').hint.includes('ATQ +3'));
+  // the forge window (src/equipview.js) buys through buyGear: here the player buys the Espada Curta and wears it
+  run(`globalThis.HeroView = { owned: () => [...G.gear], show: async (s, o) => { globalThis.forgeShop = o.shop; buyGear('espadaCurta', true, [...G.gear]); } }`);
   run(`enterTown({ x: 26, y: 6, dir: 0 }, 'valmor')`);
-  picks.push('buy', 'espadaCurta', null, null);
+  picks.push('buy', null);
   await run(`enterBuilding(BUILDINGS.find(b => b.id === 'smith'))`);
+  assert.ok(run.json('forgeShop').items.every(([id]) => ['aldo', 'lyra'].includes(run(`EQUIPS['${id}'].who`))), 'only gear for the heroes in the party');
   assert.equal(G.gold, 40);
   assert.deepEqual([...G.gear], ['espadaCurta']);
   assert.equal(G.party[0].bonus.atk, 3);
-  assert.ok(log.includes('Compraram: Espada Curta!\nAldo equipa (ATQ +3).'));
-  assert.ok(run.json('forgeOptions(100, G.gear)').find(o => o.value === 'espadaCurta').disabled, 'no second copy');
+  assert.equal(run("forgeCompare('espadaCurta', G.gear, EQUIPS, STAT_NAMES).ok"), false, 'no second copy');
 });
 
 test('equipment choice: the strongest by default (old saves too), a chosen piece stays worn, Melhor picks the strongest', () => {

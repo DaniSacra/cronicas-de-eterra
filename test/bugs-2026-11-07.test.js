@@ -19,9 +19,9 @@ test('starting over asks before replacing a save, with No selected', async () =>
 test('town menus about PV and PM show the party strip; story choices do not', async () => {
   const { run } = story(['aldo', 'lyra'], { seen: { job: 1 } });
   run(`globalThis.seenParty = []; UI.choose = async (opts, o) => { seenParty.push(!!(o && o.party)); return null; }`);
-  await run('chapel()'); await run('shop()');
+  await run('chapel()');
   await run(`pickAlly('ally', 'Em quem?')`);
-  assert.deepEqual(run.json('seenParty'), [true, true, true]);
+  assert.deepEqual(run.json('seenParty'), [true, true]);
   run(`seenParty.length = 0; UI.choose = async (opts, o) => { seenParty.push(!!(o && o.party)); return opts[0].value; }`);
   await run('askPorque()');
   assert.deepEqual(run.json('seenParty'), [false], 'a story choice leaves the scene alone');

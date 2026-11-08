@@ -649,13 +649,24 @@ const HOMES = {
 const homeTalk = id => HOMES[id] ? say(HOMES[id][0], byStage(HOMES[id][1])) : Promise.resolve();
 
 
-// What the forge sells now: the pieces of the heroes in the party, greyed out when the purse is short or the hero
-// already wears something as strong
-function forgeOptions(gold, owned) {
-  return FORGE.filter(([id]) => inParty(EQUIPS[id].who)).map(([id, price]) => {
-    const e = EQUIPS[id], best = bestGear(e.who, e.slot, owned, EQUIPS), has = best && gearPower(EQUIPS[best]) >= gearPower(e);
-    return { label: `${e.name} ${price}`, hint: has ? `${heroName(e.who)} · já tem` : `${heroName(e.who)} · ${bonusText(e.bonus, STAT_NAMES)}`, value: id, disabled: has || gold < price };
-  });
+// Purchases (the shop window, src/equipview.js): Dora sells qty of one item, never more than the purse pays for;
+// Gaspar sells one piece, worn at once ("Comprar e equipar") or kept while the hero wears what they had ("Só comprar")
+const shopPrice = (list, id) => list.find(([s]) => s === id)[1];
+function buyItem(id, qty) {
+  const price = shopPrice(SHOP, id);
+  if (!buyPreview(G.gold, price, 0, qty).ok) return false;
+  G.gold -= price * qty; G.inv[id] = (G.inv[id] || 0) + qty;
+  return true;
+}
+function buyGear(id, wear, owned) {
+  const price = shopPrice(FORGE, id), e = EQUIPS[id];
+  G.equip = G.equip || {};
+  if (G.gold < price || !forgeCompare(id, owned, EQUIPS, STAT_NAMES, G.equip).ok) return false;
+  const now = equippedGear(e.who, e.slot, owned, EQUIPS, G.equip), delta = equipDelta(id, owned, EQUIPS, G.equip);
+  G.gold -= price; G.gear = [...(G.gear || []), id];
+  if (wear) wearGear(id, delta);
+  else G.equip[e.who] = { ...G.equip[e.who], [e.slot]: now || '' };
+  return true;
 }
 async function forge() {
   for (;;) {
@@ -664,15 +675,8 @@ async function forge() {
     if (v === null) return;
     if (v === 'talk') { await homeTalk('smith'); continue; }
     if (!G.seen.forja) { G.seen.forja = 1; await say(GASPAR, ['Coisa simples, feita aqui. O aço bom mesmo ficou lá embaixo, com os mortos.']); }
-    for (;;) {
-      const id = await UI.choose([...forgeOptions(G.gold, HeroView.owned()), { label: 'Voltar', value: null }],
-        { title: `${GASPAR}:\nPara quem vai ser?  (${G.gold} moedas)`, cancel: true, cols: 2, party: true });
-      if (id == null) break;
-      const delta = equipDelta(id, HeroView.owned(), EQUIPS, G.equip);
-      G.gold -= FORGE.find(([f]) => f === id)[1]; G.gear = [...(G.gear || []), id]; Sfx.coin();
-      await UI.say(wearGear(id, delta).replace('Encontraram', 'Compraram'));
-      saveGame(); // the coins and the gear go together
-    }
+    await HeroView.show('shop', { shop: { who: GASPAR, line: 'Aço de Valmor. Não é o melhor do mundo, mas é o melhor da rua.',
+      thanks: 'Bom aço. Cuida bem dele.', items: FORGE.filter(([id]) => inParty(EQUIPS[id].who)), gear: true } });
   }
 }
 
@@ -768,15 +772,8 @@ async function shop() {
   const nm = 'Dora, a mercadora';
   const hello = doraHello(stage(), G.gold, !G.seen.dora, heroName('aldo')), solo = G.party.length === 1;
   G.seen.dora = 1;
-  for (;;) {
-    const v = await UI.choose([
-      ...SHOP.map(([id, price]) => ({ label: `${ITEMS[id].name} ${price}`, hint: `tem ${G.inv[id] || 0}`, value: id, disabled: G.gold < price })),
-      { label: 'Sair', value: null },
-    ], { title: `${nm}:\n${hello}  (${G.gold} moedas)`, cancel: true, cols: 2, party: true });
-    if (v === null) { await say(nm, [solo ? 'Volte sempre! E volte inteiro.' : 'Voltem sempre! E voltem inteiros.']); return; }
-    const price = SHOP.find(([id]) => id === v)[1];
-    G.gold -= price; G.inv[v] = (G.inv[v] || 0) + 1; Sfx.coin();
-  }
+  await HeroView.show('shop', { shop: { who: nm, line: hello, thanks: 'Obrigada! Bom proveito.', items: SHOP } });
+  await say(nm, [solo ? 'Volte sempre! E volte inteiro.' : 'Voltem sempre! E voltem inteiros.']);
 }
 
 // ---------- Desenho por quadro ----------

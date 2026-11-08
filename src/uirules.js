@@ -169,6 +169,7 @@ function bestGear(heroId, slot, ownedIds, equips) {
 // What the hero wears in a slot: the player's choice (G.equip[heroId][slot]) while the party still owns it, else the strongest
 function equippedGear(heroId, slot, ownedIds, equips, choice = {}) {
   const c = choice[heroId] && choice[heroId][slot], e = c && equips[c];
+  if (c === '') return null; // the starting gear, kept on purpose ("Só comprar" at the forge)
   return e && e.who === heroId && e.slot === slot && ownedIds.includes(c) ? c : bestGear(heroId, slot, ownedIds, equips);
 }
 // Bonus change from wearing `to` in place of `from` (either may be null: the starting gear gives nothing)
@@ -283,6 +284,28 @@ const bagGroups = o => bagTabs(o).filter(g => g.cells.length);
 // A target card: what an effect (fx: { hp } | { mp } | { revive } from ITEMS or a field skill) would do to one hero
 // (m: { hp, maxHp, mp, maxMp, mpUser }). { ok, gain, text: '28/45 +17 → 45/45' } or { ok: false, why } when it would
 // do nothing: that hero is greyed out and the item is never spent on them
+// ---------- Shops (Dora and Gaspar: one window, src/equipview.js) ----------
+// How many the purse pays for, and what buying qty of an item leaves: the total, coins and the bag before → after
+const buyMax = (gold, price, cap = 99) => Math.max(0, Math.min(cap, Math.floor(gold / price)));
+function buyPreview(gold, price, have, qty) {
+  const total = price * qty;
+  return { total, gold: [gold, gold - total], have: [have, have + qty], ok: qty > 0 && total <= gold };
+}
+// A forge piece against its hero: greyed out when bought or weaker than the best one the hero has,
+// otherwise the bonus change over what the hero wears now ("▲ MAG +2")
+const gender = name => (/a$/.test(name.split(' ')[0]) ? 'a' : 'o');
+const diffText = (d, names) => Object.entries(d).map(([k, v]) => `${v > 0 ? '▲' : '▼'} ${names[k]} ${v > 0 ? '+' : ''}${v}`).join(' ');
+function forgeCompare(id, owned, equips, names, choice = {}) {
+  const e = equips[id], g = gender(e.name);
+  if (owned.includes(id)) return { ok: false, text: `Já comprad${g}` };
+  const best = bestGear(e.who, e.slot, owned, equips);
+  if (best && gearPower(equips[best]) >= gearPower(e)) { const b = equips[best].name; return { ok: false, text: `▼ mais frac${g} que ${gender(b)} ${b}` }; }
+  const now = equippedGear(e.who, e.slot, owned, equips, choice), diff = bonusDiff(id, now, equips);
+  return { ok: true, now, diff, text: diffText(diff, names) };
+}
+// The forge's hero filter: 'all' or one hero id
+const forgeFilter = (ids, equips, who) => ids.filter(id => who === 'all' || equips[id].who === who);
+
 function targetPreview(fx, m) {
   if (fx.revive) return m.hp > 0 ? { ok: false, why: 'De pé' } : { ok: true, gain: 0, text: `0/${m.maxHp} → ${Math.max(1, Math.floor(m.maxHp * fx.revive))}/${m.maxHp}` };
   if (m.hp <= 0) return { ok: false, why: 'Caído' };
@@ -308,6 +331,8 @@ function heroViewFonts(w, h, dpr = 1) {
 const shortName = name => (name === 'Moça dos dados' ? 'Moça' : name);
 // Names in the middle of a line keep their article: "ataca o Sineiro", "Fogo no Sineiro", "Truque da moça dos dados";
 // plain names stay plain ("em Aldo", "de Lyra"). prep: '', 'em' or 'de'
+// "da Lyra", "do Aldo": the heroes with their article after de
+const ofHero = (id, name) => `${['lyra', 'andilla'].includes(id) ? 'da' : 'do'} ${name}`;
 const ARTICLE_NAMES = { 'O Sineiro': ['o', 'Sineiro'], 'Moça dos dados': ['a', 'moça dos dados'] };
 function midName(name, prep = '') {
   const a = ARTICLE_NAMES[name];
@@ -374,5 +399,5 @@ const encounterChance = since => (since < 5 ? 0 : Math.min(0.22, 0.05 + (since -
 const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { label: 'Continuar', value: 'load', disabled: !save },
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

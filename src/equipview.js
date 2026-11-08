@@ -9,6 +9,7 @@ const HeroView = (() => {
   let view = 'stage', slot = 0, choosing = false, pick = 0; // Heróis
   let skill = 0, bookPage = 'list'; // Livro
   let tab = 0, cell = 0; // Bolsa
+  let shop = null, qty = 1, filt = 'all', btnAt = 1; // the shop window (Dora, Gaspar): its setup, the quantity, the hero filter, the button
   let aim = -1, note = ''; // Bolsa and Livro: the target card under the cursor (-1: none, the list has the cursor) and the last result
   const STAGE_W = 64, STAGE_H = 72; // the hero's stage in art pixels: stained glass, the 48x64 sprite and the pedestal
 
@@ -53,9 +54,12 @@ const HeroView = (() => {
       else if (act === 'skill') { skill = n; bookPage = 'detail'; aim = -1; note = ''; Sfx.cursor(); render(); }
       else if (act === 'cast') cast();
       else if (act === 'tab') { tab = n; cell = 0; aim = -1; note = ''; Sfx.cursor(); render(); }
-      else if (act === 'cell') { cell = n; bookPage = 'detail'; aim = -1; note = ''; Sfx.cursor(); render(); }
+      else if (act === 'cell') { if (screen === 'shop') pickCell(n); else cell = n; bookPage = 'detail'; aim = -1; note = ''; Sfx.cursor(); render(); }
       else if (act === 'use') useCell();
       else if (act === 'aim') { aim = n; useOn(); }
+      else if (act === 'qty') setQty(qty + n);
+      else if (act === 'buy') { btnAt = n; buy(); }
+      else if (act === 'filt') setFilt(v);
     });
     addEventListener('resize', () => open && render());
   }
@@ -119,7 +123,7 @@ const HeroView = (() => {
     const list = choices(m), diff = d => Object.entries(d).map(([k, v]) => `<i class="${v > 0 ? 'up' : 'down'}">${v > 0 ? '▲' : '▼'} ${STAT_NAMES[k]} ${Math.abs(v)}</i>`).join(' ');
     const rows = list.map((c, i) => `<button class="hv-row${i === pick ? ' sel' : ''}" data-act="gear" data-v="${i}">${icon(c.icon)}<span>
       <b>${esc(c.name)}</b> <em>${esc(bonusText(c.bonus, STAT_NAMES))}</em><br>${c.equipped ? '<span class="hv-seal">Equipado</span>' : diff(c.diff) || '<i>igual</i>'}</span></button>`).join('');
-    return `<section class="hv-sheet hv-choice win"><h4>${GEAR_SLOTS[slot][1]} ${midName(pdef(m).name, 'de')}</h4>
+    return `<section class="hv-sheet hv-choice win"><h4>${GEAR_SLOTS[slot][1]} ${ofHero(m.id, pdef(m).name)}</h4>
       ${rows || `<p class="dim">Só a peça de partida. Baús da cripta e a forja do Gaspar têm mais.</p>`}
       <div class="hv-actions">${btn('best', 0, 'Melhor', `hv-btn${pick === list.length ? ' sel' : ''}`)}${btn('back', 0, 'Voltar', 'hv-btn')}</div></section>`;
   }
@@ -267,6 +271,84 @@ const HeroView = (() => {
     hide(); await useBagItem('key:' + c.id); reshow();
   }
 
+  // ---------- The shop window: Dora's items and Gaspar's pieces, one component ----------
+  // shop: { who, line, thanks, items: [[id, price]], gear } (src/town.js); the list on the left, the chosen one on the right
+  const shopRows = () => (shop.gear ? forgeFilter(shop.items.map(([id]) => id), EQUIPS, filt) : shop.items.map(([id]) => id));
+  const priceOf = id => shop.items.find(([s]) => s === id)[1];
+  const shopMax = id => buyMax(G.gold, priceOf(id));
+  const cmpOf = id => forgeCompare(id, ownedEquips(), EQUIPS, STAT_NAMES, choice());
+  const canBuy = id => shopMax(id) > 0 && (!shop.gear || cmpOf(id).ok);
+  const shopCell = () => shopRows()[cell];
+  const coin = n => `<span class="sh-coin">●</span> ${n}`;
+  const fromTo = (a, b, cls = '') => `<b class="px">${a}</b> → <b class="px ${cls}">${b}</b>`;
+  function shopScreen() {
+    const ids = shopRows(), id = shopCell(), key = Portraits.keyFor(shop.who);
+    const top = `<div class="sh-top">${key ? `<img class="sh-face win" src="${Portraits.draw(key).toDataURL()}" alt="">` : ''}
+      <div class="sh-say win"><b>${esc(shop.who)}</b><p>${esc(note || shop.line)}</p></div>
+      <div class="sh-gold win"><small>Moedas</small><b class="px">${coin(G.gold)}</b></div></div>`;
+    const heroes = shop.gear ? [...new Set(shop.items.map(([i]) => EQUIPS[i].who))].filter(inParty) : [];
+    const filter = shop.gear ? `<div class="sh-filter">${btn('filt', 'all', 'Todos', filt === 'all' ? 'on' : '')}${heroes.map(h =>
+      btn('filt', h, `<img src="${face(h)}" alt="${esc(heroName(h))}">`, filt === h ? 'on' : '')).join('')}</div>` : '';
+    const rows = ids.map((x, i) => {
+      const it = shop.gear ? EQUIPS[x] : ITEMS[x], c = shop.gear && cmpOf(x), off = !canBuy(x);
+      const sub = shop.gear ? `<small>${GEAR_SLOTS.find(([k]) => k === it.slot)[1]} ${ofHero(it.who, heroName(it.who))}</small>` : '';
+      const side = shop.gear ? `<i class="sh-cmp${c.ok ? ' up' : ''}">${esc(c.text)}</i>` : `<small class="px">tem ${G.inv[x] || 0}</small>`;
+      return `<button class="hv-row sh-row${i === cell ? ' sel' : ''}${off ? ' off' : ''}" data-act="cell" data-v="${i}">${icon(shop.gear ? it.icon : x, off ? 'dis' : 'normal')}
+        <span><b>${esc(it.name)}</b>${sub}</span>${side}<b class="px sh-price">${coin(priceOf(x))}</b></button>`;
+    }).join('');
+    const hint = shop.gear ? '↑↓ escolhe · ←→ botão · Tab filtra · Enter compra · Esc sai' : '↑↓ escolhe · ←→ quantidade · Enter compra · Esc sai';
+    const back = mode() === 'tabs' ? btn('back', 0, '◀ Lista', 'hv-btn') : '';
+    return top + `<div class="bg-body" data-page="${bookPage}"><section class="bg-list win">${filter}${rows || '<p class="dim">Nada para este herói.</p>'}
+      <p class="bg-keys dim">Sem moeda, o item fica apagado. ${hint}</p></section>
+      ${id ? `<section class="bg-detail sh-detail win">${back}${shop.gear ? gearDetail(id) : itemDetail(id)}</section>` : ''}</div>`;
+  }
+  function itemDetail(id) {
+    const it = ITEMS[id], max = shopMax(id), price = priceOf(id), v = buyPreview(G.gold, price, G.inv[id] || 0, qty);
+    const head = `<div class="bg-head"><span class="hv-box slot-frame">${icon(id, 'normal', 'bg-ico')}</span><div><h3>${esc(it.name)}</h3><p>${esc(it.desc)}</p></div></div>`;
+    if (!max) return head + `<p class="dim">Faltam ${price - G.gold} moedas.</p>`;
+    return head + `<div class="sh-grid"><span>Quantidade</span><span class="sh-qty">${btn('qty', -1, '−', 'hv-btn')}<b class="px">${qty}</b>${btn('qty', 1, '+', 'hv-btn')}<small>máx. ${max}</small></span>
+      <span>Total</span><b class="px sh-total">${coin(v.total)}</b>
+      <span>Moedas</span><span>${fromTo(...v.gold, 'down')}</span>
+      <span>Na bolsa</span><span>${fromTo(...v.have, 'up')}</span></div>
+      <div class="hv-actions sh-actions">${btn('buy', 1, `Comprar ${qty}`, 'hv-btn sh-buy sel')}</div>`;
+  }
+  function gearDetail(id) {
+    const e = EQUIPS[id], c = cmpOf(id), m = G.party.find(p => p.id === e.who), price = priceOf(id);
+    const slotName = GEAR_SLOTS.find(([k]) => k === e.slot)[1], now = c.ok ? c.now : equippedGear(e.who, e.slot, ownedEquips(), EQUIPS, choice());
+    const nowPiece = now ? EQUIPS[now] : START_GEAR[e.who][e.slot];
+    const piece = (p, cls) => `<span class="sh-piece ${cls}"><span class="hv-box slot-frame">${icon(p.icon)}</span>${esc(p.name)}</span>`;
+    const stats = c.ok ? Object.entries(c.diff).map(([k, v]) => `<span>${STAT_FULL[k]}</span><span>${fromTo(stat(m, k), stat(m, k) + v, v > 0 ? 'up' : 'down')}</span>`).join('') : '';
+    const ok = c.ok && G.gold >= price;
+    return `<div class="bg-head"><img class="sh-hero win" src="${face(e.who)}" alt=""><div><h3 style="color:${ink(pdef(m).color)}">${esc(heroName(e.who))}</h3><p>${slotName}</p></div></div>
+      <div class="sh-swap">${piece(nowPiece, 'dim')}<span>→</span>${piece(e, '')}</div>
+      ${c.ok ? `<div class="sh-grid">${stats}<span>Moedas</span><span>${fromTo(G.gold, G.gold - price, 'down')}</span></div>` : ''}
+      ${c.ok ? '' : `<p class="dim">${esc(c.text.replace('▼ ', ''))}.</p>`}${c.ok && !ok ? `<p class="dim">Faltam ${price - G.gold} moedas.</p>` : ''}
+      <div class="hv-actions sh-actions">${btn('buy', 0, 'Só comprar', `hv-btn${ok ? '' : ' dis'}${btnAt === 0 ? ' sel' : ''}`)}${btn('buy', 1, 'Comprar e equipar', `hv-btn sh-buy${ok ? '' : ' dis'}${btnAt === 1 ? ' sel' : ''}`)}</div>`;
+  }
+  function setQty(n) {
+    const id = shopCell(), max = id && !shop.gear ? shopMax(id) : 0;
+    const q = Math.max(Math.min(1, max), Math.min(max, n));
+    if (q !== qty) { qty = q; Sfx.cursor(); render(); } else Sfx.bump();
+  }
+  function setFilt(v) { filt = v; cell = 0; qty = 1; Sfx.cursor(); render(); }
+  function pickCell(i) { cell = i; qty = Math.min(1, shopCell() ? shopMax(shopCell()) : 0); note = ''; }
+  function buy() {
+    const id = shopCell();
+    if (!id || !canBuy(id)) return Sfx.bump();
+    const ok = shop.gear ? buyGear(id, btnAt === 1, ownedEquips()) : buyItem(id, qty);
+    if (!ok) return Sfx.bump();
+    Sfx.coin(); note = shop.thanks; qty = Math.min(1, shopMax(id));
+    UI.updateParty(); if (shop.gear) saveGame(); // the coins and the gear go together
+    render();
+  }
+  function shopKey(k) {
+    const n = shopRows().length, d = { ArrowUp: -1, ArrowDown: 1 }[k], lr = { ArrowLeft: -1, ArrowRight: 1 }[k];
+    if (d && n) { pickCell(wrap(cell + d, n)); Sfx.cursor(); return render(); }
+    if (lr) { if (shop.gear) { btnAt = lr > 0 ? 1 : 0; Sfx.cursor(); return render(); } return setQty(qty + lr); }
+    if (k === 'Tab' && shop.gear) { const fs = ['all', ...new Set(shop.items.map(([i]) => EQUIPS[i].who))].filter(h => h === 'all' || inParty(h)); return setFilt(fs[wrap(fs.indexOf(filt) + 1, fs.length)]); }
+    if (k === 'Enter') { if (mode() === 'tabs' && bookPage === 'list') { bookPage = 'detail'; Sfx.select(); return render(); } buy(); }
+  }
+
   function render() {
     const m = hero(), d = pdef(m), md = mode();
     root.dataset.mode = md; root.dataset.screen = screen; root.dataset.view = view;
@@ -277,6 +359,7 @@ const HeroView = (() => {
       drawCanvas();
     } else if (screen === 'book') root.innerHTML = bookScreen();
     else if (screen === 'elos') root.innerHTML = elosScreen();
+    else if (screen === 'shop') root.innerHTML = shopScreen();
     else root.innerHTML = bagScreen();
     const s = root.querySelector('.hv-row.sel');
     if (s) s.scrollIntoView({ block: 'nearest' });
@@ -336,19 +419,20 @@ const HeroView = (() => {
       if (screen === 'book') return setHero(wrap(cur - 1, G.party.length));
       k = 'Tab';
     }
-    (screen === 'hero' ? heroKey : screen === 'book' ? bookKey : screen === 'elos' ? elosKey : bagKey)(k);
+    (screen === 'hero' ? heroKey : screen === 'book' ? bookKey : screen === 'elos' ? elosKey : screen === 'shop' ? shopKey : bagKey)(k);
   }
 
   // The screen hides while a picker or a message runs (using an item or a skill), then comes back as it was
   function hide() { open = false; root.classList.remove('open'); }
   function reshow() { open = true; root.classList.add('open'); render(); }
-  // screen: 'hero' (Heróis), 'book' (Livro), 'elos' (Livro de Elos) or 'bag' (Bolsa); resolves when it closes
+  // screen: 'hero' (Heróis), 'book' (Livro), 'elos' (Livro de Elos), 'bag' (Bolsa) or 'shop' (o.shop); resolves when it closes
   // o: { hero, spell, aim } opens the Livro on that hero and skill, aim puts the cursor on the targets (the Magia shortcut)
   function show(s = 'hero', o = {}) {
     if (!root) build();
     screen = s; open = true; cur = Math.min(cur, G.party.length - 1);
     view = 'stage'; choosing = false; slot = 0; skill = 0; bookPage = 'list'; tab = 0; cell = 0; aim = -1; note = '';
     if (s === 'bag') tab = Math.max(0, tabsOf().findIndex(t => t.cells.length));
+    if (s === 'shop') { shop = o.shop; filt = 'all'; btnAt = 1; pickCell(0); note = ''; }
     if (o.hero) { cur = Math.max(0, G.party.findIndex(m => m.id === o.hero)); skill = Math.max(0, spellBook(pdef(hero()).spells, hero().lv).findIndex(r => r.id === o.spell)); bookPage = 'detail'; }
     root.classList.add('open'); render(); Sfx.select();
     if (o.aim) cast(); // straight onto the target cards
