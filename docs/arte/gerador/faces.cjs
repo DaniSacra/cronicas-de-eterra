@@ -151,7 +151,7 @@ const SK = {
 const FACE = { w: '#ffffff', f: '#1e140a', m: '#8a3a2a', P: '#f8a0a0' };
 const HR = { white: ['#ffffff', '#e8f0e8', '#b0bcc4', '#7a7a82'], brown: ['#a87040', '#7a4a24', '#4e2c14', '#2a1408'],
   dark: ['#4e2c14', '#2a1408', '#24180c', '#060408'], orange: ['#f0b050', '#d08a30', '#a0601c', '#5a2a08'],
-  auburn: ['#a8704a', '#8a3a2a', '#5a2a24', '#2a140c'] };
+  auburn: ['#a8704a', '#8a3a2a', '#5a2a24', '#2a140c'], gray: ['#a2a2ac', '#7a7a82', '#55555e', '#26262e'] };
 const CL = { green: ['#4ad08a', '#3a9a6a', '#2a5440', '#14402a'], blue: ['#8ac0f0', '#3a78c8', '#2c3c80', '#1c2860'],
   navy: ['#3a78c8', '#2c3c80', '#1c2860', '#151e4e'], red: ['#e86a7a', '#a8323e', '#7a1a24', '#4a0c14'],
   lilac: ['#f0a8f8', '#c880e0', '#a050c0', '#72308e'], purple: ['#a84ad8', '#72308e', '#40145a', '#3a1448'],
@@ -242,6 +242,12 @@ Object.assign(NPCS, {
   dora: { bg: BGS.purple, blush: 1, pal: look('warm', 'auburn', 'gold', '#3a9a6a', { x: '#ffffff', v: '#4ad08a' }),
     backHair: LONG_BACK, clothes: SHOULDERS, frontHair: LONG_FRONT,
     trim: [[24, 12, 'xxxxxxxx'], [25, 13, 'x....x']], marks: [[17, 8, 'v'], [17, 23, 'v']] },
+  // Gaspar, o ferreiro: trinta anos de forja, cabelo e barba grisalhos, rosto corado, camisa vermelha, avental de couro com fivela, fuligem na bochecha
+  gaspar: { bg: BGS.ember, pal: look('ruddy', 'gray', 'red', '#4e2c14', { x: '#9a6232', y: '#6a3a1a', v: '#e8b840', z: '#55555e' }),
+    clothes: SHOULDERS, frontHair: SHORT(8),
+    beard: any(MUSTACHE, ell(15.5, 21, 5.2, 2.4), rect(9, 15, 10, 19), rect(21, 15, 22, 19)),
+    trim: [...col(11, 20, 26, 31, 'x'), [26, 11, 'y'], [26, 20, 'y'], ...col(10, 10, 24, 26, 'y'), ...col(21, 21, 24, 26, 'y'), [28, 15, 'vv']],
+    marks: [[16, 19, 'zz'], [17, 20, 'z']] },
   // O Sineiro: crânio no capuz da batina escura, sino de bronze e a corda
   sineiro: { hatOpt: { smooth: 1 }, bg: BGS.deep, noFace: 1,
     pal: Object.assign(R('bcdq', CL.shadow), R('ABCD', CL.shadow), R('JKLM', CL.bone), R('TUVW', CL.gold), { Z: '#120c14', E: '#8ac0f0', r: '#9a6232' }),
