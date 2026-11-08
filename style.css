@@ -9,7 +9,7 @@
   --boxw: min(100%, calc(var(--fd) * 56)); /* dialog box and party strip share one width */
   /* Palette: parchment windows in a wooden frame (src/frame.js draws the frame from the same colors) */
   --ink: #24140a; --win: #ecd8aa; --win2: #d6b984; --rim: #9a6236; --rim2: #5c3318;
-  --text: #3b2414; --dim: #8a6844; --off: #b39a76; --gold: #a8361c; --gold2: #6e2410;
+  --text: #3b2414; --dim: #8a6844; --off: #9a7e5a; --gold: #a8361c; --gold2: #6e2410;
   --light: #f6ead0; --hi: #f0c04a; /* text drawn straight on the dark scene (HUD, map labels, title) */
   --shade: rgba(110, 70, 30, .22); /* soft shadow under ink on parchment */
   --hp: #d9504a; --hp2: #f28a6a; --mp: #4a8fe0; --mp2: #9fcaff; --danger: #b8325a;
@@ -18,7 +18,6 @@
 @media (min-width: 1200px) and (min-height: 700px) and (orientation: landscape) { :root { --fd: 24px; } }
 @media (min-width: 1700px) and (orientation: landscape) { :root { --u: 4px; --f1: 16px; --f2: 24px; --face: 160px; } }
 @media (max-width: 900px), (max-height: 500px) { :root { --u: 2px; --f2: 12px; --face: 64px; } }
-@media (max-width: 480px) { :root { --fd: 12px; } }
 @media (orientation: portrait) and (pointer: coarse) { :root { --face: 96px; } } /* 32 art pixels x 3: a big face on a phone held upright */
 
 * { box-sizing: border-box; }
@@ -116,6 +115,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .bar.mp i { background: linear-gradient(var(--mp2) 0 50%, var(--mp) 50%); }
 /* Energia (Aldo, Andilla): the same bar in amber, with thin marks at the three costs (20, 40, 80) */
 .bar.en { position: relative; }
+#game:not(.in-battle) .card .bar.en, #game:not(.in-battle) .card .mpn.en { visibility: hidden; } /* Energia only lives in battle; the card keeps its height */
 .bar.en i { background: linear-gradient(#f0c850 0 50%, #e0a030 50%); }
 .bar.en s { position: absolute; top: 0; bottom: 0; left: calc(var(--u) / 2 + (100% - var(--u)) * var(--at)); width: max(1px, calc(var(--u) / 2)); background: var(--light); opacity: .6; }
 .num { font-size: var(--f1); color: var(--text); }
@@ -440,7 +440,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-stat b { font-weight: normal; font-size: var(--fd); }
 .hv-next { margin-top: calc(var(--u) * 3); padding-top: calc(var(--u) * 3); border-top: var(--u) solid var(--rim); }
 .hv-next > div { display: flex; gap: calc(var(--u) * 3); align-items: center; } .hv-next b { font-weight: normal; display: block; }
-.hv-cut { display: block; font-size: inherit; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.hv-cut { display: block; font-size: inherit; white-space: nowrap; overflow: hidden; text-overflow: clip; }
 .hv-story { margin-top: calc(var(--u) * 3); display: grid; gap: var(--u); }
 .hv-quote { color: var(--gold); }
 .hv-choice { overflow: auto; } .hv-choice .hv-row { grid-template-columns: auto minmax(0, 1fr); }

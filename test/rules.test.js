@@ -27,7 +27,9 @@ test('no text under the body minimum: 16 px on a PC screen, 12 on a phone, in ev
 test('fontScale: PC, large PC and phone', () => {
   assert.deepEqual(R.fontScale(1280, 800, 1), { f1: 16, f2: 16, fd: 24 });
   assert.deepEqual(R.fontScale(1000, 650, 1), { f1: 16, f2: 16, fd: 16 }); // 12 would blur at 1x: crispPx rounds it to 16
-  assert.deepEqual(R.fontScale(390, 844, 2), { f1: 12, f2: 12, fd: 12 });
+  assert.deepEqual(R.fontScale(390, 844, 2), { f1: 12, f2: 12, fd: 16 }, 'upright phone: the dialog at 16');
+  assert.equal(R.fontScale(844, 390, 2).fd, 12, 'lying down: short box, 12');
+  assert.equal(R.fontScale(1280, 720, 1).fd, 24);
   assert.deepEqual(R.fontScale(1920, 1080, 1), { f1: 16, f2: 24, fd: 24 });
 });
 

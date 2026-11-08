@@ -538,7 +538,7 @@ function placeTitle() {
   const g = document.getElementById('game'), r = view.getBoundingClientRect(), L = TitleBG.layout(), px = r.width / VW;
   const set = (k, v) => g.style.setProperty(k, v + 'px');
   set('--tl-x', r.left + L.logo.x * px); set('--tl-y', r.top + L.logo.y * px); set('--tl-w', L.logo.w * px);
-  set('--tl-f', L.logo.L * px); set('--tl-sub', crispPx(L.logo.L / 2 * px, window.devicePixelRatio || 1));
+  set('--tl-f', L.logo.L * px); set('--tl-sub', crispPx(Math.max(bodyMin(innerWidth, innerHeight), L.logo.L / 2 * px), window.devicePixelRatio || 1)); // never under the body minimum
   set('--tm-x', r.left + L.menu.x * px); set('--tm-y', r.top + L.menu.y * px); set('--tm-w', L.menu.w * px);
 }
 window.addEventListener('resize', () => { if (G.mode === 'title') placeTitle(); });

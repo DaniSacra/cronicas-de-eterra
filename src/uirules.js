@@ -12,7 +12,8 @@ function fontScale(w, h, dpr = 1) {
   const land = w >= h, huge = land && w >= 1700, large = land && w >= 1200 && h >= 700, small = w <= 900 || h <= 500;
   const t1 = huge || large ? 16 : 12; // small text: 16 on a PC screen (2026-11-06), the body minimum (12) on small ones
   const t2 = huge ? 24 : small ? 12 : 16;
-  const td = huge || large ? 24 : small ? 12 : 16; // dialog text
+  const tall = h > w && w <= 480; // a phone held upright: the box spans the whole width, so the dialog reads at 16
+  const td = huge || large ? 24 : tall ? 16 : small ? 12 : 16; // dialog text
   return { f1: crispPx(t1, dpr), f2: crispPx(t2, dpr), fd: crispPx(td, dpr) };
 }
 
