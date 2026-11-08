@@ -19,6 +19,7 @@
 @media (min-width: 1700px) and (orientation: landscape) { :root { --u: 4px; --f1: 16px; --f2: 24px; --face: 160px; } }
 @media (max-width: 900px), (max-height: 500px) { :root { --u: 2px; --f2: 12px; --face: 64px; } }
 @media (max-width: 480px) { :root { --fd: 12px; } }
+@media (orientation: portrait) and (pointer: coarse) { :root { --face: 96px; } } /* 32 art pixels x 3: a big face on a phone held upright */
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
@@ -60,8 +61,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   text-shadow: calc(var(--u) / 2) calc(var(--u) / 2) 0 var(--shade); }
 @keyframes winOpen { from { transform: scaleY(.12); } to { transform: none; } }
 #msg { color: var(--text); }
-#speaker { color: var(--gold); }
-#speaker.hero { color: color-mix(in srgb, var(--c, var(--gold)) 55%, #2a1206); }
+/* the name on a small dark plaque: the hero's own bright color, gold for everyone else */
+#speaker { display: inline-block; margin: 0 0 .5em; padding: .15em .6em; background: var(--ink); color: var(--hi); line-height: 1.4; text-shadow: none; }
+#speaker.hero { color: var(--c, var(--hi)); }
 /* Menus read at the middle size, with the title in gold */
 #msgbox:has(#menu:not(:empty)) { font-size: var(--f2); }
 #msgbox:has(#menu:not(:empty)) #msg { color: var(--gold); }

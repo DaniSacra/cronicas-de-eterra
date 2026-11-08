@@ -129,3 +129,9 @@ test('"Próxima técnica": the level of the next skill and a hint without its na
     assert.ok(n && !/undefined|—/.test(n.hint), `${d.id} ${lv}`);
   }
 });
+
+test('dialog plaque: every hero name in its own color reads on the dark plaque (contrast 4.5 or more)', () => {
+  const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ink = require('fs').readFileSync(require('path').join(__dirname, '../style.css'), 'utf8').match(/--ink: (#[0-9a-f]{6})/)[1];
+  for (const d of D.PARTY_DEFS) assert.ok((lum(d.color) + 0.05) / (lum(ink) + 0.05) >= 4.5, d.id);
+});
