@@ -174,3 +174,9 @@ test('camp menu Magia: only field spells, with the caster; grey with the reason 
   assert.deepEqual(o[0].value, { who: 'teo', spell: 'cura' });
   assert.equal(R.fieldCasts([{ ...heroes[2], hp: 0 }], SPELLS)[0].disabled, true);
 });
+
+test('the scene note: "Objetivo" is a gold label, the commands line and long text have none', () => {
+  assert.deepEqual(R.infoLabel('Objetivo: levar a carta à rainha Lara, em Erukh.'), { k: 'Objetivo', rest: 'levar a carta à rainha Lara, em Erukh.' });
+  assert.deepEqual(R.infoLabel('OK fala · ✕ abre o menu'), { k: '', rest: 'OK fala · ✕ abre o menu' });
+  assert.equal(R.infoLabel('Uma frase longa que fala de algo: e segue').k, '', 'only a short label before the colon');
+});

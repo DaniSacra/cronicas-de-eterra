@@ -75,7 +75,14 @@ const UI = (() => {
   function info(text) {
     if (!menu && !sayR) closeSoon();
     if (text === infoEl.textContent && infoEl.classList.contains('shown-once')) return;
-    infoEl.textContent = text; infoEl.classList.add('show', 'shown-once');
+    infoEl.textContent = '';
+    text.split('\n').forEach((line, i) => {
+      if (i) infoEl.append('\n');
+      const { k, rest } = infoLabel(line);
+      if (k) { const b = document.createElement('span'); b.className = 'k'; b.textContent = k + ':'; infoEl.append(b, ' '); }
+      infoEl.append(rest);
+    });
+    infoEl.classList.add('show', 'shown-once');
     clearTimeout(infoT); infoT = setTimeout(() => infoEl.classList.remove('show'), 6000);
   }
 

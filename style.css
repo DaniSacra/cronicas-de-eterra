@@ -25,7 +25,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
   font-family: var(--font-text); font-size-adjust: 0.5625; font-variant-ligatures: none; /* Pixelify's "fi" ligature reads as an A */ -webkit-user-select: none; user-select: none;
   -webkit-font-smoothing: none; font-smooth: never; }
 /* Press Start 2P: titles, numbers, short labels and buttons */
-.px, h1, h2, h3, h4, .title .sub:not(.end), .num, .card .nm, .card .lv, .float, #hudbar .chip, #hudtop .label, #cmdbar, #menu.icons .opt, #info::first-line,
+.px, h1, h2, h3, h4, .title .sub:not(.end), .num, .card .nm, .card .lv, .float, #hudbar .chip, #hudtop .label, #cmdbar, #menu.icons .opt,
   .hv-close, .hv-btn, .hv-cost, .hv-box > b, .bg-gold, .bg-tabs, .bk-title, .hv-name, .hv-bar b, .hv-stat b, .hv-seal, .hv-ko, .bk-ribbon,
   .card.elo::after { font-family: var(--font-pixel); font-size-adjust: none; }
 /* Installed app in full screen: keep clear of the notch, the rounded corners and the home bar */
@@ -124,12 +124,12 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* Aviso curto no alto (lugar, comandos, objetivo): aparece quando muda e some sozinho */
 /* Aviso de lugar e objetivo: na coluna da esquerda, embaixo do nome do lugar, em letra legível */
-#info { flex-basis: 100%; max-width: min(100%, 40em); box-sizing: border-box;
-  padding: calc(var(--u) * 3) calc(var(--u) * 5); font-size: var(--f2); line-height: 1.6; white-space: pre-line; color: var(--text);
+#info { flex-basis: 100%; max-width: min(100%, 28em); box-sizing: border-box;
+  padding: calc(var(--u) * 2) calc(var(--u) * 4); font-size: var(--f2); line-height: 1.5; white-space: pre-line; color: var(--text);
   opacity: 0; transition: opacity .4s steps(4); pointer-events: none; }
 #info.show { opacity: 1; }
 #info:empty, #game.talking #info { display: none; }
-#info::first-line { color: var(--gold); }
+#info .k { color: var(--gold); }
 
 /* ---- Telas de título, fim de jogo e vitória ---- */
 #overlay { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;

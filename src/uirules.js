@@ -359,9 +359,12 @@ const spellLine = (who, spell, target) => `${who} usa ${spell}${target ? ' ' + m
 const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length < 4 ? 'O sino pesa. Talvez seja melhor voltar mais forte.\n' : '');
 
 // Control hints: each "key action" pair never breaks across lines ("Esc menu" stays together)
+// A note line split into its gold label ("Objetivo") and the rest; lines without a short label have none
+const infoLabel = line => { const m = /^([^:·]{1,12}): (.*)$/s.exec(line); return m ? { k: m[1], rest: m[2] } : { k: '', rest: line }; };
 const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join('\u00a0· '); // the dot goes down with the pair before it
 // The note's place: low, above the party strip, in areas with fog of sight; at the top everywhere else
-const hintHome = (mode, vision) => (mode === 'town' && vision ? 'bottom' : 'hudbar');
+// on a portrait phone the top of the fog is empty and the bottom holds the touch pad: the note stays up there
+const hintHome = (mode, vision, tall = false) => (mode === 'town' && vision && !tall ? 'bottom' : 'hudbar');
 
 // Title menu: the quick start straight into the crypt is a test shortcut, only with ?dev in the address
 // ---------- Hit rolls (combat Phase 2, the cut Daniel kept: Andilla's crit, the same luck on both sides) ----------
@@ -418,5 +421,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

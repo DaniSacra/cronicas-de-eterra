@@ -39,6 +39,7 @@ test('control hints keep each key with its action, and in fog areas the note sit
   assert.equal(R.keepPairs('Setas andar · Esc menu'), 'Setas\u00a0andar\u00a0· Esc\u00a0menu', 'pairs never split; the dot goes down with the pair before it');
   assert.equal(R.hintHome('town', true), 'bottom');
   assert.equal(R.hintHome('town', false), 'hudbar');
+  assert.equal(R.hintHome('town', true, true), 'hudbar', 'portrait phone: up top, away from the touch pad');
   assert.equal(R.hintHome('explore', false), 'hudbar');
 });
 
