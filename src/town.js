@@ -806,6 +806,13 @@ function drawSight(c, A, lp, camX, camY) {
 // Rows of the scene covered by the open dialog box (0 when closed). The speaker's face sits in the left corner
 // and is left out, so a face showing up never moves the scene; the room of a five-line box is kept from the
 // first line, so a long line does not either
+// Rows the touch pad covers at the bottom of a portrait phone: the camera keeps the party above it too
+function touchRows() {
+  const t = document.getElementById('touch');
+  if (!t || !matchMedia('(orientation: portrait) and (pointer: coarse)').matches) return 0;
+  const v = view.getBoundingClientRect(), r = t.getBoundingClientRect();
+  return r.height ? Math.max(0, Math.min(VH * 0.5, (v.bottom - r.top) * VH / v.height)) : 0;
+}
 function dialogRows() {
   const d = document.getElementById('dialog');
   if (!d || !d.classList.contains('open')) return 0;
@@ -822,7 +829,7 @@ function drawTown(now) {
   // with the dialog open, the camera moves only if the box would cover the party (eased, 200 ms)
   const padB = (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
-  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(TOWN.pad));
+  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(Math.max(TOWN.pad, touchRows())));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }

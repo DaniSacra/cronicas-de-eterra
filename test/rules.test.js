@@ -142,6 +142,13 @@ test('portrait phones walk the town about 12 tiles across, at a whole scale; lan
   assert.equal(R.viewFit(1170, 2532, { minW: R.TOWN_MIN_W, room: cem }).s, 6, 'small areas: the same zoom as before');
 });
 
+test('portrait phone: on the last row of the map the party stays above the touch pad', () => {
+  const view = 422, size = 40 * 16, pos = size - 16, pad = 112;
+  const cam = R.camLift(pos, size, view, pad);
+  assert.ok(pos - cam + 16 <= view - pad, `party bottom ${pos - cam + 16} over the pad top ${view - pad}`);
+  assert.equal(R.camLift(200, size, view, pad), R.camAxis(200, size, view), 'in the middle of the map the camera does not move');
+});
+
 test('town camera: centered on the party above the dialog box, small areas centered in the free part', () => {
   assert.equal(R.camAxis(100, 400, 180), 18);
   assert.equal(R.camAxis(390, 400, 180), 220, 'clamped at the bottom edge');
