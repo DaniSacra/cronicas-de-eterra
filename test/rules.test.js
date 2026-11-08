@@ -197,3 +197,10 @@ test('battle plaque: a spoken line shows who speaks (and so the face); commands 
   assert.equal(R.battleSpeaker('Rato de Cova cai!'), null);
   assert.equal(R.battleSpeaker(null), null);
 });
+
+test('bayerOn: k 0 is clear, k 1 is solid, k 0.5 covers exactly half of each 4x4 cell, and it only grows with k', () => {
+  const count = k => { let n = 0; for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) n += R.bayerOn(x, y, k); return n; };
+  assert.equal(count(0), 0); assert.equal(count(1), 16); assert.equal(count(0.5), 8);
+  for (let i = 0; i < 16; i++) assert.ok(count(i / 16) <= count((i + 1) / 16));
+  assert.equal(R.bayerOn(5, 6, 0.3), R.bayerOn(1, 2, 0.3));
+});

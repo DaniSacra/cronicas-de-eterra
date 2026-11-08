@@ -717,6 +717,18 @@ function drawCells(c, ox, oy, cs, x0, y0, x1, y1, now) {
   c.closePath(); c.fill();
 }
 
+const curtains = [];
+function curtain(k) {
+  const n = Math.round(k * 16);
+  if (!curtains[n]) {
+    const t = document.createElement('canvas'); t.width = t.height = 4;
+    const g = t.getContext('2d'); g.fillStyle = PALETTE.noite[4];
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (bayerOn(x, y, n / 16)) g.fillRect(x, y, 1, 1);
+    curtains[n] = vctx.createPattern(t, 'repeat');
+  }
+  return curtains[n];
+}
+
 function drawOverlays(now) {
   const c = vctx;
   if (G.flash) {
@@ -732,7 +744,11 @@ function drawOverlays(now) {
     G.fade = F.from + (F.to - F.from) * k;
     if (k >= 1) { G.fadeAnim = null; F.res(); }
   }
-  if (G.fade > 0) { c.fillStyle = `rgba(0,0,0,${G.fade})`; c.fillRect(0, 0, VW, VH); }
+  if (G.fade > 0) {
+    // moving: the Bayer curtain in the night ink; a fade held still (a dim story scene) stays an even tint
+    c.fillStyle = G.fadeAnim || G.fade >= 1 ? curtain(G.fade) : `rgba(0,0,0,${G.fade})`;
+    c.fillRect(0, 0, VW, VH);
+  }
   if (now < noteUntil) HUD.note(noteText);
   const shaking = now < G.shakeUntil;
   view.style.transform = shaking ? `translate(${rnd(-4, 4)}px,${rnd(-3, 3)}px)` : '';

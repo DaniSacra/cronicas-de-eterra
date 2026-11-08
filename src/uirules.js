@@ -374,6 +374,9 @@ const bossWarning = party => (party.reduce((s, m) => s + m.lv, 0) / party.length
 
 // Control hints: each "key action" pair never breaks across lines ("Esc menu" stays together)
 // A note line split into its gold label ("Objetivo") and the rest; lines without a short label have none
+// 16-bit screen curtain: a 4x4 Bayer threshold, so a fade is whole dark pixels, never a see-through tint
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+function bayerOn(x, y, k) { return (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16 < k; }
 const infoLabel = line => { const m = /^([^:·]{1,12}): (.*)$/s.exec(line); return m ? { k: m[1], rest: m[2] } : { k: '', rest: line }; };
 const keepPairs = s => s.split(' · ').map(p => p.replace(/ /g, '\u00a0')).join('\u00a0· '); // the dot goes down with the pair before it
 // The note's place: low, above the party strip, in areas with fog of sight; at the top everywhere else
@@ -435,5 +438,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, wholeFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, battleSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, bayerOn, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, wholeFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, battleSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
