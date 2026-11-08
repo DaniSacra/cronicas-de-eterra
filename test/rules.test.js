@@ -35,6 +35,7 @@ test('place label shows only while walking', () => {
   const base = { areaName: 'Vila de Valmor', floorShort: 'B1', floorName: 'Cripta de Valmor', gold: 20 };
   assert.deepEqual(R.placeLabel({ ...base, mode: 'town' }), { text: 'Vila de Valmor', gold: 20 });
   assert.deepEqual(R.placeLabel({ ...base, mode: 'explore' }), { text: 'B1 · Cripta de Valmor', gold: 20 });
+  assert.equal(R.placeLabel({ ...base, mode: 'explore', narrow: true }).text, 'B1 · Cripta', 'narrow phone: the first word only');
   for (const mode of ['battle', 'title', 'gameover']) assert.equal(R.placeLabel({ ...base, mode }), null, mode);
 });
 

@@ -672,7 +672,9 @@ function drawMinimap(now) {
     drawCells(c, ox, oy, cs, 0, 0, N, N, now);
     return;
   }
-  const R = 5, cs = 4, size = (R * 2 + 1) * cs, ox = VW - size - 6, oy = 6;
+  // the small map sits under the globe button, never behind it
+  const v = view.getBoundingClientRect(), g = wmBtn.hidden ? null : wmBtn.getBoundingClientRect();
+  const R = 5, cs = 4, size = (R * 2 + 1) * cs, ox = VW - size - 6, oy = 6 + (g ? Math.ceil(Math.max(0, g.bottom - v.top) * VH / v.height) : 0);
   drawWindow(c, ox - 4, oy - 4, size + 8, size + 18);
   c.save(); c.beginPath(); c.rect(ox, oy, size, size); c.clip();
   drawCells(c, ox - (G.x - R) * cs, oy - (G.y - R) * cs, cs, G.x - R, G.y - R, G.x + R + 1, G.y + R + 1, now);
@@ -744,7 +746,7 @@ function frame(now) {
     if (gameEl._ht !== h) { gameEl._ht = h; gameEl.style.setProperty('--hudtop-h', h); }
   }
   const F = FLOORS[G.floor];
-  HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold }));
+  HUD.place(placeLabel({ mode: G.mode, areaName: G.mode === 'town' ? TOWN.A.name : '', floorShort: F.short, floorName: F.name, gold: G.gold, narrow: innerWidth < 480 }));
   if (G.mode === 'title' || G.mode === 'ending') {
     TitleBG.draw(vctx, now); // o amanhecer sobre Erukh (src/titlebg.js), no título e no fim do prólogo
   } else if (G.mode === 'town') {

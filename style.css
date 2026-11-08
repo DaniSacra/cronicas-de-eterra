@@ -124,7 +124,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 
 /* Aviso curto no alto (lugar, comandos, objetivo): aparece quando muda e some sozinho */
 /* Aviso de lugar e objetivo: na coluna da esquerda, embaixo do nome do lugar, em letra legível */
-#info { flex-basis: 100%; max-width: min(100%, 28em); box-sizing: border-box;
+#info { flex-basis: 100%; max-width: min(100%, 34em); box-sizing: border-box;
   padding: calc(var(--u) * 2) calc(var(--u) * 4); font-size: var(--f2); line-height: 1.5; white-space: pre-line; color: var(--text);
   opacity: 0; transition: opacity .4s steps(4); pointer-events: none; }
 #info.show { opacity: 1; }
@@ -291,10 +291,12 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #hud .compass { translate: -50% -50%; color: var(--hi); }
 #hud .maptitle { translate: -50% -100%; color: var(--gold); text-shadow: none; }
 #hudbar { position: absolute; z-index: 4; top: calc(var(--u) * 4); left: calc(var(--u) * 4); display: flex; flex-wrap: wrap; gap: calc(var(--u) * 2);
-  align-items: flex-start; max-width: calc(100% - var(--u) * 8); pointer-events: none; }
+  align-items: flex-start; max-width: calc(100% - var(--u) * 14 - var(--globe, 0px)); pointer-events: none; } /* never under the globe */
+#game:has(#wmBtn:not([hidden])) { --globe: calc(var(--u) * 2 + 32px + var(--bw) * 2); }
 #hudbar > * { pointer-events: auto; }
 #hudbar .chip { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: var(--u) calc(var(--u) * 3); font-size: var(--f1);
   white-space: nowrap; min-width: 0; overflow: hidden; }
+#hudbar .chip .coin { margin-left: calc(var(--u) * 2); }
 #hudbar .chip .pl { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 #hudbar [hidden] { display: none !important; }
 .coin { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--hi);

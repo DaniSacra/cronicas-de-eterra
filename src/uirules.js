@@ -17,9 +17,10 @@ function fontScale(w, h, dpr = 1) {
 }
 
 // Place + coins label: only while walking (town or crypt); hidden in battle, title and game over
+// (on a narrow phone the crypt keeps only the first word of its name: "B1 · Cripta")
 function placeLabel(s) {
   if (s.mode === 'town') return { text: s.areaName, gold: s.gold };
-  if (s.mode === 'explore') return { text: `${s.floorShort} · ${s.floorName}`, gold: s.gold };
+  if (s.mode === 'explore') return { text: `${s.floorShort} · ${s.narrow ? s.floorName.split(' ')[0] : s.floorName}`, gold: s.gold };
   return null;
 }
 
