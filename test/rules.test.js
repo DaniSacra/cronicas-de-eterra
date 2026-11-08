@@ -131,6 +131,17 @@ test('small areas fill the view with a little zoom (never more than 1.5x), the r
   }
 });
 
+test('portrait phones walk the town about 12 tiles across, at a whole scale; landscape and PC unchanged', () => {
+  for (const [bw, bh] of [[1170, 2532], [780, 1688], [1081, 2402], [1080, 2400], [1284, 2778]]) {
+    const v = R.viewFit(bw, bh, { minW: R.TOWN_MIN_W });
+    assert.ok(v.w >= 160 && v.w <= R.TOWN_MIN_W + 24 && Number.isInteger(v.s) && v.w * v.s >= bw, `${bw}x${bh}: ${JSON.stringify(v)}`);
+  }
+  assert.deepEqual(R.viewFit(1280, 720, { minW: R.TOWN_MIN_W }), R.viewFit(1280, 720));
+  assert.deepEqual(R.viewFit(2532, 1170, { minW: R.TOWN_MIN_W }), R.viewFit(2532, 1170));
+  const cem = { w: 256, h: 192 };
+  assert.equal(R.viewFit(1170, 2532, { minW: R.TOWN_MIN_W, room: cem }).s, 6, 'small areas: the same zoom as before');
+});
+
 test('town camera: centered on the party above the dialog box, small areas centered in the free part', () => {
   assert.equal(R.camAxis(100, 400, 180), 18);
   assert.equal(R.camAxis(390, 400, 180), 220, 'clamped at the bottom edge');

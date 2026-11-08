@@ -108,9 +108,12 @@ const talkLines = (lines, heroIds, inParty) => lines.filter(([who]) => !heroIds.
 
 // Screen fit: logical resolution follows the window at a whole scale of device pixels (base 320x180 at 4x in 1280x720)
 // o.room: a small area (logical px) that should fill the view: zoom in up to 1.5x the normal scale, never less
+// o.minW: on a portrait screen, the view is at most this wide (the town walks at a readable size: about 12 tiles across)
+const TOWN_MIN_W = 176;
 function viewFit(bw, bh, o = {}) {
   const s = Math.max(1, Math.floor(Math.min(bw / 288, bh / 180)));
-  const z = o.room ? Math.max(s, Math.min(Math.floor(s * 1.5), Math.floor(Math.max(bw / o.room.w, bh / o.room.h)))) : s;
+  const zr = o.room ? Math.max(s, Math.min(Math.floor(s * 1.5), Math.floor(Math.max(bw / o.room.w, bh / o.room.h)))) : s;
+  const z = Math.max(zr, o.minW && bh > bw ? Math.floor(bw / o.minW) : 0);
   const lo = z > s ? 1 : 0; // zoomed in, the view may be smaller than 288x180
   let w = Math.min(512, Math.max(lo || 288, Math.ceil(bw / z))), h = Math.min(900, Math.max(lo || 180, Math.ceil(bh / z)));
   w += w & 1; h += h & 1;
@@ -412,5 +415,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
