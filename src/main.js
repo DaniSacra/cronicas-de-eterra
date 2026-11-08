@@ -597,10 +597,12 @@ async function quickDungeon() {
 async function gameOver() {
   G.mode = 'gameover'; G.busy = true;
   Music.stop(); Sfx.gameover();
-  UI.showOverlay(`<div class="title"><h1 class="red">${logoText('FIM DE JOGO')}</h1><p class="sub">A escuridão engoliu o grupo...</p></div>`, 'ov-dark');
+  UI.showOverlay(`<div class="title"><h1 class="red">${logoText('FIM DE JOGO')}</h1><div class="sub end"><p>A escuridão engoliu o grupo...</p></div></div>`, 'ov-dark');
+  document.getElementById('game').classList.add('on-end');
   let v;
   do v = await UI.choose([{ label: 'Continuar do último save', value: 'load', disabled: !hasSave() }, { label: 'Novo Jogo', value: 'new' }], { title: '', cols: 1 });
   while (v === 'new' && !await replaceSaveOk(hasSave()));
+  document.getElementById('game').classList.remove('on-end');
   UI.hideOverlay();
   if (v === 'load' && loadGame()) { G.busy = false; exploreHint(); }
   else await newGame();
