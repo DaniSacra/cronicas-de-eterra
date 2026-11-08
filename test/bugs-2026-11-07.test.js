@@ -171,7 +171,7 @@ test('Defesa and Resistência: the Heroes screen shows the points and the share 
   assert.equal(run('guardText(22.5)'), '23%');
   assert.equal(run('guardText(0)'), '0%');
   assert.equal(run('guardText(1000)'), '76%', 'no cap at 75 any more, and never 80');
-  assert.match(require('node:fs').readFileSync(`${__dirname}/../src/equipview.js`, 'utf8'), /reduz \$\{guardText\(r\.value\)\} do dano.*\n.*<b>\$\{r\.value\}<\/b>/);
+  assert.match(require('node:fs').readFileSync(`${__dirname}/../src/equipview.js`, 'utf8'), /corta \$\{guardText\(r\.value\)\}.*\n.*<b>\$\{r\.value\}<\/b>/);
 });
 
 test('combat: the bar opens on the last command, a single skill still opens the list, the list shows what a spell does', async () => {

@@ -380,6 +380,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .hv-party { flex: 1; display: flex; gap: calc(var(--u) * 2); justify-content: center; align-items: center; }
 .hv-mini { padding: var(--u) !important; border: var(--bw) solid transparent !important; border-image: var(--frame-slot) 4 fill / var(--bw) round !important; }
 .hv-mini.on { border-image-source: var(--frame-sel) !important; box-shadow: 0 calc(var(--u) * 2) 0 calc(var(--u) * -1) var(--c); }
+.hv-mini { display: flex !important; align-items: center; gap: calc(var(--u) * 2); } .hv-mini span { padding-right: calc(var(--u) * 2); } .hv-mini.on span { color: var(--gold); }
+#heroview[data-mode="tabs"] .hv-mini span { display: none; }
 .hv-mini img { display: block; width: calc(var(--f2) * 3); height: calc(var(--f2) * 3); image-rendering: pixelated; }
 .hv-mini.ko img, .bk-ribbon.ko { filter: grayscale(1) brightness(.75); }
 .hv-arrow { color: var(--gold) !important; padding: calc(var(--u) * 2) !important; }
@@ -412,16 +414,19 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview .hv-slot.sel { border-image-source: var(--frame-sel); }
 .hv-slot { display: flex !important; gap: calc(var(--u) * 3); align-items: center; padding: calc(var(--u) * 2) !important; color: var(--text) !important; line-height: 1.25; min-width: 0; }
 .hv-slot.open { background: var(--win2) !important; }
-.hv-slot > span:last-child { min-width: 0; }
+.hv-slot > span:last-child { flex: 1; min-width: 0; }
+.hv-swap { float: right; margin-left: calc(var(--u) * 2); white-space: nowrap; color: var(--dim); } .hv-slot.sel .hv-swap, .hv-slot:hover .hv-swap { color: var(--gold); }
 .hv-sheet { display: flex; flex-direction: column; gap: calc(var(--u) * 1.5); padding: calc(var(--u) * 4) calc(var(--u) * 5); min-height: 0; overflow: hidden; }
 .hv-bar { display: flex; justify-content: space-between; align-items: baseline; }
 .hv-bar b { font-weight: normal; } #heroview .hv-bar b small { display: inline; }
 .hv-en { margin: var(--u) 0 calc(var(--u) * 2); color: #9a6a18; }
 .hv-sheet > .bar { height: calc(var(--u) * 4); margin: 0 0 var(--u); }
-.hv-stats { display: grid; gap: var(--u); margin-top: calc(var(--u) * 2); }
-.hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 3em; column-gap: calc(var(--u) * 3); align-items: center; }
+.hv-stats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(var(--u) * 2) calc(var(--u) * 6); margin-top: calc(var(--u) * 2); }
+.hv-stat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 2.5em; column-gap: calc(var(--u) * 3); align-items: center; }
 .hv-stat .hv-ico { width: calc(var(--f2) * 1.5); height: calc(var(--f2) * 1.5); }
-.hv-stat b { font-weight: normal; }
+.hv-stat b { font-weight: normal; font-size: var(--fd); }
+.hv-next { margin-top: calc(var(--u) * 3); padding-top: calc(var(--u) * 3); border-top: var(--u) solid var(--rim); }
+.hv-next > div { display: flex; gap: calc(var(--u) * 3); align-items: center; } .hv-next b { font-weight: normal; display: block; }
 .hv-cut { display: block; font-size: inherit; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: clip; }
 .hv-story { margin-top: calc(var(--u) * 3); display: grid; gap: var(--u); }
 .hv-quote { color: var(--gold); }
@@ -532,6 +537,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"] .hv-top { flex-wrap: wrap; }
 #heroview[data-mode="tabs"] .bg-tabs { order: 3; flex-basis: 100%; }
 #heroview[data-mode="tabs"] .bk-right > .hv-btn { align-self: flex-start; }
+@media (orientation: portrait) { #heroview[data-mode="tabs"] .hv-stats { grid-template-columns: minmax(0, 1fr); } }
 @media (orientation: portrait) { #heroview[data-mode="tabs"] .hv-slots { grid-template-columns: minmax(0, 1fr); gap: calc(var(--u) * 2); } }
 /* phone on its side: Palco and Ficha move into the top bar, the stage puts the scene beside the name and the slots,
    the sheet puts the story beside the numbers, so nothing needs to scroll */
@@ -547,7 +553,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   #heroview[data-mode="tabs"] .hv-slots { grid-template-columns: minmax(0, 1fr); align-content: end; }
   #heroview[data-mode="tabs"][data-view="sheet"] .hv-sheet:not(.hv-choice) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: calc(var(--u) * 6); align-content: start; overflow: hidden; }
   #heroview[data-mode="tabs"] .hv-sheet > * { grid-column: 1; }
-  #heroview[data-mode="tabs"] .hv-sheet > .hv-story { grid-column: 2; grid-row: 1 / 6; margin-top: 0; align-content: start; }
+  #heroview[data-mode="tabs"] .hv-sheet > .hv-side { grid-column: 2; grid-row: 1 / 8; } #heroview[data-mode="tabs"] .hv-side > .hv-next { margin-top: 0; padding-top: 0; border: 0; }
   #heroview[data-mode="tabs"] .bg-tabs { order: 0; flex-basis: auto; }
 }
 

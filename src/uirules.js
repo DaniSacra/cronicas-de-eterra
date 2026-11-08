@@ -263,7 +263,14 @@ const xpLeftText = (xp, lv, next) => `Faltam ${Math.max(0, next - xp)} XP para o
 
 // A hero's story grows with the game: each line has a flag (or none) and shows once the flag is set;
 // only the last STORY_MAX show, so the sheet never scrolls
-const STORY_MAX = 3;
+const STORY_MAX = 2; // plus the quote: three short sentences, no scroll
+// "Próxima técnica": the level of the hero's next skill and a hint of what it does, without its name
+const HINT_KIND = { phys: 'Um golpe', mag: 'Uma magia', heal: 'Uma cura', holy: 'Uma luz', revive: 'Uma bênção' };
+const HINT_TARGET = { enemy: 'contra um inimigo', allEnemies: 'contra todos os inimigos', ally: 'para um aliado', deadAlly: 'que levanta um aliado caído', allAllies: 'para todo o grupo' };
+function nextSkill(spells, lv, SPELLS) {
+  const n = spells.find(([at]) => at > lv);
+  return n && { lv: n[0], hint: `${HINT_KIND[SPELLS[n[1]].kind]} ${HINT_TARGET[SPELLS[n[1]].target]}.` };
+}
 const storyLines = (lines, flags) => lines.filter(l => !l.when || flags[l.when]).map(l => l.text).slice(-STORY_MAX);
 // The quote: the last unlocked one
 const storyQuote = (quotes, flags) => storyLines(quotes, flags).at(-1) || '';
@@ -400,4 +407,4 @@ const titleOptions = (save, dev) => [{ label: 'Novo Jogo', value: 'new' }, { lab
   ...(dev ? [{ label: 'Começar em...', hint: 'modo dev', value: 'dev' }] : [])];
 
 if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, viewFit, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
-  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
+  slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

@@ -63,7 +63,7 @@ test('attributes with equipment bonus and a bar against the best of the party', 
 test('the story grows with flags and never shows a spoiler or an em dash', () => {
   const a = D.HERO_STORY.aldo;
   assert.equal(R.storyLines(a.lines, {}).length, 2);
-  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).length, R.STORY_MAX, 'only the last three show');
+  assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).length, R.STORY_MAX, 'only the last two show, and the quote makes three');
   assert.equal(R.storyLines(a.lines, { quest: 1, bossDead: true }).at(-1), a.lines.at(-1).text);
   assert.equal(R.storyQuote(a.quotes, {}), 'Vim procurar trabalho. Só isso.');
   assert.equal(R.storyQuote(a.quotes, { bossDead: true }), 'Trabalho não falta. Isso eu garanto.');
@@ -116,4 +116,16 @@ test('book: which skills work outside battle, the Usar button grey with the reas
   assert.equal(R.spellEffect(S.golpe, { atk: 20, mag: 0 }), 'Cerca de 28 de dano');
   assert.match(R.spellEffect(S.quebraJunta, { atk: 20, mag: 0 }), /mortos-vivos/);
   for (const [k, sp] of Object.entries(S)) assert.ok(!R.spellEffect(sp, { atk: 10, mag: 10 }).includes('NaN'), k);
+});
+
+test('"Próxima técnica": the level of the next skill and a hint without its name; none after the last', () => {
+  const aldo = D.PARTY_DEFS.find(d => d.id === 'aldo'), teo = D.PARTY_DEFS.find(d => d.id === 'teo');
+  assert.deepEqual(R.nextSkill(aldo.spells, 5, D.SPELLS), { lv: 6, hint: 'Um golpe contra um inimigo.' });
+  assert.deepEqual(R.nextSkill(aldo.spells, 6, D.SPELLS), { lv: 12, hint: 'Um golpe contra todos os inimigos.' });
+  assert.equal(R.nextSkill(aldo.spells, 12, D.SPELLS), undefined);
+  assert.equal(R.nextSkill(teo.spells, 4, D.SPELLS).hint, 'Uma bênção que levanta um aliado caído.');
+  for (const d of D.PARTY_DEFS) for (const [lv] of d.spells) {
+    const n = R.nextSkill(d.spells, lv - 1, D.SPELLS);
+    assert.ok(n && !/undefined|—/.test(n.hint), `${d.id} ${lv}`);
+  }
 });

@@ -67,7 +67,7 @@ const HeroView = (() => {
   // ---------- Top bar: mini portraits with the arrows next to the first and the last, Fechar on the right ----------
   function heroStrip() {
     const minis = G.party.map((p, i) => `<button class="hv-mini${i === cur ? ' on' : ''}${p.hp <= 0 ? ' ko' : ''}" data-act="hero" data-v="${i}"
-      style="--c:${pdef(p).color}" aria-label="${esc(pdef(p).name)}"><img src="${face(p.id)}" alt=""></button>`).join('');
+      style="--c:${pdef(p).color}" aria-label="${esc(pdef(p).name)}"><img src="${face(p.id)}" alt=""><span>${esc(pdef(p).name)}</span></button>`).join('');
     return `<div class="hv-top win"><div class="hv-party">${btn('step', -1, '◀', 'hv-arrow')}${minis}${btn('step', 1, '▶', 'hv-arrow')}</div>
       ${btn('close', 0, 'Fechar', 'hv-close')}</div>`;
   }
@@ -96,7 +96,7 @@ const HeroView = (() => {
   function stageCol(m, d) {
     const dead = m.hp <= 0, bg = HERO_FACE_BG[m.id], slots = slotGear(m.id, ownedEquips(), EQUIPS, START_GEAR, choice());
     const slotBtn = (s, i) => `<button class="hv-slot win${i === slot ? ' sel' : ''}${choosing && i === slot ? ' open' : ''}" data-act="slot" data-v="${i}" title="${s.label}">
-      <span class="hv-box slot-frame">${icon(s.icon)}</span><span>${esc(s.name)}<br>${s.start ? '<i class="dim">sem bônus</i>' : `<em>${esc(bonusText(s.bonus, STAT_NAMES))}</em>`}</span></button>`;
+      <span class="hv-box slot-frame">${icon(s.icon)}</span><span>${esc(s.name)}<br>${s.start ? '<i class="dim">sem bônus</i>' : `<em>${esc(bonusText(s.bonus, STAT_NAMES))}</em>`}<span class="hv-swap">Trocar ▸</span></span></button>`;
     return `<section class="hv-stage-col" style="--b0:${bg[0]};--b1:${bg[1]};--b2:${bg[2]};--b3:${bg[3]}">
       <div class="hv-band"><p><span class="hv-name" style="color:${d.color}">${esc(d.name)}</span> ${esc(d.cls)} · Nível ${m.lv}${dead ? '<span class="hv-ko">Caído</span>' : ''}</p><div class="bar xp"><i style="width:${m.lv >= MAX_LEVEL ? 100 : Math.min(100, 100 * m.xp / xpNext(m.lv))}%"></i></div>
         <p>${m.lv >= MAX_LEVEL ? 'Nível máximo' : xpLeftText(m.xp, m.lv, xpNext(m.lv))}</p></div>
@@ -110,13 +110,16 @@ const HeroView = (() => {
     const totals = G.party.map(p => ({ total: Object.fromEntries(STAT_KEYS.map(k => [k, stat(p, k)])), bonus: p.bonus }));
     const statIcon = { atk: 'atk', def: 'def', mag: 'spell', res: 'res', agi: 'run' };
     const st = storyLines(HERO_STORY[m.id].lines, flags()), q = storyQuote(HERO_STORY[m.id].quotes, flags());
+    const d = pdef(m), nx = nextSkill(d.spells, m.lv, SPELLS);
+    const next = nx ? `<div class="hv-next"><h4>Próxim${gender(d.skillWord)} ${d.skillWord.toLowerCase()}</h4><div><span class="hv-box slot-frame">${icon('spell', 'dis')}</span>
+      <p><b class="px">??? · Nível ${nx.lv}</b><small>${esc(nx.hint)}</small></p></div></div>` : '';
     const bar = (lbl, v, max, cls) => `<div class="hv-bar"><span>${lbl}</span><b>${v}<small>/${max}</small></b></div>
       <div class="bar ${cls}"><i style="width:${max ? 100 * v / max : 0}%"></i></div>`;
     return `<section class="hv-sheet win">` + bar('PV', m.hp, maxHp(m), '') +
       (usesEnergy(m) ? `<p class="hv-en">Energia: começa cada luta em ${ENERGY.start} e vai até ${ENERGY.max}</p>` : bar('PM', m.mp, maxMp(m), 'mp')) +
-      `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}${r.key === 'def' || r.key === 'res' ? `<small class="hv-cut">reduz ${guardText(r.value)} do dano</small>` : ''}</span>
+      `<div class="hv-stats">${statRows(totals, cur).map(r => `<div class="hv-stat">${icon(statIcon[r.key])}<span>${STAT_FULL[r.key]}${r.key === 'def' || r.key === 'res' ? `<small class="hv-cut">corta ${guardText(r.value)}</small>` : ''}</span>
         <b>${r.value}</b><em>${r.bonus ? '+' + r.bonus : ''}</em></div>`).join('')}</div>
-      <div class="hv-story">${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div></section>`;
+      <div class="hv-side">${next}<div class="hv-story">${st.map(t => `<p>${esc(t)}</p>`).join('')}<p class="hv-quote">"${esc(q)}"</p></div></div></section>`;
   }
   const choices = m => gearChoices(m.id, GEAR_SLOTS[slot][0], ownedEquips(), EQUIPS, choice());
   function choiceCol(m) {
