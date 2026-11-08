@@ -141,6 +141,12 @@ function camLift(pos, size, view, pad = 0) {
   return Math.max(base, Math.min(camAxis(pos, size, view, pad), need));
 }
 
+// A w x h art canvas shown at the biggest whole number of device pixels per art pixel that fits rw x rh CSS px
+function wholeFit(rw, rh, w, h, dpr = 1) {
+  const k = Math.max(1, Math.floor(Math.min(rw * dpr / w, rh * dpr / h)));
+  return { w: w * k / dpr, h: h * k / dpr, k };
+}
+
 // Battle: enemies stand on a floor line just above the command bar, at the biggest whole scale that fits
 // their slot (art pixels stay square, never blurry). Common enemies keep room for the HP bar under them.
 const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE_BACK = 0.08;
@@ -427,5 +433,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, infoLabel, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, wholeFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };

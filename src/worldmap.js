@@ -216,8 +216,8 @@ const WorldMap = (() => {
   }
   function fit() {
     if (!open) return;
-    const r = cell.getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 700);
-    mapBox.style.width = Math.floor(1000 * s) + 'px'; mapBox.style.height = Math.floor(700 * s) + 'px';
+    const r = cell.getBoundingClientRect(), f = wholeFit(r.width, r.height, W, H, window.devicePixelRatio || 1); // square art pixels
+    mapBox.style.width = f.w + 'px'; mapBox.style.height = f.h + 'px';
   }
 
   function render() {

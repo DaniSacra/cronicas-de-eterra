@@ -286,7 +286,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .wm-info .wm-tag { color: var(--dim); margin-bottom: calc(var(--u) * 3); }
 .wm-info p { margin: 0 0 calc(var(--u) * 3); user-select: text; -webkit-user-select: text; }
 @media (orientation: portrait), (max-width: 700px) {
-  #worldmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 38%); }
+  #worldmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); } /* the map as tall as it needs, the list takes the rest */
+  .wm-cell { aspect-ratio: 250 / 175; max-height: 62vh; }
 }
 
 /* ---- HUD em DOM (src/hud.js): rótulos na mesma escala de texto do resto ---- */

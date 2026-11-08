@@ -24,6 +24,12 @@ test('no text under the body minimum: 16 px on a PC screen, 12 on a phone, in ev
   for (const [, n] of css.matchAll(/font-size:\s*([\d.]+)px/g)) assert.ok(+n === 0 || +n >= 12, `font-size ${n}px`);
 });
 
+test('world map: a whole number of device pixels per art pixel, as big as fits', () => {
+  assert.deepEqual(R.wholeFit(372, 260, 250, 175, 3), { w: 1000 / 3 * 1, h: 700 / 3, k: 4 });
+  assert.deepEqual(R.wholeFit(1000, 700, 250, 175, 1), { w: 1000, h: 700, k: 4 });
+  assert.equal(R.wholeFit(100, 50, 250, 175, 1).k, 1, 'never under 1');
+});
+
 test('fontScale: PC, large PC and phone', () => {
   assert.deepEqual(R.fontScale(1280, 800, 1), { f1: 16, f2: 16, fd: 24 });
   assert.deepEqual(R.fontScale(1000, 650, 1), { f1: 16, f2: 16, fd: 16 }); // 12 would blur at 1x: crispPx rounds it to 16
