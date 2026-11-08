@@ -192,7 +192,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #game.in-town #touch [data-k="ArrowRight"]::after { content: '▶'; font-size: 26px; }
 /* Arrows and ✕ are not (or look tiny) in the pixel font: drawn by the system font at a larger, bold size */
 #touch .glyph { font-family: system-ui, sans-serif; font-size: 26px; font-weight: 700; }
-@media (pointer: coarse) { #touch { display: flex; position: absolute; left: 8px; bottom: 8px; width: calc(100% - var(--hudw, 0px) - 16px); margin: 0; opacity: .6; pointer-events: none; }
+@media (pointer: coarse) { #touch { display: flex; position: absolute; left: calc(8px + env(safe-area-inset-left)); bottom: calc(8px + env(safe-area-inset-bottom));
+    width: calc(100% - var(--hudw, 0px) - 16px - env(safe-area-inset-left) - env(safe-area-inset-right)); /* clear of the notch and the home bar */ margin: 0; opacity: .6; pointer-events: none; }
   #touch .pad, #touch .pad2 { pointer-events: auto; } #touch .pad { grid-template-columns: repeat(3, 48px); }
   #game.talking #touch .pad { visibility: hidden; } }
 @media (orientation: portrait) {
@@ -206,7 +207,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   .card .num b { display: none; } .card .mpn { color: #2a5aa0; } .card .mpn.en { color: #9a6a18; }
   .card { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 2); } .card .pf { align-self: center; }
 }
-@media (orientation: portrait) and (pointer: coarse) { #bottom { padding-bottom: 150px; } #touch { width: calc(100% - 16px); opacity: .9; } }
+@media (orientation: portrait) and (pointer: coarse) { #bottom { padding-bottom: 150px; } #touch { width: calc(100% - 16px - env(safe-area-inset-left) - env(safe-area-inset-right)); opacity: .9; } }
 @media (orientation: landscape) and (max-height: 500px) { .card { padding: 6px 8px; } .card .cls { display: none; } #msgbox { line-height: 1.6; } }
 
 /* ajustes do protótipo */

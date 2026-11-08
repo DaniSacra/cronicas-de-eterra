@@ -156,6 +156,15 @@ document.querySelectorAll('#touch [data-k]').forEach(b => {
   b.addEventListener('pointerleave', () => G.held.delete(normKey(key)));
 });
 
+// Installed app: Android's Back button is the ✕ (closes a window, opens the menu) instead of closing the game
+if (typeof matchMedia === 'function' && matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches) {
+  history.pushState({ eterra: 1 }, '');
+  window.addEventListener('popstate', () => {
+    history.pushState({ eterra: 1 }, '');
+    onKeyDown({ key: 'Escape', repeat: false }); G.held.delete(normKey('Escape'));
+  });
+}
+
 // ---------- Movimento ----------
 function doAction(act) {
   if (act === 'left' || act === 'right') {
