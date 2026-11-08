@@ -28,7 +28,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
 .px, h1, h2, h3, h4, .title .sub:not(.end), .num, .card .nm, .card .lv, .float, #hudbar .chip, #hudtop .label, #cmdbar, #menu.icons .opt, #info::first-line,
   .hv-close, .hv-btn, .hv-cost, .hv-box > b, .bg-gold, .bg-tabs, .bk-title, .hv-name, .hv-bar b, .hv-stat b, .hv-seal, .hv-ko, .bk-ribbon,
   .card.elo::after { font-family: var(--font-pixel); font-size-adjust: none; }
-#game { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+/* Installed app in full screen: keep clear of the notch, the rounded corners and the home bar */
+#game { position: fixed; inset: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 #game.on-title #party, #game.on-title #info { display: none !important; }
 
 #screen { position: relative; min-width: 0; min-height: 0; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
