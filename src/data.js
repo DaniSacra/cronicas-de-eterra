@@ -268,11 +268,13 @@ const FIELD_KINDS = {
   beam:     { verb: 'atravessa', block: true },
   chest:    { verb: 'abre',      block: true },
   rune:     { verb: 'ilumina',   block: true },
-  hurt:     { verb: 'cura',      block: true },
+  hurt:     { verb: 'cura',      block: true, gone: true }, // a lame leg, under the horse (nothing once healed)
   sign:     { block: true },               // a stone with something to read (look)
-  rope:     { gone: true },
+  rope:     { gone: true },                // the loose rope bridge, drawn over the ravine until it is tied
   falls:    { block: true },               // a frozen waterfall (scenery)
-  cave:     {},                            // the dark mouth of a grotto (scenery; the exit is the tile)                // the loose rope bridge, drawn over the ravine until it is tied
+  cave:     {},                            // the dark mouth of a grotto (scenery; the exit is the tile)
+  gate:     { block: true, gone: true },   // the corral gate: it swings open once the way in front of it is clear
+  stone:    { block: true },               // a stone frozen into the lake (stops a slide)
 };
 
 const KEY_ITEMS = {

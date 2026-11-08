@@ -27,7 +27,7 @@ Object.assign(LOOKS, {
 // ---------- Plantas das áreas: uma letra por tile ----------
 const C1_TILES = { T: TILE.TREE, '.': TILE.GRASS, ':': TILE.PATH, r: TILE.BUSH, '~': TILE.WATER, '=': TILE.FORD, f: TILE.FLOWER,
   // exploration: cliff ledge, ramp, wooden bridge, ravine, avalanche, wheel ruts, dead pine, a flat stone in the brook, ice
-  '^': TILE.CLIFF, '/': TILE.RAMP, H: TILE.BRIDGE, '#': TILE.CHASM, A: TILE.SNOWPILE, u: TILE.RUTS, x: TILE.DEADTREE, P: TILE.FORD, I: TILE.ICE };
+  '^': TILE.CLIFF, '/': TILE.RAMP, H: TILE.BRIDGE, '#': TILE.CHASM, A: TILE.SNOWPILE, u: TILE.RUTS, x: TILE.DEADTREE, P: TILE.FORD, I: TILE.ICE, n: TILE.FENCE };
 const planGrid = plan => Uint8Array.from(plan.join(''), ch => C1_TILES[ch]);
 
 // ---------- 1 · Despedida em Valmor ----------
@@ -184,7 +184,6 @@ const ROAD_FOES = {
   crow: { foe: 'crow', ids: ['corvo', 'corvo'], intro: 'Corvos mergulham do escuro!', perch: true },
 };
 const roamer = (kind, x, y) => ({ ...ROAD_FOES[kind], x, y });
-const PASTO_ENCOUNTERS = [ROAD_FOES.wolf, ROAD_FOES.wolf, ROAD_FOES.wolf2];
 const ESTRADA_ROAMERS = () => [roamer('wolf', 18, 39), roamer('wolf', 16, 43), roamer('wolf2', 7, 47), roamer('wolf', 20, 33),
   roamer('wolf2', 17, 19), roamer('wolf2', 6, 11), roamer('wolf', 6, 13), roamer('crow', 21, 4)];
 
@@ -378,7 +377,7 @@ async function gervasioTalk() {
       ['Gervásio', 'Tragam os quatro de volta e eles são de vocês até Arcaval. Lá eu busco.'],
       ['aldo', 'Feito.']]);
     saveGame();
-    await UI.say('Objetivo: trazer os quatro cavalos do pasto, a leste do Vau.\nOs lobos espantam os cavalos. Cheguem perto com nenhum lobo por perto.');
+    await UI.say('Objetivo: trazer os quatro cavalos do pasto, a leste do Vau.\nCada um está preso de um jeito. Os lobos espantam os cavalos: evitem lutar perto deles.');
     return;
   }
   if (horsesCaught(G.seen) >= HORSES && !c1('cavalos')) return horsesBack();
@@ -400,7 +399,7 @@ Object.assign(AREAS.vau, {
   exits: [
     { x: 11, y: 19, check: () => 'A estrada volta para o sul, para Valmor. A carta segue para o norte.' },
     { x: 12, y: 19, check: () => 'A estrada volta para o sul, para Valmor. A carta segue para o norte.' },
-    { x: 23, y: 10, to: 'pasto', pos: { x: 1, y: 8, dir: 1 }, check: () => c1('gervasio') ? null : 'Uma cerca e um pasto coberto de névoa. Melhor falar antes com o dono do haras.' },
+    { x: 23, y: 10, to: 'pasto', pos: { x: 1, y: 12, dir: 1 }, check: () => c1('gervasio') ? null : 'Uma cerca e um pasto coberto de névoa. Melhor falar antes com o dono do haras.' },
     { x: 11, y: 0, enter: () => leaveVau() }, { x: 12, y: 0, enter: () => leaveVau() },
   ],
   goal() {
@@ -477,28 +476,57 @@ async function diceGame() {
 }
 
 // ---------- O Pasto do Vau ----------
+// Four horses, each held a different way (docs/planos/exploracao-estrada-pasto.md): the brown one shut in the corral
+// behind two fallen posts, the white one on an island of the frozen lake, the black one shy in the middle of the field
+// (it sees a fan in front of it and turns now and then), the painted one lame at the foot of the bank, behind icicles.
+// The wolves walk on the map; a fight close to a horse sends it running.
 const PASTO_PLAN = [
-  'TTTTTTTTTTTTTTTTTTTT',
-  'TT......r.........TT',
-  'T...............r..T',
-  'T..r......T........T',
-  'T..................T',
-  'T.......r......T...T',
-  'T..T...............T',
-  'T..............r...T',
-  ':..................T',
-  'T....r.....T.......T',
-  'T..................T',
-  'T.........r....r...T',
-  'T..T...............T',
-  'T.....r............T',
-  'TT...............TTT',
-  'TTTTTTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTTTIIIIIIIIITTTTTTTTT',
+  'TT.......TTTTTIIIIIIIIITTT.....T',
+  'TT.nnnnnn.TTTTIIII..IIITT......T',
+  'TT.n....n..TTTIIIIIIIIIT....T..T',
+  'TT.n....n...TTIIIIIIIIIT.......T',
+  'TT.nnn.nn....T.........T...T...T',
+  'TT............................TT',
+  'TT..........T......T..........TT',
+  'TT..........................T.TT',
+  'TT...T....................T...TT',
+  'T.......T..........T...........T',
+  ':..............................T',
+  'T....T.........................T',
+  'TT.......................T.....T',
+  'TT..T..............T...........T',
+  'TT...........T.................T',
+  'TTT.....T............^^^/^^^^TTT',
+  'TTT..................^.......^TT',
+  'TTTT....T...T........^.......^TT',
+  'TTTT.................^.......^TT',
+  'TTTTT......T.........^^^^^^^^^TT',
+  'TTTTTTT.........TTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
-const HORSE_SPOTS = [[4, 3, ['#9a6232', '#26202e']], [15, 3, ['#e8eff8', '#a2a2ac']], [4, 12, ['#26262e', '#55555e']], [16, 12, ['#b07c58', '#f4cca0']]];
+const PASTO_START = { x: 1, y: 12, dir: 1 };
+const HORSE_COATS = [['#9a6232', '#26202e'], ['#e8eff8', '#a2a2ac'], ['#26262e', '#55555e'], ['#b07c58', '#f4cca0']];
+const HORSE_SPOTS = [[5, 5], [19, 3], [17, 12], [25, 19]];
+const GATE_SWING = [[6, 7], [6, 8]]; // the gate opens outwards over these two tiles
+// A horse already caught leaves its puzzle solved: an old save finds the gate open and the icicles gone
+const PASTO_FIELD = () => {
+  const corral = c1('cavalo1'), bank = c1('cavalo4');
+  return [
+    { id: 'porteira', kind: 'gate', x: 6, y: 6, open: corral, look: 'Mourões caídos estão no caminho da porteira.' },
+    ...GATE_SWING.map(([x, y], i) => ({ id: 'mourao' + (i + 1), kind: 'post', x: corral ? x + 1 : x, y, puzzle: 'porteira' })),
+    ...[[17, 1], [17, 3], [18, 5]].map(([x, y], i) => ({ id: 'pedra' + (i + 1), kind: 'stone', x, y })),
+    { id: 'pingentes', kind: 'icicles', x: 24, y: 17, open: bank, look: 'Pingentes de gelo fecham a descida do barranco.' },
+    { id: 'pata', kind: 'hurt', x: 25, y: 19, open: bank },
+  ];
+};
+const PASTO_ROAMERS = () => [roamer('wolf', 15, 10), roamer('wolf', 9, 15), roamer('wolf2', 27, 4), roamer('wolf2', 11, 19)];
+const gateClear = objs => objs.filter(o => o.def.puzzle === 'porteira').every(o => !GATE_SWING.some(([x, y]) => o.x === x && o.y === y));
+
 const FLEE_NEAR = 4;
-// The horses this close to a fight (Manhattan distance) bolt with the noise
-const horsesNear = (p, npcs, d = FLEE_NEAR) => npcs.filter(n => n.def.horse && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= d);
+// The horses this close to a fight (Manhattan distance) bolt with the noise; the lame one cannot run
+const horsesNear = (p, npcs, d = FLEE_NEAR) => npcs.filter(n => n.def.horse && !n.def.lame && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= d);
 // One step away from the threat: the free neighbor farthest from it (stays put when cornered)
 function fleeStep(h, from, free) {
   let best = null, bd = Math.hypot(h.x - from.x, h.y - from.y);
@@ -508,37 +536,68 @@ function fleeStep(h, from, free) {
   }
   return best;
 }
-const horseFree = (x, y) => TOWN.walkable(x, y) && x > 0 && !npcAt(x, y) && !partyAt(x, y);
+// A horse never runs onto the ice of the lake
+const horseFree = (x, y) => TOWN.walkable(x, y) && TOWN.tileAt(x, y) !== TILE.ICE && x > 0 && !npcAt(x, y) && !partyAt(x, y) && !roamerAt(x, y);
 async function horseRun(h, from, steps = 3) {
   h.fleeing = true;
   for (let i = 0; i < steps; i++) {
     const s = fleeStep(h, from, horseFree);
     if (!s) break;
-    h.dir = s.x > h.x ? 1 : s.x < h.x ? 3 : h.dir;
+    h.dir = s.x > h.x ? 1 : s.x < h.x ? 3 : s.y > h.y ? 2 : 0;
     moveActor(h, s.x, s.y, 160);
     await wait(170);
   }
   h.fleeing = false;
 }
+// The shy horse: it sees the party in the fan in front of it and runs; from behind or from the side it lets Andilla
+// take the rein
+const horseSees = h => [TOWN.p, ...TOWN.followers].some(a => inCone(h, h.dir, a));
+async function shyRun(h) {
+  Sfx.alert();
+  await horseRun(h, TOWN.p);
+  h.dir = dirTo(h, TOWN.p.x, TOWN.p.y); // it stops and looks back at whoever scared it
+  h.turn = rnd(3000, 5000);
+  if (!c1('arisco')) { c1set('arisco'); await play([['andilla', 'Assim não. Deixa comigo.']]); }
+}
+const pataCured = () => { const o = (TOWN.objs || []).find(q => q.id === 'pata'); return !o || o.done; };
+const LAME = 'O cavalo manca e não deixa ninguém chegar perto da pata.';
+// The lame horse: Teo heals the leg first (the "cura" verb on the hurt object under it), then it comes along
+async function lameHorse(h) {
+  if (pataCured()) return catchHorse(h);
+  const act = fieldAction(h.x, h.y);
+  return act ? act() : UI.say(LAME);
+}
 async function catchHorse(h) {
   c1set('cavalo' + h.def.n);
   TOWN.npcs = TOWN.npcs.filter(n => n !== h);
+  if (h.def.shy && inParty('andilla')) await play([['andilla', 'Ninguém me vê chegar. Nem cavalo.', 'alegre']]);
   Sfx.join();
   const n = horsesCaught(G.seen);
   await UI.say(`O cavalo baixa a cabeça e deixa pegar a rédea. Cavalos: ${n} de ${HORSES}.`);
   if (n >= HORSES) { saveGame(); await UI.say('Os quatro cavalos estão com o grupo. Hora de voltar ao Gervásio.'); }
 }
+async function openGate() {
+  const g = TOWN.objs.find(o => o.id === 'porteira');
+  if (!g || g.done) return;
+  g.done = true; fieldNow().s.porteira = 1;
+  Sfx.chest();
+  await play([[null, 'A porteira abre para fora. Lá dentro, o cavalo castanho bate o casco no chão.'], ['aldo', 'Calma. É só madeira.']]);
+}
+const horseDef = i => {
+  const [x, y] = HORSE_SPOTS[i], n = i + 1;
+  return { id: 'cavalo' + n, n, name: 'Cavalo', horse: HORSE_COATS[i], x, y, dir: n === 3 ? 2 : 3, wander: 0, shy: n === 3, lame: n === 4, onTalk: n === 4 ? lameHorse : catchHorse };
+};
 
-AREAS.pasto = makeArea('Pasto do Vau', 'PASTO', 20, 16, planGrid(PASTO_PLAN), [], TILE.TREE);
+AREAS.pasto = makeArea('Pasto do Vau', 'PASTO', 32, 24, planGrid(PASTO_PLAN), [], TILE.TREE);
 Object.assign(AREAS.pasto, {
   poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'cemiterio',
-  music: () => 'cemetery',
-  encounters: () => PASTO_ENCOUNTERS,
-  cast: () => HORSE_SPOTS.map(([x, y, coat], i) => ({ id: 'cavalo' + (i + 1), n: i + 1, name: 'Cavalo', horse: coat, x, y, dir: 3, wander: 0, onTalk: catchHorse }))
-    .filter(d => !c1('cavalo' + d.n)),
-  exits: [{ x: 0, y: 8, to: 'vau', pos: { x: 22, y: 10, dir: 3 } }],
+  music: () => 'cemetery', mapv: 2, start: PASTO_START,
+  field: PASTO_FIELD, roamers: PASTO_ROAMERS, puzzles: { porteira: gateClear },
+  cast: () => HORSE_SPOTS.map((_, i) => horseDef(i)).filter(d => !c1('cavalo' + d.n)),
+  exits: [{ x: 0, y: 12, to: 'vau', pos: { x: 22, y: 10, dir: 3 } }],
+  reserved: (x, y) => x === 0 && y === 12,
   goal() {
-    if (horsesCaught(G.seen) >= HORSES) return { x: 0, y: 8 };
+    if (horsesCaught(G.seen) >= HORSES) return { x: 0, y: 12 };
     const h = TOWN.npcs.find(n => n.def.horse && visibleAt(n.x, n.y));
     return h ? { x: h.x, y: h.y } : null;
   },
@@ -546,6 +605,15 @@ Object.assign(AREAS.pasto, {
     if (c1('pasto')) return;
     c1set('pasto'); G.busy = true;
     await UI.say('O pasto do Vau, coberto de névoa. Em algum lugar, cavalos relincham. Em outro, lobos.');
+  },
+  async onField(o) {
+    if (o.def && o.def.puzzle === 'porteira' && fieldNow().solved.porteira) return openGate();
+    if (o.id === 'pata') { const h = TOWN.npcs.find(n => n.def.lame); if (h) await catchHorse(h); }
+  },
+  async onSlide() {
+    if (c1('lago')) return;
+    c1set('lago');
+    await play([['andilla', 'Ninguém disse que o pasto tinha pista de patinação.', 'alegre'], ['lyra', 'Se alguém cair, eu não vi.']]);
   },
   // A fight scares the horses close by: they run off through the fog and the party has to find them again
   async afterFight() {
@@ -556,8 +624,33 @@ Object.assign(AREAS.pasto, {
     await Promise.all(near.map(h => horseRun(h, TOWN.p)));
   },
   onStep(x, y) {
+    const shy = TOWN.npcs.find(n => n.def.shy && !n.fleeing);
+    if (shy && horseSees(shy)) return () => shyRun(shy);
     const h = TOWN.npcs.find(n => n.def.horse && !n.fleeing && Math.abs(n.x - x) + Math.abs(n.y - y) === 1);
-    return h ? () => catchHorse(h) : null;
+    if (!h) return null;
+    if (h.def.lame && !pataCured()) return h.warned ? null : () => { h.warned = true; return UI.say(LAME); };
+    return () => catchHorse(h);
+  },
+  // The shy horse turns a quarter now and then; turning onto the party scares it too
+  update(dt) {
+    const h = TOWN.npcs.find(n => n.def.shy && !n.fleeing);
+    if (!h || G.busy || UI.busy()) return;
+    if ((h.turn = (h.turn ?? rnd(3000, 5000)) - dt) > 0) return;
+    h.turn = rnd(3000, 5000);
+    h.dir = (h.dir + (Math.random() < 0.5 ? 1 : 3)) % 4;
+    if (horseSees(h)) townBusy(() => shyRun(h));
+  },
+  // What the shy horse sees: a faint warm fan on the snow in front of it, in a 2x2 checker so it reads over white
+  drawGround(c, camX, camY) {
+    const h = TOWN.npcs.find(n => n.def.shy);
+    if (!h || !visibleAt(h.x, h.y)) return;
+    for (const [x, y] of coneTiles(h, h.dir)) {
+      if (!TOWN.walkable(x, y) || !visibleAt(x, y)) continue;
+      const X = x * TS - camX, Y = y * TS - camY;
+      c.fillStyle = 'rgba(232,184,64,.16)'; c.fillRect(X, Y, TS, TS);
+      c.fillStyle = 'rgba(200,130,62,.28)';
+      for (let j = 0; j < TS; j += 4) for (let i = (j / 4) % 2 ? 2 : 0; i < TS; i += 4) c.fillRect(X + i, Y + j, 2, 2);
+    }
   },
 });
 
@@ -585,7 +678,7 @@ const campGrid = () => { const g = planGrid(CAMP_PLAN); g[CAMP_FIRE.y * 12 + CAM
 AREAS.acampamento = makeArea('Beira da Floresta Púrpura', 'ACAMPAMENTO', 12, 9, campGrid(), [], TILE.TREE);
 Object.assign(AREAS.acampamento, {
   poi: 'acampamento', winter: true, dusk: true, trees: 'pine', battle: 'cemiterio', music: () => 'cemetery',
-  cast: () => HORSE_SPOTS.map(([, , coat], i) => ({ id: 'cavaloC' + i, name: 'Cavalo', horse: coat, x: 1 + (i % 2), y: 5 + (i >> 1), dir: 1, wander: 0 })),
+  cast: () => HORSE_COATS.map((coat, i) => ({ id: 'cavaloC' + i, name: 'Cavalo', horse: coat, x: 1 + (i % 2), y: 5 + (i >> 1), dir: 1, wander: 0 })),
 });
 // Around the fire: Aldo south of it, the others on the other sides
 const CAMP_SEATS = [[6, 5, 0], [5, 4, 1], [7, 4, 3], [6, 3, 2]];

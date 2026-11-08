@@ -853,6 +853,17 @@ const TownArt = (() => {
       const g = ly === 4 || ly === 11, gl = ly === 5 || ly === 12;
       return g ? rgb(SNOW.dk) : gl ? rgb(SNOW.sh) : snowAt(gx, gy);
     }
+    if (t === TILE.FENCE) {
+      // split rails between posts, along the run of the fence (east-west or north-south), snow on the top rail
+      const isF = (dx, dy) => tileAt(A, x + dx, y + dy) === TILE.FENCE;
+      const across = isF(-1, 0) || isF(1, 0) || !(isF(0, -1) || isF(0, 1)), along = isF(0, -1) || isF(0, 1);
+      if (lx >= 6 && lx <= 9 && ly >= 2 && ly <= 14) return ly === 2 ? SNOWG[2] : lx === 6 ? PLANK[3] : lx === 9 ? PLANK[2] : PLANK[1];
+      if (across && (ly === 5 || ly === 10)) return SNOWG[1];
+      if (across && (ly === 6 || ly === 11)) return PLANK[(gx >> 2) % 3 ? 1 : 3];
+      if (across && (ly === 7 || ly === 12)) return PLANK[2];
+      if (along && (lx === 5 || lx === 10) && ly % 8 !== 0) return lx === 5 ? PLANK[3] : PLANK[2];
+      return snowAt(gx, gy);
+    }
     return snowAt(gx, gy);
   }
 
@@ -957,7 +968,13 @@ const TownArt = (() => {
       });
       case 'log': return sprite('log', 16, 8, c => pix(c, 0, 0, LOG_ROWS, LOG_PAL));
       case 'post': return sprite('post', 16, 5, c => pix(c, 0, 0, POST_ROWS, LOG_PAL));
-      case 'rock': return sprite('rock', 14, 10, c => pix(c, 0, 0, ROCK_ROWS, ROCK_PAL));
+      case 'gate': return sprite('gate', 16, 14, c => { // a closed corral gate: two posts, three bars and a brace
+        for (const x of [0, 14]) { R(c, x, 0, 2, 14, '#6a3a1a'); R(c, x, 0, 1, 14, '#9a6232'); R(c, x, 0, 2, 1, '#e8eff8'); }
+        for (const y of [2, 6, 10]) { R(c, 2, y, 12, 2, '#9a6232'); R(c, 2, y, 12, 1, '#d8a478'); }
+        R(c, 2, 1, 12, 1, '#e8eff8');
+        for (let i = 0; i < 10; i++) R(c, 3 + i, 11 - i, 2, 1, '#6a3a1a');
+      });
+      case 'rock': case 'stone': return sprite('rock', 14, 10, c => pix(c, 0, 0, ROCK_ROWS, ROCK_PAL));
       case 'chest': return sprite('chest' + !!done, 14, 9, c => pix(c, 0, done ? 1 : 0, done ? CHEST_OPEN : CHEST_ROWS, CHEST_PAL));
       case 'rune': return sprite('rune' + !!done, 14, 12, c => { pix(c, 0, 0, CAIRN_ROWS, CAIRN_PAL); if (done) { R(c, 5, 9, 1, 2, '#f0d860'); R(c, 7, 9, 2, 1, '#f0d860'); R(c, 7, 10, 1, 1, '#f0d860'); } });
       case 'sign': return sprite('sign', 10, 9, c => pix(c, 0, 0, SIGN_ROWS, { o: '#26202e', G: '#a2a2ac', g: '#7a7a82', D: '#55555e', Y: '#26202e' }));

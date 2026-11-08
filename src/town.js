@@ -6,8 +6,9 @@ const TILE = { GRASS: 0, PATH: 1, WATER: 2, TREE: 3, CLIFF: 4, BUSH: 5, FLOWER: 
   // cemitério
   GATE: 14, MURO: 15, TOMB: 16, GRAVE_O: 17, GRAVE_U: 18, GRAVE_OLD: 19, DEADTREE: 20,
   FORD: 21, FIRE: 22, // capítulo 1: the shallow crossing of the Vau do Corvo, the campfire
-  // exploration (src/explore.js): ice to slide on, a bridge, the ravine, an avalanche, a ramp between ledges, wheel ruts
-  ICE: 23, BRIDGE: 24, CHASM: 25, SNOWPILE: 26, RAMP: 27, RUTS: 28 };
+  // exploration (src/explore.js): ice to slide on, a bridge, the ravine, an avalanche, a ramp between ledges, wheel ruts,
+  // the fence of a corral
+  ICE: 23, BRIDGE: 24, CHASM: 25, SNOWPILE: 26, RAMP: 27, RUTS: 28, FENCE: 29 };
 const WALKABLE = new Set([TILE.GRASS, TILE.PATH, TILE.FLOWER, TILE.FLOOR, TILE.DOOR, TILE.GATE, TILE.FORD, TILE.ICE, TILE.BRIDGE, TILE.RAMP, TILE.RUTS]);
 const isInterior = t => t >= TILE.FLOOR && t <= TILE.DOOR;
 const TDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
@@ -895,6 +896,7 @@ function drawTown(now) {
     c.fillRect(x * TS - camX + 13 - o, y * TS - camY + 11, 2, 1);
   }
 
+  if (A.drawGround) A.drawGround(c, camX, camY, now); // an area's marks on the ground (what the shy horse sees)
   // Personagens, de trás para a frente
   const list = [
     ...TOWN.followers.map((a, i) => ({ a, spr: () => personSprite(G.party[i + 1]?.id || 'teo', a.dir, Folk.pose(a, now)) })).reverse(),

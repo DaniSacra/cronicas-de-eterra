@@ -9,7 +9,7 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 
 test('chapter 1 areas: same-width rows, every letter a tile, the way from the entry reaches every exit', () => {
   const { run } = story(['aldo']);
-  for (const [id, plan, from] of [['vau', 'VAU_PLAN', '{ x: 11, y: 18 }'], ['pasto', 'PASTO_PLAN', '{ x: 1, y: 8 }']]) {
+  for (const [id, plan, from] of [['vau', 'VAU_PLAN', '{ x: 11, y: 18 }'], ['pasto', 'PASTO_PLAN', '{ x: 1, y: 12 }']]) {
     const rows = run.json(plan), w = rows[0].length;
     assert.ok(rows.every(r => r.length === w), id);
     assert.ok(rows.join('').split('').every(ch => run(`C1_TILES[${JSON.stringify(ch)}] !== undefined`)), id);
@@ -150,20 +150,124 @@ test('Gervásio: the gold of a dead king, four horses, then the road north opens
   assert.strictEqual(G.seen['c1:cavalos'], 1);
 });
 
-test('the pasture: a fight scares the horses within 4 tiles; walking up to a horse catches it', async () => {
-  const { G, log, run } = story(['aldo'], after());
-  run(`enterTown({ x: 3, y: 3, dir: 1 }, 'pasto')`);
-  assert.ok(run('TOWN.A.encounters().length') > 0, 'the pasture has wolves, unseen');
-  const h = n => run.json(`(h => h && { x: h.x, y: h.y })(TOWN.npcs.find(n => n.def.n === ${n}))`);
-  const far = h(4);
+const PARTY = ['aldo', 'lyra', 'teo', 'andilla'];
+const horse = (run, n) => run.json(`(h => h && { x: h.x, y: h.y, dir: h.dir })(TOWN.npcs.find(n => n.def.n === ${n}))`);
+
+test('the pasture: the wolves walk on the map; a fight scares the horses within 4 tiles, never the lame one', async () => {
+  const { log, run } = story(PARTY, after());
+  run(`enterTown({ x: 14, y: 12, dir: 1 }, 'pasto')`);
+  assert.strictEqual(run('TOWN.roamers.length'), 4, 'four packs of wolves');
+  assert.strictEqual(run('TOWN.A.encounters'), undefined, 'no unseen fights');
+  const far = horse(run, 4);
   await run('TOWN.A.afterFight()');
   assert.ok(log.includes('Com o barulho da luta, um cavalo dispara pela névoa.'));
-  assert.notDeepEqual(h(1), { x: 4, y: 3 }, 'the close horse ran');
-  assert.deepEqual(h(4), far, 'the far one did not');
-  await run(`catchHorse(TOWN.npcs.find(n => n.def.n === 1))`);
-  assert.strictEqual(G.seen['c1:cavalo1'], 1);
-  assert.ok(log.at(-1).endsWith('Cavalos: 1 de 4.'));
+  assert.notDeepEqual(horse(run, 3), { x: 17, y: 12, dir: 2 }, 'the close horse ran');
+  assert.deepEqual(horse(run, 4), far, 'the far one did not');
+  run(`TOWN.p.x = 25; TOWN.p.y = 17`);
+  await run('TOWN.A.afterFight()');
+  assert.deepEqual(horse(run, 4), far, 'the lame one cannot run');
   assert.strictEqual(run(`fleeStep({ x: 5, y: 5 }, { x: 4, y: 5 }, () => true).x`), 6);
+  assert.strictEqual(run(`horseFree(15, 3)`), false, 'a horse never runs onto the lake');
+});
+
+test('the corral: the horse cannot be reached until Aldo pushes both posts off the swing of the gate', async () => {
+  const { G, log, run } = story(PARTY, after());
+  run(`enterTown({ x: 5, y: 7, dir: 1 }, 'pasto')`);
+  assert.strictEqual(run('TOWN.walkable(6, 6)'), false, 'the gate is shut');
+  assert.ok(run(`fieldAction(6, 6) !== null`), 'a look at the gate');
+  await run(`pushObj(fieldObjAt(6, 7), 1, true)`);
+  assert.strictEqual(run('TOWN.walkable(6, 6)'), false, 'one post is not enough');
+  run(`TOWN.p.y = 8`);
+  await run(`pushObj(fieldObjAt(6, 8), 1, true)`);
+  assert.strictEqual(G.field['area:pasto'].solved.porteira, 1);
+  assert.strictEqual(run('TOWN.walkable(6, 6)'), true, 'the gate swung open');
+  assert.ok(log.includes('Aldo:\nCalma. É só madeira.'));
+  run(`enterTown({ x: 6, y: 6, dir: 0 }, 'pasto')`);
+  assert.strictEqual(run('TOWN.walkable(6, 6)'), true, 'and stays open');
+  const fn = run(`AREAS.pasto.onStep(5, 4) || AREAS.pasto.onStep(6, 5)`);
+  assert.ok(fn);
+  await run(`AREAS.pasto.onStep(6, 5)()`);
+  assert.strictEqual(G.seen['c1:cavalo1'], 1);
+});
+
+test('the lake: three slides to the island at the least, and from every spot on the ice the party gets back to the bank', async () => {
+  const { G, log, run } = story(PARTY, after());
+  run(`enterTown({ x: 16, y: 6, dir: 0 }, 'pasto'); TOWN.followers.forEach(f => { f.x = 1; f.y = 12; })`);
+  const res = run.json(`(() => {
+    const k = (x, y) => x + ',' + y, dist = new Map([[k(TOWN.p.x, TOWN.p.y), 0]]), q = [[TOWN.p.x, TOWN.p.y]], next = new Map();
+    const lake = (x, y) => y <= 6 && x >= 13 && x <= 23;
+    while (q.length) {
+      const [x, y] = q.shift(), out = [];
+      for (let d = 0; d < 4; d++) {
+        const nx = x + TDIRS[d][0], ny = y + TDIRS[d][1];
+        let to = null, cost = 0;
+        if (TOWN.tileAt(nx, ny) === TILE.ICE && TOWN.walkable(nx, ny)) { const p = slidePath(x, y, d, slideKind); if (p.length) { to = p.at(-1); cost = 1; } }
+        else if (TOWN.walkable(nx, ny) && !npcAt(nx, ny) && lake(nx, ny)) to = [nx, ny];
+        if (!to) continue;
+        out.push(k(...to));
+        const nd = dist.get(k(x, y)) + cost;
+        if (!dist.has(k(...to)) || dist.get(k(...to)) > nd) { dist.set(k(...to), nd); q.push(to); }
+      }
+      next.set(k(x, y), out);
+    }
+    const back = new Set([...dist.keys()].filter(s => s.endsWith(',6')));
+    for (let changed = true; changed;) { changed = false; for (const [s, out] of next) if (!back.has(s) && out.some(o => back.has(o))) { back.add(s); changed = true; } }
+    return { island: dist.get('18,3'), stuck: [...dist.keys()].filter(s => !back.has(s)) };
+  })()`);
+  assert.strictEqual(res.island, 3);
+  assert.deepEqual(res.stuck, [], 'no trap on the ice');
+  await run(`slideParty(0)`);
+  assert.ok(log.includes('Andilla~alegre:\nNinguém disse que o pasto tinha pista de patinação.'));
+  assert.ok(run(`TOWN.p.y < 6`), 'the party slid onto the lake');
+  await run(`AREAS.pasto.onStep(18, 3)()`);
+  assert.strictEqual(G.seen['c1:cavalo2'], 1, 'standing on the island beside the white horse');
+});
+
+test('the shy horse: walking into its fan sends it running; from behind Andilla takes the rein; it turns now and then', async () => {
+  const { G, log, run } = story(PARTY, after());
+  run(`enterTown({ x: 17, y: 15, dir: 0 }, 'pasto'); TOWN.followers.forEach(f => { f.x = 17; f.y = 16; })`);
+  const fn = run(`AREAS.pasto.onStep(17, 15)`);
+  assert.ok(fn, 'seen from the front');
+  await run(`AREAS.pasto.onStep(17, 15)()`);
+  assert.notDeepEqual([horse(run, 3).x, horse(run, 3).y], [17, 12]);
+  assert.ok(log.includes('Andilla:\nAssim não. Deixa comigo.'));
+  assert.ok(!G.seen['c1:cavalo3']);
+  run(`enterTown({ x: 17, y: 11, dir: 2 }, 'pasto'); TOWN.followers.forEach((f, i) => { f.x = 17; f.y = 10 - i; })`);
+  assert.strictEqual(run(`horseSees(TOWN.npcs.find(n => n.def.shy))`), false, 'from behind it sees nobody');
+  await run(`AREAS.pasto.onStep(17, 11)()`);
+  assert.strictEqual(G.seen['c1:cavalo3'], 1);
+  assert.ok(log.includes('Andilla~alegre:\nNinguém me vê chegar. Nem cavalo.'));
+  // the turn: a quarter at a time
+  run(`enterTown({ x: 2, y: 12, dir: 1 }, 'pasto'); delete G.seen['c1:cavalo3']; enterTown({ x: 2, y: 12, dir: 1 }, 'pasto')`);
+  run(`(h => { h.turn = 1; })(TOWN.npcs.find(n => n.def.shy)); AREAS.pasto.update(5)`);
+  assert.ok([1, 3].includes(horse(run, 3).dir));
+});
+
+test('the bank: Lyra melts the icicles on the ramp, Teo heals the lame horse, then it comes along', async () => {
+  const { G, log, run } = story(PARTY, after());
+  run(`enterTown({ x: 24, y: 16, dir: 2 }, 'pasto')`);
+  assert.strictEqual(run('TOWN.walkable(24, 17)'), false, 'the icicles close the ramp');
+  await run('fieldAction(24, 17)()');
+  assert.strictEqual(run('TOWN.walkable(24, 17)'), true);
+  run(`enterTown({ x: 24, y: 19, dir: 1 }, 'pasto')`);
+  await run(`AREAS.pasto.onStep(24, 19)()`);
+  assert.ok(log.includes('O cavalo manca e não deixa ninguém chegar perto da pata.'));
+  assert.ok(!G.seen['c1:cavalo4']);
+  assert.strictEqual(run(`AREAS.pasto.onStep(24, 19)`), null, 'said once');
+  await run(`talkTo(TOWN.npcs.find(n => n.def.lame))`);
+  assert.ok(log.includes('Teo:\nCalma. Ninguém vai te deixar aqui.'));
+  assert.strictEqual(G.seen['c1:cavalo4'], 1);
+  assert.ok(log.at(-1).endsWith('Cavalos: 1 de 4.'));
+});
+
+test('the pasture redrawn: an old save stands at the entry, and a horse already caught leaves its puzzle solved', () => {
+  const { G, run } = story(PARTY, after());
+  Object.assign(G.seen, { 'c1:cavalo1': 1, 'c1:cavalo4': 1 });
+  assert.deepEqual(run.json(`savedSpot(AREAS.pasto, undefined, { x: 15, y: 8 })`), { x: 1, y: 12, dir: 1 });
+  run(`enterTown({ x: 2, y: 12, dir: 1 }, 'pasto')`);
+  assert.strictEqual(run('TOWN.walkable(6, 6)'), true, 'the gate open');
+  assert.strictEqual(run('TOWN.walkable(24, 17)'), true, 'the icicles gone');
+  assert.deepEqual(run.json('TOWN.npcs.map(n => n.def.n)'), [2, 3]);
 });
 
 test('dice at the inn: once, Andilla wins saddles, Aldo loses two coins', async () => {

@@ -68,10 +68,13 @@ const DEV_STARTS = [
     devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1 } });
     return devTown({ x: 11, y: 18, dir: 0 }, 'vau');
   } },
-  { label: 'Capítulo 1 · Pasto do Vau', hint: 'nível 5, depois do Gervásio', go() {
-    devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1, vau: 1, estojo: 1, gervasio: 1 } });
-    return devTown({ x: 1, y: 8, dir: 1 }, 'pasto');
-  } },
+  // The pasture: the entry, then right beside each horse's puzzle
+  ...[['Pasto do Vau', PASTO_START], ['Pasto: o curral', { x: 4, y: 8, dir: 1 }], ['Pasto: o lago', { x: 16, y: 7, dir: 0 }],
+    ['Pasto: o cavalo arisco', { x: 12, y: 12, dir: 1 }], ['Pasto: o barranco', { x: 24, y: 15, dir: 2 }]].map(([name, pos]) => ({
+    label: 'Capítulo 1 · ' + name, hint: 'nível 5, depois do Gervásio', go() {
+      devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1, vau: 1, estojo: 1, gervasio: 1, pasto: 1 } });
+      return devTown(pos, 'pasto');
+    } })),
   { label: 'Capítulo 1 · Acampamento', hint: 'nível 5, a noite da matilha', go() {
     devState({ lv: 5, ...C1_BASE, c1: { silhueta1: 1, silhueta2: 1, vau: 1, estojo: 1, gervasio: 1, pasto: 1, cavalo1: 1, cavalo2: 1, cavalo3: 1, cavalo4: 1, cavalos: 1 } });
     G.busy = true;
