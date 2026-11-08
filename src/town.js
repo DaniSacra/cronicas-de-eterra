@@ -270,21 +270,22 @@ function catSprite(dir, frame, fur = '#e09038', stripe = '#b06a20') {
 // A horse seen from the side, walking (the four horses of the Vau do Corvo); coat: [body, mane]
 // The animals of the road and the pasture, in grids (docs/arte/estilo.md): two frames each, facing right, a coat by
 // swapping the palette. Outline in the darkest tone of the animal's own colors.
-const HORSE_FRAMES = [['..........oo....', '.........omlo...', '.........omffoo.', '.........omfoffo', '.........omffffo', '..ooooooomfffoo.', '.omllllllllffo..', 'omfffffffffffo..', 'omffffffffffso..', '.mfsfffffffsso..', '.oossssssssso...', '..fo.fo..fo.fo..', '..fo.fo..fo.fo..', '..oo.oo..oo.oo..'],
-  ['..........oo....', '.........omlo...', '.........omffoo.', '.........omfoffo', '.........omffffo', '..ooooooomfffoo.', '.omllllllllffo..', 'omfffffffffffo..', 'omffffffffffso..', '.mfsfffffffsso..', '.oossssssssso...', '...fofo...fofo..', '...fofo...fofo..', '...oooo...oooo..']];
+const HORSE_FRAMES = [ // 24x18: a horse is bigger than a wolf; drawn 4 px to the left so it stays centered on its tile
+  ['................olo.....', '................omloo...', '...............ommflloo.', '...............omfffollo', '...............omffffffo', '.......oooooooomffffssso', '....ooollllllllmffffooo.', '...omllfffffffmfffffo...', '..omffffffffffffffffo...', '..omfffffffffffffffso...', '.ommmsfffffffffffsfo....', '.ommooffsffssssffofso...', '.ommoofsossoooossofso...', '.omo.ofsosso..ossofso...', '..o..ofsosso..ossofso...', '.....ossosso..ossosso...', '.....okkokko..okkokko...', '......oo.oo....oo.oo....'],
+  ['................olo.....', '................omloo...', '...............ommflloo.', '...............omfffollo', '...............omffffffo', '.......oooooooomffffssso', '....ooollllllllmffffooo.', '...omllfffffffmfffffo...', '..omffffffffffffffffo...', '..omfffffffffffffffso...', '.ommmffffffffffffssoo...', '.ommofssssffssffsoolso..', '.ommofsooossoosso.ofso..', '.omoofso.ossoosso.ofso..', '..o.ofso.ossoosso.ofso..', '....osso.ossoosso.osso..', '....okko.okkookko.okko..', '.....oo...oo..oo...oo...']];
 const HORSE_PALS = {
-  castanho: { o: '#26202e', m: '#26202e', f: '#9a6232', l: '#b07c58', s: '#6a3a1a' },
-  branco:   { o: '#4a5a8c', m: '#a2a2ac', f: '#cbd8ec', l: '#e8eff8', s: '#a4b8da' },
-  preto:    { o: '#151e4e', m: '#151e4e', f: '#55555e', l: '#7a7a82', s: '#26202e' },
-  malhado:  { o: '#6a3a1a', m: '#6a3a1a', f: '#d8a478', l: '#f4cca0', s: '#b07c58' },
+  castanho: { o: '#26202e', m: '#26202e', f: '#9a6232', l: '#b07c58', s: '#6a3a1a', k: '#26202e' },
+  branco:   { o: '#4a5a8c', m: '#a2a2ac', f: '#cbd8ec', l: '#e8eff8', s: '#a4b8da', k: '#55555e' },
+  preto:    { o: '#151e4e', m: '#151e4e', f: '#55555e', l: '#7a7a82', s: '#26202e', k: '#151e4e' },
+  malhado:  { o: '#6a3a1a', m: '#6a3a1a', f: '#d8a478', l: '#f4cca0', s: '#b07c58', k: '#26202e' },
 };
 const ANIMAL_DEFS = {
   wolf: { frames: [['..........o.o...', '..........oloo..', '.........olllloo', 'o........llefllo', 'lo.oooooolfffffo', '.lolllllllfffoo.', '..offfffffffso..', '..ofsffffffsso..', '..ossssssssso...', '..fo.fo..fo.fo..', '..fo.fo..fo.fo..', '..oo.oo..oo.oo..'],
     ['..........o.o...', '..........oloo..', '.........olllloo', 'o........llefllo', 'lo.oooooolfffffo', '.lolllllllfffoo.', '..offfffffffso..', '..ofsffffffsso..', '..ossssssssso...', '...fofo...fofo..', '...fofo...fofo..', '...oooo...oooo..']],
-    pal: { o: '#55555e', f: '#a2a2ac', l: '#cbd8ec', s: '#7a7a82', e: '#e86a7a' } },
+    pal: { o: '#4a5a8c', f: '#cbd8ec', l: '#e8eff8', s: '#a4b8da', e: '#e86a7a' } }, // the white of the battle's wolf
   crow: { frames: [['................', '................', '..........ooo...', '.........obbbo..', '.........bbebokk', '....oooooobbbo..', '...obbbbbbbbbo..', '..obhbbbbbbbbo..', '.obbhhbbbbbbo...', 'obbbo.obbbbo....', 'oo....ko.ko.....', '................'],
     ['................', '................', '..........ooo...', '.........obbbo..', '.........bbbbokk', '....oooooobbbo..', '...obbbbbbbbbo..', '..obhbbbbbbbbo..', '.obbhhbbbbbbo...', 'obbbo.obbbbo....', 'oo....ko.ko.....', '................']],
-    pal: { o: '#151e4e', b: '#26202e', h: '#55555e', e: '#e86a7a', k: '#7a7a82' } },
+    pal: { o: '#151e4e', b: '#26202e', h: '#2c3c80', e: '#e86a7a', k: '#c89c38' } }, // the battle crow's sheen and beak
   ...Object.fromEntries(Object.entries(HORSE_PALS).map(([k, pal]) => ['horse:' + k, { frames: HORSE_FRAMES, pal }])),
 };
 // One of them on the map, turned to face left when it walks left
@@ -302,7 +303,7 @@ const horseSprite = (dir, frame, coat) => animalSprite('horse:' + coat, frame, d
 function horseBreath(c, h, x, y, now) {
   const k = ((now / 2600 + h.home.x * 0.37) % 1) / 0.28;
   if (k >= 1) return;
-  const left = h.dir === 3, mx = left ? x - 1 - Math.floor(k * 3) : x + 15 + Math.floor(k * 3), my = y + 4 - Math.floor(k * 3);
+  const left = h.dir === 3, mx = left ? x - 1 - Math.floor(k * 3) : x + 23 + Math.floor(k * 3), my = y + 5 - Math.floor(k * 3);
   c.fillStyle = k < 0.5 ? '#e8eff8' : '#cbd8ec';
   c.fillRect(mx, my, 2, 1); if (k > 0.3) c.fillRect(mx + (left ? -1 : 1), my - 1, 1, 1);
 }
@@ -465,7 +466,7 @@ function drawPrints(c, now, camX, camY) {
   for (const p of TOWN.prints || []) {
     const k = (now - p.t0) / PRINT_MS;
     if (k >= 1) continue;
-    c.fillStyle = `rgba(116,136,184,${(0.55 * (1 - k)).toFixed(2)})`; // #7488b8, the shade of the snow
+    c.fillStyle = k < 0.6 ? '#a4b8da' : '#cbd8ec'; // two whole steps of snow shade, then gone
     const X = p.x * TS - camX, Y = p.y * TS - camY, side = p.dir === 0 || p.dir === 2;
     for (const [i, j] of side ? [[5, 3], [9, 9]] : [[3, 6], [10, 10]]) c.fillRect(X + i, Y + j, side ? 2 : 3, side ? 3 : 2);
   }
@@ -899,7 +900,7 @@ function drawTown(now) {
   // with the dialog open, the camera moves only if the box would cover the party (eased, 200 ms)
   const padB = (TOWN.padHold = dialogPad(TOWN.padHold || 0, dialogRows(), G.busy));
   TOWN.pad = TOWN.pad == null ? padB : TOWN.pad + (padB - TOWN.pad) * 0.25;
-  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(Math.max(TOWN.pad, portraitRows()))) + (TOWN.camOff || 0); // camOff: a vista past the edge
+  const camX = camAxis(lp.x, A.W * TS, VW), camY = camLift(lp.y, A.H * TS, VH, Math.round(Math.max(TOWN.pad, portraitRows())));
   if (!A.edge && A.edgeTile) A.edge = c.createPattern(A.edgeTile, 'repeat'); // mata fechada além da borda
   if (!A.edge) { const t = document.createElement('canvas'); t.width = t.height = TS; const tc = t.getContext('2d');
     const i = Math.max(0, A.g.indexOf(A.outside)); tc.drawImage(A.layer, (i % A.W) * TS, Math.floor(i / A.W) * TS, TS, TS, 0, 0, TS, TS); tc.fillStyle = 'rgba(0,0,0,.45)'; tc.fillRect(0, 0, TS, TS); A.edge = c.createPattern(t, 'repeat'); }
@@ -915,10 +916,7 @@ function drawTown(now) {
   for (let y = Math.floor(camY / TS); y <= Math.floor((camY + VH) / TS); y++) for (let x = Math.floor(camX / TS); x <= Math.floor((camX + VW) / TS); x++) {
     const t = TOWN.tileAt(x, y);
     if (t === TILE.FIRE) { // campfire: a tall flame, high in its tile so whoever sits south of it does not hide it
-      const X = x * TS - camX, Y = y * TS - camY, f = Math.sin(now / 90 + x) * 1.5;
-      c.fillStyle = '#c83a10'; c.fillRect(X + 4, Y + 1 - f, 8, 11 + f);
-      c.fillStyle = '#ff9a20'; c.fillRect(X + 5, Y + 3 - f, 6, 9 + f);
-      c.fillStyle = '#ffe070'; c.fillRect(X + 7, Y + 6 - f / 2, 2, 5);
+      c.drawImage(TownArt.flame(Math.floor(now / 160 + x) % 2), x * TS - camX + 4, y * TS - camY + 2);
       continue;
     }
     if (t === TILE.HEARTH) {
@@ -951,12 +949,12 @@ function drawTown(now) {
     { a: TOWN.p, spr: () => personSprite('aldo', TOWN.p.dir, Folk.pose(TOWN.p, now)), lead: true },
     ...(TOWN.objs || []).filter(o => !fieldGone(o)).map(o => ({ a: o, obj: true, spr: () => TownArt.fieldSprite(o.kind, o.done, now, o) })),
     ...(TOWN.roamers || []).filter(r => visibleAt(r.x, r.y)).map(r => ({ a: r, foe: true, lift: r.perch ? 10 : 0, spr: () => foeSprite(r, now) })), // a perched crow sits up in its dead pine
-    ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : n.def.horse ? horseSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0, n.def.horse) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
+    ...TOWN.npcs.filter(n => visibleAt(n.x, n.y)).map(n => ({ a: n, lying: n.lying, foe: n.def.foe, ox: n.def.horse ? -4 : 0, spr: () => n.def.foe ? foeSprite(n, now) : n.def.cat ? catSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0) : n.def.horse ? horseSprite(n.dir === 1 ? 1 : 3, n.t < 1 ? n.frame : 0, n.def.horse) : personSprite(n.def.look || n.def.id, n.lying ? 2 : n.dir, n.lying ? 0 : Folk.pose(n, now)) })),
   ];
   list.forEach(o => { o.pos = actorPos(o.a); if (o.a === TOWN.p && o.a.x === o.a.fx && o.a.y === o.a.fy && o.a.t < 1) o.pos.x += Math.sin(o.a.t * Math.PI) * 2 * (TDIRS[o.a.dir][0]); });
   list.sort((p, q) => p.pos.y - q.pos.y || (p.lead ? 1 : 0) - (q.lead ? 1 : 0));
   for (const o of list) {
-    const spr = o.spr(), x = Math.round(o.pos.x - camX + (o.obj ? (TS - spr.width) / 2 : 0)), y = Math.round(o.pos.y - camY - (o.obj ? spr.height - TS : 3 + spr.height - 18) - (o.lift || 0));
+    const spr = o.spr(), x = Math.round(o.pos.x - camX + (o.obj ? (TS - spr.width) / 2 : 0) + (o.ox || 0)), y = Math.round(o.pos.y - camY - (o.obj ? spr.height - TS : 3 + spr.height - 18) - (o.lift || 0));
     if (!o.lying) {
       c.drawImage(spr, x, y);
       if (o.a.def && o.a.def.horse && TOWN.A.winter) horseBreath(c, o.a, x, y, now);
@@ -1000,9 +998,7 @@ function drawTown(now) {
     }
   }
   // a painted view past the edge of the map (the camera rises onto it: panVista in src/explore.js)
-  if (TOWN.vistaSide && A.vista) {
-    const north = TOWN.vistaSide === 'north';
-    c.drawImage(vistaCanvas(A, TOWN.vistaSide, VW, VH), 0, north ? -VH - camY : A.H * TS - camY);
-  }
+  if (TOWN.vistaSide && A.vista) c.drawImage(vistaCanvas(A, TOWN.vistaSide, VW, VH), 0, 0); // a painted view, the whole screen
+
 
 }

@@ -6,7 +6,7 @@
 //   freezable(x, y)                                    running water Lyra may freeze
 //   onField(obj, verb)                                 what the place does after a verb (rewards, scenes)
 //   roamers: () => [{ foe, ids, intro, x, y, range?, speed?, perch? }]   enemies seen on the map
-//   vista: { north(c, w, h), south(c, w, h) }          a painted view past the edge of the map (panVista)
+//   vista: { north(c, w, h), south(c, w, h) }          a painted view past the edge of the map (panVista cuts to it)
 
 const fieldDefs = A => (A && A.field ? A.field() : []);
 const fieldNow = () => fieldState(G.field || (G.field = {}), areaKey(G.area));
@@ -21,7 +21,7 @@ const litTile = (x, y) => litAt(x, y, fieldLights());
 // ---------- Entering an area: the map as the party left it ----------
 function enterField() {
   const A = TOWN.A;
-  TOWN.objs = []; TOWN.roamers = []; TOWN.fx = []; TOWN.hintKey = null; TOWN.camOff = 0;
+  TOWN.objs = []; TOWN.roamers = []; TOWN.fx = []; TOWN.hintKey = null; TOWN.vistaSide = null;
   if (A.field) {
     const st = fieldNow(), defs = fieldDefs(A), at = fieldPlace(defs, st);
     applyTiles(A, st.tiles);
@@ -197,23 +197,19 @@ async function roamerFight(r) {
   if (TOWN.A.afterFight) await TOWN.A.afterFight(res); // the pasture: the noise scares the horses close by
 }
 
-// ---------- Vistas: the camera rises past the edge of the map onto a painted view, holds, and comes back ----------
-const vistaTween = (from, to, ms) => new Promise(res => {
-  if (typeof requestAnimationFrame === 'undefined') { TOWN.camOff = to; return res(); } // tests: no screen
-  const t0 = performance.now();
-  const step = () => { const k = Math.min(1, (performance.now() - t0) / ms), e = k * k * (3 - 2 * k); TOWN.camOff = Math.round(from + (to - from) * e); k < 1 ? requestAnimationFrame(step) : res(); };
-  step();
-});
-// Out to the view (the narration plays while it holds), then vistaBack() brings the camera down to the party
+// ---------- Vistas: a cut to a painted view past the edge of the map, held while the narration plays ----------
+// (fadeTo is the screen curtain of src/main.js; vistaBack() cuts back to the party)
 async function panVista(side) {
   if (!TOWN.A.vista || !TOWN.A.vista[side]) return;
+  await fadeTo(1, 400);
   TOWN.vistaSide = side;
-  await vistaTween(0, Math.round((typeof VH === 'undefined' ? 200 : VH) * 0.85) * (side === 'north' ? -1 : 1), 1800);
+  await fadeTo(0, 400);
 }
 async function vistaBack() {
   if (!TOWN.vistaSide) return;
-  await vistaTween(TOWN.camOff, 0, 1400);
+  await fadeTo(1, 400);
   TOWN.vistaSide = null;
+  await fadeTo(0, 400);
 }
 // The painted view, cached by size
 function vistaCanvas(A, side, w, h) {
@@ -225,7 +221,7 @@ function vistaCanvas(A, side, w, h) {
 
 // ---------- Drawing ----------
 // Short pixel bursts at map scale, in the colors of the battle spells
-const FX_COLORS = { fire: ['#f0d860', '#e8b840', '#c8823e', '#a8323e'], ice: ['#e8eff8', '#8ac0f0', '#cbd8ec'], holy: ['#fff6c0', '#f0d860', '#e8b840'],
+const FX_COLORS = { fire: ['#f0d860', '#e8b840', '#c89c38', '#a8323e'], ice: ['#e8eff8', '#8ac0f0', '#cbd8ec'], holy: ['#fff6c0', '#f0d860', '#e8b840'],
   heal: ['#90e0b0', '#4ad08a', '#fff6c0'], push: ['#e8eff8', '#cbd8ec', '#a4b8da'], step: ['#e8eff8'] };
 function drawFieldFx(c, now, camX, camY) {
   TOWN.fx = (TOWN.fx || []).filter(f => now - f.t0 < 600);
@@ -249,5 +245,11 @@ function drawFieldLights(c, camX, camY) {
       c.fillStyle = `rgba(232,184,64,${(g.warm * 0.7).toFixed(3)})`;
       TownArt.disc(c, Math.round(cx), Math.round(cy), g.r);
     }
+  }
+  // what gives the light is drawn again over its own pool, so the lamp keeps its colors (as in Valmor's light layer)
+  const now = performance.now();
+  for (const o of TOWN.objs || []) if (o.done && FIELD_KINDS[o.kind].light) {
+    const spr = TownArt.fieldSprite(o.kind, true, now, o), p = actorPos(o);
+    c.drawImage(spr, Math.round(p.x - camX + (TS - spr.width) / 2), Math.round(p.y - camY - (spr.height - TS)));
   }
 }

@@ -172,7 +172,7 @@ function battleLayout(sizes, vw, vh, boss = false) {
   const room = Math.min(...sizes.map(({ h, float }) => base0 - (float ? 8 : 0) - safe - h * scale)); // free height over the tallest
   const back = boss || sizes.length < 2 ? 0 : Math.max(0, Math.min(Math.round(vh * BATTLE_BACK), room));
   // the whole group a step farther into the scene, as far as the room left over allows
-  const base = boss ? base0 : base0 - Math.max(0, Math.min(Math.round(vh * BATTLE_DEPTH), room - back));
+  const base = boss || rows ? base0 : base0 - Math.max(0, Math.min(Math.round(vh * BATTLE_DEPTH), room - back)); // two rows on a tall view use all the depth they have
   return sizes.map(({ w, h, float }, i) => {
     const inRow = rows ? (i % 2 ? Math.floor(n / 2) : cols) : n, k = rows ? i >> 1 : i, shift = rows ? (i % 2 ? 0.35 : -0.35) * slot : 0;
     const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (k - (inRow - 1) / 2) * slot + (rows && n % 2 === 0 ? shift : 0));

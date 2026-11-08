@@ -86,7 +86,7 @@ test('portrait battle: three enemies in two rows at scale 2, inside the view and
   const L = battleLayout(sizes, 294, 634);
   assert.ok(L.every(l => l.scale === 2), L.map(l => l.scale).join());
   assert.equal(new Set(L.map(l => l.base)).size, 2, 'two rows');
-  for (const l of L) assert.ok(l.left >= 0 && l.left + l.w <= 294 && l.top >= Math.round(634 * 0.26) && l.base <= 634 * 0.56, JSON.stringify(l));
+  for (const l of L) assert.ok(l.left >= 0 && l.left + l.w <= 294 && l.top >= Math.round(634 * 0.26) && l.base <= 634 * 0.6, JSON.stringify(l));
   assert.equal(new Set(battleLayout(sizes, 320, 180).map(l => l.base)).size, 2, 'landscape keeps its one staggered line (back/front by parity)');
 });
 
@@ -130,7 +130,8 @@ test('common enemies stand out on the field, one size under a boss; the road nor
   for (const [w, h] of [[320, 180], [294, 634], [422, 196]]) {
     const L = R.battleLayout(sizes, w, h), floor = Math.round(h * R.battleFloor(w, h));
     assert.ok(L.every(l => l.scale <= 2), `${w}x${h} scale ${L[0].scale}`);
-    assert.ok(Math.max(...L.map(l => l.base)) < floor - 12, `${w}x${h}: a step into the scene`);
+    assert.ok(Math.max(...L.map(l => l.base)) <= floor - 12, `${w}x${h}: never in front of the floor line`);
+    if (w === 320) assert.ok(Math.max(...L.map(l => l.base)) < floor - 12, 'on the PC a step into the scene');
   }
   assert.ok(BATTLE_PLACES.includes('estrada'));
   assert.equal(battlePlace({ mode: 'town', area: 'estrada' }), 'estrada');

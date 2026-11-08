@@ -202,7 +202,7 @@ async function giveGear(id) {
   await UI.say(wearGear(id, delta));
 }
 
-LOOKS.dorival = { skin: '#d8a070', hair: '#a2a2ac', body: '#2c3c80', legs: '#3a3a4a', hairStyle: 'short', beard: 'full', hat: 'cap', hatCol: '#55555e', belt: '#3a2010' };
+LOOKS.dorival = { skin: '#d8a478', hair: '#a2a2ac', body: '#2c3c80', legs: '#55555e', hairStyle: 'short', beard: 'full', hat: 'cap', hatCol: '#55555e', belt: '#3a2010' };
 const DORIVAL_HOUSE = { id: 'dorival', style: 'joaquim', x: 9, y: 44, w: 3, h: 2 };
 DORIVAL_HOUSE.door = { x: 10, y: 45 };
 const DORIVAL = { id: 'dorival', name: 'Seu Dorival', x: 11, y: 46, dir: 3, wander: 0, lines: { start: ['A estrada voltou a ter luz.'] } };
@@ -644,12 +644,16 @@ Object.assign(AREAS.pasto, {
   drawGround(c, camX, camY) {
     const h = TOWN.npcs.find(n => n.def.shy);
     if (!h || !visibleAt(h.x, h.y)) return;
-    for (const [x, y] of coneTiles(h, h.dir)) {
-      if (!TOWN.walkable(x, y) || !visibleAt(x, y)) continue;
+    const fan = coneTiles(h, h.dir).filter(([x, y]) => TOWN.walkable(x, y) && visibleAt(x, y)), inFan = new Set(fan.map(([x, y]) => x + ',' + y));
+    for (const [x, y] of fan) { // whole gold dots every 4 px, a gold line where the fan ends (no see-through color)
       const X = x * TS - camX, Y = y * TS - camY;
-      c.fillStyle = 'rgba(232,184,64,.16)'; c.fillRect(X, Y, TS, TS);
-      c.fillStyle = 'rgba(200,156,56,.3)';
-      for (let j = 0; j < TS; j += 4) for (let i = (j / 4) % 2 ? 2 : 0; i < TS; i += 4) c.fillRect(X + i, Y + j, 2, 2);
+      c.fillStyle = '#e8b840';
+      for (let j = 2; j < TS; j += 4) for (let i = (j >> 2) % 2 ? 0 : 2; i < TS; i += 4) c.fillRect(X + i, Y + j, 1, 1);
+      c.fillStyle = '#c89c38';
+      if (!inFan.has(x + ',' + (y - 1))) c.fillRect(X, Y, TS, 1);
+      if (!inFan.has(x + ',' + (y + 1))) c.fillRect(X, Y + TS - 1, TS, 1);
+      if (!inFan.has((x - 1) + ',' + y)) c.fillRect(X, Y, 1, TS);
+      if (!inFan.has((x + 1) + ',' + y)) c.fillRect(X + TS - 1, Y, 1, TS);
     }
   },
 });
@@ -678,7 +682,7 @@ const campGrid = () => { const g = planGrid(CAMP_PLAN); g[CAMP_FIRE.y * 12 + CAM
 AREAS.acampamento = makeArea('Beira da Floresta Púrpura', 'ACAMPAMENTO', 12, 9, campGrid(), [], TILE.TREE);
 Object.assign(AREAS.acampamento, {
   poi: 'acampamento', winter: true, dusk: true, trees: 'pine', battle: 'estrada', music: () => 'cemetery',
-  cast: () => HORSE_COATS.map((coat, i) => ({ id: 'cavaloC' + i, name: 'Cavalo', horse: coat, x: 1 + (i % 2), y: 5 + (i >> 1), dir: 1, wander: 0 })),
+  cast: () => HORSE_COATS.map((coat, i) => ({ id: 'cavaloC' + i, name: 'Cavalo', horse: coat, x: 1 + (i % 2) * 2, y: 5 + (i >> 1), dir: 1, wander: 0 })), // two tiles apart: a horse is wider than its tile
 });
 // Around the fire: Aldo south of it, the others on the other sides
 const CAMP_SEATS = [[6, 5, 0], [5, 4, 1], [7, 4, 3], [6, 3, 2]];

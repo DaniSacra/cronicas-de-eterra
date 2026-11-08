@@ -811,12 +811,13 @@ const TownArt = (() => {
   // ---------- Exploration ground (src/explore.js): ice, bridge, ravine, avalanche, ramp, wheel ruts ----------
   const PLANK = P(['#b07c58', '#9a6232', '#6a3a1a', '#d8a478']), ABYSS = P(['#151e4e', '#1c2860', '#26202e', '#2c3c80']);
   const STONE_W = P(['#a2a2ac', '#7a7a82', '#55555e', '#26202e']);
+  const FIELD_ICE = P(['#e8eff8', '#a4b8da', '#8ac0f0', '#7488b8', '#4a5a8c']); // the frozen lake: the same blue as the battle's pond
   function iceAt(gx, gy) {
     const crack = Math.abs(noise(gx / 6, gy / 6, 61) - 0.5) < 0.02;          // thin cracks
-    if (crack) return ICE[3];
-    if (hash(gx, gy, 62) < 0.012) return ICE[0];                              // a glint
+    if (crack) return FIELD_ICE[3];
+    if (hash(gx, gy, 62) < 0.012) return FIELD_ICE[0];                        // a glint
     const n = noise(gx / 9, gy / 4, 63);
-    return n > 0.68 ? ICE[0] : n < 0.3 ? ICE[2] : ICE[1];
+    return n > 0.68 ? FIELD_ICE[0] : n < 0.3 ? FIELD_ICE[2] : FIELD_ICE[1];
   }
   // A snowy ledge: the snow of the upper terrace rolls over the edge, then a rock face in vertical slabs (lit on the
   // left, dark on the right), a ledge of snow now and then, and a dark foot where it meets the ground below
@@ -840,7 +841,7 @@ const TownArt = (() => {
   function fieldGround(A, t, x, y, gx, gy, lx, ly) {
     if (t === TILE.ICE) {
       const d = edgeDist(A, x, y, lx, ly, u => u === TILE.ICE);
-      return d < 1 ? ICE[4] : d < 2 ? ICE[3] : iceAt(gx, gy);
+      return d < 1 ? FIELD_ICE[4] : d < 2 ? FIELD_ICE[3] : iceAt(gx, gy);
     }
     if (t === TILE.BRIDGE) {
       // planks across the way, a dark rail at each side; over water the river shows between them
@@ -851,10 +852,11 @@ const TownArt = (() => {
     }
     if (t === TILE.CHASM) {
       const north = tileAt(A, x, y - 1), south = tileAt(A, x, y + 1);
-      if (north !== TILE.CHASM && north !== TILE.BRIDGE) { if (ly < 2) return SNOWG[1]; if (ly < 4) return rgb(SNOW.ou); if (ly < 7) return STONE_W[1 + (hash(gx, gy, 65) < 0.3 ? 1 : 0)]; }
+      // steps of depth: the snowy lip, the rock wall below it, then darker and darker down to the bottom
+      const edge = north !== TILE.CHASM && north !== TILE.BRIDGE;
+      if (edge) { if (ly < 2) return SNOWG[1]; if (ly < 4) return rgb(SNOW.ou); if (ly < 7) return STONE_W[2]; if (ly < 11) return ABYSS[1]; }
       if (south !== TILE.CHASM && south !== TILE.BRIDGE && ly > 12) return ly > 14 ? STONE_W[0] : STONE_W[2];
-      const n = noise(gx / 5, gy / 5, 66);
-      return n > 0.7 ? ABYSS[3] : n > 0.45 ? ABYSS[1] : ((gx + gy) & 1) && n > 0.4 ? ABYSS[1] : ABYSS[0];
+      return edge && ly < 13 ? ABYSS[0] : ABYSS[2];
     }
     if (t === TILE.SNOWPILE) {
       // a heap of snow: bright on the upper left of each lump, blue shade low on the right
@@ -902,60 +904,82 @@ const TownArt = (() => {
       if (i + 1 < n) for (let x = 0; x < w; x++) if (BAYER2[0][x & 1] < 2) R(c, x, bot - 1, 1, 1, cols[i + 1]);
     }
   }
+  // a ridge: snow on top, more of it on the slopes facing the light (left), like the battle backdrop of the road
   function ridge(c, w, base, amp, seed, col, top = null) {
+    const at = x => base - amp * noise(x / 23, 0.5, seed) - amp * 0.4 * noise(x / 7, 1.5, seed + 1);
     for (let x = 0; x < w; x++) {
-      const y = Math.round(base - amp * noise(x / 23, 0.5, seed) - amp * 0.4 * noise(x / 7, 1.5, seed + 1));
+      const y = Math.round(at(x)), cap = top ? (at(x + 2) - at(x - 2) < -0.3 ? 4 : 1) : 0;
       R(c, x, y, 1, 400, col);
-      if (top) R(c, x, y, 1, 1, top);
+      if (cap) R(c, x, y, 1, cap, top);
     }
   }
-  function pineRow(c, w, base, h, col, seed) {
-    for (let x = -4; x < w; x += 5 + Math.floor(hash(x, 0, seed) * 4)) {
-      const th = h + Math.floor(hash(x, 1, seed) * h * 0.5);
-      for (let j = 0; j < th; j++) { const half = Math.floor((j / th) * 4); R(c, x + 3 - half, base - th + j, half * 2 + 1, 1, col); }
-      R(c, x + 3, base - th, 1, 1, SNOW.lt);
+  // a snowy pine in tiers: dark on the right, snow on the left tips and along the lower edge of each tier
+  function vPine(c, x, base, ht) {
+    const tiers = ht > 20 ? 4 : 3;
+    R(c, x - 1, base - Math.round(ht * 0.16), 2, Math.round(ht * 0.16), '#6a3a1a');
+    for (let t = 0; t < tiers; t++) {
+      const top = base - ht + Math.round(t * ht * 0.2), th = Math.max(3, Math.round(ht * 0.32)), half = Math.round(ht * (0.14 + t * 0.06));
+      for (let j = 0; j < th; j++) {
+        const hw = Math.max(1, Math.round(half * (j + 1) / th));
+        R(c, x - hw, top + j, hw * 2 + 1, 1, j === th - 1 ? '#14402a' : '#2a5440');
+        R(c, x + Math.ceil(hw * 0.35), top + j, hw - Math.ceil(hw * 0.35) + 1, 1, '#14402a');
+        if (j === th - 1 || j === 0) R(c, x - hw, top + j, Math.max(1, hw - 1), 1, SNOW.lt); // snow on the top and the lower edge of each tier
+      }
+      R(c, x, top, 1, 1, SNOW.lt);
     }
   }
+  function pineRow(c, w, base, h, seed) {
+    for (let x = -6; x < w + 6; x += 7 + Math.floor(hash(x, 0, seed) * 6)) vPine(c, x, base + Math.floor(hash(x, 2, seed) * 4), h + Math.floor(hash(x, 1, seed) * h * 0.6));
+  }
+  // a house of the valley seen from far: 9x6, snow on the roof, two lit windows, a chimney with smoke
+  function vHouse(c, x, y, smoke) {
+    R(c, x - 1, y - 2, 11, 2, SNOW.lt); R(c, x, y - 3, 9, 1, SNOW.hi);
+    R(c, x, y, 9, 6, '#9a6232'); R(c, x, y, 1, 6, '#b07c58'); R(c, x + 8, y, 1, 6, '#6a3a1a');
+    R(c, x + 2, y + 2, 1, 2, '#f0d860'); R(c, x + 6, y + 2, 1, 2, '#f0d860');
+    if (smoke) { R(c, x + 6, y - 5, 2, 2, '#55555e'); for (let k = 1; k < 7; k++) R(c, x + 6 + (k > 4 ? 1 : 0), y - 5 - k * 2, 1, 1, k % 2 ? '#7488b8' : '#a4b8da'); }
+  }
+  function stars(c, w, h, n, seed) { for (let i = 0; i < n; i++) R(c, Math.floor(hash(i, 2, seed) * w), Math.floor(hash(i, 3, seed) * h), 1, 1, i % 5 ? '#e8eff8' : '#8ac0f0'); }
+  // A night view, the whole screen at once (panVista cuts to it): the sky, snowy ranges, the valley and pines close by
   function vista(c, w, h, kind) {
     if (kind === 'vale') {
-      bands(c, w, 0, Math.round(h * 0.5), ['#151e4e', '#1c2860', '#2c3c80', '#3a78c8', '#8ac0f0']);
-      for (let i = 0; i < 24; i++) R(c, Math.floor(hash(i, 2, 90) * w), Math.floor(hash(i, 3, 90) * h * 0.3), 1, 1, i % 5 ? '#e8eff8' : '#fff6c0');
-      ridge(c, w, h * 0.5, h * 0.12, 91, '#4a5a8c', '#cbd8ec');          // far mountains, snow on top
-      ridge(c, w, h * 0.56, h * 0.05, 93, '#40145a', '#72308e');          // the Purple Forest, a dark mass far north
-      ridge(c, w, h * 0.64, h * 0.04, 95, '#7488b8', '#a4b8da');          // snowy hills of the valley
-      R(c, 0, Math.round(h * 0.66), w, h, '#a4b8da');
+      bands(c, w, 0, Math.round(h * 0.46), ['#151e4e', '#1c2860', '#2c3c80', '#2c3c80', '#4a5a8c']);
+      stars(c, w, h * 0.3, 30, 90);
+      ridge(c, w, h * 0.42, h * 0.16, 91, '#4a5a8c', '#cbd8ec');         // far mountains, snow on the lit slopes
+      ridge(c, w, h * 0.48, h * 0.05, 93, '#40145a', '#72308e');         // the Purple Forest, a dark mass far north
+      ridge(c, w, h * 0.56, h * 0.05, 95, '#7488b8', '#cbd8ec');         // snowy hills of the valley
+      R(c, 0, Math.round(h * 0.6), w, h, '#a4b8da');
+      for (let y = Math.round(h * 0.6); y < h; y++) if (y % 4 === 0) for (let x = (y >> 2) % 3; x < w; x += 6) R(c, x, y, 1, 1, '#cbd8ec');
       // the river in an S, shining
-      for (let y = Math.round(h * 0.66); y < h; y++) {
-        const k = (y - h * 0.66) / (h * 0.34), cx = Math.round(w * (0.5 + 0.18 * Math.sin(k * 4.2)) ), half = 1 + Math.round(k * 4);
-        R(c, cx - half, y, half * 2, 1, '#3a78c8'); if (y % 3 === 0) R(c, cx - half + 1, y, Math.max(1, half - 1), 1, '#8ac0f0');
+      for (let y = Math.round(h * 0.6); y < h; y++) {
+        const k = (y - h * 0.6) / (h * 0.4), cx = Math.round(w * (0.5 + 0.18 * Math.sin(k * 4.2))), half = 1 + Math.round(k * 5);
+        R(c, cx - half, y, half * 2, 1, '#2c3c80'); R(c, cx - half + 1, y, half * 2 - 2, 1, '#3a78c8'); if (y % 3 === 0) R(c, cx - half + 2, y, Math.max(1, half - 2), 1, '#8ac0f0');
       }
-      // the village of the ford: roofs and lit windows by the river
-      const vx = Math.round(w * 0.62), vy = Math.round(h * 0.76);
-      for (let i = 0; i < 7; i++) { const x = vx + (i - 3) * 6 + Math.floor(hash(i, 4, 92) * 3), y = vy + Math.floor(hash(i, 5, 92) * 6); R(c, x, y, 5, 3, '#55555e'); R(c, x, y - 1, 5, 1, '#e8eff8'); R(c, x + 2, y + 1, 1, 1, '#f0d860'); }
-      pineRow(c, w, h, Math.round(h * 0.14), '#14402a', 94);
+      // the village of the ford by the river: roofs, lit windows, smoke
+      const vx = Math.round(w * 0.62), vy = Math.round(h * 0.7);
+      for (let i = 0; i < 6; i++) vHouse(c, vx + (i - 3) * 13 + Math.floor(hash(i, 4, 92) * 4), vy + Math.floor(hash(i, 5, 92) * 8), i % 2 === 0);
+      pineRow(c, w, h, Math.round(h * 0.16), 94);
       return;
     }
     // Valmor down below at dusk
-    bands(c, w, 0, Math.round(h * 0.42), ['#151e4e', '#1c2860', '#2c3c80', '#3a78c8']);
-    ridge(c, w, h * 0.44, h * 0.1, 81, '#4a5a8c', '#cbd8ec');
-    R(c, 0, Math.round(h * 0.5), w, h, '#cbd8ec');
-    ridge(c, w, h * 0.52, h * 0.03, 83, '#a4b8da', '#e8eff8');
-    const vx = Math.round(w * 0.45), vy = Math.round(h * 0.6);
+    bands(c, w, 0, Math.round(h * 0.3), ['#151e4e', '#1c2860', '#2c3c80', '#4a5a8c']);
+    stars(c, w, h * 0.2, 18, 80);
+    ridge(c, w, h * 0.32, h * 0.1, 81, '#4a5a8c', '#cbd8ec');
+    R(c, 0, Math.round(h * 0.38), w, h, '#cbd8ec');
+    ridge(c, w, h * 0.42, h * 0.04, 83, '#a4b8da', '#e8eff8');
+    R(c, 0, Math.round(h * 0.44), w, h, '#a4b8da');
+    const vx = Math.round(w * 0.45), vy = Math.round(h * 0.56);
     for (let i = 0; i < 11; i++) {
-      const x = vx + (i - 5) * 9 + Math.floor(hash(i, 6, 82) * 4), y = vy + Math.floor(hash(i, 7, 82) * 14), big = i === 5;
-      R(c, x, y, big ? 9 : 7, big ? 6 : 4, '#9a6232'); R(c, x - 1, y - 2, big ? 11 : 9, 2, '#e8eff8'); R(c, x + 2, y + 2, 1, 1, '#f0d860');
-      if (big) { R(c, x + 3, y - 7, 3, 5, '#e8eff8'); R(c, x + 4, y - 9, 1, 2, '#c89c38'); }   // the chapel tower
-      if (i % 3 === 0) for (let k = 1; k < 7; k++) R(c, x + 3 + (k > 4 ? 1 : 0), y - 2 - k * 2, 1, 1, k % 2 ? '#a4b8da' : '#cbd8ec');   // smoke straight up
+      const x = vx + (i - 5) * 12 + Math.floor(hash(i, 6, 82) * 4), y = vy + Math.floor(hash(i, 7, 82) * 16);
+      vHouse(c, x, y, i % 3 === 0);
+      if (i === 5) { R(c, x + 3, y - 10, 3, 8, '#e8eff8'); R(c, x + 3, y - 10, 1, 8, SNOW.hi); R(c, x + 4, y - 12, 1, 2, '#c89c38'); } // the chapel tower
     }
-    pineRow(c, w, h, Math.round(h * 0.18), '#14402a', 84);
+    pineRow(c, w, h, Math.round(h * 0.2), 84);
   }
-  const FALLS_ROWS = ['oWWlWWWlWWWWlWWo', 'oWlLWWlLWWWlLWWo', 'oWlLWlLLWWlLLWlo', 'oWlLWlLWWWlLWWlo', 'oWWLWlLWWlLLWWlo', 'oWlLWWLWWlLWWlLo',
-    'oWlLWWLWWlLWWlLo', 'oWlWWlLWWlLWlLLo', 'oWlWWlLWWWLWlLWo', 'oWlWlLWWlWLWlLWo', 'oWWWlLWWlWWWlWWo', 'oWlWlWWWlWWlLWWo', 'oWlWWWlWWWlLWlWo', 'oWWlWWlWlWWLWWlo', 'oWWWWWWWWWWWWWWo', 'oooooooooooooooo'];
-  const CAVE_ROWS = ['....oooooooo....', '..ooDDDDDDDDoo..', '.oDDKKKKKKKKDDo.', 'oDDKKKKKKKKKKDDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo',
-    'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo', 'oDKKKKKKKKKKKKDo'];
+  const FALLS_ROWS = ['WWWlWWWlWWWWlWWW', 'WWlLWWlLWWWlLWWl', 'lWlLWlLLWWlLLWlW', 'WWlLWlLWWWlLWWlW', 'lWWLWlLWWlLLWWlW', 'WWlLWWLWWlLWWlLW', 'lWlLWWLWWlLWWlLW', 'WWlWWlLWWlLWlLLW', 'lWlWWlLWWWLWlLWW', 'WWlWlLWWlWLWlLWl', 'WWWWlLWWlWWWlWWW', 'lWlWlWWWlWWlLWWW', 'WLlWLWlWLWlLWlLW', 'L.L.L.L.LWL.L.L.', '.L...L..L.L..L..', '......L....L....']; // ice hanging over the water, no outline (scenery)
+  const CAVE_ROWS = ['................', '.....SSSSSS.....', '...SSSSSSSSSS...', '..SSGGGEEDDDSS..', '..SGGEEKKEEDDS..', '.SGGEKKKKKKEDDS.', '.GGEKKKKKKKKEDD.', 'SGGEKKKKKKKKEDDS', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD', 'GGGEKKKKKKKKEDDD'];
   const FSPR = {};
   const sprite = (key, w, h, draw) => FSPR[key] || (FSPR[key] = (() => { const cv = canvas(w, h); draw(cv.getContext('2d')); return cv; })());
-  const LAMP_OFF = { o: '#26202e', I: '#55555e', i: '#7a7a82', S: SNOW.lt, y: '#1c2860', Y: '#2c3c80', W: '#3a78c8' };
+  const LAMP_OFF = { o: '#26202e', I: '#55555e', i: '#7a7a82', S: SNOW.lt, y: '#151e4e', Y: '#1c2860', W: '#4a5a8c' }; // cold glass
   const LAMP_ON = { o: '#26202e', I: '#55555e', i: '#7a7a82', S: SNOW.lt, y: '#e8b840', Y: '#f0d860', W: '#fff6c0' };
   const LOG_ROWS = ['..SSSSSSSSSSSS..', '.oSSLSSSSSLSSSo.', 'oBbbBbbbbBbbbBwo', 'obBbbbBbbbbBbbWo', 'obbbBbbbbbbbBbwo', 'odbbbbbdbbbbbbwo', '.oddddddddddddo.', '..oooooooooooo..'];
   const LOG_PAL = { o: '#6a3a1a', B: '#b07c58', b: '#9a6232', d: '#6a3a1a', w: '#d8a478', W: '#f4cca0', S: SNOW.lt, L: '#ffffff' };
@@ -963,11 +987,11 @@ const TownArt = (() => {
   const ROCK_ROWS = ['....SSSSSS....', '..SSLLSSSSSS..', '.oSLSSSSSSSSo.', 'oGGgGGGGgGGGdo', 'oGgGGGGGGGGddo', 'oGGGGgGGGGdddo', 'oGGGGGGGGdddDo', '.oGGGGGddddDo.', '..ooDDDDDDoo..', '....oooooo....'];
   const ROCK_PAL = { o: '#26202e', G: '#a2a2ac', g: '#7a7a82', d: '#7a7a82', D: '#55555e', S: SNOW.lt, L: '#ffffff' };
   const CHEST_ROWS = ['.oooooooooooo.', 'oyBBBBBBBBBByo', 'oBbbbbbbbbbbBo', 'oyyyyyyKyyyyyo', 'oBbbbbbkbbbbBo', 'oBbbbbbbbbbbBo', 'oBbbbbbbbbbbdo', 'oyddddddddddyo', '.oooooooooooo.'];
-  const CHEST_OPEN = ['.oooooooooooo.', 'oddddddddddddo', 'oyyyyyyyyyyyyo', 'oBbbbbbbbbbbBo', 'oBbbbbbbbbbbBo', 'oBbbbbbbbbbbdo', 'oyddddddddddyo', '.oooooooooooo.'];
+  const CHEST_OPEN = ['.oooooooooooo.', 'oyBBBBBBBBBByo', 'oddddddddddddo', 'oyyyyyyyyyyyyo', 'okkkkkkkkkkkko', 'oBbbbbbbbbbbBo', 'oBbbbbbbbbbbBo', 'oBbbbbbbbbbbdo', 'oyddddddddddyo', '.oooooooooooo.']; // the lid raised behind, dark inside
   const CHEST_PAL = { o: '#26202e', B: '#b07c58', b: '#9a6232', d: '#6a3a1a', y: '#c89c38', K: '#7a7a82', k: '#26202e' };
   const CAIRN_ROWS = ['.....ooo......', '....oGGgo.....', '...ooggDoo....', '..oGGGgggDo...', '..ooDDooDDo...', '.oGGgggGGGgo..', '.oGgggggggDDo.', 'ooDDooooDDDooo', 'oGGGgoGGgggDDo', 'oGgggDoGgggDDo', 'oDDDDDoDDDDDDo', '.oooooooooooo.'];
   const CAIRN_PAL = { o: '#26202e', G: '#a2a2ac', g: '#7a7a82', D: '#55555e' };
-  const SIGN_ROWS = ['..oooooo..', '.oGGGGGGo.', 'oGGgYgGGGo', 'oGgYYYgGDo', 'oGGgYgGGDo', 'oGGgYgGDDo', 'oGGGGGGDDo', '.oDDDDDDo.', '..oooooo..'];
+  const SIGN_ROWS = ['..oooooo..', '.oGGGGGGo.', 'oGGgYgGGGo', 'oGgYYYgGDo', 'oGYgYgYGDo', 'oGGgYgGDDo', 'oGGgYgGDDo', '.oDDDDDDo.', '..oooooo..']; // an arrow cut in the stone, pointing north
   const ICICLE_ROWS = ['oooooooooooooooo', 'oWWWWWWWWWWWWWWo', 'oLWLLWLLWLLWLLWo', '.oLo.oLo.oLLo.o.', '.oLo.oLo..oLo.o.', '..o..oLo..oLo...', '.....oLo...o....', '......o.........'];
   const ICE_PAL = { o: '#7488b8', W: '#e8eff8', L: '#a4b8da', l: '#cbd8ec', D: '#4a5a8c' };
   const BLOCK_ROWS = ['.oooooooooooooo.', 'oWWWWWWWWWWWWWlo', 'oWlllllllllllllo', 'oWlKKKKKKKKKllLo', 'oWlKyyyyyyyKllLo', 'oWlKbbbbbbbKllLo', 'oWlKyyyyyyyKllLo', 'oWlKbbbbbbbKllLo', 'oWlKKKKKKKKKllLo', 'oWlllllllllllLLo', 'oLLLLLLLLLLLLLLo', '.oooooooooooooo.'];
@@ -976,6 +1000,10 @@ const TownArt = (() => {
   const ROPE_PAL = { o: '#9a6232', B: '#b07c58', b: '#6a3a1a', P: '#9a6232', p: '#6a3a1a' };
   const BEAM_ROWS = Array.from({ length: 16 }, (_, i) => i % 6 === 2 ? '......oBdo......' : '......oBbo......');
   const BEAM_PAL = { o: '#6a3a1a', B: '#b07c58', b: '#9a6232', d: '#6a3a1a' };
+  // A flame in a drop shape, two frames (mirrored): the campfire of the road and of the camp
+  const FLAME_ROWS = ['...a....', '..aba...', '..abba..', '.abcba..', '.abccba.', 'abcdcbba', 'abcddcba', 'abcddcba', '.abccba.'];
+  const FLAME_PAL = { a: '#7a1a24', b: '#a8323e', c: '#e8b840', d: '#fff6c0' };
+  const flame = f => sprite('flame' + f, 8, 9, c => pix(c, 0, 0, f ? FLAME_ROWS.map(r => [...r].reverse().join('')) : FLAME_ROWS, FLAME_PAL));
   const FIRE_STONES = [[1, 8], [3, 12], [11, 12], [13, 8], [7, 13]];
   function fieldSprite(kind, done, now, o) {
     const f = Math.floor(now / 160) % 2;
@@ -983,8 +1011,8 @@ const TownArt = (() => {
       case 'lamp': return sprite('lamp' + !!done, 9, 22, c => pix(c, 0, 0, LAMP_ROWS, done ? LAMP_ON : LAMP_OFF));
       case 'fire': return sprite('fire' + !!done + (done ? f : ''), 16, 16, c => {
         for (const [sx, sy] of FIRE_STONES) { R(c, sx, sy, 3, 2, '#26202e'); R(c, sx, sy, 2, 1, '#7a7a82'); }
-        R(c, 3, 10, 10, 2, '#4e2c14'); R(c, 4, 10, 8, 1, '#6a3a1a');
-        if (done) { R(c, 4, 2 + f, 8, 9 - f, '#a8323e'); R(c, 5, 4 + f, 6, 7 - f, '#e8b840'); R(c, 7, 6, 2, 4, '#fff6c0'); }
+        R(c, 3, 10, 10, 2, '#6a3a1a'); R(c, 4, 10, 8, 1, '#9a6232');
+        if (done) c.drawImage(flame(f), 4, 2);
       });
       case 'log': return sprite('log', 16, 8, c => pix(c, 0, 0, LOG_ROWS, LOG_PAL));
       case 'post': return sprite('post', 16, 5, c => pix(c, 0, 0, POST_ROWS, LOG_PAL));
@@ -995,15 +1023,18 @@ const TownArt = (() => {
         for (let i = 0; i < 10; i++) R(c, 3 + i, 11 - i, 2, 1, '#6a3a1a');
       });
       case 'rock': case 'stone': return sprite('rock', 14, 10, c => pix(c, 0, 0, ROCK_ROWS, ROCK_PAL));
-      case 'chest': return sprite('chest' + !!done, 14, 9, c => pix(c, 0, done ? 1 : 0, done ? CHEST_OPEN : CHEST_ROWS, CHEST_PAL));
-      case 'rune': return sprite('rune' + !!done, 14, 12, c => { pix(c, 0, 0, CAIRN_ROWS, CAIRN_PAL); if (done) { R(c, 5, 9, 1, 2, '#f0d860'); R(c, 7, 9, 2, 1, '#f0d860'); R(c, 7, 10, 1, 1, '#f0d860'); } });
+      case 'chest': return sprite('chest' + !!done, 14, 10, c => pix(c, 0, done ? 0 : 1, done ? CHEST_OPEN : CHEST_ROWS, CHEST_PAL));
+      case 'rune': return sprite('rune' + !!done, 14, 12, c => { // the worn letters: dark until Teo's light fills them
+        const g = done ? '#f0d860' : '#26202e';
+        pix(c, 0, 0, CAIRN_ROWS, CAIRN_PAL); R(c, 5, 9, 1, 2, g); R(c, 7, 9, 2, 1, g); R(c, 7, 10, 1, 1, g);
+      });
       case 'sign': return sprite('sign', 10, 9, c => pix(c, 0, 0, SIGN_ROWS, { o: '#26202e', G: '#a2a2ac', g: '#7a7a82', D: '#55555e', Y: '#26202e' }));
       case 'icicles': return sprite('icicles', 16, 8, c => pix(c, 0, 0, ICICLE_ROWS, ICE_PAL));
       case 'iceBlock': return sprite('iceBlock', 16, 12, c => pix(c, 0, 0, BLOCK_ROWS, BLOCK_PAL));
       case 'rope': return sprite('rope', 16, 9, c => pix(c, 0, 0, ROPE_ROWS, ROPE_PAL));
       case 'beam': return sprite('beam', 16, 16, c => pix(c, 0, 0, BEAM_ROWS, BEAM_PAL));
       case 'falls': return sprite('falls' + f, 16, 16, c => { pix(c, 0, 0, FALLS_ROWS, ICE_PAL); R(c, 3 + f * 8, 2 + f * 5, 1, 2, '#ffffff'); });
-      case 'cave': return sprite('cave', 16, 16, c => pix(c, 0, 0, CAVE_ROWS, { o: '#26202e', D: '#55555e', K: '#151e4e' }));
+      case 'cave': return sprite('cave', 16, 16, c => pix(c, 0, 0, CAVE_ROWS, { S: SNOW.lt, G: '#a2a2ac', D: '#55555e', E: '#151e4e', K: '#26202e' })); // a rock arch, snow on top
       default: return sprite('none', 1, 1, () => {});
     }
   }
@@ -1100,7 +1131,7 @@ const TownArt = (() => {
   // Toda cor nova do inverno (o teste confere que estão na paleta mestre)
   const WINTER_COLORS = [...Object.values(SNOW), ...LEAF_W, ...PINE_W, '#2c3c80', '#3a78c8', '#1c2860', '#26202e', '#55555e', '#7a7a82',
     '#a2a2ac', '#e8b840', '#f0d860', '#fff6c0', '#c89c38'];
-  return { layer, hash, weather, lightRings, disc, fieldSprite, vista, smokePuff, flake, SNOW, WINTER_COLORS, INTERIOR_COLORS, PUFFS };
+  return { layer, hash, weather, lightRings, disc, fieldSprite, flame, vista, smokePuff, flake, SNOW, WINTER_COLORS, INTERIOR_COLORS, PUFFS };
 })();
 
 if (typeof module !== 'undefined') module.exports = { TownArt };
