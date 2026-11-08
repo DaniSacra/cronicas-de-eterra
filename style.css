@@ -450,6 +450,9 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"] .hv-modes { display: flex; gap: calc(var(--u) * 2); justify-content: center; }
 #heroview[data-mode="tabs"] .hv-modes button { padding: calc(var(--u) * 2) calc(var(--u) * 6); color: var(--dim); }
 #heroview[data-mode="tabs"] .hv-modes button.on { color: var(--gold); }
+/* Palco and Ficha are ribbons like the Livro's, in the color of the hero on screen; the one open hangs lower */
+#heroview .hv-modes .bk-ribbon { --c: var(--hero-c); color: var(--ink) !important; align-self: flex-start; }
+#heroview .hv-modes .bk-ribbon:not(.on) { filter: brightness(.7); }
 #heroview[data-screen="hero"][data-mode="tabs"] { grid-template-rows: auto auto minmax(0, 1fr); }
 #heroview[data-mode="tabs"] .hv-cols { grid-template-columns: minmax(0, 1fr); }
 #heroview[data-mode="tabs"][data-view="stage"] .hv-sheet, #heroview[data-mode="tabs"][data-view="sheet"] .hv-stage-col { display: none; }

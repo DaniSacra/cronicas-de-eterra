@@ -355,9 +355,9 @@ const HeroView = (() => {
   function render() {
     const m = hero(), d = pdef(m), md = mode();
     root.dataset.mode = md; root.dataset.screen = screen; root.dataset.view = view; root.toggleAttribute('data-choosing', choosing);
-    root.style.setProperty('--hv-bg', HERO_FACE_BG[m.id][3]);
+    root.style.setProperty('--hv-bg', HERO_FACE_BG[m.id][3]); root.style.setProperty('--hero-c', d.color);
     if (screen === 'hero') {
-      const tabs = md === 'tabs' ? `<div class="hv-modes">${[['stage', 'Palco'], ['sheet', 'Ficha']].map(([v, l]) => btn('view', v, l, `win${v === view ? ' on' : ''}`)).join('')}</div>` : '';
+      const tabs = md === 'tabs' ? `<div class="hv-modes">${[['stage', 'Palco'], ['sheet', 'Ficha']].map(([v, l]) => btn('view', v, l, `bk-ribbon${v === view ? ' on' : ''}`)).join('')}</div>` : '';
       root.innerHTML = heroStrip() + tabs + `<div class="hv-cols">${stageCol(m, d)}${sheetCol(m)}</div>`;
       drawCanvas();
     } else if (screen === 'book') root.innerHTML = bookScreen();
