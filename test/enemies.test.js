@@ -5,6 +5,7 @@ const { inPalette } = require('../src/palette.js');
 const { ENEMY_ART } = require('../src/enemyart.js');
 const { ENEMIES } = require('../src/data.js');
 const { viewFit, battleLayout } = require('../src/uirules.js');
+const R2 = require('../src/uirules.js');
 
 // Every enemy of Chapter 1 (cemetery, tavern, crypt and its boss) plus the two the art bible names
 const CHAPTER1 = ['ratoCova', 'morcegoCova', 'ossada', 'encapuzado', 'rato', 'morcego', 'gosma', 'aranha', 'esqueleto', 'sineiro'];
@@ -88,4 +89,13 @@ test('every enemy in one battle shares the same scale', () => {
       assert.equal(new Set(L.map(l => l.scale)).size, 1, `${VW}x${VH} ${g.join('+')}`);
     }
   }
+});
+
+test('portrait battle: the enemies stand higher, above the party band and the command bar; landscape and PC unchanged', () => {
+  assert.equal(R2.battleFloor(320, 180), R2.BATTLE_FLOOR);
+  assert.equal(R2.battleFloor(422, 196), R2.BATTLE_FLOOR);
+  const tall = viewFit(1170, 2532), base = Math.round(tall.h * R2.battleFloor(tall.w, tall.h));
+  assert.ok(base <= tall.h * 0.56, 'floor at 56% of a 390x844 phone');
+  const sizes = ['ratoCova', 'morcegoCova', 'ossada'].map(id => ({ ...GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite]), float: !!ENEMIES[id].float }));
+  for (const L of battleLayout(sizes, tall.w, tall.h)) assert.ok(L.base <= base && L.top >= 0, JSON.stringify(L));
 });

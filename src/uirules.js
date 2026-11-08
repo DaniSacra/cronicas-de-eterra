@@ -145,8 +145,11 @@ const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE
 // Common enemies stand on the ground of the painted backdrop (src/battlebg.js): the first, third... a row farther back
 // (BATTLE_BACK of the height, as far as the HUD allows), the others in front, like a group spread on a field.
 // A lone enemy stands in the front row: at the back it sits on the horizon, where the props are tiny, and looks pasted on
+// On a tall portrait view the party band and the command bar take the bottom third: the enemies stand higher
+const BATTLE_FLOOR_TALL = 0.56;
+const battleFloor = (vw, vh) => (vh > vw * 1.2 ? BATTLE_FLOOR_TALL : BATTLE_FLOOR);
 function battleLayout(sizes, vw, vh, boss = false) {
-  const floor = Math.round(vh * BATTLE_FLOOR), n = sizes.length, slot = Math.floor(vw / n);
+  const floor = Math.round(vh * battleFloor(vw, vh)), n = sizes.length, slot = Math.floor(vw / n);
   const base = boss ? floor : floor - 12, safe = Math.round(vh * (boss ? 0.17 : BATTLE_SAFE_TOP));
   // one scale for the whole group, so every pixel in the scene has the same size
   const scale = Math.max(1, Math.min(BATTLE_MAX_SCALE, ...sizes.map(({ w, h, float }) =>
@@ -415,5 +418,5 @@ const installSteps = ios => (ios
   : 'Abra o jogo no Chrome, toque no menu ⋮ e depois em "Instalar app" ou "Adicionar à tela inicial".')
   + '\nDepois é só tocar no ícone: o jogo abre em tela cheia e funciona sem internet.';
 
-if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
+if (typeof module !== 'undefined') module.exports = { equippedGear, bonusDiff, gearChoices, bestChoice, HIT, critChance, dodgeChance, rollHit, fallReactor, bestGear, equipDelta, gearPower, claraCalls, CLARA_CALL, gridPath, gearFromBonus, midName, replaceSaveOk, boxRoom, keepPairs, hintHome, dialogPad, shortName, queueTag, spellLine, bossWarning, encounterChance, titleOptions, installSteps, viewFit, TOWN_MIN_W, camAxis, camLift, battleLayout, BATTLE_FLOOR, battleFloor, crispPx, bodyMin, fontScale, placeLabel, healthWord, campMenuOpts, CAMP_HELP, unseen, ofHero, buyMax, buyPreview, forgeCompare, forgeFilter, fieldCasts, heroGear, bonusText, takeTalk, talkLines, splitMood, splitSpeaker, cardMood, torchTint,
   slotGear, bodyPal, spellBook, TARGET_TEXT, spellIcon, STAT_KEYS, statRows, xpLeftText, storyLines, storyQuote, STORY_MAX, nextSkill, bagGroups, bagTabs, targetPreview, fieldUse, spellEffect, heroViewMode, heroViewViews, heroViewFonts };
