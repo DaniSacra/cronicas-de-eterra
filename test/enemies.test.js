@@ -99,3 +99,16 @@ test('portrait battle: the enemies stand higher, above the party band and the co
   const sizes = ['ratoCova', 'morcegoCova', 'ossada'].map(id => ({ ...GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite]), float: !!ENEMIES[id].float }));
   for (const L of battleLayout(sizes, tall.w, tall.h)) assert.ok(L.base <= base && L.top >= 0, JSON.stringify(L));
 });
+
+test('turn queue faces: every grid enemy has a 32x32 head crop inside its sprite, and the crop is mostly the creature', () => {
+  const { ENEMY_ART } = require('../src/enemyart.js');
+  const { GridSprite } = require('../src/gridsprite.js');
+  for (const [k, art] of Object.entries(ENEMY_ART)) {
+    const [x, y] = art.face, { w, h } = GridSprite.sizeOf(art);
+    assert.ok(x >= 0 && y >= 0 && x + 32 <= w && y + 32 <= h, `${k}: ${x},${y} in ${w}x${h}`);
+    const px = GridSprite.toPixels(art, 0);
+    let filled = 0;
+    for (let j = y; j < y + 32; j++) for (let i = x; i < x + 32; i++) if (px[j][i]) filled++;
+    assert.ok(filled > 32 * 32 * 0.4, `${k}: only ${filled} pixels in the head crop`);
+  }
+});

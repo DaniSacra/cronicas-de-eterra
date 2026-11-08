@@ -326,6 +326,15 @@ const Sprites = (() => {
     return (cache[id] = [c, c]);
   }
   const enemy = id => enemyFrames(id)[0];
+  // The 32x32 head of a grid enemy for the turn queue (null for the old drawings)
+  const faceCache = {};
+  function enemyFace(id) {
+    if (id in faceCache) return faceCache[id];
+    const at = (ENEMY_ART[ENEMIES[id].sprite] || {}).face;
+    if (!at) return (faceCache[id] = null);
+    const c = cv(32, 32); c.getContext('2d').drawImage(enemyFrames(id)[0], -at[0], -at[1]);
+    return (faceCache[id] = c.toDataURL());
+  }
   const isGrid = id => !!ENEMY_ART[ENEMIES[id].sprite];
   function toTex(c) { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; return { w: c.width, h: c.height, d }; }
   function world() {
@@ -340,5 +349,5 @@ const Sprites = (() => {
       clue: mk(c => draw.clue(c)),
     };
   }
-  return { enemy, enemyFrames, isGrid, world };
+  return { enemy, enemyFrames, enemyFace, isGrid, world };
 })();

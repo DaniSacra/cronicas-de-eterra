@@ -619,6 +619,7 @@ function drawOrder(c, now, boss) {
       label: o.side === 'party' ? queueTag(pdef(a).name) : a.boss ? a.name.replace(/^O /, '').slice(0, 2) : a.letter ? a.name[0] + a.letter : a.name.slice(0, 2),
       color: o.side === 'party' ? pdef(a).color : 'var(--danger)',
       state: a.hp <= 0 || o.skip ? 'gone' : i < B.turn ? 'done' : i === B.turn ? 'cur' : 'next',
+      face: o.side === 'party' ? UI.faceUrl(Portraits.keyFor(pdef(a).name), '') : Sprites.enemyFace(a.id), mark: o.side === 'party' ? '' : a.letter || '',
     };
   }), B.round > 1 && now - B.roundT < 1600 ? B.round : 0, B.macro ? macroName(B.macro.slot) : '');
   // Seta sobre o inimigo que está agindo

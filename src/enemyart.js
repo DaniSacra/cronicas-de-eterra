@@ -2,6 +2,7 @@
 // Variants of the same enemy come from a palette swap in ENEMIES[id].recolor, never from a new grid.
 const ENEMY_ART = {
   slime: {
+    face: [9, 0], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#14402a', b: '#90e0b0', c: '#ffffff', d: '#4ad08a', e: '#3a9a6a', f: '#26202e', g: '#2a5440', h: '#fff6c0', i: '#a8323e', j: '#e8f0e8', k: '#f0d860', m: '#b0bcc4', n: '#c89c38', o: '#7a7a82' },
     frames: [
       [
@@ -86,6 +87,7 @@ const ENEMY_ART = {
   },
   // Capítulo 1: the frost wolf of the southern road (first pass, light from the top left)
   wolf: {
+    face: [26, 0], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#26202e', b: '#e8eff8', c: '#cbd8ec', d: '#a4b8da', e: '#7488b8', f: '#4a5a8c', g: '#f0d860', h: '#26202e', i: '#fff6c0', j: '#e86a7a' },
     frames: [
     [
@@ -167,6 +169,7 @@ const ENEMY_ART = {
     ],
   },
   rat: {
+    face: [25, 0], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#2a1408', b: '#9a6232', c: '#b07c58', d: '#4a2610', e: '#6a3a1a', f: '#f8a0a0', g: '#4a0c14', h: '#e86a7a', i: '#a8323e', j: '#fff6c0', k: '#d8a478' },
     frames: [
       [
@@ -242,6 +245,7 @@ const ENEMY_ART = {
     ],
   },
   bat: {
+    face: [15, 4], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#26202e', b: '#72308e', c: '#40145a', d: '#3a1448', e: '#a84ad8', f: '#fff6c0', g: '#f0d860', h: '#4a0c14' },
     frames: [
       [
@@ -323,6 +327,7 @@ const ENEMY_ART = {
     ],
   },
   skeleton: {
+    face: [0, 0], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#55555e', b: '#e8f0e8', c: '#d8a478', d: '#3a2010', e: '#b0bcc4', f: '#7a7a82', g: '#9a6232', h: '#a2a2ac', i: '#b07c58', j: '#120c14', k: '#a8323e', m: '#f0d860', n: '#151e4e', o: '#3a78c8', p: '#2c3c80', q: '#e8b840', r: '#141018', s: '#26262e', t: '#1c2860', u: '#2a1408', v: '#6a3a1a', w: '#4a2610', x: '#e86a7a' },
     frames: [
       [
@@ -446,6 +451,7 @@ const ENEMY_ART = {
     ],
   },
   spider: {
+    face: [16, 6], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#141018', b: '#40145a', c: '#3a1448', d: '#26202e', e: '#72308e', f: '#e86a7a', g: '#a8323e', h: '#fff6c0' },
     frames: [
       [
@@ -539,6 +545,7 @@ const ENEMY_ART = {
     ],
   },
   hooded: {
+    face: [1, 0], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#141018', b: '#a2a2ac', c: '#7a7a82', d: '#55555e', e: '#26262e', f: '#e8f0e8', g: '#e86a7a', h: '#fff6c0', i: '#b0bcc4', j: '#a8323e', k: '#26202e', m: '#9a6232', n: '#6a3a1a', o: '#4a2610', p: '#2a1408' },
     frames: [
       [
@@ -662,6 +669,7 @@ const ENEMY_ART = {
     ],
   },
   bellringer: {
+    face: [31, 3], // top left of the 32x32 head shown in the turn queue
     pal: { a: '#141018', b: '#1c2860', c: '#4e2c14', d: '#d8a478', e: '#b07c58', f: '#151e4e', g: '#26202e', h: '#2c3c80', i: '#26262e', j: '#9a6232', k: '#120c14', m: '#e8f0e8', n: '#8ac0f0', o: '#7a7a82', p: '#3a78c8', q: '#f4cca0', r: '#fff6c0', s: '#e8b840', t: '#c89c38', u: '#8a5418', v: '#6a3a1a', w: '#55555e', x: '#b0bcc4', y: '#a2a2ac', z: '#5a2a08', A: '#f0d860', B: '#ffffff' },
     frames: [
       [

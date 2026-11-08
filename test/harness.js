@@ -44,7 +44,7 @@ function battle(ids, choose, extra = {}) {
     files: ['macro', 'battlebg', 'battle'], choose: (opts, o) => choose(opts, o, run),
     ctx: { VW: 320, VH: 200, view: el('view'), performance: { now: () => 0 }, HUD: { queue() {}, label() {}, boss() {} },
       document: { createElement: () => ({ getContext: () => ({ drawImage() {}, putImageData() {}, createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }) }) }), getElementById: el },
-      Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true } },
+      Sprites: { enemyFrames: () => [{ width: 48, height: 48 }], isGrid: () => true, enemyFace: id => 'face:' + id } },
   });
   run = s.run;
   run('Math.random = () => 0.5');

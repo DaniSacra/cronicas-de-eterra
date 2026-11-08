@@ -76,9 +76,10 @@ test('the turn queue calls the boss by its own name', () => {
   const { battle } = require('./harness.js');
   const { run } = battle(['aldo'], () => null);
   run(`globalThis.q = null; HUD.queue = items => { globalThis.q = items; }`);
-  run(`B = { order: [{ actor: { ...ENEMIES.sineiro, hp: 1, boss: true }, side: 'enemy' }], turn: 0, round: 1, roundT: 0 }`);
+  run(`B = { order: [{ actor: { ...ENEMIES.sineiro, id: 'sineiro', hp: 1, boss: true }, side: 'enemy' }], turn: 0, round: 1, roundT: 0 }`);
   run(`drawOrder({ beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, fill() {} }, 0, true)`);
   assert.equal(run('q[0].label'), 'Si');
+  assert.equal(run('q[0].face'), 'face:sineiro', 'its head in the slot, the name stays as the alt text');
 });
 
 test('the morning after the fight: Tomé heard of the grey cloaks; before the night he only talks of fish', () => {

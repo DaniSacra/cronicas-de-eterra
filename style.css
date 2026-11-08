@@ -305,7 +305,7 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 .coin { flex: none; width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: var(--hi);
   box-shadow: 0 0 0 var(--u) var(--ink), inset calc(var(--u) * -1) calc(var(--u) * -1) 0 #a8781e; }
 #hudtop { position: absolute; z-index: 3; top: calc(var(--u) * 4); left: 50%; translate: -50% 0; display: flex; flex-direction: column;
-  align-items: center; gap: calc(var(--u) * 2); pointer-events: none; max-width: calc(100% - var(--u) * 8); }
+  align-items: center; gap: calc(var(--u) * 2); pointer-events: none; width: max-content; max-width: calc(100% - var(--u) * 8); } /* max-content: left 50% would cap it at half the view */
 #hudtop [hidden] { display: none !important; }
 #hudtop .boss { width: min(34em, 80vw); padding: calc(var(--u) * 2) calc(var(--u) * 5); text-align: center; font-size: var(--f2); }
 #hudtop .boss .bar { height: calc(var(--u) * 4); margin-bottom: 0; }
@@ -318,6 +318,12 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
   font-size: var(--f1); line-height: 1.8; border: var(--bw) solid transparent; border-image: var(--frame-slot) 4 fill / var(--bw) round; image-rendering: pixelated; }
 .queue .qs.sel-frame { border-image-source: var(--frame-sel); }
 .queue .qs i { display: block; align-self: stretch; height: var(--u); }
+/* faces in the queue: 32 art pixels at a whole scale (64 px on a big screen, 32 on a phone) */
+.queue .qs { position: relative; }
+.queue .qs:has(img) { min-width: 0; border-width: calc(var(--u) * 2); padding: 0; } /* a thin frame: seven faces fit across a phone */
+.queue .qs img { display: block; width: 64px; height: 64px; image-rendering: pixelated; margin: var(--u) 0; }
+.queue .qs b { position: absolute; right: 0; bottom: calc(var(--u) * 2); padding: 0 var(--u); background: var(--ink); color: var(--hi); font-size: var(--f1); line-height: 1.2; }
+@media (max-width: 900px), (max-height: 500px) { .queue .qs img { width: 32px; height: 32px; } }
 .queue .qs.done { opacity: .45; } .queue .qs.gone { opacity: .2; }
 .queue .round.tag { animation: none; color: var(--hi); }
 #menu .opt .ics { display: inline-flex; gap: var(--u); margin-left: calc(var(--u) * 2); vertical-align: middle; }
@@ -608,3 +614,8 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 }
 @media (pointer: coarse) { #game.in-battle #touch [data-k="m"] { display: none; } } /* no map in battle */
 #bottom > #info { align-self: flex-start; margin-bottom: calc(var(--u) * 2); } /* low note (fog areas): left, above the party */
+/* boss fight on a wide screen: the queue stands in a column left of the boss window, off the skull */
+@media (min-width: 901px) and (min-height: 501px) {
+  #game.boss-fight #hudtop .queue { position: absolute; right: calc(100% + var(--u) * 4); top: 0; flex-direction: column; flex-wrap: nowrap; }
+  #game.boss-fight #hudtop .queue .round { margin: var(--u) 0 0; }
+}

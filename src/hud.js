@@ -42,12 +42,13 @@ const HUD = (() => {
       if (fill._w !== w) { fill._w = w; fill.style.width = w; }
       boss.classList.toggle('enraged', !!enraged); show(boss);
     },
-    // items: [{ label, color, state: 'done' | 'cur' | 'next' | 'gone' }]; round: number to flash or 0; tag: the tactic running
+    // items: [{ label, color, state: 'done' | 'cur' | 'next' | 'gone', face?: url, mark?: 'A' }]; round: number to flash or 0;
+    // tag: the tactic running. With a face the slot shows it (and the A/B letter of repeated enemies); without, the short name.
     queue(items, round, tag = '') {
-      const key = items.map(i => i.label + i.state + i.color).join('|') + '#' + round + tag;
+      const key = items.map(i => i.label + i.state + i.color + !!i.face + (i.mark || '')).join('|') + '#' + round + tag;
       if (queue._k !== key) {
         queue._k = key;
-        queue.innerHTML = items.map(i => `<div class="qs ${i.state}${i.state === 'cur' ? ' sel-frame' : ''}"><span>${esc(i.label)}</span><i style="background:${i.color}"></i></div>`).join('') +
+        queue.innerHTML = items.map(i => `<div class="qs ${i.state}${i.state === 'cur' ? ' sel-frame' : ''}">${i.face ? `<img src="${i.face}" alt="${esc(i.label)}">${i.mark ? `<b>${esc(i.mark)}</b>` : ''}` : `<span>${esc(i.label)}</span>`}<i style="background:${i.color}"></i></div>`).join('') +
           (round ? `<div class="round">Rodada ${round}</div>` : '') + (tag ? `<div class="round tag">${esc(tag)}</div>` : '');
       }
       show(queue);

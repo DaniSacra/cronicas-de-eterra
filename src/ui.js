@@ -279,5 +279,5 @@ const UI = (() => {
   document.getElementById('screen').addEventListener('click', () => { Sfx.init(); if (menu && menu.style === 'side') cancel(); else advance(); }); // a click outside the camp menu closes it
   document.addEventListener('pointerdown', () => Sfx.init(), true); // o tema do título toca também para quem só usa o mouse
 
-  return { say, info, choose, pickValue, hoverValue, markCard, placeBar, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };
+  return { faceUrl, say, info, choose, pickValue, hoverValue, markCard, placeBar, handleKey, advance, busy, buildParty, updateParty, cardFloat, cardHit, cardGlow, showOverlay, hideOverlay };
 })();
