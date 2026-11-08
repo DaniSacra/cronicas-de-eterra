@@ -546,8 +546,12 @@ async function titleScreen() {
   UI.showOverlay(`<div class="title title-logo"><h1>${logoText(GAME.title)}</h1><p class="sub">${esc(GAME.subtitle)}</p>` +
     `<p class="foot">${esc(GAME.credit)}</p></div>`, 'ov-title');
   let v;
-  do v = await UI.choose(titleOptions(hasSave(), new URLSearchParams(location.search).has('dev')), { title: '', cols: 1 });
-  while (v === 'new' && !await replaceSaveOk(hasSave()));
+  for (;;) {
+    v = await UI.choose(titleOptions(hasSave(), new URLSearchParams(location.search).has('dev'), Install.offer()), { title: '', cols: 1 });
+    if (v === 'install') { await Install.run(); continue; } // src/install.js
+    if (v === 'new' && !await replaceSaveOk(hasSave())) continue;
+    break;
+  }
   UI.hideOverlay();
   document.getElementById('game').classList.remove('on-title');
   Sfx.init();
