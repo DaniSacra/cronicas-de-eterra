@@ -301,9 +301,9 @@ const BattleBG = (() => {
         if (road) {
           const rut = Math.abs(Math.abs(X + 0.05) - 0.09) < 0.012;
           if (rut && k > 0.08) return N[0];
-          return band(x, y, N, 0.6 + k * 2.2);
+          return band(x, y, N, 0.5 + k * 1.8 + hash(x, y) * 0.3);
         }
-        return hash(x * 7, y) < 0.02 * k ? N[4] : band(x, y, N, 0.2 + k * 2.6);
+        return hash(x * 7, y) < 0.02 * k ? N[4] : band(x, y, N, 0.2 + k * 1.9 + hash(x, y) * 0.3); // darker close by: white wolves stand out; jitter breaks the dither rows
       });
       // footprints of wolves crossing the road
       for (let i = 0; i < 9; i++) { const q = at(-0.3 + i * 0.07, 2.2 + (i % 2) * 0.12); put(q.x, q.y, N[0]); put(q.x + 1, q.y, N[0]); }
@@ -312,10 +312,10 @@ const BattleBG = (() => {
       for (const Z of [7, 5.5, 4.4, 3.5, 2.8, 2.2, 1.7, 1.3]) for (let X = -1.2; X <= 1.2; X += 0.3) {
         const x = X + (g() - 0.5) * 0.15, z = Z + g() * 0.3, sx = at(x, z).x, roll = g();
         if (roll < 0.5 || Math.abs(x + 0.05) < 0.25 || pond(x, z) || pond(x, z - 0.4)) continue;
-        if (Z < 3.2 && sx > w * 0.16 && sx < w * 0.84) continue;
+        if (Z < 4.6 && sx > w * 0.12 && sx < w * 0.88) continue; // small pines behind the enemies would make them giants
         props.push({ x, z, kind: roll > 0.78 ? 'rock' : 'pine' });
       }
-      for (const p of props) { const q = at(p.x, p.z); p.kind === 'rock' ? snowRock(K, q.x, q.y, q.s * 1.6) : pine(K, q.x, q.y, Math.round(70 * q.s)); }
+      for (const p of props) { const q = at(p.x, p.z); p.kind === 'rock' ? snowRock(K, q.x, q.y, q.s * 1.6) : pine(K, q.x, q.y, Math.round(95 * q.s)); }
       // low mist on the far snow
       for (let y = hy; y < hy + Math.round(gh * 0.12); y++) for (let x = 0; x < w; x++) if (bay(x, y) < 0.12 * (1 - (y - hy) / (gh * 0.12)) * (0.6 + 0.4 * Math.sin(x / 19))) put(x, y, N[2]);
       // a big pine close by at each edge, framing the fight

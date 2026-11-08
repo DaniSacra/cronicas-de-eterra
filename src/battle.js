@@ -537,16 +537,19 @@ async function startBattle(ids, isBoss, opts = {}) {
 
 // ---------- Desenho da batalha ----------
 // Pixel ellipse on the floor under an enemy (the sprite never carries its own shadow)
-function groundShadow(c, x, y, rx, alpha) {
-  c.fillStyle = `rgba(38,32,46,${(0.5 * alpha).toFixed(2)})`;
-  for (let dy = -2; dy <= 1; dy++) {
-    const half = Math.round(rx * Math.sqrt(1 - ((dy + 0.5) / 2.5) ** 2));
+// A flat ellipse of shade on the ground under the enemy, taller at a bigger scale (rows: whole lines)
+function groundShadow(c, x, y, rx, alpha, rows = 4) {
+  c.fillStyle = `rgba(40,48,96,${(0.55 * alpha).toFixed(2)})`; // the blue shade of the night snow
+  const r = rows / 2;
+  for (let i = 0; i < rows; i++) {
+    const dy = i - Math.floor(r), half = Math.round(rx * Math.sqrt(Math.max(0, 1 - ((dy + 0.5) / (r + 0.5)) ** 2)));
     c.fillRect(x - half, y + dy, half * 2, 1);
   }
 }
 
 function drawBattle(now) {
   const c = vctx;
+  c.imageSmoothingEnabled = false; // the sprites are scaled by whole numbers: crisp pixels, never blurred
   c.drawImage(bgCanvas, 0, 0, VW, VH);
   const appear = Math.min(1, Math.max(0, 1 - (B.intro - now) / 600));
 
@@ -560,7 +563,7 @@ function drawBattle(now) {
     const bob = e.float ? Math.round(Math.sin(now / 380 + e.i * 1.7) * 3) : 0;
     const hop = now - e.atkT < 300 ? Math.round((e.boss ? 3 : 5) * Math.sin((now - e.atkT) / 300 * Math.PI)) : 0; // o chefe, mais pesado, pula menos
     const rise = e.dieT ? Math.round((now - e.dieT) / 40) : 0;
-    if (e.grid && !e.dieT) groundShadow(c, e.x, e.base, Math.round(e.w * (e.float ? 0.28 : 0.38)), alpha);
+    if (e.grid && !e.dieT) groundShadow(c, e.x, e.base, Math.round(e.w * (e.float ? 0.28 : 0.42)), alpha, 2 * e.scale + 1);
     c.globalAlpha = alpha;
     if (e.dieT) { c.filter = 'sepia(1) saturate(4) hue-rotate(-50deg)'; }
     c.drawImage(frame, e.left, e.top + bob - hop - rise, e.w, e.h);

@@ -8,7 +8,7 @@ let vbuf = new Uint32Array(vimg.data.buffer);
 let zbuf = new Float32Array(VW);
 function resizeView(w, h) {
   if (w === VW && h === VH) return false;
-  VW = w; VH = h; view.width = w; view.height = h;
+  VW = w; VH = h; view.width = w; view.height = h; vctx.imageSmoothingEnabled = false; // a new size resets it
   vimg = vctx.createImageData(w, h); vbuf = new Uint32Array(vimg.data.buffer); zbuf = new Float32Array(w);
   return true;
 }

@@ -106,7 +106,7 @@ test('portrait battle: the enemies stand higher, above the party band and the co
   assert.equal(R2.battleFloor(320, 180), R2.BATTLE_FLOOR);
   assert.equal(R2.battleFloor(422, 196), R2.BATTLE_FLOOR);
   const tall = viewFit(1170, 2532), base = Math.round(tall.h * R2.battleFloor(tall.w, tall.h));
-  assert.ok(base <= tall.h * 0.56, 'floor at 56% of a 390x844 phone');
+  assert.ok(base <= tall.h * 0.6, 'floor at 60% of a 390x844 phone, still over the command bar');
   const sizes = ['ratoCova', 'morcegoCova', 'ossada'].map(id => ({ ...GridSprite.sizeOf(ENEMY_ART[ENEMIES[id].sprite]), float: !!ENEMIES[id].float }));
   for (const L of battleLayout(sizes, tall.w, tall.h)) assert.ok(L.base <= base && L.top >= 0, JSON.stringify(L));
 });

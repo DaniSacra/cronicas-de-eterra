@@ -153,12 +153,12 @@ function wholeFit(rw, rh, w, h, dpr = 1) {
 // their slot (art pixels stay square, never blurry). Common enemies keep room for the HP bar under them.
 const BATTLE_FLOOR = 0.685, BATTLE_MAX_SCALE = 3, BATTLE_SAFE_TOP = 0.26, BATTLE_BACK = 0.08;
 // Common enemies stand a step into the scene, one size smaller than a boss: out on the field, not in the heroes' face
-const BATTLE_COMMON_SCALE = 2, BATTLE_DEPTH = 0.06;
+const BATTLE_COMMON_SCALE = 2, BATTLE_DEPTH = 0.06, BATTLE_HORIZON_MIN = 0.47; // the backdrop's horizon is at 0.40
 // Common enemies stand on the ground of the painted backdrop (src/battlebg.js): the first, third... a row farther back
 // (BATTLE_BACK of the height, as far as the HUD allows), the others in front, like a group spread on a field.
 // A lone enemy stands in the front row: at the back it sits on the horizon, where the props are tiny, and looks pasted on
 // On a tall portrait view the party band and the command bar take the bottom third: the enemies stand higher
-const BATTLE_FLOOR_TALL = 0.56;
+const BATTLE_FLOOR_TALL = 0.6;
 const battleFloor = (vw, vh) => (vh > vw * 1.2 ? BATTLE_FLOOR_TALL : BATTLE_FLOOR);
 // On a tall view three or more enemies stand in two staggered rows (back: 1st, 3rd...; front: 2nd, 4th...), so each
 // gets twice the width and the group is drawn at a bigger whole scale instead of a thin line across the screen
@@ -174,10 +174,10 @@ function battleLayout(sizes, vw, vh, boss = false) {
   // the whole group a step farther into the scene, as far as the room left over allows
   const base = boss ? base0 : base0 - Math.max(0, Math.min(Math.round(vh * BATTLE_DEPTH), room - back));
   return sizes.map(({ w, h, float }, i) => {
-    const inRow = rows ? (i % 2 ? Math.floor(n / 2) : cols) : n, k = rows ? i >> 1 : i, shift = rows ? (i % 2 ? 0.25 : -0.25) * slot : 0;
+    const inRow = rows ? (i % 2 ? Math.floor(n / 2) : cols) : n, k = rows ? i >> 1 : i, shift = rows ? (i % 2 ? 0.35 : -0.35) * slot : 0;
     const x = boss ? Math.round(vw / 2) : Math.round(vw / 2 + (k - (inRow - 1) / 2) * slot + (rows && n % 2 === 0 ? shift : 0));
     const W = w * scale, H = h * scale, left = x - Math.floor(W / 2), lift = float ? 8 : 0; // flyers hover over their shadow
-    const b = base - (i % 2 === 0 ? back : 0);
+    const b = Math.max(base - (i % 2 === 0 ? back : 0), Math.round(vh * BATTLE_HORIZON_MIN)); // never standing on the horizon
     return { x, base: b, scale, w: W, h: H, left, top: b - H - lift };
   });
 }
