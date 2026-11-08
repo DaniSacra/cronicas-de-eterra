@@ -455,6 +455,16 @@ canvas#view { flex: none; display: block; image-rendering: pixelated; image-rend
 #heroview[data-mode="tabs"][data-view="stage"] .hv-sheet, #heroview[data-mode="tabs"][data-view="sheet"] .hv-stage-col { display: none; }
 #heroview[data-mode="tabs"] .hv-mini img { width: calc(var(--f2) * 2.5); height: calc(var(--f2) * 2.5); }
 #heroview[data-mode="tabs"] .hv-sheet { overflow: auto; }
+/* Heróis on a phone held upright: one column that scrolls, the hero on a smaller stage on top and the sheet below (no tabs);
+   the equipment list still takes the whole page while choosing */
+@media (orientation: portrait) {
+  #heroview[data-screen="hero"][data-mode="tabs"] { grid-template-rows: auto minmax(0, 1fr); }
+  #heroview[data-screen="hero"][data-mode="tabs"] .hv-modes { display: none; }
+  #heroview[data-screen="hero"][data-mode="tabs"]:not([data-choosing]) .hv-cols { display: flex; flex-direction: column; overflow: auto; }
+  #heroview[data-screen="hero"][data-mode="tabs"]:not([data-choosing]) .hv-stage-col,
+  #heroview[data-screen="hero"][data-mode="tabs"]:not([data-choosing]) .hv-sheet { display: flex; flex: none; overflow: visible; }
+  #heroview[data-screen="hero"][data-mode="tabs"]:not([data-choosing]) .hv-scene { flex: none; height: 30vh; }
+}
 
 /* Livro: an open book, a ribbon per hero on its top edge, the list on the left page, the chosen skill on the right */
 .bk-title { color: var(--gold); flex: 1; }

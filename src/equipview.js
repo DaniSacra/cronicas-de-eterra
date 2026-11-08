@@ -3,7 +3,7 @@
 // a slot opens the equipment choice. Livro: an open book with a ribbon per hero, skills on the left, the chosen one
 // on the right. Bolsa: coins, three tabs and a grid of items.
 // Keys: arrows move, Enter chooses or uses, Tab or Q/E change tabs, Esc goes back one level (choice → sheet → menu).
-// On phones (heroViewMode 'tabs'): Heróis has two tabs (Palco, Ficha), the Livro shows one page at a time, the Bolsa one column.
+// On phones (heroViewMode 'tabs'): Heróis has two tabs (Palco, Ficha) lying down and one scrolling column upright, the Livro shows one page at a time, the Bolsa one column.
 const HeroView = (() => {
   let root, open = false, screen = 'hero', cur = 0, frame = 0, timer = null, done = null;
   let view = 'stage', slot = 0, choosing = false, pick = 0; // Heróis
@@ -354,7 +354,7 @@ const HeroView = (() => {
 
   function render() {
     const m = hero(), d = pdef(m), md = mode();
-    root.dataset.mode = md; root.dataset.screen = screen; root.dataset.view = view;
+    root.dataset.mode = md; root.dataset.screen = screen; root.dataset.view = view; root.toggleAttribute('data-choosing', choosing);
     root.style.setProperty('--hv-bg', HERO_FACE_BG[m.id][3]);
     if (screen === 'hero') {
       const tabs = md === 'tabs' ? `<div class="hv-modes">${[['stage', 'Palco'], ['sheet', 'Ficha']].map(([v, l]) => btn('view', v, l, `win${v === view ? ' on' : ''}`)).join('')}</div>` : '';
