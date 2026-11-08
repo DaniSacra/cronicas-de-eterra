@@ -156,7 +156,7 @@ const horse = (run, n) => run.json(`(h => h && { x: h.x, y: h.y, dir: h.dir })(T
 test('the pasture: the wolves walk on the map; a fight scares the horses within 4 tiles, never the lame one', async () => {
   const { log, run } = story(PARTY, after());
   run(`enterTown({ x: 14, y: 12, dir: 1 }, 'pasto')`);
-  assert.strictEqual(run('TOWN.roamers.length'), 4, 'four packs of wolves');
+  assert.strictEqual(run('TOWN.roamers.length'), 5, 'five packs of wolves');
   assert.strictEqual(run('TOWN.A.encounters'), undefined, 'no unseen fights');
   const far = horse(run, 4);
   await run('TOWN.A.afterFight()');

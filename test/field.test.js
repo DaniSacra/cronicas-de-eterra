@@ -160,3 +160,17 @@ test('the engine: roamers are born again on each visit and fight on contact', ()
   run(`TOWN.roamers = []; enterTown({ x: 2, y: 4, dir: 1 }, 'teste')`);
   assert.equal(run('TOWN.roamers.length'), 2, 'born again');
 });
+
+test('the animals of the map (wolf, crow, four horse coats) are valid grids in the master palette', () => {
+  const { GridSprite } = require('../src/gridsprite.js');
+  const { inPalette } = require('../src/palette.js');
+  const { run } = story(party);
+  const defs = run.json('ANIMAL_DEFS');
+  assert.deepEqual(Object.keys(defs).sort(), ['crow', 'horse:branco', 'horse:castanho', 'horse:malhado', 'horse:preto', 'wolf']);
+  for (const [k, d] of Object.entries(defs)) {
+    assert.deepEqual(GridSprite.check(d), [], k);
+    assert.strictEqual(d.frames.length, 2, k);
+    for (const col of Object.values(d.pal)) assert.ok(inPalette(col), `${k}: ${col}`);
+  }
+  assert.deepEqual(run.json('HORSE_COATS'), Object.keys(run.json('HORSE_PALS')));
+});

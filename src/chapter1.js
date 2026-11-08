@@ -507,7 +507,7 @@ const PASTO_PLAN = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
 const PASTO_START = { x: 1, y: 12, dir: 1 };
-const HORSE_COATS = [['#9a6232', '#26202e'], ['#e8eff8', '#a2a2ac'], ['#26262e', '#55555e'], ['#b07c58', '#f4cca0']];
+const HORSE_COATS = ['castanho', 'branco', 'preto', 'malhado']; // HORSE_PALS in src/town.js
 const HORSE_SPOTS = [[5, 5], [19, 3], [17, 12], [25, 19]];
 const GATE_SWING = [[6, 7], [6, 8]]; // the gate opens outwards over these two tiles
 // A horse already caught leaves its puzzle solved: an old save finds the gate open and the icicles gone
@@ -521,7 +521,7 @@ const PASTO_FIELD = () => {
     { id: 'pata', kind: 'hurt', x: 25, y: 19, open: bank },
   ];
 };
-const PASTO_ROAMERS = () => [roamer('wolf', 15, 10), roamer('wolf', 9, 15), roamer('wolf2', 27, 4), roamer('wolf2', 11, 19)];
+const PASTO_ROAMERS = () => [roamer('wolf', 15, 10), roamer('wolf', 9, 15), roamer('wolf2', 27, 4), roamer('wolf2', 11, 19), roamer('wolf2', 22, 10)];
 const gateClear = objs => objs.filter(o => o.def.puzzle === 'porteira').every(o => !GATE_SWING.some(([x, y]) => o.x === x && o.y === y));
 
 const FLEE_NEAR = 4;
@@ -648,7 +648,7 @@ Object.assign(AREAS.pasto, {
       if (!TOWN.walkable(x, y) || !visibleAt(x, y)) continue;
       const X = x * TS - camX, Y = y * TS - camY;
       c.fillStyle = 'rgba(232,184,64,.16)'; c.fillRect(X, Y, TS, TS);
-      c.fillStyle = 'rgba(200,130,62,.28)';
+      c.fillStyle = 'rgba(200,156,56,.3)';
       for (let j = 0; j < TS; j += 4) for (let i = (j / 4) % 2 ? 2 : 0; i < TS; i += 4) c.fillRect(X + i, Y + j, 2, 2);
     }
   },

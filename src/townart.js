@@ -119,6 +119,7 @@ const TownArt = (() => {
       const w = noise(gx / 7, gy / 2.5, 22);
       return w > 0.68 ? WATER[2] : w < 0.32 ? WATER[0] : WATER[1];
     }
+    if (t === TILE.CLIFF && snow) return snowCliff(A, x, y, lx, ly, gx, gy);
     if (t === TILE.CLIFF) {
       // borda norte: barranco de pedra com grama em cima
       if (ly < 3) return grassAt(gx, gy);
@@ -817,6 +818,25 @@ const TownArt = (() => {
     const n = noise(gx / 9, gy / 4, 63);
     return n > 0.68 ? ICE[0] : n < 0.3 ? ICE[2] : ICE[1];
   }
+  // A snowy ledge: the snow of the upper terrace rolls over the edge, then a rock face in vertical slabs (lit on the
+  // left, dark on the right), a ledge of snow now and then, and a dark foot where it meets the ground below
+  const CRAG = P(['#26202e', '#55555e', '#7a7a82', '#a2a2ac', '#4a5a8c']);
+  function snowCliff(A, x, y, lx, ly, gx, gy) {
+    const cl = t => t === TILE.CLIFF, top = !cl(tileAt(A, x, y - 1)), foot = !cl(tileAt(A, x, y + 1));
+    const lip = 4 + Math.floor(noise(gx / 3, 1, 81) * 3); // the overhang of snow, uneven
+    if (top && ly < lip - 1) return ly < 2 ? SNOWG[2] : SNOWG[1];
+    if (top && ly === lip - 1) return rgb(SNOW.sh);
+    if (foot && ly >= 14) return ly === 15 ? CRAG[0] : CRAG[4];
+    if (top && ly === lip && hash(gx, gy, 82) < 0.5) return rgb(SNOW.md); // drips of snow on the rock
+    const sx = gx + Math.floor(noise(1, gy / 6, 83) * 4), slab = Math.floor(sx / 5), k = sx - slab * 5;
+    const shelf = (gy + slab * 3) % 11 === 0;
+    if (shelf) return SNOWG[0];
+    if ((gy + slab * 3) % 11 === 1) return CRAG[1];
+    if (k === 0) return CRAG[3];
+    if (k === 4) return CRAG[1];
+    return hash(slab, gy >> 2, 84) < 0.3 ? CRAG[3] : CRAG[2];
+  }
+
   function fieldGround(A, t, x, y, gx, gy, lx, ly) {
     if (t === TILE.ICE) {
       const d = edgeDist(A, x, y, lx, ly, u => u === TILE.ICE);
