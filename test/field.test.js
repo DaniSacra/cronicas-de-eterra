@@ -174,3 +174,13 @@ test('the animals of the map (wolf, crow, four horse coats) are valid grids in t
   }
   assert.deepEqual(run.json('HORSE_COATS'), Object.keys(run.json('HORSE_PALS')));
 });
+
+test('the road and the pasture: the party sees 5 tiles, the wolves only give chase within 4', () => {
+  const { run } = story(party);
+  for (const a of ['estrada', 'pasto']) assert.deepEqual(run.json(`AREAS.${a}.vision`), { radius: 5, chase: 4 }, a);
+  run(`enterTown({ x: 2, y: 12, dir: 1 }, 'pasto'); TOWN.roamers = [{ ...newActor(7, 12, 3), def: { foe: 'wolf' }, home: { x: 7, y: 12 }, range: 2, wait: 0, calm: 0 }]`);
+  run('updateRoamers(16)');
+  assert.equal(run('TOWN.roamers[0].seen'), false, 'five tiles away: seen by the party, not by the wolf');
+  run(`Object.assign(TOWN.roamers[0], { x: 6, y: 12, fx: 6, fy: 12, t: 1, wait: 0 }); updateRoamers(16)`);
+  assert.equal(run('TOWN.roamers[0].seen'), true, 'four tiles: it comes');
+});

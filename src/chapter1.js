@@ -278,7 +278,7 @@ async function estradaStart() {
 
 AREAS.estrada = makeArea('Estrada do Sul', 'ESTRADA', 32, 60, planGrid(ESTRADA_PLAN), [DORIVAL_HOUSE], TILE.TREE);
 Object.assign(AREAS.estrada, {
-  poi: 'valmor', winter: true, trees: 'pine', river: true, vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'estrada',
+  poi: 'valmor', winter: true, trees: 'pine', river: true, vision: { radius: 5, chase: 4 }, dimCol: '10,24,56', dim: () => 0.3, battle: 'estrada',
   music: () => 'cemetery', mapv: 2, start: ESTRADA_START,
   field: ESTRADA_FIELD, roamers: ESTRADA_ROAMERS,
   puzzles: { pinheiro: () => true, atalho: objs => objs.find(o => o.id === 'pedra').y >= 37 },
@@ -590,7 +590,7 @@ const horseDef = i => {
 
 AREAS.pasto = makeArea('Pasto do Vau', 'PASTO', 32, 24, planGrid(PASTO_PLAN), [], TILE.TREE);
 Object.assign(AREAS.pasto, {
-  poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'estrada',
+  poi: 'vau', winter: true, fog: true, trees: 'pine', vision: { radius: 5, chase: 4 }, dimCol: '10,24,56', dim: () => 0.25, battle: 'estrada',
   music: () => 'cemetery', mapv: 2, start: PASTO_START,
   field: PASTO_FIELD, roamers: PASTO_ROAMERS, puzzles: { porteira: gateClear },
   cast: () => HORSE_SPOTS.map((_, i) => horseDef(i)).filter(d => !c1('cavalo' + d.n)),

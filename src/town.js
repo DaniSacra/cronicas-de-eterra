@@ -846,8 +846,10 @@ async function shop() {
 // Névoa da visão: uma máscara de um pixel por tile (com uma borda preta em volta do mapa), ampliada com suavização,
 // dá a borda macia. Primeiro tira a cor do que está fora do raio, depois escurece: névoa no que já foi visto, preto no resto.
 const SIGHT_MASKS = {}, SIGHT_DARK = [4, 4, 12]; // the never-seen dark, also past the map's edge
+// The fog of the dark areas: a mask at 4 px per tile in four whole steps (no blur), drawn without smoothing
+const SIGHT_SUB = 4;
 function drawSight(c, A, lp, camX, camY) {
-  const W = A.W + 2, H = A.H + 2, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS, py = lp.y / TS, lights = fieldLights();
+  const S = SIGHT_SUB, W = (A.W + 2) * S, H = (A.H + 2) * S, seen = areaSeen(), r = A.vision.radius, px = lp.x / TS + 0.5, py = lp.y / TS + 0.5, lights = fieldLights();
   let M = SIGHT_MASKS[A.name];
   if (!M) {
     const mk = () => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d'); return { cv, cx, img: cx.createImageData(W, H) }; };
@@ -855,18 +857,19 @@ function drawSight(c, A, lp, camX, camY) {
   }
   const g = M.gray.img.data, d = M.dark.img.data;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const tx = x - 1, ty = y - 1, i = (y * W + x) * 4, inMap = tx >= 0 && ty >= 0 && tx < A.W && ty < A.H;
-    let k = inMap ? Math.min(1, Math.max(0, (Math.hypot(tx - px, ty - py) - (r - 1)) / 1.5)) : 1; // 0 perto do grupo, 1 além do raio
-    if (inMap) for (const l of lights) k = Math.min(k, Math.max(0, (Math.hypot(tx - l.x, ty - l.y) - (l.r - 1)) / 1.5)); // lit lamps show their ground
+    const fx = x / S - 1 + 0.5 / S, fy = y / S - 1 + 0.5 / S, tx = Math.floor(fx), ty = Math.floor(fy), i = (y * W + x) * 4, inMap = tx >= 0 && ty >= 0 && tx < A.W && ty < A.H;
+    let k = inMap ? Math.min(1, Math.max(0, (Math.hypot(fx - px, fy - py) - (r - 0.5)) / 1.5)) : 1; // 0 near the party, 1 past the radius
+    if (inMap) for (const l of lights) k = Math.min(k, Math.max(0, (Math.hypot(fx - l.x - 0.5, fy - l.y - 0.5) - (l.r - 0.5)) / 1.5)); // lit lamps show their ground
+    k = Math.round(k * 3) / 3; // four whole steps
     const a = inMap && seen[ty * A.W + tx] ? 0.6 * k : k;
     g[i] = g[i + 1] = g[i + 2] = 128; g[i + 3] = 255 * k;
     [d[i], d[i + 1], d[i + 2]] = SIGHT_DARK; d[i + 3] = 255 * a;
   }
   M.gray.cx.putImageData(M.gray.img, 0, 0); M.dark.cx.putImageData(M.dark.img, 0, 0);
-  const X = -camX - TS, Y = -camY - TS;
-  c.save(); c.imageSmoothingEnabled = true;
-  c.globalCompositeOperation = 'saturation'; c.drawImage(M.gray.cv, X, Y, W * TS, H * TS);
-  c.globalCompositeOperation = 'source-over'; c.drawImage(M.dark.cv, X, Y, W * TS, H * TS);
+  const X = -camX - TS, Y = -camY - TS, w = (A.W + 2) * TS, h = (A.H + 2) * TS;
+  c.save(); c.imageSmoothingEnabled = false;
+  c.globalCompositeOperation = 'saturation'; c.drawImage(M.gray.cv, X, Y, w, h);
+  c.globalCompositeOperation = 'source-over'; c.drawImage(M.dark.cv, X, Y, w, h);
   c.restore();
 }
 
@@ -979,9 +982,10 @@ function drawTown(now) {
   if (TOWN.objs && TOWN.objs.length) drawFieldLights(c, camX, camY);
   drawFieldFx(c, now, camX, camY);
   if (A.vision) { // a luz quente do lampião em volta do grupo
-    const gx = lp.x - camX + TS / 2, gy = lp.y - camY + TS / 2, R = A.vision.radius * TS, gr = c.createRadialGradient(gx, gy, 0, gx, gy, R);
-    gr.addColorStop(0, 'rgba(255,190,110,.18)'); gr.addColorStop(1, 'rgba(255,190,110,0)');
-    c.globalCompositeOperation = 'lighter'; c.fillStyle = gr; c.fillRect(gx - R, gy - R, R * 2, R * 2); c.globalCompositeOperation = 'source-over';
+    const gx = Math.round(lp.x - camX + TS / 2), gy = Math.round(lp.y - camY + TS / 2);
+    for (const g of TownArt.lightRings(A.vision.radius * TS)) if (g.warm) { // the same stepped rings as a lamp's pool, fainter
+      c.fillStyle = `rgba(232,184,64,${(g.warm * 0.22).toFixed(3)})`; TownArt.disc(c, gx, gy, g.r);
+    }
   }
   // Névoa baixa (cemitério): faixas claras deslizando devagar
   if (A.fog) {

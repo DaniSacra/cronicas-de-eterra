@@ -171,7 +171,7 @@ const spotted = (r, chase) => { const now = chase && !r.seen; r.seen = chase; re
 const touchingParty = r => r.perch ? perchedAttack(r, [TOWN.p, ...TOWN.followers])
   : [TOWN.p, ...TOWN.followers].some(a => Math.abs(a.x - r.x) + Math.abs(a.y - r.y) === 1);
 function updateRoamers(dt) {
-  const radius = TOWN.A.vision ? TOWN.A.vision.radius : 6;
+  const radius = TOWN.A.vision ? TOWN.A.vision.chase ?? TOWN.A.vision.radius : 6; // the party may see farther than the wolves do
   for (const r of TOWN.roamers || []) {
     if (r.calm > 0) r.calm -= dt;
     if (r.t < 1 || (r.wait -= dt) > 0) continue;
